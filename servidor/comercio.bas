@@ -54,7 +54,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
             exit sub
         elseif cantidad > max_inventory_objs then
             call senddata(sendtarget.toall, 0, preparemessageconsolemsg(userlist(userindex).name & " ha sido baneado por el sistema anti-cheats.", fonttypenames.fonttype_fight))
-            call ban(userlist(userindex).name, "sistema anti cheats", "intentar hackear el sistema de comercio. quiso comprar demasiados items:" & cantidad)
+            call ban(userlist(userindex).name, "sistema anti cheats", "intentar hackear el sistema de comercio. quiso comprar demasiados �tems:" & cantidad)
             userlist(userindex).flags.ban = 1
             call writeerrormsg(userindex, "has sido baneado por el sistema anticheat.")
             call flushbuffer(userindex)
@@ -105,7 +105,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
         'agregado para que no se vuelvan a vender las llaves si se recargan los .dat.
         if objdata(objeto.objindex).objtype = otllaves then
             call writevar(datpath & "npcs.dat", "npc" & npclist(npcindex).numero, "obj" & slot, objeto.objindex & "-0")
-            call logventacasa(userlist(userindex).name & " compro " & objdata(objeto.objindex).name)
+            call logventacasa(userlist(userindex).name & " compr� " & objdata(objeto.objindex).name)
         end if
         
     elseif modo = emodocomercio.venta then
@@ -114,12 +114,8 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
         
         objeto.amount = cantidad
         objeto.objindex = userlist(userindex).invent.object(slot).objindex
+        
         if objeto.objindex = 0 then
-            exit sub
-        elseif objdata(objeto.objindex).newbie = 1 then
-            call writeconsolemsg(userindex, "lo siento, no comercio objetos para newbies.", fonttypenames.fonttype_info)
-            call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
-            call writetradeok(userindex)
             exit sub
         elseif (npclist(npcindex).tipoitems <> objdata(objeto.objindex).objtype and npclist(npcindex).tipoitems <> eobjtype.otcualquiera) or objeto.objindex = ioro then
             call writeconsolemsg(userindex, "lo siento, no estoy interesado en este tipo de objetos.", fonttypenames.fonttype_info)
@@ -128,14 +124,14 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
             exit sub
         elseif objdata(objeto.objindex).real = 1 then
             if npclist(npcindex).name <> "sr" then
-                call writeconsolemsg(userindex, "las armaduras de la armada solo pueden ser vendidas a los sastres reales.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "las armaduras del ej�rcito real s�lo pueden ser vendidas a los sastres reales.", fonttypenames.fonttype_info)
                 call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
                 call writetradeok(userindex)
                 exit sub
             end if
         elseif objdata(objeto.objindex).caos = 1 then
             if npclist(npcindex).name <> "sc" then
-                call writeconsolemsg(userindex, "las armaduras de la legi�n solo pueden ser vendidas a los sastres del demonio.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "las armaduras de la legi�n oscura s�lo pueden ser vendidas a los sastres del demonio.", fonttypenames.fonttype_info)
                 call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
                 call writetradeok(userindex)
                 exit sub
@@ -146,7 +142,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
             call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
             exit sub
         elseif userlist(userindex).flags.privilegios and playertype.consejero then
-            call writeconsolemsg(userindex, "no puedes vender items.", fonttypenames.fonttype_warning)
+            call writeconsolemsg(userindex, "no puedes vender �tems.", fonttypenames.fonttype_warning)
             call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
             call writetradeok(userindex)
             exit sub
@@ -155,7 +151,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
         call quitaruserinvitem(userindex, slot, cantidad)
         
         'precio = round(objdata(objeto.objindex).valor / reductor_precioventa * cantidad, 0)
-        precio = fix(saleprice(objdata(objeto.objindex).valor) * cantidad)
+        precio = fix(saleprice(objeto.objindex) * cantidad)
         userlist(userindex).stats.gld = userlist(userindex).stats.gld + precio
         
         if userlist(userindex).stats.gld > maxoro then _
@@ -191,7 +187,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
     call enviarnpcinv(userindex, userlist(userindex).flags.targetnpc)
     call writetradeok(userindex)
         
-    call subirskill(userindex, eskill.comerciar)
+    call subirskill(userindex, eskill.comerciar, true)
 end sub
 
 public sub iniciarcomercionpc(byval userindex as integer)
@@ -258,12 +254,14 @@ private sub enviarnpcinv(byval userindex as integer, byval npcindex as integer)
     dim slot as byte
     dim val as single
     
-    for slot = 1 to max_inventory_slots
+    for slot = 1 to max_normal_inventory_slots
         if npclist(npcindex).invent.object(slot).objindex > 0 then
             dim thisobj as obj
+            
             thisobj.objindex = npclist(npcindex).invent.object(slot).objindex
             thisobj.amount = npclist(npcindex).invent.object(slot).amount
-            val = (objdata(npclist(npcindex).invent.object(slot).objindex).valor) / descuento(userindex)
+            
+            val = (objdata(thisobj.objindex).valor) / descuento(userindex)
             
             call writechangenpcinventoryslot(userindex, slot, thisobj, val)
         else
@@ -276,12 +274,15 @@ end sub
 ''
 ' devuelve el valor de venta del objeto
 '
-' @param valor  el valor de compra de objeto
+' @param objindex  el n�mero de objeto al cual le calculamos el precio de venta
 
-public function saleprice(byval valor as long) as single
+public function saleprice(byval objindex as integer) as single
 '*************************************************
 'author: nicol�s (niconz)
 '
 '*************************************************
-    saleprice = valor / reductor_precioventa
+    if objindex < 1 or objindex > ubound(objdata) then exit function
+    if itemnewbie(objindex) then exit function
+    
+    saleprice = objdata(objindex).valor / reductor_precioventa
 end function

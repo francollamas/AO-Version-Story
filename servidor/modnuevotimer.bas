@@ -37,6 +37,12 @@ option explicit
 
 ' casting de hechizos
 public function intervalopermitelanzarspell(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
@@ -53,6 +59,12 @@ end if
 end function
 
 public function intervalopermiteatacar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
@@ -90,27 +102,40 @@ end if
 end function
 
 public function intervalopermitemagiagolpe(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
     dim tactual as long
     
-    if userlist(userindex).counters.timermagiagolpe > userlist(userindex).counters.timerlanzarspell then
-        exit function
-    end if
-    
-    tactual = gettickcount() and &h7fffffff
-    
-    if tactual - userlist(userindex).counters.timerlanzarspell >= intervalomagiagolpe then
-        if actualizar then
-            userlist(userindex).counters.timermagiagolpe = tactual
-            userlist(userindex).counters.timerpuedeatacar = tactual
-            userlist(userindex).counters.timergolpeusar = tactual
+    with userlist(userindex)
+        if .counters.timermagiagolpe > .counters.timerlanzarspell then
+            exit function
         end if
-        intervalopermitemagiagolpe = true
-    else
-        intervalopermitemagiagolpe = false
-    end if
+        
+        tactual = gettickcount() and &h7fffffff
+        
+        if tactual - .counters.timerlanzarspell >= intervalomagiagolpe then
+            if actualizar then
+                .counters.timermagiagolpe = tactual
+                .counters.timerpuedeatacar = tactual
+                .counters.timergolpeusar = tactual
+            end if
+            intervalopermitemagiagolpe = true
+        else
+            intervalopermitemagiagolpe = false
+        end if
+    end with
 end function
 
 public function intervalopermitegolpemagia(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim tactual as long
     
     if userlist(userindex).counters.timergolpemagia > userlist(userindex).counters.timerpuedeatacar then
@@ -146,16 +171,22 @@ end function
 
 ' trabajo
 public function intervalopermitetrabajar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
-dim tactual as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-tactual = gettickcount() and &h7fffffff
-
-if tactual - userlist(userindex).counters.timerpuedetrabajar >= intervalouserpuedetrabajar then
-    if actualizar then userlist(userindex).counters.timerpuedetrabajar = tactual
-    intervalopermitetrabajar = true
-else
-    intervalopermitetrabajar = false
-end if
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    if tactual - userlist(userindex).counters.timerpuedetrabajar >= intervalouserpuedetrabajar then
+        if actualizar then userlist(userindex).counters.timerpuedetrabajar = tactual
+        intervalopermitetrabajar = true
+    else
+        intervalopermitetrabajar = false
+    end if
 end function
 
 ' usar objetos
@@ -173,35 +204,122 @@ public function intervalopermiteusar(byval userindex as integer, optional byval 
     if tactual - userlist(userindex).counters.timerusar >= intervalouserpuedeusar then
         if actualizar then
             userlist(userindex).counters.timerusar = tactual
-          '  userlist(userindex).counters.failedusageattempts = 0
+            'userlist(userindex).counters.failedusageattempts = 0
         end if
         intervalopermiteusar = true
     else
         intervalopermiteusar = false
         
-      '  userlist(userindex).counters.failedusageattempts = userlist(userindex).counters.failedusageattempts + 1
+        'userlist(userindex).counters.failedusageattempts = userlist(userindex).counters.failedusageattempts + 1
         
         'tolerancia arbitraria - 20 es muy alta, la est� chiteando zarpado
-      '  if userlist(userindex).counters.failedusageattempts = 20 then
-      '      call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(userlist(userindex).name & " kicked by the server por posible modificaci�n de intervalos.", fonttypenames.fonttype_fight))
-      '      call closesocket(userindex)
-      '  end if
+        'if userlist(userindex).counters.failedusageattempts = 20 then
+            'call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(userlist(userindex).name & " kicked by the server por posible modificaci�n de intervalos.", fonttypenames.fonttype_fight))
+            'call closesocket(userindex)
+        'end if
     end if
 
 end function
 
 public function intervalopermiteusararcos(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
-dim tactual as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-tactual = gettickcount() and &h7fffffff
-
-if tactual - userlist(userindex).counters.timerpuedeusararco >= intervaloflechascazadores then
-    if actualizar then userlist(userindex).counters.timerpuedeusararco = tactual
-    intervalopermiteusararcos = true
-else
-    intervalopermiteusararcos = false
-end if
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    if tactual - userlist(userindex).counters.timerpuedeusararco >= intervaloflechascazadores then
+        if actualizar then userlist(userindex).counters.timerpuedeusararco = tactual
+        intervalopermiteusararcos = true
+    else
+        intervalopermiteusararcos = false
+    end if
 
 end function
 
+public function intervalopermiteseratacado(byval userindex as integer, optional byval actualizar as boolean = false) as boolean
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 13/11/2009
+'13/11/2009: zama - add the timer which determines wether the user can be atacked by a npc or not
+'**************************************************************
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    with userlist(userindex)
+        ' inicializa el timer
+        if actualizar then
+            .counters.timerpuedeseratacado = tactual
+            .flags.nopuedeseratacado = true
+            intervalopermiteseratacado = false
+        else
+            if tactual - .counters.timerpuedeseratacado >= intervalopuedeseratacado then
+                .flags.nopuedeseratacado = false
+                intervalopermiteseratacado = true
+            else
+                intervalopermiteseratacado = false
+            end if
+        end if
+    end with
 
+end function
+
+public function intervaloperdionpc(byval userindex as integer, optional byval actualizar as boolean = false) as boolean
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 13/11/2009
+'13/11/2009: zama - add the timer which determines wether the user still owns a npc or not
+'**************************************************************
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    with userlist(userindex)
+        ' inicializa el timer
+        if actualizar then
+            .counters.timerpertenecenpc = tactual
+            intervaloperdionpc = false
+        else
+            if tactual - .counters.timerpertenecenpc >= intervaloownednpc then
+                intervaloperdionpc = true
+            else
+                intervaloperdionpc = false
+            end if
+        end if
+    end with
+
+end function
+
+public function intervaloestadoatacable(byval userindex as integer, optional byval actualizar as boolean = false) as boolean
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 13/01/2010
+'13/01/2010: zama - add the timer which determines wether the user can be atacked by an user or not
+'**************************************************************
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    with userlist(userindex)
+        ' inicializa el timer
+        if actualizar then
+            .counters.timerestadoatacable = tactual
+            intervaloestadoatacable = true
+        else
+            if tactual - .counters.timerestadoatacable >= intervaloatacable then
+                intervaloestadoatacable = false
+            else
+                intervaloestadoatacable = true
+            end if
+        end if
+    end with
+
+end function

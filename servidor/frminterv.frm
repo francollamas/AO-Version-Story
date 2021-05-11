@@ -705,7 +705,7 @@ call writevar(inipath & "server.ini", "intervalos", "intervalouserpuedeatacar", 
 call writevar(inipath & "server.ini", "intervalos", "intervaloperdidastaminalluvia", frmmain.tlluvia.interval)
 
 
-msgbox "los intervalos se han guardado sin problemas"
+msgbox "los intervalos se han guardado sin problemas."
 
 exit sub
 err:

@@ -58,8 +58,9 @@ public enum sendtarget
     torealyrms
     tocaosyrms
     tohigheradmins
-    togmsarea
+    togmsareabutrmsorcounselors
     tousersareabutgms
+    tousersandrmsandcounselorsareabutgms
 end enum
 
 public sub senddata(byval sndroute as sendtarget, byval sndindex as integer, byval snddata as string)
@@ -288,14 +289,16 @@ on error resume next
             next loopc
             exit sub
             
-        case sendtarget.togmsarea
-            call sendtogmsarea(sndindex, snddata)
+        case sendtarget.togmsareabutrmsorcounselors
+            call sendtogmsareabutrmsorcounselors(sndindex, snddata)
             exit sub
             
         case sendtarget.tousersareabutgms
             call sendtousersareabutgms(sndindex, snddata)
             exit sub
-            
+        case sendtarget.tousersandrmsandcounselorsareabutgms
+            call sendtousersandrmsandcounselorsareabutgms(sndindex, snddata)
+            exit sub
     end select
 end sub
 
@@ -610,11 +613,12 @@ public sub sendtomapbutindex(byval userindex as integer, byval sddata as string)
     next loopc
 end sub
 
-private sub sendtogmsarea(byval userindex as integer, byval sddata as string)
+private sub sendtogmsareabutrmsorcounselors(byval userindex as integer, byval sddata as string)
 '**************************************************************
 'author: torres patricio(pato)
-'last modify date: 10/17/2009
-'
+'last modify date: 12/02/2010
+'12/02/2010: zama - restrinjo solo a dioses, admins y gms.
+'15/02/2010: zama - cambio el nombre de la funcion (viejo: togmsarea, nuevo: togmsareabutrmsorcounselors)
 '**************************************************************
     dim loopc as long
     dim tempindex as integer
@@ -632,15 +636,19 @@ private sub sendtogmsarea(byval userindex as integer, byval sddata as string)
     for loopc = 1 to conngroups(map).countentrys
         tempindex = conngroups(map).userentrys(loopc)
         
-        if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
-            if userlist(tempindex).areasinfo.arearecivey and areay then
-                if userlist(tempindex).connidvalida then
-                    if userlist(tempindex).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero) then
-                        call enviardatosaslot(tempindex, sddata)
+        with userlist(tempindex)
+            if .areasinfo.arearecivex and areax then  'esta en el area?
+                if .areasinfo.arearecivey and areay then
+                    if .connidvalida then
+                        ' exclusivo para dioses, admins y gms
+                        if (.flags.privilegios and not playertype.user and not playertype.consejero _
+                            and not playertype.rolemaster) = .flags.privilegios then
+                            call enviardatosaslot(tempindex, sddata)
+                        end if
                     end if
                 end if
             end if
-        end if
+        end with
     next loopc
 end sub
 
@@ -676,4 +684,76 @@ private sub sendtousersareabutgms(byval userindex as integer, byval sddata as st
             end if
         end if
     next loopc
+end sub
+
+private sub sendtousersandrmsandcounselorsareabutgms(byval userindex as integer, byval sddata as string)
+'**************************************************************
+'author: torres patricio(pato)
+'last modify date: 10/17/2009
+'
+'**************************************************************
+    dim loopc as long
+    dim tempindex as integer
+    
+    dim map as integer
+    dim areax as integer
+    dim areay as integer
+    
+    map = userlist(userindex).pos.map
+    areax = userlist(userindex).areasinfo.areapertenecex
+    areay = userlist(userindex).areasinfo.areapertenecey
+    
+    if not mapavalido(map) then exit sub
+    
+    for loopc = 1 to conngroups(map).countentrys
+        tempindex = conngroups(map).userentrys(loopc)
+        
+        if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
+            if userlist(tempindex).areasinfo.arearecivey and areay then
+                if userlist(tempindex).connidvalida then
+                    if userlist(tempindex).flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then
+                        call enviardatosaslot(tempindex, sddata)
+                    end if
+                end if
+            end if
+        end if
+    next loopc
+end sub
+
+public sub alertarfaccionarios(byval userindex as integer)
+'**************************************************************
+'author: zama
+'last modify date: 17/11/2009
+'alerta a los faccionarios, dandoles una orientacion
+'**************************************************************
+    dim loopc as long
+    dim tempindex as integer
+    dim map as integer
+    dim font as fonttypenames
+    
+    if escaos(userindex) then
+        font = fonttypenames.fonttype_consejocaos
+    else
+        font = fonttypenames.fonttype_consejo
+    end if
+    
+    map = userlist(userindex).pos.map
+    
+    if not mapavalido(map) then exit sub
+
+    for loopc = 1 to conngroups(map).countentrys
+        tempindex = conngroups(map).userentrys(loopc)
+        
+        if userlist(tempindex).connidvalida then
+            if tempindex <> userindex then
+                ' solo se envia a los de la misma faccion
+                if samefaccion(userindex, tempindex) then
+                    call enviardatosaslot(tempindex, _
+                         preparemessageconsolemsg("escuchas el llamado de un compa�ero que proviene del " & _
+                         getdireccion(userindex, tempindex), font))
+                end if
+            end if
+        end if
+    next loopc
+
 end sub

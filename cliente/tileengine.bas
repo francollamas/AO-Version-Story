@@ -154,6 +154,7 @@ public type char
     fxindex as integer
     
     criminal as byte
+    atacable as boolean
     
     nombre as string
     
@@ -351,6 +352,9 @@ private declare function queryperformancecounter lib "kernel32" (lpperformanceco
 
 'text width computation. needed to center text.
 private declare function gettextextentpoint32 lib "gdi32" alias "gettextextentpoint32a" (byval hdc as long, byval lpsz as string, byval cbstring as long, lpsize as size) as long
+
+private declare function setpixel lib "gdi32" (byval hdc as long, byval x as long, byval y as long, byval crcolor as long) as long
+private declare function getpixel lib "gdi32" (byval hdc as long, byval x as long, byval y as long) as long
 
 sub cargarcabezas()
     dim n as integer
@@ -581,6 +585,7 @@ sub resetcharinfo(byval charindex as integer)
     with charlist(charindex)
         .active = 0
         .criminal = 0
+        .atacable = false
         .fxindex = 0
         .invisible = false
         
@@ -1368,6 +1373,39 @@ sub drawgrhtohdc(byval hdc as long, byval grhindex as integer, byref sourcerect 
     call surfacedb.surface(grhdata(grhindex).filenum).blttodc(hdc, sourcerect, destrect)
 end sub
 
+public sub drawtransparentgrhtohdc(byval dsthdc as long, byval srchdc as long, byref sourcerect as rect, byref destrect as rect, byval transparentcolor)
+'**************************************************************
+'author: torres patricio (pato)
+'last modify date: 12/22/2009
+'this method is slow... don't use in a loop if you care about
+'speed!
+'*************************************************************
+    dim color as long
+    dim x as long
+    dim y as long
+    
+    for x = sourcerect.left to sourcerect.right
+        for y = sourcerect.top to sourcerect.bottom
+            color = getpixel(srchdc, x, y)
+            
+            if color <> transparentcolor then
+                call setpixel(dsthdc, destrect.left + (x - sourcerect.left), destrect.top + (y - sourcerect.top), color)
+            end if
+        next y
+    next x
+end sub
+
+public sub drawimageinpicture(byref picturebox as picturebox, byref picture as stdpicture, byval x1 as single, byval y1 as single, optional width1, optional height1, optional x2, optional y2, optional width2, optional height2)
+'**************************************************************
+'author: torres patricio (pato)
+'last modify date: 12/28/2009
+'draw picture in the picturebox
+'*************************************************************
+
+call picturebox.paintpicture(picture, x1, y1, width1, height1, x2, y2, width2, height2)
+end sub
+
+
 sub renderscreen(byval tilex as integer, byval tiley as integer, byval pixeloffsetx as integer, byval pixeloffsety as integer)
 '**************************************************************
 'author: aaron perkins
@@ -1550,7 +1588,7 @@ sub renderscreen(byval tilex as integer, byval tiley as integer, byval pixeloffs
 
             for y = 0 to 4
                 for x = 0 to 4
-                    call backbuffersurface.bltfast(ltlluvia(y), ltlluvia(x), surfacedb.surface(5556), rlluvia(iframeindex), ddbltfast_srccolorkey + ddbltfast_wait)
+                    call backbuffersurface.bltfast(ltlluvia(y), ltlluvia(x), surfacedb.surface(15168), rlluvia(iframeindex), ddbltfast_srccolorkey + ddbltfast_wait)
                 next x
             next y
         end if
@@ -1757,7 +1795,6 @@ on error goto 0
     call cargarcascos
     call cargarfxs
     
-    
     ltlluvia(0) = 224
     ltlluvia(1) = 352
     ltlluvia(2) = 480
@@ -1833,9 +1870,12 @@ sub shownextframe(byval displayformtop as integer, byval displayformleft as inte
         else
             call renderscreen(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
         end if
-        
-        if iscombate then call rendertext(260, 260, "modo combate", vbred, frmmain.font)
-        
+        if clientsetup.bactive then
+            if iscapturepending then
+                call screencapture(true)
+                iscapturepending = false
+            end if
+        end if
         call dialogos.render
         call dibujarcartel
         
@@ -2057,7 +2097,7 @@ private sub charrender(byval charindex as long, byval pixeloffsetx as integer, b
                     
                     'draw helmet
                     if .casco.head(.heading).grhindex then _
-                        call ddrawtransgrhtosurface(.casco.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y, 1, 0)
+                        call ddrawtransgrhtosurface(.casco.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y + offset_head, 1, 0)
                     
                     'draw weapon
                     if .arma.weaponwalk(.heading).grhindex then _
@@ -2070,16 +2110,20 @@ private sub charrender(byval charindex as long, byval pixeloffsetx as integer, b
                 
                     'draw name over head
                     if lenb(.nombre) > 0 then
-                        if nombres and esgm(usercharindex) or abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2 then
+                        if nombres and (esgm(usercharindex) or abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2) then
                             pos = gettagposition(.nombre)
                             'pos = instr(.nombre, "<")
                             'if pos = 0 then pos = len(.nombre) + 2
                             
                             if .priv = 0 then
-                                if .criminal then
-                                    color = rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b)
+                                if .atacable then
+                                    color = rgb(colorespj(48).r, colorespj(48).g, colorespj(48).b)
                                 else
-                                    color = rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b)
+                                    if .criminal then
+                                        color = rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b)
+                                    else
+                                        color = rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b)
+                                    end if
                                 end if
                             else
                                 color = rgb(colorespj(.priv).r, colorespj(.priv).g, colorespj(.priv).b)
@@ -2104,7 +2148,7 @@ private sub charrender(byval charindex as long, byval pixeloffsetx as integer, b
 
         
         'update dialogs
-        call dialogos.updatedialogpos(pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y, charindex)
+        call dialogos.updatedialogpos(pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y + offset_head, charindex) '34 son los pixeles del grh de la cabeza que quedan superpuestos al cuerpo
         
         'draw fx
         if .fxindex <> 0 then

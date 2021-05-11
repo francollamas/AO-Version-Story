@@ -41,6 +41,12 @@ option explicit
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 public function tiraritemalpiso(pos as worldpos, obj as obj, optional notpirata as boolean = true) as worldpos
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error goto errhandler
 
     dim nuevapos as worldpos
@@ -53,48 +59,106 @@ on error goto errhandler
     end if
     tiraritemalpiso = nuevapos
 
-exit function
+    exit function
 errhandler:
 
 end function
 
-public sub npc_tirar_items(byref npc as npc)
-'tira todos los items del npc
+public sub npc_tirar_items(byref npc as npc, byval ispretoriano as boolean)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 28/11/2009
+'give away npc's items.
+'28/11/2009: zama - implementado drops complejos
+'02/04/2010: zama - los pretos vuelven a tirar oro.
+'***************************************************
 on error resume next
 
-if npc.invent.nroitems > 0 then
-    
-    dim i as byte
-    dim miobj as obj
-    
-    for i = 1 to max_inventory_slots
-    
-        if npc.invent.object(i).objindex > 0 then
-              miobj.amount = npc.invent.object(i).amount
-              miobj.objindex = npc.invent.object(i).objindex
-              call tiraritemalpiso(npc.pos, miobj)
+    with npc
+        
+        dim i as byte
+        dim miobj as obj
+        dim nrodrop as integer
+        dim random as integer
+        dim objindex as integer
+        
+        
+        ' tira todo el inventario
+        if ispretoriano then
+            for i = 1 to max_inventory_slots
+                if .invent.object(i).objindex > 0 then
+                      miobj.amount = .invent.object(i).amount
+                      miobj.objindex = .invent.object(i).objindex
+                      call tiraritemalpiso(.pos, miobj)
+                end if
+            next i
+            
+            ' dropea oro?
+            if .givegld > 0 then _
+                call tiraroronpc(.givegld, .pos)
+                
+            exit sub
         end if
-      
-    next i
+        
+        random = randomnumber(1, 100)
+        
+        ' tiene 10% de prob de no tirar nada
+        if random <= 90 then
+            nrodrop = 1
+            
+            if random <= 10 then
+                nrodrop = nrodrop + 1
+                 
+                for i = 1 to 3
+                    ' 10% de ir pasando de etapas
+                    if randomnumber(1, 100) <= 10 then
+                        nrodrop = nrodrop + 1
+                    else
+                        exit for
+                    end if
+                next i
+                
+            end if
+            
 
-end if
+            objindex = .drop(nrodrop).objindex
+            if objindex > 0 then
+            
+                if objindex = ioro then
+                    call tiraroronpc(.drop(nrodrop).amount, npc.pos)
+                else
+                    miobj.amount = .drop(nrodrop).amount
+                    miobj.objindex = .drop(nrodrop).objindex
+                    
+                    call tiraritemalpiso(.pos, miobj)
+                end if
+            end if
+
+        end if
+
+    end with
 
 end sub
 
 function quedanitems(byval npcindex as integer, byval objindex as integer) as boolean
-on error resume next
-'call logtarea("function quedanitems npcindex:" & npcindex & " objindex:" & objindex)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-dim i as integer
-if npclist(npcindex).invent.nroitems > 0 then
-    for i = 1 to max_inventory_slots
-        if npclist(npcindex).invent.object(i).objindex = objindex then
-            quedanitems = true
-            exit function
-        end if
-    next
-end if
-quedanitems = false
+on error resume next
+
+    dim i as integer
+    if npclist(npcindex).invent.nroitems > 0 then
+        for i = 1 to max_inventory_slots
+            if npclist(npcindex).invent.object(i).objindex = objindex then
+                quedanitems = true
+                exit function
+            end if
+        next
+    end if
+    quedanitems = false
 end function
 
 ''
@@ -114,36 +178,44 @@ function encontrarcant(byval npcindex as integer, byval objindex as integer) as 
 on error resume next
 'devuelve la cantidad original del obj de un npc
 
-dim ln as string, npcfile as string
-dim i as integer
-
-npcfile = datpath & "npcs.dat"
- 
-for i = 1 to max_inventory_slots
-    ln = getvar(npcfile, "npc" & npclist(npcindex).numero, "obj" & i)
-    if objindex = val(readfield(1, ln, 45)) then
-        encontrarcant = val(readfield(2, ln, 45))
-        exit function
-    end if
-next
-                   
-encontrarcant = 0
+    dim ln as string, npcfile as string
+    dim i as integer
+    
+    npcfile = datpath & "npcs.dat"
+     
+    for i = 1 to max_inventory_slots
+        ln = getvar(npcfile, "npc" & npclist(npcindex).numero, "obj" & i)
+        if objindex = val(readfield(1, ln, 45)) then
+            encontrarcant = val(readfield(2, ln, 45))
+            exit function
+        end if
+    next
+                       
+    encontrarcant = 0
 
 end function
 
 sub resetnpcinv(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
-dim i as integer
-
-npclist(npcindex).invent.nroitems = 0
-
-for i = 1 to max_inventory_slots
-   npclist(npcindex).invent.object(i).objindex = 0
-   npclist(npcindex).invent.object(i).amount = 0
-next i
-
-npclist(npcindex).invrespawn = 0
+    dim i as integer
+    
+    with npclist(npcindex)
+        .invent.nroitems = 0
+        
+        for i = 1 to max_inventory_slots
+           .invent.object(i).objindex = 0
+           .invent.object(i).amount = 0
+        next i
+        
+        .invrespawn = 0
+    end with
 
 end sub
 
@@ -156,72 +228,119 @@ end sub
 sub quitarnpcinvitem(byval npcindex as integer, byval slot as byte, byval cantidad as integer)
 '***************************************************
 'author: unknown
-'last modification: 03/09/08
+'last modification: 23/11/2009
 'last modification by: marco vanotti (marco)
 ' - 03/09/08 now this sub checks that te npc has an item before respawning it (marco)
+'23/11/2009: zama - optimizacion de codigo.
 '***************************************************
-dim objindex as integer
-dim icant as integer
-objindex = npclist(npcindex).invent.object(slot).objindex
-
-    'quita un obj
-    if objdata(npclist(npcindex).invent.object(slot).objindex).crucial = 0 then
-        npclist(npcindex).invent.object(slot).amount = npclist(npcindex).invent.object(slot).amount - cantidad
-        
-        if npclist(npcindex).invent.object(slot).amount <= 0 then
-            npclist(npcindex).invent.nroitems = npclist(npcindex).invent.nroitems - 1
-            npclist(npcindex).invent.object(slot).objindex = 0
-            npclist(npcindex).invent.object(slot).amount = 0
-            if npclist(npcindex).invent.nroitems = 0 and npclist(npcindex).invrespawn <> 1 then
-               call cargarinvent(npcindex) 'reponemos el inventario
-            end if
-        end if
-    else
-        npclist(npcindex).invent.object(slot).amount = npclist(npcindex).invent.object(slot).amount - cantidad
-        
-        if npclist(npcindex).invent.object(slot).amount <= 0 then
-            npclist(npcindex).invent.nroitems = npclist(npcindex).invent.nroitems - 1
-            npclist(npcindex).invent.object(slot).objindex = 0
-            npclist(npcindex).invent.object(slot).amount = 0
+    dim objindex as integer
+    dim icant as integer
+    
+    with npclist(npcindex)
+        objindex = .invent.object(slot).objindex
+    
+        'quita un obj
+        if objdata(.invent.object(slot).objindex).crucial = 0 then
+            .invent.object(slot).amount = .invent.object(slot).amount - cantidad
             
-            if not quedanitems(npcindex, objindex) then
-                'check if the item is in the npc's dat.
-                icant = encontrarcant(npcindex, objindex)
-                if icant then
-                    npclist(npcindex).invent.object(slot).objindex = objindex
-                    npclist(npcindex).invent.object(slot).amount = icant
-                    npclist(npcindex).invent.nroitems = npclist(npcindex).invent.nroitems + 1
+            if .invent.object(slot).amount <= 0 then
+                .invent.nroitems = .invent.nroitems - 1
+                .invent.object(slot).objindex = 0
+                .invent.object(slot).amount = 0
+                if .invent.nroitems = 0 and .invrespawn <> 1 then
+                   call cargarinvent(npcindex) 'reponemos el inventario
                 end if
             end if
+        else
+            .invent.object(slot).amount = .invent.object(slot).amount - cantidad
             
-            if npclist(npcindex).invent.nroitems = 0 and npclist(npcindex).invrespawn <> 1 then
-               call cargarinvent(npcindex) 'reponemos el inventario
+            if .invent.object(slot).amount <= 0 then
+                .invent.nroitems = .invent.nroitems - 1
+                .invent.object(slot).objindex = 0
+                .invent.object(slot).amount = 0
+                
+                if not quedanitems(npcindex, objindex) then
+                    'check if the item is in the npc's dat.
+                    icant = encontrarcant(npcindex, objindex)
+                    if icant then
+                        .invent.object(slot).objindex = objindex
+                        .invent.object(slot).amount = icant
+                        .invent.nroitems = .invent.nroitems + 1
+                    end if
+                end if
+                
+                if .invent.nroitems = 0 and .invrespawn <> 1 then
+                   call cargarinvent(npcindex) 'reponemos el inventario
+                end if
             end if
         end if
-    
-    
-    
-    end if
+    end with
 end sub
 
 sub cargarinvent(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-'vuelve a cargar el inventario del npc npcindex
-dim loopc as integer
-dim ln as string
-dim npcfile as string
-
-npcfile = datpath & "npcs.dat"
-
-npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npclist(npcindex).numero, "nroitems"))
-
-for loopc = 1 to npclist(npcindex).invent.nroitems
-    ln = getvar(npcfile, "npc" & npclist(npcindex).numero, "obj" & loopc)
-    npclist(npcindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
-    npclist(npcindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
+    'vuelve a cargar el inventario del npc npcindex
+    dim loopc as integer
+    dim ln as string
+    dim npcfile as string
     
-next loopc
+    npcfile = datpath & "npcs.dat"
+    
+    with npclist(npcindex)
+        .invent.nroitems = val(getvar(npcfile, "npc" & .numero, "nroitems"))
+        
+        for loopc = 1 to .invent.nroitems
+            ln = getvar(npcfile, "npc" & .numero, "obj" & loopc)
+            .invent.object(loopc).objindex = val(readfield(1, ln, 45))
+            .invent.object(loopc).amount = val(readfield(2, ln, 45))
+            
+        next loopc
+    end with
 
 end sub
 
+
+public sub tiraroronpc(byval cantidad as long, byref pos as worldpos)
+'***************************************************
+'autor: zama
+'last modification: 13/02/2010
+'***************************************************
+on error goto errhandler
+
+    if cantidad > 0 then
+        dim i as byte
+        dim miobj as obj
+        dim remaininggold as long
+        
+        remaininggold = cantidad
+        
+        while (remaininggold > 0)
+            
+            ' tira pilon de 10k
+            if remaininggold > max_inventory_objs then
+                miobj.amount = max_inventory_objs
+                remaininggold = remaininggold - max_inventory_objs
+                
+            ' tira lo que quede
+            else
+                miobj.amount = remaininggold
+                remaininggold = 0
+            end if
+
+            miobj.objindex = ioro
+            
+            call tiraritemalpiso(pos, miobj)
+        wend
+    end if
+
+    exit sub
+
+errhandler:
+    call logerror("error en tiraroro. error " & err.number & " : " & err.description)
+end sub
 

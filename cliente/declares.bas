@@ -38,6 +38,20 @@ public dialogosclanes as new clsguilddlg
 public dialogos as new clsdialogs
 public audio as new clsaudio
 public inventario as new clsgrapchicalinventory
+public invbanco(1) as new clsgrapchicalinventory
+
+'inventarios de comercio con usuario
+public invcomusu as new clsgrapchicalinventory ' inventario del usuario visible en el comercio
+public invorocomusu(2) as new clsgrapchicalinventory ' inventarios de oro (ambos usuarios)
+public invoffercomusu(1) as new clsgrapchicalinventory ' inventarios de ofertas (ambos usuarios)
+
+public invcomnpc as new clsgrapchicalinventory ' inventario con los items que ofrece el npc
+
+'inventarios de herreria
+public const max_list_items as byte = 4
+public invlingosherreria(1 to max_list_items) as new clsgrapchicalinventory
+public invmaderascarpinteria(1 to max_list_items) as new clsgrapchicalinventory
+                
 public surfacedb as clssurfacemanager   'no va new porque es una interfaz, el new se pone al decidir que clase de objeto es
 public customkeys as new clscustomkeys
 public custommessages as new clscustommessages
@@ -85,8 +99,48 @@ public const fragata_fantasmal as integer = 87
 
 public const numatributes as byte = 5
 
+public const humano_h_primer_cabeza as integer = 1
+public const humano_h_ultima_cabeza as integer = 40 'en verdad es hasta la 51, pero como son muchas estas las dejamos no seleccionables
+public const humano_h_cuerpo_desnudo as integer = 21
+
+public const elfo_h_primer_cabeza as integer = 101
+public const elfo_h_ultima_cabeza as integer = 122
+public const elfo_h_cuerpo_desnudo as integer = 210
+
+public const drow_h_primer_cabeza as integer = 201
+public const drow_h_ultima_cabeza as integer = 221
+public const drow_h_cuerpo_desnudo as integer = 32
+
+public const enano_h_primer_cabeza as integer = 301
+public const enano_h_ultima_cabeza as integer = 319
+public const enano_h_cuerpo_desnudo as integer = 53
+
+public const gnomo_h_primer_cabeza as integer = 401
+public const gnomo_h_ultima_cabeza as integer = 416
+public const gnomo_h_cuerpo_desnudo as integer = 222
+'**************************************************
+public const humano_m_primer_cabeza as integer = 70
+public const humano_m_ultima_cabeza as integer = 89
+public const humano_m_cuerpo_desnudo as integer = 39
+
+public const elfo_m_primer_cabeza as integer = 170
+public const elfo_m_ultima_cabeza as integer = 188
+public const elfo_m_cuerpo_desnudo as integer = 259
+
+public const drow_m_primer_cabeza as integer = 270
+public const drow_m_ultima_cabeza as integer = 288
+public const drow_m_cuerpo_desnudo as integer = 40
+
+public const enano_m_primer_cabeza as integer = 370
+public const enano_m_ultima_cabeza as integer = 384
+public const enano_m_cuerpo_desnudo as integer = 60
+
+public const gnomo_m_primer_cabeza as integer = 470
+public const gnomo_m_ultima_cabeza as integer = 484
+public const gnomo_m_cuerpo_desnudo as integer = 260
+
 'musica
-public const midi_inicio as byte = 6
+public const mp3_inicio as byte = 101
 
 public rawserverslist as string
 
@@ -140,23 +194,20 @@ public const ultimobodybarco = 87
 
 public numescudosanims as integer
 
-public armasherrero(0 to 100) as integer
-public armadurasherrero(0 to 100) as integer
-public objcarpintero(0 to 100) as integer
-
-public versiones(1 to 7) as integer
+public armasherrero() as titemsconstruibles
+public armadurasherrero() as titemsconstruibles
+public objcarpintero() as titemsconstruibles
+public carpinteromejorar() as titemsconstruibles
+public herreromejorar() as titemsconstruibles
 
 public usamacro as boolean
 public cntd as byte
 
 
-
-
-'[kevin]
 public const max_bancoinventory_slots as byte = 40
 public userbancoinventory(1 to max_bancoinventory_slots) as inventory
-'[/kevin]
 
+public tradingusername as string
 
 public tips() as string * 255
 public const loopadeternum as integer = 999
@@ -171,13 +222,20 @@ end enum
 
 'objetos
 public const max_inventory_objs as integer = 10000
-public const max_inventory_slots as byte = 20
+public const max_inventory_slots as byte = 30
+public const max_normal_inventory_slots as byte = 20
 public const max_npc_inventory_slots as byte = 50
 public const maxhechi as byte = 35
 
+public const inv_offer_slots as byte = 20
+public const inv_gold_slots as byte = 1
+
 public const maxskillpoints as byte = 100
 
+public const maxatributos as byte = 38
+
 public const flagoro as integer = max_inventory_slots + 1
+public const gold_offer_slot as integer = inv_offer_slots + 1
 
 public const fogata as integer = 1521
 
@@ -193,11 +251,7 @@ public enum eclass
     bandit      'bandido
     paladin     'palad�n
     hunter      'cazador
-    fisher      'pescador
-    blacksmith  'herrero
-    lumberjack  'le�ador
-    miner       'minero
-    carpenter   'carpintero
+    worker      'trabajador
     pirat       'pirata
 end enum
 
@@ -218,27 +272,26 @@ enum eraza
 end enum
 
 public enum eskill
-    suerte = 1
-    magia = 2
-    robar = 3
-    tacticas = 4
-    armas = 5
-    meditar = 6
-    apu�alar = 7
-    ocultarse = 8
-    supervivencia = 9
-    talar = 10
-    comerciar = 11
-    defensa = 12
-    pesca = 13
-    mineria = 14
-    carpinteria = 15
-    herreria = 16
-    liderazgo = 17
-    domar = 18
-    proyectiles = 19
-    wrestling = 20
-    navegacion = 21
+    magia = 1
+    robar = 2
+    tacticas = 3
+    armas = 4
+    meditar = 5
+    apu�alar = 6
+    ocultarse = 7
+    supervivencia = 8
+    talar = 9
+    comerciar = 10
+    defensa = 11
+    pesca = 12
+    mineria = 13
+    carpinteria = 14
+    herreria = 15
+    liderazgo = 16
+    domar = 17
+    proyectiles = 18
+    wrestling = 19
+    navegacion = 20
 end enum
 
 public enum eatributos
@@ -295,10 +348,159 @@ public enum eobjtype
     otbotellavacia = 33
     otbotellallena = 34
     otmanchas = 35          'no se usa
+    otarbolelfico = 36
+    otmochilas = 37
     otcualquiera = 1000
 end enum
 
+public enum emochilas
+    mediana = 1
+    grande = 2
+end enum
+
+public maxinventoryslots as byte
+
 public const fundirmetal as integer = 88
+
+' determina el color del nick
+public enum enickcolor
+    iecriminal = &h1
+    ieciudadano = &h2
+    ieatacable = &h4
+end enum
+
+public enum egmcommands
+    gmmessage = 1           '/gmsg
+    showname                '/showname
+    onlineroyalarmy         '/onlinereal
+    onlinechaoslegion       '/onlinecaos
+    gonearby                '/ircerca
+    comment                 '/rem
+    servertime              '/hora
+    where                   '/donde
+    creaturesinmap          '/nene
+    warpmetotarget          '/teleploc
+    warpchar                '/telep
+    silence                 '/silenciar
+    sosshowlist             '/show sos
+    sosremove               'sosdone
+    gotochar                '/ira
+    invisible               '/invisible
+    gmpanel                 '/panelgm
+    requestuserlist         'listusu
+    working                 '/trabajando
+    hiding                  '/ocultando
+    jail                    '/carcel
+    killnpc                 '/rmata
+    warnuser                '/advertencia
+    editchar                '/mod
+    requestcharinfo         '/info
+    requestcharstats        '/stat
+    requestchargold         '/bal
+    requestcharinventory    '/inv
+    requestcharbank         '/bov
+    requestcharskills       '/skills
+    revivechar              '/revivir
+    onlinegm                '/onlinegm
+    onlinemap               '/onlinemap
+    forgive                 '/perdon
+    kick                    '/echar
+    execute                 '/ejecutar
+    banchar                 '/ban
+    unbanchar               '/unban
+    npcfollow               '/seguir
+    summonchar              '/sum
+    spawnlistrequest        '/cc
+    spawncreature           'spa
+    resetnpcinventory       '/resetinv
+    cleanworld              '/limpiar
+    servermessage           '/rmsg
+    nicktoip                '/nick2ip
+    iptonick                '/ip2nick
+    guildonlinemembers      '/onclan
+    teleportcreate          '/ct
+    teleportdestroy         '/dt
+    raintoggle              '/lluvia
+    setchardescription      '/setdesc
+    forcemiditomap          '/forcemidimap
+    forcewavetomap          '/forcewavmap
+    royalarmymessage        '/realmsg
+    chaoslegionmessage      '/caosmsg
+    citizenmessage          '/ciumsg
+    criminalmessage         '/crimsg
+    talkasnpc               '/talkas
+    destroyallitemsinarea   '/massdest
+    acceptroyalcouncilmember '/aceptconse
+    acceptchaoscouncilmember '/aceptconsecaos
+    itemsinthefloor         '/piso
+    makedumb                '/estupido
+    makedumbnomore          '/noestupido
+    dumpiptables            '/dumpsecurity
+    councilkick             '/kickconse
+    settrigger              '/trigger
+    asktrigger              '/trigger with no args
+    bannediplist            '/baniplist
+    bannedipreload          '/banipreload
+    guildmemberlist         '/miembrosclan
+    guildban                '/banclan
+    banip                   '/banip
+    unbanip                 '/unbanip
+    createitem              '/ci
+    destroyitems            '/dest
+    chaoslegionkick         '/nocaos
+    royalarmykick           '/noreal
+    forcemidiall            '/forcemidi
+    forcewaveall            '/forcewav
+    removepunishment        '/borrarpena
+    tileblockedtoggle       '/bloq
+    killnpcnorespawn        '/mata
+    killallnearbynpcs       '/masskill
+    lastip                  '/lastip
+    changemotd              '/motdcambia
+    setmotd                 'zmotd
+    systemmessage           '/smsg
+    createnpc               '/acc
+    createnpcwithrespawn    '/racc
+    imperialarmour          '/ai1 - 4
+    chaosarmour             '/ac1 - 4
+    navigatetoggle          '/nave
+    serveropentouserstoggle '/habilitar
+    turnoffserver           '/apagar
+    turncriminal            '/conden
+    resetfactions           '/rajar
+    removecharfromguild     '/rajarclan
+    requestcharmail         '/lastemail
+    alterpassword           '/apass
+    altermail               '/aemail
+    altername               '/aname
+    togglecentinelactivated '/centinelaactivado
+    dobackup                '/dobackup
+    showguildmessages       '/showcmsg
+    savemap                 '/guardamapa
+    changemapinfopk         '/modmapinfo pk
+    changemapinfobackup     '/modmapinfo backup
+    changemapinforestricted '/modmapinfo restringir
+    changemapinfonomagic    '/modmapinfo magiasinefecto
+    changemapinfonoinvi     '/modmapinfo invisinefecto
+    changemapinfonoresu     '/modmapinfo resusinefecto
+    changemapinfoland       '/modmapinfo terreno
+    changemapinfozone       '/modmapinfo zona
+    savechars               '/grabar
+    cleansos                '/borrar sos
+    showserverform          '/show int
+    night                   '/noche
+    kickallchars            '/echartodospjs
+    reloadnpcs              '/reloadnpcs
+    reloadserverini         '/reloadsini
+    reloadspells            '/reloadhechizos
+    reloadobjects           '/reloadobj
+    restart                 '/reiniciar
+    resetautoupdate         '/autoupdate
+    chatcolor               '/chatcolor
+    ignored                 '/ignorado
+    checkslot               '/slot
+    setinivar               '/setinivar llave clave valor
+end enum
 
 '
 ' mensajes
@@ -306,10 +508,10 @@ public const fundirmetal as integer = 88
 ' mensaje_*  --> mensajes de texto que se muestran en el cuadro de texto
 '
 
-public const mensaje_criatura_falla_golpe as string = "���la criatura fallo el golpe!!!"
+public const mensaje_criatura_falla_golpe as string = "���la criatura fall� el golpe!!!"
 public const mensaje_criatura_matado as string = "���la criatura te ha matado!!!"
 public const mensaje_rechazo_ataque_escudo as string = "���has rechazado el ataque con el escudo!!!"
-public const mensaje_usuario_rechazo_ataque_escudo  as string = "���el usuario rechazo el ataque con su escudo!!!"
+public const mensaje_usuario_rechazo_ataque_escudo  as string = "���el usuario rechaz� el ataque con su escudo!!!"
 public const mensaje_fallado_golpe as string = "���has fallado el golpe!!!"
 public const mensaje_seguro_activado as string = ">>seguro activado<<"
 public const mensaje_seguro_desactivado as string = ">>seguro desactivado<<"
@@ -329,10 +531,12 @@ public const mensaje_golpe_torso  as string = "��la criatura te ha pegado en
 ' mensaje_[12]: aparecen antes y despues del valor de los mensajes anteriores (mensaje_golpe_*)
 public const mensaje_1 as string = "��"
 public const mensaje_2 as string = "!!"
+public const mensaje_11 as string = "�"
+public const mensaje_22 as string = "!"
 
 public const mensaje_golpe_criatura_1 as string = "��le has pegado a la criatura por "
 
-public const mensaje_ataque_fallo as string = " te ataco y fallo!!"
+public const mensaje_ataque_fallo as string = " te atac� y fall�!!"
 
 public const mensaje_recive_impacto_cabeza as string = " te ha pegado en la cabeza por "
 public const mensaje_recive_impacto_brazo_izq as string = " te ha pegado el brazo izquierdo por "
@@ -362,6 +566,47 @@ public const mensaje_entrar_party_2 as string = ", escribe /entrarparty"
 
 public const mensaje_nene as string = "cantidad de npcs: "
 
+public const mensaje_fragshooter_te_ha_matado as string = "te ha matado!"
+public const mensaje_fragshooter_has_matado as string = "has matado a"
+public const mensaje_fragshooter_has_ganado as string = "has ganado "
+public const mensaje_fragshooter_puntos_de_experiencia as string = "puntos de experiencia."
+
+public const mensaje_no_ves_nada_interesante as string = "no ves nada interesante."
+public const mensaje_has_matado_a as string = "has matado a "
+public const mensaje_has_ganado_expe_1 as string = "has ganado "
+public const mensaje_has_ganado_expe_2 as string = " puntos de experiencia."
+public const mensaje_te_ha_matado as string = " te ha matado!"
+
+public const mensaje_hogar as string = "has llegado a tu hogar. el viaje ha finalizado."
+public const mensaje_hogar_cancel as string = "tu viaje ha sido cancelado."
+
+public enum emessages
+    dontseeanything
+    npcswing
+    npckilluser
+    blockedwithshielduser
+    blockedwithshieldother
+    userswing
+    safemodeon
+    safemodeoff
+    resuscitationsafeoff
+    resuscitationsafeon
+    nobilitylost
+    cantusewhilemeditating
+    npchituser
+    userhitnpc
+    userattackedswing
+    userhittedbyuser
+    userhitteduser
+    workrequesttarget
+    havekilleduser
+    userkill
+    earnexp
+    gohome
+    cancelgohome
+    finishhome
+end enum
+
 'inventario
 type inventory
     objindex as integer
@@ -373,7 +618,8 @@ type inventory
     equipped as byte
     valor as single
     objtype as integer
-    def as integer
+    maxdef as integer
+    mindef as integer 'budi
     maxhit as integer
     minhit as integer
 end type
@@ -385,7 +631,8 @@ type npcinv
     amount as integer
     valor as single
     objtype as integer
-    def as integer
+    maxdef as integer
+    mindef as integer
     maxhit as integer
     minhit as integer
     c1 as string
@@ -415,6 +662,20 @@ type testadisticasusu
     npcsmatados as long
     clase as string
     penacarcel as long
+end type
+
+type titemsconstruibles
+    name as string
+    objindex as integer
+    grhindex as integer
+    linh as integer
+    linp as integer
+    lino as integer
+    madera as integer
+    maderaelfica as integer
+    upgrade as integer
+    upgradename as string
+    upgradegrhindex as integer
 end type
 
 public nombres as boolean
@@ -450,15 +711,27 @@ public userestadisticas as testadisticasusu
 public userdescansar as boolean
 public tipf as string
 public primeravez as boolean
+public bshowtutorial as boolean
 public fpsflag as boolean
 public pausa as boolean
-public iscombate as boolean
 public userparalizado as boolean
 public usernavegando as boolean
 public userhogar as eciudad
 
+public userfuerza as byte
+public useragilidad as byte
+
+public userweaponeqpslot as byte
+public userarmoureqpslot as byte
+public userhelmeqpslot as byte
+public usershieldeqpslot as byte
+
 '<-------------------------nuevo-------------------------->
 public comerciando as boolean
+public mirandoforo as boolean
+public mirandoasignarskills as boolean
+public mirandoestadisticas as boolean
+public mirandoparty as boolean
 '<-------------------------nuevo-------------------------->
 
 public userclase as eclass
@@ -467,12 +740,13 @@ public userraza as eraza
 public useremail as string
 
 public const numciudades as byte = 5
-public const numskills as byte = 21
+public const numskills as byte = 20
 public const numatributos as byte = 5
-public const numclases as byte = 16
+public const numclases as byte = 12
 public const numrazas as byte = 5
 
 public userskills(1 to numskills) as byte
+public porcentajeskills(1 to numskills) as byte
 public skillsnames(1 to numskills) as string
 
 public useratributos(1 to numatributos) as byte
@@ -487,13 +761,15 @@ public skillpoints as integer
 public alocados as integer
 public flags() as integer
 public oscuridad as integer
-public logged as boolean
+'public logged as boolean ' www.gs-zone.org
 
 public usingskill as integer
 
 public md5hushyo as string * 16
 
 public pingtime as long
+
+public espartyleader as boolean
 
 public enum e_modo
     normal = 1
@@ -610,3 +886,87 @@ public type tindicefx
     offsetx as integer
     offsety as integer
 end type
+
+public esperandolevel as boolean
+
+' tipos de mensajes
+public enum eforummsgtype
+    iegeneral
+    iegeneral_sticky
+    iereal
+    iereal_sticky
+    iecaos
+    iecaos_sticky
+end enum
+
+' indica los privilegios para visualizar los diferentes foros
+public enum eforumvisibility
+    iegeneral_member = &h1
+    iereal_member = &h2
+    iecaos_member = &h4
+end enum
+
+' indica el tipo de foro
+public enum eforumtype
+    iegeneral
+    iereal
+    iecaos
+end enum
+
+' limite de posts
+public const max_sticky_post as byte = 5
+public const max_general_post as byte = 30
+public const sticky_forum_offset as byte = 50
+
+' estructura contenedora de mensajes
+public type tforo
+    stickytitle(1 to max_sticky_post) as string
+    stickypost(1 to max_sticky_post) as string
+    stickyauthor(1 to max_sticky_post) as string
+    generaltitle(1 to max_general_post) as string
+    generalpost(1 to max_general_post) as string
+    generalauthor(1 to max_general_post) as string
+end type
+
+' 1 foro general y 2 faccionarios
+public foros(0 to 2) as tforo
+
+' forum info handler
+public clsforos as new clsforum
+
+public iscapturepending as boolean
+public traveling as boolean
+
+public guildnames() as string
+public guildmembers() as string
+
+public const offset_head as integer = -34
+
+public enum esmtype
+    sresucitation
+    ssafemode
+    mspells
+    mwork
+end enum
+
+public const sm_cant as byte = 4
+public smstatus(sm_cant) as boolean
+
+'hardcoded grhs and items
+public const grh_ini_sm as integer = 4978
+
+public const oro_index as integer = 12
+public const oro_grh as integer = 511
+
+public const grh_half_star as integer = 5357
+public const grh_full_star as integer = 5358
+public const grh_glow_star as integer = 5359
+
+public const lh_grh as integer = 724
+public const lp_grh as integer = 725
+public const lo_grh as integer = 723
+
+public const madera_grh as integer = 550
+public const madera_elfica_grh as integer = 1999
+
+public picmouseicon as picture

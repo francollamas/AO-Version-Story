@@ -100,9 +100,9 @@ for i = 1 to maxusers
 next i
 
 if c = maxusers then
-    label1.caption = "no hay slots vacios!"
+    label1.caption = "�no hay slots vacios!"
 else
-    label1.caption = "hay " & maxusers - c & " slots vacios!"
+    label1.caption = "�hay " & maxusers - c & " slots vacios!"
 end if
 
 end sub

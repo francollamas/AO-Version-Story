@@ -62,32 +62,18 @@ private enum serverpacketid
     bankinit                ' initbanco
     usercommerceinit        ' initcomusu
     usercommerceend         ' fincomusuok
+    userofferconfirm
+    commercechat
     showblacksmithform      ' sfh
     showcarpenterform       ' sfc
-    npcswing                ' n1
-    npckilluser             ' 6
-    blockedwithshielduser   ' 7
-    blockedwithshieldother  ' 8
-    userswing               ' u1
-    updateneeded            ' reau
-    safemodeon              ' segon
-    safemodeoff             ' segoff
-    resuscitationsafeon
-    resuscitationsafeoff
-    nobilitylost            ' pn
-    cantusewhilemeditating  ' m!
     updatesta               ' ass
     updatemana              ' asm
     updatehp                ' ash
     updategold              ' asg
+    updatebankgold
     updateexp               ' ase
     changemap               ' cm
     posupdate               ' pu
-    npchituser              ' n2
-    userhitnpc              ' u2
-    userattackedswing       ' u3
-    userhittedbyuser        ' n4
-    userhitteduser          ' n5
     chatoverhead            ' ||
     consolemsg              ' || - beware!! its the same as above, but it was properly splitted
     guildchat               ' |+
@@ -144,6 +130,7 @@ private enum serverpacketid
     peaceproposalslist      ' peacepr
     characterinfo           ' chrinfo
     guildleaderinfo         ' leaderi
+    guildmemberinfo
     guilddetails            ' clandet
     showguildfundationform  ' showfun
     paralizeok              ' paradok
@@ -161,6 +148,16 @@ private enum serverpacketid
     showmotdeditionform     ' zmotd
     showgmpanelform         ' abpanel
     usernamelist            ' listusu
+    
+    showguildalign
+    showpartyform
+    updatestrenghtanddexterity
+    updatestrenght
+    updatedexterity
+    addslots
+    multimessage
+    stopworking
+    cancelofferitem
 end enum
 
 private enum clientpacketid
@@ -174,7 +171,6 @@ private enum clientpacketid
     requestpositionupdate   'rpu
     attack                  'at
     pickup                  'ag
-    combatmodetoggle        'tab        - should be hanlded just by the client!!
     safetoggle              '/seg & seg  (seg's behaviour has to be coded in the client)
     resuscitationsafetoggle
     requestguildleaderinfo  'glinfo
@@ -184,6 +180,8 @@ private enum clientpacketid
     requestministats        'fest
     commerceend             'fincom
     usercommerceend         'fincomusu
+    usercommerceconfirm
+    commercechat
     bankend                 'finban
     usercommerceok          'comusuok
     usercommercereject      'comusuno
@@ -239,6 +237,7 @@ private enum clientpacketid
     requestaccountstate     '/balance
     petstand                '/quieto
     petfollow               '/acompa�ar
+    releasepet              '/liberar
     trainlist               '/entrenar
     rest                    '/descansar
     meditate                '/meditar
@@ -277,142 +276,21 @@ private enum clientpacketid
     bankdepositgold         '/depositar
     denounce                '/denunciar
     guildfundate            '/fundarclan
+    guildfundation
     partykick               '/echarparty
     partysetleader          '/partylider
     partyacceptmember       '/acceptparty
     ping                    '/ping
     
-    'gm messages
-    gmmessage               '/gmsg
-    showname                '/showname
-    onlineroyalarmy         '/onlinereal
-    onlinechaoslegion       '/onlinecaos
-    gonearby                '/ircerca
-    comment                 '/rem
-    servertime              '/hora
-    where                   '/donde
-    creaturesinmap          '/nene
-    warpmetotarget          '/teleploc
-    warpchar                '/telep
-    silence                 '/silenciar
-    sosshowlist             '/show sos
-    sosremove               'sosdone
-    gotochar                '/ira
-    invisible               '/invisible
-    gmpanel                 '/panelgm
-    requestuserlist         'listusu
-    working                 '/trabajando
-    hiding                  '/ocultando
-    jail                    '/carcel
-    killnpc                 '/rmata
-    warnuser                '/advertencia
-    editchar                '/mod
-    requestcharinfo         '/info
-    requestcharstats        '/stat
-    requestchargold         '/bal
-    requestcharinventory    '/inv
-    requestcharbank         '/bov
-    requestcharskills       '/skills
-    revivechar              '/revivir
-    onlinegm                '/onlinegm
-    onlinemap               '/onlinemap
-    forgive                 '/perdon
-    kick                    '/echar
-    execute                 '/ejecutar
-    banchar                 '/ban
-    unbanchar               '/unban
-    npcfollow               '/seguir
-    summonchar              '/sum
-    spawnlistrequest        '/cc
-    spawncreature           'spa
-    resetnpcinventory       '/resetinv
-    cleanworld              '/limpiar
-    servermessage           '/rmsg
-    nicktoip                '/nick2ip
-    iptonick                '/ip2nick
-    guildonlinemembers      '/onclan
-    teleportcreate          '/ct
-    teleportdestroy         '/dt
-    raintoggle              '/lluvia
-    setchardescription      '/setdesc
-    forcemiditomap          '/forcemidimap
-    forcewavetomap          '/forcewavmap
-    royalarmymessage        '/realmsg
-    chaoslegionmessage      '/caosmsg
-    citizenmessage          '/ciumsg
-    criminalmessage         '/crimsg
-    talkasnpc               '/talkas
-    destroyallitemsinarea   '/massdest
-    acceptroyalcouncilmember '/aceptconse
-    acceptchaoscouncilmember '/aceptconsecaos
-    itemsinthefloor         '/piso
-    makedumb                '/estupido
-    makedumbnomore          '/noestupido
-    dumpiptables            '/dumpsecurity
-    councilkick             '/kickconse
-    settrigger              '/trigger
-    asktrigger              '/trigger with no arguments
-    bannediplist            '/baniplist
-    bannedipreload          '/banipreload
-    guildmemberlist         '/miembrosclan
-    guildban                '/banclan
-    banip                   '/banip
-    unbanip                 '/unbanip
-    createitem              '/ci
-    destroyitems            '/dest
-    chaoslegionkick         '/nocaos
-    royalarmykick           '/noreal
-    forcemidiall            '/forcemidi
-    forcewaveall            '/forcewav
-    removepunishment        '/borrarpena
-    tileblockedtoggle       '/bloq
-    killnpcnorespawn        '/mata
-    killallnearbynpcs       '/masskill
-    lastip                  '/lastip
-    changemotd              '/motdcambia
-    setmotd                 'zmotd
-    systemmessage           '/smsg
-    createnpc               '/acc
-    createnpcwithrespawn    '/racc
-    imperialarmour          '/ai1 - 4
-    chaosarmour             '/ac1 - 4
-    navigatetoggle          '/nave
-    serveropentouserstoggle '/habilitar
-    turnoffserver           '/apagar
-    turncriminal            '/conden
-    resetfactions           '/rajar
-    removecharfromguild     '/rajarclan
-    requestcharmail         '/lastemail
-    alterpassword           '/apass
-    altermail               '/aemail
-    altername               '/aname
-    togglecentinelactivated '/centinelaactivado
-    dobackup                '/dobackup
-    showguildmessages       '/showcmsg
-    savemap                 '/guardamapa
-    changemapinfopk         '/modmapinfo pk
-    changemapinfobackup     '/modmapinfo backup
-    changemapinforestricted '/modmapinfo restringir
-    changemapinfonomagic    '/modmapinfo magiasinefecto
-    changemapinfonoinvi     '/modmapinfo invisinefecto
-    changemapinfonoresu     '/modmapinfo resusinefecto
-    changemapinfoland       '/modmapinfo terreno
-    changemapinfozone       '/modmapinfo zona
-    savechars               '/grabar
-    cleansos                '/borrar sos
-    showserverform          '/show int
-    night                   '/noche
-    kickallchars            '/echartodospjs
-    reloadnpcs              '/reloadnpcs
-    reloadserverini         '/reloadsini
-    reloadspells            '/reloadhechizos
-    reloadobjects           '/reloadobj
-    restart                 '/reiniciar
-    resetautoupdate         '/autoupdate
-    chatcolor               '/chatcolor
-    ignored                 '/ignorado
-    checkslot               '/slot
-    setinivar               '/setinivar llave clave valor
+    requestpartyform
+    itemupgrade
+    gmcommands
+    initcrafting
+    home
+    showguildnews
+    sharenpc                '/compartirnpc
+    stopsharingnpc          '/nocompartirnpc
+    consulta
 end enum
 
 public enum fonttypenames
@@ -437,7 +315,6 @@ public enum fonttypenames
     fonttype_citizen
     fonttype_conse
     fonttype_dios
-    
 end enum
 
 public fonttypes(20) as tfont
@@ -587,6 +464,7 @@ public sub handleincomingdata()
 '
 '***************************************************
 on error resume next
+
     select case incomingdata.peekbyte()
         case serverpacketid.logged                  ' logged
             call handlelogged
@@ -605,6 +483,9 @@ on error resume next
         
         case serverpacketid.commerceend             ' fincomok
             call handlecommerceend
+            
+        case serverpacketid.commercechat
+            call handlecommercechat
         
         case serverpacketid.bankend                 ' finbanok
             call handlebankend
@@ -620,48 +501,15 @@ on error resume next
         
         case serverpacketid.usercommerceend         ' fincomusuok
             call handleusercommerceend
+            
+        case serverpacketid.userofferconfirm
+            call handleuserofferconfirm
         
         case serverpacketid.showblacksmithform      ' sfh
             call handleshowblacksmithform
         
         case serverpacketid.showcarpenterform       ' sfc
             call handleshowcarpenterform
-        
-        case serverpacketid.npcswing                ' n1
-            call handlenpcswing
-        
-        case serverpacketid.npckilluser             ' 6
-            call handlenpckilluser
-        
-        case serverpacketid.blockedwithshielduser   ' 7
-            call handleblockedwithshielduser
-        
-        case serverpacketid.blockedwithshieldother  ' 8
-            call handleblockedwithshieldother
-        
-        case serverpacketid.userswing               ' u1
-            call handleuserswing
-        
-        case serverpacketid.updateneeded            ' reau
-            call handleupdateneeded
-        
-        case serverpacketid.safemodeon              ' segon
-            call handlesafemodeon
-        
-        case serverpacketid.safemodeoff             ' segoff
-            call handlesafemodeoff
-            
-        case serverpacketid.resuscitationsafeoff
-            call handleresuscitationsafeoff
-        
-        case serverpacketid.resuscitationsafeon
-            call handleresuscitationsafeon
-        
-        case serverpacketid.nobilitylost            ' pn
-            call handlenobilitylost
-        
-        case serverpacketid.cantusewhilemeditating  ' m!
-            call handlecantusewhilemeditating
         
         case serverpacketid.updatesta               ' ass
             call handleupdatesta
@@ -674,7 +522,10 @@ on error resume next
         
         case serverpacketid.updategold              ' asg
             call handleupdategold
-        
+            
+        case serverpacketid.updatebankgold
+            call handleupdatebankgold
+
         case serverpacketid.updateexp               ' ase
             call handleupdateexp
         
@@ -683,21 +534,6 @@ on error resume next
         
         case serverpacketid.posupdate               ' pu
             call handleposupdate
-        
-        case serverpacketid.npchituser              ' n2
-            call handlenpchituser
-        
-        case serverpacketid.userhitnpc              ' u2
-            call handleuserhitnpc
-        
-        case serverpacketid.userattackedswing       ' u3
-            call handleuserattackedswing
-        
-        case serverpacketid.userhittedbyuser        ' n4
-            call handleuserhittedbyuser
-        
-        case serverpacketid.userhitteduser          ' n5
-            call handleuserhitteduser
         
         case serverpacketid.chatoverhead            ' ||
             call handlechatoverhead
@@ -896,7 +732,11 @@ on error resume next
         
         case serverpacketid.updatetagandstatus
             call handleupdatetagandstatus
-
+        
+        case serverpacketid.guildmemberinfo
+            call handleguildmemberinfo
+            
+        
         
         '*******************
         'gm messages
@@ -915,7 +755,34 @@ on error resume next
         
         case serverpacketid.usernamelist            ' listusu
             call handleusernamelist
+            
+        case serverpacketid.showguildalign
+            call handleshowguildalign
         
+        case serverpacketid.showpartyform
+            call handleshowpartyform
+        
+        case serverpacketid.updatestrenghtanddexterity
+            call handleupdatestrenghtanddexterity
+            
+        case serverpacketid.updatestrenght
+            call handleupdatestrenght
+            
+        case serverpacketid.updatedexterity
+            call handleupdatedexterity
+            
+        case serverpacketid.addslots
+            call handleaddslots
+
+        case serverpacketid.multimessage
+            call handlemultimessage
+        
+        case serverpacketid.stopworking
+            call handlestopworking
+            
+        case serverpacketid.cancelofferitem
+            call handlecancelofferitem
+            
 #if seguridadalkon then
         case else
             call handleincomingdataex
@@ -932,6 +799,198 @@ on error resume next
         call handleincomingdata
     end if
 end sub
+
+public sub handlemultimessage()
+
+    dim bodypart as byte
+    dim da�o as integer
+    
+with incomingdata
+    call .readbyte
+    
+    select case .readbyte
+        case emessages.dontseeanything
+            call addtorichtextbox(frmmain.rectxt, mensaje_no_ves_nada_interesante, 65, 190, 156, false, false, true)
+        
+        case emessages.npcswing
+            call addtorichtextbox(frmmain.rectxt, mensaje_criatura_falla_golpe, 255, 0, 0, true, false, true)
+        
+        case emessages.npckilluser
+            call addtorichtextbox(frmmain.rectxt, mensaje_criatura_matado, 255, 0, 0, true, false, true)
+        
+        case emessages.blockedwithshielduser
+            call addtorichtextbox(frmmain.rectxt, mensaje_rechazo_ataque_escudo, 255, 0, 0, true, false, true)
+        
+        case emessages.blockedwithshieldother
+            call addtorichtextbox(frmmain.rectxt, mensaje_usuario_rechazo_ataque_escudo, 255, 0, 0, true, false, true)
+        
+        case emessages.userswing
+            call addtorichtextbox(frmmain.rectxt, mensaje_fallado_golpe, 255, 0, 0, true, false, true)
+        
+        case emessages.safemodeon
+            call frmmain.controlsm(esmtype.ssafemode, true)
+        
+        case emessages.safemodeoff
+            call frmmain.controlsm(esmtype.ssafemode, false)
+        
+        case emessages.resuscitationsafeoff
+            call frmmain.controlsm(esmtype.sresucitation, false)
+         
+        case emessages.resuscitationsafeon
+            call frmmain.controlsm(esmtype.sresucitation, true)
+        
+        case emessages.nobilitylost
+            call addtorichtextbox(frmmain.rectxt, mensaje_pierde_nobleza, 255, 0, 0, false, false, true)
+        
+        case emessages.cantusewhilemeditating
+            call addtorichtextbox(frmmain.rectxt, mensaje_usar_meditando, 255, 0, 0, false, false, true)
+        
+        case emessages.npchituser
+            select case incomingdata.readbyte()
+                case bcabeza
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
+                
+                case bbrazoizquierdo
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
+                
+                case bbrazoderecho
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
+                
+                case bpiernaizquierda
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
+                
+                case bpiernaderecha
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
+                
+                case btorso
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & cstr(incomingdata.readinteger() & "!!"), 255, 0, 0, true, false, true)
+            end select
+        
+        case emessages.userhitnpc
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_criatura_1 & cstr(incomingdata.readlong()) & mensaje_2, 255, 0, 0, true, false, true)
+        
+        case emessages.userattackedswing
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & charlist(incomingdata.readinteger()).nombre & mensaje_ataque_fallo, 255, 0, 0, true, false, true)
+        
+        case emessages.userhittedbyuser
+            dim attackername as string
+            
+            attackername = getrawname(charlist(incomingdata.readinteger()).nombre)
+            bodypart = incomingdata.readbyte()
+            da�o = incomingdata.readinteger()
+            
+            select case bodypart
+                case bcabeza
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_cabeza & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bbrazoizquierdo
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_brazo_izq & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bbrazoderecho
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_brazo_der & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bpiernaizquierda
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_pierna_izq & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bpiernaderecha
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_pierna_der & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case btorso
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & attackername & mensaje_recive_impacto_torso & da�o & mensaje_2, 255, 0, 0, true, false, true)
+            end select
+        
+        case emessages.userhitteduser
+
+            dim victimname as string
+            
+            victimname = getrawname(charlist(incomingdata.readinteger()).nombre)
+            bodypart = incomingdata.readbyte()
+            da�o = incomingdata.readinteger()
+            
+            select case bodypart
+                case bcabeza
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_cabeza & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bbrazoizquierdo
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_brazo_izq & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bbrazoderecho
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_brazo_der & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bpiernaizquierda
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_pierna_izq & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case bpiernaderecha
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_pierna_der & da�o & mensaje_2, 255, 0, 0, true, false, true)
+                
+                case btorso
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victimname & mensaje_produce_impacto_torso & da�o & mensaje_2, 255, 0, 0, true, false, true)
+            end select
+        
+        case emessages.workrequesttarget
+            usingskill = incomingdata.readbyte()
+            
+            frmmain.mousepointer = 2
+            
+            select case usingskill
+                case magia
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_magia, 100, 100, 120, 0, 0)
+                
+                case pesca
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_pesca, 100, 100, 120, 0, 0)
+                
+                case robar
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_robar, 100, 100, 120, 0, 0)
+                
+                case talar
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_talar, 100, 100, 120, 0, 0)
+                
+                case mineria
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_mineria, 100, 100, 120, 0, 0)
+                
+                case fundirmetal
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_fundirmetal, 100, 100, 120, 0, 0)
+                
+                case proyectiles
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_proyectiles, 100, 100, 120, 0, 0)
+            end select
+
+        case emessages.havekilleduser
+            dim level as long
+            call showconsolemsg(mensaje_has_matado_a & charlist(.readinteger).nombre & mensaje_22, 255, 0, 0, true, false)
+            level = .readlong
+            call showconsolemsg(mensaje_has_ganado_expe_1 & level & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+            if clientsetup.bkill and clientsetup.bactive then
+                if level / 2 > clientsetup.bymurderedlevel then
+                    iscapturepending = true
+                end if
+            end if
+        case emessages.userkill
+            call showconsolemsg(charlist(.readinteger).nombre & mensaje_te_ha_matado, 255, 0, 0, true, false)
+            if clientsetup.bdie and clientsetup.bactive then _
+                iscapturepending = true
+        case emessages.earnexp
+            call showconsolemsg(mensaje_has_ganado_expe_1 & .readlong & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+        case emessages.gohome
+            dim distance as byte
+            dim hogar as string
+            dim tiempo as integer
+            distance = .readbyte
+            tiempo = .readinteger
+            hogar = .readasciistring
+            call showconsolemsg("est�s a " & distance & " mapas de distancia de " & hogar & ", este viaje durar� " & tiempo & " segundos.", 255, 0, 0, true)
+            traveling = true
+        case emessages.finishhome
+            call showconsolemsg(mensaje_hogar, 255, 255, 255)
+            traveling = false
+        case emessages.cancelgohome
+            call showconsolemsg(mensaje_hogar_cancel, 255, 0, 0, true)
+            traveling = false
+    end select
+end with
+end sub
+
+
 
 ''
 ' handles the logged message.
@@ -951,6 +1010,8 @@ private sub handlelogged()
     
     'set connected state
     call setconnected
+    
+    if bshowtutorial then frmtutorial.show
     
     'show tip
     if tipf = "1" and primeravez then
@@ -1035,7 +1096,6 @@ private sub handledisconnect()
     
     'hide main form
     frmmain.visible = false
-    frmmain.label1.visible = false
     
     'stop audio
     call audio.stopwave
@@ -1045,7 +1105,6 @@ private sub handledisconnect()
     frmconnect.visible = true
     
     'reset global vars
-    iscombate = false
     userdescansar = false
     userparalizado = false
     pausa = false
@@ -1055,7 +1114,9 @@ private sub handledisconnect()
     brain = false
     bfogata = false
     skillpoints = 0
-    
+    comerciando = false
+    'new
+    traveling = false
     'delete all kind of dialogs
     call cleandialogs
     
@@ -1073,9 +1134,15 @@ private sub handledisconnect()
         end if
     next
     
+    for i = 1 to max_inventory_slots
+        call inventario.setitem(i, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
+    next i
+    
 #if seguridadalkon then
     call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
 #end if
+
+    call audio.playmidi("2.mid")
 end sub
 
 ''
@@ -1089,10 +1156,6 @@ private sub handlecommerceend()
 '***************************************************
     'remove packet id
     call incomingdata.readbyte
-    
-    'clear item's list
-    frmcomerciar.list1(0).clear
-    frmcomerciar.list1(1).clear
     
     'reset vars
     comerciando = false
@@ -1113,8 +1176,8 @@ private sub handlebankend()
     'remove packet id
     call incomingdata.readbyte
     
-    frmbancoobj.list1(0).clear
-    frmbancoobj.list1(1).clear
+    set invbanco(0) = nothing
+    set invbanco(1) = nothing
     
     unload frmbancoobj
     comerciando = false
@@ -1134,12 +1197,31 @@ private sub handlecommerceinit()
     'remove packet id
     call incomingdata.readbyte
     
-    'fill our inventory list
+    ' initialize commerce inventories
+    call invcomusu.initialize(directdraw, frmcomerciar.picinvuser, inventario.maxobjs)
+    call invcomnpc.initialize(directdraw, frmcomerciar.picinvnpc, max_npc_inventory_slots)
+
+    'fill user inventory
     for i = 1 to max_inventory_slots
         if inventario.objindex(i) <> 0 then
-            frmcomerciar.list1(1).additem inventario.itemname(i)
-        else
-            frmcomerciar.list1(1).additem ""
+            with inventario
+                call invcomusu.setitem(i, .objindex(i), _
+                .amount(i), .equipped(i), .grhindex(i), _
+                .objtype(i), .maxhit(i), .minhit(i), .maxdef(i), .mindef(i), _
+                .valor(i), .itemname(i))
+            end with
+        end if
+    next i
+    
+    ' fill npc inventory
+    for i = 1 to 50
+        if npcinventory(i).objindex <> 0 then
+            with npcinventory(i)
+                call invcomnpc.setitem(i, .objindex, _
+                .amount, 0, .grhindex, _
+                .objtype, .maxhit, .minhit, .maxdef, .mindef, _
+                .valor, .name)
+            end with
         end if
     next i
     
@@ -1158,34 +1240,38 @@ private sub handlebankinit()
 '
 '***************************************************
     dim i as long
+    dim bankgold as long
     
     'remove packet id
     call incomingdata.readbyte
     
-    call frmbancoobj.list1(1).clear
+        bankgold = incomingdata.readlong
+    call invbanco(0).initialize(directdraw, frmbancoobj.picbancoinv, max_bancoinventory_slots)
+    call invbanco(1).initialize(directdraw, frmbancoobj.picinv, inventario.maxobjs)
     
-    'fill the inventory list
-    for i = 1 to max_inventory_slots
-        if inventario.objindex(i) <> 0 then
-            frmbancoobj.list1(1).additem inventario.itemname(i)
-        else
-            frmbancoobj.list1(1).additem ""
-        end if
+    for i = 1 to inventario.maxobjs
+        with inventario
+            call invbanco(1).setitem(i, .objindex(i), _
+                .amount(i), .equipped(i), .grhindex(i), _
+                .objtype(i), .maxhit(i), .minhit(i), .maxdef(i), .mindef(i), _
+                .valor(i), .itemname(i))
+        end with
     next i
     
-    call frmbancoobj.list1(0).clear
-    
-    'fill the bank list
     for i = 1 to max_bancoinventory_slots
-        if userbancoinventory(i).objindex <> 0 then
-            frmbancoobj.list1(0).additem userbancoinventory(i).name
-        else
-            frmbancoobj.list1(0).additem ""
-        end if
+        with userbancoinventory(i)
+            call invbanco(0).setitem(i, .objindex, _
+                .amount, .equipped, .grhindex, _
+                .objtype, .maxhit, .minhit, .maxdef, .mindef, _
+                .valor, .name)
+        end with
     next i
     
     'set state and show form
     comerciando = true
+    
+    frmbancoobj.lblusergld.caption = bankgold
+    
     frmbancoobj.show , frmmain
 end sub
 
@@ -1202,25 +1288,37 @@ private sub handleusercommerceinit()
     
     'remove packet id
     call incomingdata.readbyte
+    tradingusername = incomingdata.readasciistring
     
-    'clears lists if necessary
-    if frmcomerciarusu.list1.listcount > 0 then frmcomerciarusu.list1.clear
-    if frmcomerciarusu.list2.listcount > 0 then frmcomerciarusu.list2.clear
-    
-    'fill inventory list
+    ' initialize commerce inventories
+    call invcomusu.initialize(directdraw, frmcomerciarusu.picinvcomercio, inventario.maxobjs)
+    call invoffercomusu(0).initialize(directdraw, frmcomerciarusu.picinvofertaprop, inv_offer_slots)
+    call invoffercomusu(1).initialize(directdraw, frmcomerciarusu.picinvofertaotro, inv_offer_slots)
+    call invorocomusu(0).initialize(directdraw, frmcomerciarusu.picinvoroprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
+    call invorocomusu(1).initialize(directdraw, frmcomerciarusu.picinvoroofertaprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
+    call invorocomusu(2).initialize(directdraw, frmcomerciarusu.picinvoroofertaotro, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
+
+    'fill user inventory
     for i = 1 to max_inventory_slots
         if inventario.objindex(i) <> 0 then
-            frmcomerciarusu.list1.additem inventario.itemname(i)
-            frmcomerciarusu.list1.itemdata(frmcomerciarusu.list1.newindex) = inventario.amount(i)
-        else
-            frmcomerciarusu.list1.additem ""
-            frmcomerciarusu.list1.itemdata(frmcomerciarusu.list1.newindex) = 0
+            with inventario
+                call invcomusu.setitem(i, .objindex(i), _
+                .amount(i), .equipped(i), .grhindex(i), _
+                .objtype(i), .maxhit(i), .minhit(i), .maxdef(i), .mindef(i), _
+                .valor(i), .itemname(i))
+            end with
         end if
     next i
-    
+
+    ' inventarios de oro
+    call invorocomusu(0).setitem(1, oro_index, usergld, 0, oro_grh, 0, 0, 0, 0, 0, 0, "oro")
+    call invorocomusu(1).setitem(1, oro_index, 0, 0, oro_grh, 0, 0, 0, 0, 0, 0, "oro")
+    call invorocomusu(2).setitem(1, oro_index, 0, 0, oro_grh, 0, 0, 0, 0, 0, 0, "oro")
+
+
     'set state and show form
     comerciando = true
-    call frmcomerciarusu.show(vbmodal, frmmain)
+    call frmcomerciarusu.show(vbmodeless, frmmain)
 end sub
 
 ''
@@ -1235,13 +1333,36 @@ private sub handleusercommerceend()
     'remove packet id
     call incomingdata.readbyte
     
-    'clear the lists
-    frmcomerciarusu.list1.clear
-    frmcomerciarusu.list2.clear
+    set invcomusu = nothing
+    set invorocomusu(0) = nothing
+    set invorocomusu(1) = nothing
+    set invorocomusu(2) = nothing
+    set invoffercomusu(0) = nothing
+    set invoffercomusu(1) = nothing
     
     'destroy the form and reset the state
     unload frmcomerciarusu
     comerciando = false
+end sub
+
+''
+' handles the userofferconfirm message.
+private sub handleuserofferconfirm()
+'***************************************************
+'author: zama
+'last modification: 14/12/2009
+'
+'***************************************************
+    'remove packet id
+    call incomingdata.readbyte
+    
+    with frmcomerciarusu
+        ' now he can accept the offer or reject it
+        .habilitaraceptarrechazar true
+        
+        .printcommercemsg tradingusername & " ha confirmado su oferta!", fonttypenames.fonttype_conse
+    end with
+    
 end sub
 
 ''
@@ -1294,7 +1415,7 @@ private sub handlenpcswing()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_criatura_falla_golpe, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_criatura_falla_golpe, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1309,7 +1430,7 @@ private sub handlenpckilluser()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_criatura_matado, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_criatura_matado, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1324,7 +1445,7 @@ private sub handleblockedwithshielduser()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_rechazo_ataque_escudo, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_rechazo_ataque_escudo, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1339,7 +1460,7 @@ private sub handleblockedwithshieldother()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_usuario_rechazo_ataque_escudo, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_usuario_rechazo_ataque_escudo, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1354,22 +1475,7 @@ private sub handleuserswing()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_fallado_golpe, 255, 0, 0, true, false, false)
-end sub
-
-''
-' handles the updateneeded message.
-
-private sub handleupdateneeded()
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
-'***************************************************
-    'remove packet id
-    call incomingdata.readbyte
-    
-    call frmmain.dibujarsatelite
+    call addtorichtextbox(frmmain.rectxt, mensaje_fallado_golpe, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1384,8 +1490,7 @@ private sub handlesafemodeon()
     'remove packet id
     call incomingdata.readbyte
     
-    call frmmain.dibujarseguro
-    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_activado, 0, 255, 0, true, false, false)
+    call frmmain.controlsm(esmtype.ssafemode, true)
 end sub
 
 ''
@@ -1400,8 +1505,7 @@ private sub handlesafemodeoff()
     'remove packet id
     call incomingdata.readbyte
     
-    call frmmain.desdibujarseguro
-    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_desactivado, 255, 0, 0, true, false, false)
+    call frmmain.controlsm(esmtype.ssafemode, false)
 end sub
 
 ''
@@ -1415,8 +1519,7 @@ private sub handleresuscitationsafeoff()
     'remove packet id
     call incomingdata.readbyte
     
-    call frmmain.controlseguroresu(false)
-    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_off, 255, 0, 0, true, false, false)
+    call frmmain.controlsm(esmtype.sresucitation, false)
 end sub
 
 ''
@@ -1430,8 +1533,7 @@ private sub handleresuscitationsafeon()
     'remove packet id
     call incomingdata.readbyte
     
-    call frmmain.controlseguroresu(true)
-    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_on, 0, 255, 0, true, false, false)
+    call frmmain.controlsm(esmtype.sresucitation, true)
 end sub
 
 ''
@@ -1446,7 +1548,7 @@ private sub handlenobilitylost()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_pierde_nobleza, 255, 0, 0, false, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_pierde_nobleza, 255, 0, 0, false, false, true)
 end sub
 
 ''
@@ -1461,7 +1563,7 @@ private sub handlecantusewhilemeditating()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_usar_meditando, 255, 0, 0, false, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_usar_meditando, 255, 0, 0, false, false, true)
 end sub
 
 ''
@@ -1484,7 +1586,18 @@ private sub handleupdatesta()
     
     'get data and update form
     userminsta = incomingdata.readinteger()
-    frmmain.stashp.width = (((userminsta / 100) / (usermaxsta / 100)) * 94)
+    
+    frmmain.lblenergia = userminsta & "/" & usermaxsta
+    
+    dim bwidth as byte
+    
+    bwidth = (((userminsta / 100) / (usermaxsta / 100)) * 75)
+    
+    frmmain.shpenergia.width = 75 - bwidth
+    frmmain.shpenergia.left = 584 + (75 - frmmain.shpenergia.width)
+    
+    frmmain.shpenergia.visible = (bwidth <> 75)
+    
 end sub
 
 ''
@@ -1508,11 +1621,17 @@ private sub handleupdatemana()
     'get data and update form
     userminman = incomingdata.readinteger()
     
-    if usermaxman > 0 then
-        frmmain.manshp.width = (((userminman + 1 / 100) / (usermaxman + 1 / 100)) * 94)
-    else
-        frmmain.manshp.width = 0
-    end if
+    frmmain.lblmana = userminman & "/" & usermaxman
+    
+    dim bwidth as byte
+    
+    if usermaxman > 0 then _
+        bwidth = (((userminman / 100) / (usermaxman / 100)) * 75)
+        
+    frmmain.shpmana.width = 75 - bwidth
+    frmmain.shpmana.left = 584 + (75 - frmmain.shpmana.width)
+    
+    frmmain.shpmana.visible = (bwidth <> 75)
 end sub
 
 ''
@@ -1535,13 +1654,23 @@ private sub handleupdatehp()
     
     'get data and update form
     userminhp = incomingdata.readinteger()
-    frmmain.hpshp.width = (((userminhp / 100) / (usermaxhp / 100)) * 94)
+    
+    frmmain.lblvida = userminhp & "/" & usermaxhp
+    
+    dim bwidth as byte
+    
+    bwidth = (((userminhp / 100) / (usermaxhp / 100)) * 75)
+    
+    frmmain.shpvida.width = 75 - bwidth
+    frmmain.shpvida.left = 584 + (75 - frmmain.shpvida.width)
+    
+    frmmain.shpvida.visible = (bwidth <> 75)
     
     'is the user alive??
     if userminhp = 0 then
         userestado = 1
-        if frmmain.trainingmacro then frmmain.desactivarmacrohechizos
-        if frmmain.macrotrabajo then frmmain.desactivarmacrotrabajo
+        if frmmain.trainingmacro then call frmmain.desactivarmacrohechizos
+        if frmmain.macrotrabajo then call frmmain.desactivarmacrotrabajo
     else
         userestado = 0
     end if
@@ -1581,6 +1710,28 @@ private sub handleupdategold()
 end sub
 
 ''
+' handles the updatebankgold message.
+
+private sub handleupdatebankgold()
+'***************************************************
+'autor: zama
+'last modification: 14/12/2009
+'
+'***************************************************
+    'check packet is complete
+    if incomingdata.length < 5 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    
+    frmbancoobj.lblusergld.caption = incomingdata.readlong
+    
+end sub
+
+''
 ' handles the updateexp message.
 
 private sub handleupdateexp()
@@ -1600,13 +1751,82 @@ private sub handleupdateexp()
     
     'get data and update form
     userexp = incomingdata.readlong()
-    frmmain.exp.caption = "exp: " & userexp & "/" & userpasarnivel
+    frmmain.lblexp.caption = "exp: " & userexp & "/" & userpasarnivel
     frmmain.lblporclvl.caption = "[" & round(cdbl(userexp) * cdbl(100) / cdbl(userpasarnivel), 2) & "%]"
 end sub
 
 ''
-' handles the changemap message.
+' handles the updatestrenghtanddexterity message.
 
+private sub handleupdatestrenghtanddexterity()
+'***************************************************
+'author: budi
+'last modification: 11/26/09
+'***************************************************
+    'check packet is complete
+    if incomingdata.length < 3 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    
+    'get data and update form
+    userfuerza = incomingdata.readbyte
+    useragilidad = incomingdata.readbyte
+    frmmain.lblstrg.caption = userfuerza
+    frmmain.lbldext.caption = useragilidad
+    frmmain.lblstrg.forecolor = getstrenghtcolor()
+    frmmain.lbldext.forecolor = getdexteritycolor()
+end sub
+
+' handles the updatestrenghtanddexterity message.
+
+private sub handleupdatestrenght()
+'***************************************************
+'author: budi
+'last modification: 11/26/09
+'***************************************************
+    'check packet is complete
+    if incomingdata.length < 2 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    
+    'get data and update form
+    userfuerza = incomingdata.readbyte
+    frmmain.lblstrg.caption = userfuerza
+    frmmain.lblstrg.forecolor = getstrenghtcolor()
+end sub
+
+' handles the updatestrenghtanddexterity message.
+
+private sub handleupdatedexterity()
+'***************************************************
+'author: budi
+'last modification: 11/26/09
+'***************************************************
+    'check packet is complete
+    if incomingdata.length < 2 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    
+    'get data and update form
+    useragilidad = incomingdata.readbyte
+    frmmain.lbldext.caption = useragilidad
+    frmmain.lbldext.forecolor = getdexteritycolor()
+end sub
+
+''
+' handles the changemap message.
 private sub handlechangemap()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
@@ -1684,7 +1904,7 @@ private sub handleposupdate()
             mapdata(userpos.x, userpos.y).trigger = 4, true, false)
                 
     'update pos label
-    frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+    frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
 end sub
 
 ''
@@ -1706,17 +1926,17 @@ private sub handlenpchituser()
     
     select case incomingdata.readbyte()
         case bcabeza
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
         case bbrazoizquierdo
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
         case bbrazoderecho
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
         case bpiernaizquierda
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
         case bpiernaderecha
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, true)
         case btorso
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & cstr(incomingdata.readinteger() & "!!"), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & cstr(incomingdata.readinteger() & "!!"), 255, 0, 0, true, false, true)
     end select
 end sub
 
@@ -1737,7 +1957,7 @@ private sub handleuserhitnpc()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_criatura_1 & cstr(incomingdata.readlong()) & mensaje_2, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_criatura_1 & cstr(incomingdata.readlong()) & mensaje_2, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1757,7 +1977,7 @@ private sub handleuserattackedswing()
     'remove packet id
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, mensaje_1 & charlist(incomingdata.readinteger()).nombre & mensaje_ataque_fallo, 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_1 & charlist(incomingdata.readinteger()).nombre & mensaje_ataque_fallo, 255, 0, 0, true, false, true)
 end sub
 
 ''
@@ -1783,17 +2003,17 @@ private sub handleuserhittedbyuser()
     
     select case incomingdata.readbyte
         case bcabeza
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_cabeza & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_cabeza & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bbrazoizquierdo
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_brazo_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_brazo_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bbrazoderecho
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_brazo_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_brazo_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bpiernaizquierda
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_pierna_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_pierna_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bpiernaderecha
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_pierna_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_pierna_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case btorso
-            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_torso & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & attacker & mensaje_recive_impacto_torso & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
     end select
 end sub
 
@@ -1820,17 +2040,17 @@ private sub handleuserhitteduser()
     
     select case incomingdata.readbyte
         case bcabeza
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_cabeza & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_cabeza & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bbrazoizquierdo
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_brazo_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_brazo_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bbrazoderecho
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_brazo_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_brazo_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bpiernaizquierda
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_pierna_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_pierna_izq & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case bpiernaderecha
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_pierna_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_pierna_der & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
         case btorso
-            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_torso & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & victim & mensaje_produce_impacto_torso & cstr(incomingdata.readinteger() & mensaje_2), 255, 0, 0, true, false, true)
     end select
 end sub
 
@@ -1871,7 +2091,7 @@ on error goto errhandler
     
     'only add the chat if the character exists (a characterremove may have been sent to the pc / npc area before the buffer was flushed)
     if charlist(charindex).active then _
-        call dialogos.createdialog(chat, charindex, rgb(r, g, b))
+        call dialogos.createdialog(trim$(chat), charindex, rgb(r, g, b))
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -1919,7 +2139,7 @@ on error goto errhandler
     
     chat = buffer.readasciistring()
     fontindex = buffer.readbyte()
-    
+
     if instr(1, chat, "~") then
         str = readfield(2, chat, 126)
             if val(str) > 255 then
@@ -1947,8 +2167,13 @@ on error goto errhandler
         with fonttypes(fontindex)
             call addtorichtextbox(frmmain.rectxt, chat, .red, .green, .blue, .bold, .italic)
         end with
+        
+        ' para no perder el foco cuando chatea por party
+        if fontindex = fonttypenames.fonttype_party then
+            if mirandoparty then frmparty.sendtxt.setfocus
+        end if
     end if
-    
+'    call checktext(chat)
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
     
@@ -2028,6 +2253,82 @@ on error goto errhandler
         end if
     else
         call dialogosclanes.pushbacktext(readfield(1, chat, 126))
+    end if
+    
+    'if we got here then packet is complete, copy data back to original queue
+    call incomingdata.copybuffer(buffer)
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the consolemessage message.
+
+private sub handlecommercechat()
+'***************************************************
+'author: zama
+'last modification: 03/12/2009
+'
+'***************************************************
+    if incomingdata.length < 4 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as new clsbytequeue
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+    
+    dim chat as string
+    dim fontindex as integer
+    dim str as string
+    dim r as byte
+    dim g as byte
+    dim b as byte
+    
+    chat = buffer.readasciistring()
+    fontindex = buffer.readbyte()
+    
+    if instr(1, chat, "~") then
+        str = readfield(2, chat, 126)
+            if val(str) > 255 then
+                r = 255
+            else
+                r = val(str)
+            end if
+            
+            str = readfield(3, chat, 126)
+            if val(str) > 255 then
+                g = 255
+            else
+                g = val(str)
+            end if
+            
+            str = readfield(4, chat, 126)
+            if val(str) > 255 then
+                b = 255
+            else
+                b = val(str)
+            end if
+            
+        call addtorichtextbox(frmcomerciarusu.commerceconsole, left$(chat, instr(1, chat, "~") - 1), r, g, b, val(readfield(5, chat, 126)) <> 0, val(readfield(6, chat, 126)) <> 0)
+    else
+        with fonttypes(fontindex)
+            call addtorichtextbox(frmcomerciarusu.commerceconsole, chat, .red, .green, .blue, .bold, .italic)
+        end with
     end if
     
     'if we got here then packet is complete, copy data back to original queue
@@ -2130,7 +2431,7 @@ private sub handleusercharindexinserver()
             mapdata(userpos.x, userpos.y).trigger = 2 or _
             mapdata(userpos.x, userpos.y).trigger = 4, true, false)
 
-    frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+    frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
 end sub
 
 ''
@@ -2165,6 +2466,7 @@ on error goto errhandler
     dim shield as integer
     dim helmet as integer
     dim privs as integer
+    dim nickcolor as byte
     
     charindex = buffer.readinteger()
     body = buffer.readinteger()
@@ -2181,7 +2483,15 @@ on error goto errhandler
         call setcharacterfx(charindex, buffer.readinteger(), buffer.readinteger())
         
         .nombre = buffer.readasciistring()
-        .criminal = buffer.readbyte()
+        nickcolor = buffer.readbyte()
+        
+        if (nickcolor and enickcolor.iecriminal) <> 0 then
+            .criminal = 1
+        else
+            .criminal = 0
+        end if
+        
+        .atacable = (nickcolor and enickcolor.ieatacable) <> 0
         
         privs = buffer.readbyte()
         
@@ -2380,7 +2690,7 @@ private sub handlecharacterchange()
         end if
         
         .muerto = (headindex = casper_head)
-        
+
         .heading = incomingdata.readbyte()
         
         tempint = incomingdata.readinteger()
@@ -2561,21 +2871,22 @@ on error goto errhandler
     'remove packet id
     call buffer.readbyte
     
-    'clear guild's list
-    frmguildadm.guildslist.clear
-    
-    dim guilds() as string
-    guilds = split(buffer.readasciistring(), separator)
-    
-    dim i as long
-    for i = 0 to ubound(guilds())
-        call frmguildadm.guildslist.additem(guilds(i))
-    next i
-    
-    'if we got here then packet is complete, copy data back to original queue
-    call incomingdata.copybuffer(buffer)
-    
-    frmguildadm.show vbmodeless, frmmain
+    with frmguildadm
+        'clear guild's list
+        .guildslist.clear
+        
+        guildnames = split(buffer.readasciistring(), separator)
+        
+        dim i as long
+        for i = 0 to ubound(guildnames())
+            call .guildslist.additem(guildnames(i))
+        next i
+        
+        'if we got here then packet is complete, copy data back to original queue
+        call incomingdata.copybuffer(buffer)
+        
+        .show vbmodeless, frmmain
+    end with
     
 errhandler:
     dim error as long
@@ -2720,7 +3031,7 @@ private sub handleupdateuserstats()
     userpasarnivel = incomingdata.readlong()
     userexp = incomingdata.readlong()
     
-    frmmain.exp.caption = "exp: " & userexp & "/" & userpasarnivel
+    frmmain.lblexp.caption = "exp: " & userexp & "/" & userpasarnivel
     
     if userpasarnivel > 0 then
         frmmain.lblporclvl.caption = "[" & round(cdbl(userexp) * cdbl(100) / cdbl(userpasarnivel), 2) & "%]"
@@ -2728,23 +3039,46 @@ private sub handleupdateuserstats()
         frmmain.lblporclvl.caption = "[n/a]"
     end if
     
-    frmmain.hpshp.width = (((userminhp / 100) / (usermaxhp / 100)) * 94)
-    
-    if usermaxman > 0 then
-        frmmain.manshp.width = (((userminman + 1 / 100) / (usermaxman + 1 / 100)) * 94)
-    else
-        frmmain.manshp.width = 0
-    end if
-    
-    frmmain.stashp.width = (((userminsta / 100) / (usermaxsta / 100)) * 94)
-
     frmmain.gldlbl.caption = usergld
-    frmmain.lvllbl.caption = userlvl
+    frmmain.lbllvl.caption = userlvl
+    
+    'stats
+    frmmain.lblmana = userminman & "/" & usermaxman
+    frmmain.lblvida = userminhp & "/" & usermaxhp
+    frmmain.lblenergia = userminsta & "/" & usermaxsta
+    
+    dim bwidth as byte
+    
+    '***************************
+    if usermaxman > 0 then _
+        bwidth = (((userminman / 100) / (usermaxman / 100)) * 75)
+        
+    frmmain.shpmana.width = 75 - bwidth
+    frmmain.shpmana.left = 584 + (75 - frmmain.shpmana.width)
+    
+    frmmain.shpmana.visible = (bwidth <> 75)
+    '***************************
+    
+    bwidth = (((userminhp / 100) / (usermaxhp / 100)) * 75)
+    
+    frmmain.shpvida.width = 75 - bwidth
+    frmmain.shpvida.left = 584 + (75 - frmmain.shpvida.width)
+    
+    frmmain.shpvida.visible = (bwidth <> 75)
+    '***************************
+    
+    bwidth = (((userminsta / 100) / (usermaxsta / 100)) * 75)
+    
+    frmmain.shpenergia.width = 75 - bwidth
+    frmmain.shpenergia.left = 584 + (75 - frmmain.shpenergia.width)
+    
+    frmmain.shpenergia.visible = (bwidth <> 75)
+    '***************************
     
     if userminhp = 0 then
         userestado = 1
-        if frmmain.trainingmacro then frmmain.desactivarmacrohechizos
-        if frmmain.macrotrabajo then frmmain.desactivarmacrotrabajo
+        if frmmain.trainingmacro then call frmmain.desactivarmacrohechizos
+        if frmmain.macrotrabajo then call frmmain.desactivarmacrotrabajo
     else
         userestado = 0
     end if
@@ -2828,7 +3162,8 @@ on error goto errhandler
     dim objtype as byte
     dim maxhit as integer
     dim minhit as integer
-    dim defense as integer
+    dim maxdef as integer
+    dim mindef as integer
     dim value as single
     
     slot = buffer.readbyte()
@@ -2840,11 +3175,44 @@ on error goto errhandler
     objtype = buffer.readbyte()
     maxhit = buffer.readinteger()
     minhit = buffer.readinteger()
-    defense = buffer.readinteger()
+    maxdef = buffer.readinteger()
+    mindef = buffer.readinteger
     value = buffer.readsingle()
     
-    call inventario.setitem(slot, objindex, amount, equipped, grhindex, objtype, maxhit, minhit, defense, value, name)
+    if equipped then
+        select case objtype
+            case eobjtype.otweapon
+                frmmain.lblweapon = minhit & "/" & maxhit
+                userweaponeqpslot = slot
+            case eobjtype.otarmadura
+                frmmain.lblarmor = mindef & "/" & maxdef
+                userarmoureqpslot = slot
+            case eobjtype.otescudo
+                frmmain.lblshielder = mindef & "/" & maxdef
+                userhelmeqpslot = slot
+            case eobjtype.otcasco
+                frmmain.lblhelm = mindef & "/" & maxdef
+                usershieldeqpslot = slot
+        end select
+    else
+        select case slot
+            case userweaponeqpslot
+                frmmain.lblweapon = "0/0"
+                userweaponeqpslot = 0
+            case userarmoureqpslot
+                frmmain.lblarmor = "0/0"
+                userarmoureqpslot = 0
+            case userhelmeqpslot
+                frmmain.lblshielder = "0/0"
+                userhelmeqpslot = 0
+            case usershieldeqpslot
+                frmmain.lblhelm = "0/0"
+                usershieldeqpslot = 0
+        end select
+    end if
     
+    call inventario.setitem(slot, objindex, amount, equipped, grhindex, objtype, maxhit, minhit, maxdef, mindef, value, name)
+
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
     
@@ -2858,6 +3226,73 @@ on error goto 0
 
     if error <> 0 then _
         err.raise error
+end sub
+
+' handles the addslots message.
+private sub handleaddslots()
+'***************************************************
+'author: budi
+'last modification: 12/01/09
+'
+'***************************************************
+
+    call incomingdata.readbyte
+    
+    maxinventoryslots = incomingdata.readbyte
+end sub
+
+' handles the stopworking message.
+private sub handlestopworking()
+'***************************************************
+'author: budi
+'last modification: 12/01/09
+'
+'***************************************************
+
+    call incomingdata.readbyte
+    
+    with fonttypes(fonttypenames.fonttype_info)
+        call showconsolemsg("�has terminado de trabajar!", .red, .green, .blue, .bold, .italic)
+    end with
+    
+    if frmmain.macrotrabajo.enabled then call frmmain.desactivarmacrotrabajo
+end sub
+
+' handles the cancelofferitem message.
+
+private sub handlecancelofferitem()
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 05/03/10
+'
+'***************************************************
+    dim slot as byte
+    dim amount as long
+    
+    call incomingdata.readbyte
+    
+    slot = incomingdata.readbyte
+    
+    with invoffercomusu(0)
+        amount = .amount(slot)
+        
+        ' no tiene sentido que se quiten 0 unidades
+        if amount <> 0 then
+            ' actualizo el inventario general
+            call frmcomerciarusu.updateinvcom(.objindex(slot), amount)
+            
+            ' borro el item
+            call .setitem(slot, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
+        end if
+    end with
+    
+    ' si era el �nico �tem de la oferta, no puede confirmarla
+    if not frmcomerciarusu.hasanyitem(invoffercomusu(0)) and _
+        not frmcomerciarusu.hasanyitem(invorocomusu(1)) then call frmcomerciarusu.habilitarconfirmar(false)
+    
+    with fonttypes(fonttypenames.fonttype_info)
+        call frmcomerciarusu.printcommercemsg("�no puedes comerciar ese objeto!", fonttypenames.fonttype_info)
+    end with
 end sub
 
 ''
@@ -2893,14 +3328,16 @@ on error goto errhandler
         .objtype = buffer.readbyte()
         .maxhit = buffer.readinteger()
         .minhit = buffer.readinteger()
-        .def = buffer.readinteger()
+        .maxdef = buffer.readinteger()
+        .mindef = buffer.readinteger
         .valor = buffer.readlong()
+        
+        if comerciando then
+            call invbanco(0).setitem(slot, .objindex, .amount, _
+                .equipped, .grhindex, .objtype, .maxhit, _
+                .minhit, .maxdef, .mindef, .valor, .name)
+        end if
     end with
-    
-    if frmbancoobj.list1(0).listcount >= slot then _
-        call frmbancoobj.list1(0).removeitem(slot - 1)
-    
-    call frmbancoobj.list1(0).additem(userbancoinventory(slot).name, slot - 1)
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -2992,11 +3429,11 @@ private sub handleatributes()
     if estadologin = e_modo.dados then
         with frmcrearpersonaje
             if .visible then
-                .lbfuerza.caption = useratributos(1)
-                .lbagilidad.caption = useratributos(2)
-                .lbinteligencia.caption = useratributos(3)
-                .lbcarisma.caption = useratributos(4)
-                .lbconstitucion.caption = useratributos(5)
+                for i = 1 to numatributes
+                    .lblatributos(i).caption = useratributos(i)
+                next i
+                
+                .updatestats
             end if
         end with
     else
@@ -3028,24 +3465,60 @@ on error goto errhandler
     
     dim count as integer
     dim i as long
-    dim tmp as string
+    dim j as long
+    dim k as long
     
     count = buffer.readinteger()
     
-    call frmherrero.lstarmas.clear
+    redim armasherrero(count) as titemsconstruibles
+    redim herreromejorar(0) as titemsconstruibles
     
     for i = 1 to count
-        tmp = buffer.readasciistring() & " ("           'get the object's name
-        tmp = tmp & cstr(buffer.readinteger()) & ","    'the iron needed
-        tmp = tmp & cstr(buffer.readinteger()) & ","    'the silver needed
-        tmp = tmp & cstr(buffer.readinteger()) & ")"    'the gold needed
-        
-        call frmherrero.lstarmas.additem(tmp)
-        armasherrero(i) = buffer.readinteger()
+        with armasherrero(i)
+            .name = buffer.readasciistring()    'get the object's name
+            .grhindex = buffer.readinteger()
+            .linh = buffer.readinteger()        'the iron needed
+            .linp = buffer.readinteger()        'the silver needed
+            .lino = buffer.readinteger()        'the gold needed
+            .objindex = buffer.readinteger()
+            .upgrade = buffer.readinteger()
+        end with
     next i
     
-    for i = i to ubound(armasherrero())
-        armasherrero(i) = 0
+    with frmherrero
+        ' inicializo los inventarios
+        call invlingosherreria(1).initialize(directdraw, .piclingotes0, 3, , , , , , false)
+        call invlingosherreria(2).initialize(directdraw, .piclingotes1, 3, , , , , , false)
+        call invlingosherreria(3).initialize(directdraw, .piclingotes2, 3, , , , , , false)
+        call invlingosherreria(4).initialize(directdraw, .piclingotes3, 3, , , , , , false)
+        
+        call .hideextracontrols(count)
+        call .renderlist(1, true)
+    end with
+    
+    for i = 1 to count
+        with armasherrero(i)
+            if .upgrade then
+                for k = 1 to count
+                    if .upgrade = armasherrero(k).objindex then
+                        j = j + 1
+                
+                        redim preserve herreromejorar(j) as titemsconstruibles
+                        
+                        herreromejorar(j).name = .name
+                        herreromejorar(j).grhindex = .grhindex
+                        herreromejorar(j).objindex = .objindex
+                        herreromejorar(j).upgradename = armasherrero(k).name
+                        herreromejorar(j).upgradegrhindex = armasherrero(k).grhindex
+                        herreromejorar(j).linh = armasherrero(k).linh - .linh * 0.85
+                        herreromejorar(j).linp = armasherrero(k).linp - .linp * 0.85
+                        herreromejorar(j).lino = armasherrero(k).lino - .lino * 0.85
+                        
+                        exit for
+                    end if
+                next k
+            end if
+        end with
     next i
     
     'if we got here then packet is complete, copy data back to original queue
@@ -3087,24 +3560,50 @@ on error goto errhandler
     
     dim count as integer
     dim i as long
-    dim tmp as string
+    dim j as long
+    dim k as long
     
     count = buffer.readinteger()
     
-    call frmherrero.lstarmaduras.clear
+    redim armadurasherrero(count) as titemsconstruibles
     
     for i = 1 to count
-        tmp = buffer.readasciistring() & " ("           'get the object's name
-        tmp = tmp & cstr(buffer.readinteger()) & ","    'the iron needed
-        tmp = tmp & cstr(buffer.readinteger()) & ","    'the silver needed
-        tmp = tmp & cstr(buffer.readinteger()) & ")"    'the gold needed
-        
-        call frmherrero.lstarmaduras.additem(tmp)
-        armadurasherrero(i) = buffer.readinteger()
+        with armadurasherrero(i)
+            .name = buffer.readasciistring()    'get the object's name
+            .grhindex = buffer.readinteger()
+            .linh = buffer.readinteger()        'the iron needed
+            .linp = buffer.readinteger()        'the silver needed
+            .lino = buffer.readinteger()        'the gold needed
+            .objindex = buffer.readinteger()
+            .upgrade = buffer.readinteger()
+        end with
     next i
     
-    for i = i to ubound(armadurasherrero())
-        armadurasherrero(i) = 0
+    j = ubound(herreromejorar)
+    
+    for i = 1 to count
+        with armadurasherrero(i)
+            if .upgrade then
+                for k = 1 to count
+                    if .upgrade = armadurasherrero(k).objindex then
+                        j = j + 1
+                
+                        redim preserve herreromejorar(j) as titemsconstruibles
+                        
+                        herreromejorar(j).name = .name
+                        herreromejorar(j).grhindex = .grhindex
+                        herreromejorar(j).objindex = .objindex
+                        herreromejorar(j).upgradename = armadurasherrero(k).name
+                        herreromejorar(j).upgradegrhindex = armadurasherrero(k).grhindex
+                        herreromejorar(j).linh = armadurasherrero(k).linh - .linh * 0.85
+                        herreromejorar(j).linp = armadurasherrero(k).linp - .linp * 0.85
+                        herreromejorar(j).lino = armadurasherrero(k).lino - .lino * 0.85
+                        
+                        exit for
+                    end if
+                next k
+            end if
+        end with
     next i
     
     'if we got here then packet is complete, copy data back to original queue
@@ -3146,22 +3645,58 @@ on error goto errhandler
     
     dim count as integer
     dim i as long
-    dim tmp as string
+    dim j as long
+    dim k as long
     
     count = buffer.readinteger()
     
-    call frmcarp.lstarmas.clear
+    redim objcarpintero(count) as titemsconstruibles
+    redim carpinteromejorar(0) as titemsconstruibles
     
     for i = 1 to count
-        tmp = buffer.readasciistring() & " ("          'get the object's name
-        tmp = tmp & cstr(buffer.readinteger()) & ")"    'the wood needed
-        
-        call frmcarp.lstarmas.additem(tmp)
-        objcarpintero(i) = buffer.readinteger()
+        with objcarpintero(i)
+            .name = buffer.readasciistring()        'get the object's name
+            .grhindex = buffer.readinteger()
+            .madera = buffer.readinteger()          'the wood needed
+            .maderaelfica = buffer.readinteger()    'the elfic wood needed
+            .objindex = buffer.readinteger()
+            .upgrade = buffer.readinteger()
+        end with
     next i
     
-    for i = i to ubound(objcarpintero())
-        objcarpintero(i) = 0
+    with frmcarp
+        ' inicializo los inventarios
+        call invmaderascarpinteria(1).initialize(directdraw, .picmaderas0, 2, , , , , , false)
+        call invmaderascarpinteria(2).initialize(directdraw, .picmaderas1, 2, , , , , , false)
+        call invmaderascarpinteria(3).initialize(directdraw, .picmaderas2, 2, , , , , , false)
+        call invmaderascarpinteria(4).initialize(directdraw, .picmaderas3, 2, , , , , , false)
+        
+        call .hideextracontrols(count)
+        call .renderlist(1)
+    end with
+    
+    for i = 1 to count
+        with objcarpintero(i)
+            if .upgrade then
+                for k = 1 to count
+                    if .upgrade = objcarpintero(k).objindex then
+                        j = j + 1
+                
+                        redim preserve carpinteromejorar(j) as titemsconstruibles
+                        
+                        carpinteromejorar(j).name = .name
+                        carpinteromejorar(j).grhindex = .grhindex
+                        carpinteromejorar(j).objindex = .objindex
+                        carpinteromejorar(j).upgradename = objcarpintero(k).name
+                        carpinteromejorar(j).upgradegrhindex = objcarpintero(k).grhindex
+                        carpinteromejorar(j).madera = objcarpintero(k).madera - .madera * 0.85
+                        carpinteromejorar(j).maderaelfica = objcarpintero(k).maderaelfica - .maderaelfica * 0.85
+                        
+                        exit for
+                    end if
+                next k
+            end if
+        end with
     next i
     
     'if we got here then packet is complete, copy data back to original queue
@@ -3218,9 +3753,7 @@ on error goto errhandler
     
     call msgbox(buffer.readasciistring())
     
-    frmoldpersonaje.mousepointer = 1
-    frmpasswd.mousepointer = 1
-    if frmoldpersonaje.visible then
+    if frmconnect.visible then
 #if usarwrench = 1 then
         frmmain.socket1.disconnect
         frmmain.socket1.cleanup
@@ -3351,14 +3884,10 @@ on error goto errhandler
         .objtype = buffer.readbyte()
         .maxhit = buffer.readinteger()
         .minhit = buffer.readinteger()
-        .def = buffer.readinteger()
+        .maxdef = buffer.readinteger()
+        .mindef = buffer.readinteger
     end with
-    
-    if frmcomerciar.list1(0).listcount >= slot then _
-        call frmcomerciar.list1(0).removeitem(slot - 1)
-    
-    call frmcomerciar.list1(0).additem(npcinventory(slot).name, slot - 1)
-    
+        
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
     
@@ -3395,8 +3924,26 @@ private sub handleupdatehungerandthirst()
     userminagu = incomingdata.readbyte()
     usermaxham = incomingdata.readbyte()
     userminham = incomingdata.readbyte()
-    frmmain.aguasp.width = (((userminagu / 100) / (usermaxagu / 100)) * 94)
-    frmmain.comidasp.width = (((userminham / 100) / (usermaxham / 100)) * 94)
+    frmmain.lblhambre = userminham & "/" & usermaxham
+    frmmain.lblsed = userminagu & "/" & usermaxagu
+
+    dim bwidth as byte
+    
+    bwidth = (((userminham / 100) / (usermaxham / 100)) * 75)
+    
+    frmmain.shphambre.width = 75 - bwidth
+    frmmain.shphambre.left = 584 + (75 - frmmain.shphambre.width)
+    
+    frmmain.shphambre.visible = (bwidth <> 75)
+    '*********************************
+    
+    bwidth = (((userminagu / 100) / (usermaxagu / 100)) * 75)
+    
+    frmmain.shpsed.width = 75 - bwidth
+    frmmain.shpsed.left = 584 + (75 - frmmain.shpsed.width)
+    
+    frmmain.shpsed.visible = (bwidth <> 75)
+    
 end sub
 
 ''
@@ -3474,7 +4021,8 @@ private sub handlelevelup()
     call incomingdata.readbyte
     
     skillpoints = skillpoints + incomingdata.readinteger()
-    frmmain.label1.visible = true
+    
+    call frmmain.lightskillstar(true)
 end sub
 
 ''
@@ -3486,7 +4034,7 @@ private sub handleaddforummessage()
 'last modification: 05/17/06
 '
 '***************************************************
-    if incomingdata.length < 5 then
+    if incomingdata.length < 8 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
     end if
@@ -3499,15 +4047,25 @@ on error goto errhandler
     'remove packet id
     call buffer.readbyte
     
+    dim forumtype as eforummsgtype
     dim title as string
     dim message as string
+    dim author as string
+    dim banuncio as boolean
+    dim bsticky as boolean
+    
+    forumtype = buffer.readbyte
     
     title = buffer.readasciistring()
+    author = buffer.readasciistring()
     message = buffer.readasciistring()
     
-    call frmforo.list.additem(title)
-    frmforo.text(frmforo.list.listcount - 1).text = message
-    call load(frmforo.text(frmforo.list.listcount))
+    if not frmforo.forolimpio then
+        clsforos.clearforums
+        frmforo.forolimpio = true
+    end if
+
+    call clsforos.addpost(forumalignment(forumtype), title, author, message, esanuncio(forumtype))
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -3536,7 +4094,10 @@ private sub handleshowforumform()
     'remove packet id
     call incomingdata.readbyte
     
-    if not frmforo.visible then
+    frmforo.privilegios = incomingdata.readbyte
+    frmforo.canpoststicky = incomingdata.readbyte
+    
+    if not mirandoforo then
         frmforo.show , frmmain
     end if
 end sub
@@ -3596,11 +4157,15 @@ private sub handlediceroll()
     useratributos(eatributos.carisma) = incomingdata.readbyte()
     useratributos(eatributos.constitucion) = incomingdata.readbyte()
     
-    frmcrearpersonaje.lbfuerza = useratributos(eatributos.fuerza)
-    frmcrearpersonaje.lbagilidad = useratributos(eatributos.agilidad)
-    frmcrearpersonaje.lbinteligencia = useratributos(eatributos.inteligencia)
-    frmcrearpersonaje.lbcarisma = useratributos(eatributos.carisma)
-    frmcrearpersonaje.lbconstitucion = useratributos(eatributos.constitucion)
+    with frmcrearpersonaje
+        .lblatributos(eatributos.fuerza) = useratributos(eatributos.fuerza)
+        .lblatributos(eatributos.agilidad) = useratributos(eatributos.agilidad)
+        .lblatributos(eatributos.inteligencia) = useratributos(eatributos.inteligencia)
+        .lblatributos(eatributos.carisma) = useratributos(eatributos.carisma)
+        .lblatributos(eatributos.constitucion) = useratributos(eatributos.constitucion)
+        
+        .updatestats
+    end with
 end sub
 
 ''
@@ -3654,10 +4219,10 @@ end sub
 private sub handlesendskills()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 11/19/09
+'11/19/09: pato - now the server send the percentage of progress of the skills.
 '***************************************************
-    if incomingdata.length < 1 + numskills then
+    if incomingdata.length < 2 + numskills * 2 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
     end if
@@ -3665,10 +4230,12 @@ private sub handlesendskills()
     'remove packet id
     call incomingdata.readbyte
     
+    userclase = incomingdata.readbyte
     dim i as long
     
     for i = 1 to numskills
         userskills(i) = incomingdata.readbyte()
+        porcentajeskills(i) = incomingdata.readbyte()
     next i
     llegaronskills = true
 end sub
@@ -3726,8 +4293,8 @@ end sub
 private sub handleguildnews()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 11/19/09
+'11/19/09: pato - is optional show the frmguildnews form
 '***************************************************
     if incomingdata.length < 7 then
         err.raise incomingdata.notenoughdataerrcode
@@ -3744,6 +4311,7 @@ on error goto errhandler
     
     dim guildlist() as string
     dim i as long
+    dim stemp as string
     
     'get news' string
     frmguildnews.news = buffer.readasciistring()
@@ -3752,17 +4320,19 @@ on error goto errhandler
     guildlist = split(buffer.readasciistring(), separator)
     
     for i = 0 to ubound(guildlist)
-        call frmguildnews.guerra.additem(guildlist(i))
+        stemp = frmguildnews.txtclanesguerra.text
+        frmguildnews.txtclanesguerra.text = stemp & guildlist(i) & vbcrlf
     next i
     
     'get allied guilds list
     guildlist = split(buffer.readasciistring(), separator)
     
     for i = 0 to ubound(guildlist)
-        call frmguildnews.aliados.additem(guildlist(i))
+        stemp = frmguildnews.txtclanesaliados.text
+        frmguildnews.txtclanesaliados.text = stemp & guildlist(i) & vbcrlf
     next i
     
-    frmguildnews.show vbmodeless, frmmain
+    if clientsetup.bguildnews then frmguildnews.show vbmodeless, frmmain
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -3840,14 +4410,14 @@ on error goto errhandler
     'remove packet id
     call buffer.readbyte
     
-    dim guildlist() as string
+    dim vsguildlist() as string
     dim i as long
     
-    guildlist = split(buffer.readasciistring(), separator)
+    vsguildlist = split(buffer.readasciistring(), separator)
     
     call frmpeaceprop.lista.clear
-    for i = 0 to ubound(guildlist())
-        call frmpeaceprop.lista.additem(guildlist(i))
+    for i = 0 to ubound(vsguildlist())
+        call frmpeaceprop.lista.additem(vsguildlist(i))
     next i
     
     frmpeaceprop.proposaltype = tipo_propuesta.alianza
@@ -3942,38 +4512,38 @@ on error goto errhandler
     
     with frmcharinfo
         if .frmtype = charinfofrmtype.frmmembers then
-            .rechazar.visible = false
-            .aceptar.visible = false
-            .echar.visible = true
-            .desc.visible = false
+            .imgrechazar.visible = false
+            .imgaceptar.visible = false
+            .imgechar.visible = true
+            .imgpeticion.visible = false
         else
-            .rechazar.visible = true
-            .aceptar.visible = true
-            .echar.visible = false
-            .desc.visible = true
+            .imgrechazar.visible = true
+            .imgaceptar.visible = true
+            .imgechar.visible = false
+            .imgpeticion.visible = true
         end if
         
-        .nombre.caption = "nombre: " & buffer.readasciistring()
-        .raza.caption = "raza: " & listarazas(buffer.readbyte())
-        .clase.caption = "clase: " & listaclases(buffer.readbyte())
+        .nombre.caption = buffer.readasciistring()
+        .raza.caption = listarazas(buffer.readbyte())
+        .clase.caption = listaclases(buffer.readbyte())
         
         if buffer.readbyte() = 1 then
-            .genero.caption = "genero: hombre"
+            .genero.caption = "hombre"
         else
-            .genero.caption = "genero: mujer"
+            .genero.caption = "mujer"
         end if
         
-        .nivel.caption = "nivel: " & buffer.readbyte()
-        .oro.caption = "oro: " & buffer.readlong()
-        .banco.caption = "banco: " & buffer.readlong()
+        .nivel.caption = buffer.readbyte()
+        .oro.caption = buffer.readlong()
+        .banco.caption = buffer.readlong()
         
         dim reputation as long
         reputation = buffer.readlong()
         
-        .reputacion.caption = "reputaci�n: " & reputation
+        .reputacion.caption = reputation
         
         .txtpeticiones.text = buffer.readasciistring()
-        .guildactual.caption = "clan: " & buffer.readasciistring()
+        .guildactual.caption = buffer.readasciistring()
         .txtmiembro.text = buffer.readasciistring()
         
         dim armada as boolean
@@ -3983,19 +4553,19 @@ on error goto errhandler
         caos = buffer.readboolean()
         
         if armada then
-            .ejercito.caption = "ej�rcito: armada real"
+            .ejercito.caption = "armada real"
         elseif caos then
-            .ejercito.caption = "ej�rcito: legi�n oscura"
+            .ejercito.caption = "legi�n oscura"
         end if
         
-        .ciudadanos.caption = "ciudadanos asesinados: " & cstr(buffer.readlong())
-        .criminales.caption = "criminales asesinados: " & cstr(buffer.readlong())
+        .ciudadanos.caption = cstr(buffer.readlong())
+        .criminales.caption = cstr(buffer.readlong())
         
         if reputation > 0 then
-            .status.caption = " (ciudadano)"
+            .status.caption = " ciudadano"
             .status.forecolor = vbblue
         else
-            .status.caption = " (criminal)"
+            .status.caption = " criminal"
             .status.forecolor = vbred
         end if
         
@@ -4039,29 +4609,29 @@ on error goto errhandler
     'remove packet id
     call buffer.readbyte
     
-    dim list() as string
     dim i as long
+    dim list() as string
     
     with frmguildleader
         'get list of existing guilds
-        list = split(buffer.readasciistring(), separator)
+        guildnames = split(buffer.readasciistring(), separator)
         
         'empty the list
         call .guildslist.clear
         
-        for i = 0 to ubound(list())
-            call .guildslist.additem(list(i))
+        for i = 0 to ubound(guildnames())
+            call .guildslist.additem(guildnames(i))
         next i
         
         'get list of guild's members
-        list = split(buffer.readasciistring(), separator)
-        .miembros.caption = "el clan cuenta con " & cstr(ubound(list()) + 1) & " miembros."
+        guildmembers = split(buffer.readasciistring(), separator)
+        .miembros.caption = cstr(ubound(guildmembers()) + 1)
         
         'empty the list
         call .members.clear
         
-        for i = 0 to ubound(list())
-            call .members.additem(list(i))
+        for i = 0 to ubound(guildmembers())
+            call .members.additem(guildmembers(i))
         next i
         
         .txtguildnews = buffer.readasciistring()
@@ -4117,33 +4687,27 @@ on error goto errhandler
     call buffer.readbyte
     
     with frmguildbrief
-        if not .esleader then
-            .guerra.visible = false
-            .aliado.visible = false
-            .command3.visible = false
-        else
-            .guerra.visible = true
-            .aliado.visible = true
-            .command3.visible = true
-        end if
+        .imgdeclararguerra.visible = .esleader
+        .imgofreceralianza.visible = .esleader
+        .imgofrecerpaz.visible = .esleader
         
-        .nombre.caption = "nombre:" & buffer.readasciistring()
-        .fundador.caption = "fundador:" & buffer.readasciistring()
-        .creacion.caption = "fecha de creacion:" & buffer.readasciistring()
-        .lider.caption = "l�der:" & buffer.readasciistring()
-        .web.caption = "web site:" & buffer.readasciistring()
-        .miembros.caption = "miembros:" & buffer.readinteger()
+        .nombre.caption = buffer.readasciistring()
+        .fundador.caption = buffer.readasciistring()
+        .creacion.caption = buffer.readasciistring()
+        .lider.caption = buffer.readasciistring()
+        .web.caption = buffer.readasciistring()
+        .miembros.caption = buffer.readinteger()
         
         if buffer.readboolean() then
-            .eleccion.caption = "elecci�n de l�der: abierta"
+            .eleccion.caption = "abierta"
         else
-            .eleccion.caption = "elecci�n de l�der: cerrada"
+            .eleccion.caption = "cerrada"
         end if
         
-        .lblalineacion.caption = "alineaci�n: " & buffer.readasciistring()
-        .enemigos.caption = "clanes enemigos:" & buffer.readinteger()
-        .aliados.caption = "clanes aliados:" & buffer.readinteger()
-        .antifaccion.caption = "puntos antifaccion: " & buffer.readasciistring()
+        .lblalineacion.caption = buffer.readasciistring()
+        .enemigos.caption = buffer.readinteger()
+        .aliados.caption = buffer.readinteger()
+        .antifaccion.caption = buffer.readasciistring()
         
         dim codexstr() as string
         dim i as long
@@ -4172,6 +4736,21 @@ on error goto 0
 
     if error <> 0 then _
         err.raise error
+end sub
+
+''
+' handles the showguildalign message.
+
+private sub handleshowguildalign()
+'***************************************************
+'author: zama
+'last modification: 14/12/2009
+'
+'***************************************************
+    'remove packet id
+    call incomingdata.readbyte
+    
+    frmeligealineacion.show vbmodeless, frmmain
 end sub
 
 ''
@@ -4260,24 +4839,38 @@ private sub handletradeok()
     if frmcomerciar.visible then
         dim i as long
         
-        call frmcomerciar.list1(1).clear
-        
+        'update user inventory
         for i = 1 to max_inventory_slots
-            if inventario.objindex(i) <> 0 then
-                call frmcomerciar.list1(1).additem(inventario.itemname(i))
-            else
-                call frmcomerciar.list1(1).additem("")
+            ' agrego o quito un item en su totalidad
+            if inventario.objindex(i) <> invcomusu.objindex(i) then
+                with inventario
+                    call invcomusu.setitem(i, .objindex(i), _
+                    .amount(i), .equipped(i), .grhindex(i), _
+                    .objtype(i), .maxhit(i), .minhit(i), .maxdef(i), .mindef(i), _
+                    .valor(i), .itemname(i))
+                end with
+            ' vendio o compro cierta cantidad de un item que ya tenia
+            elseif inventario.amount(i) <> invcomusu.amount(i) then
+                call invcomusu.changeslotitemamount(i, inventario.amount(i))
             end if
         next i
         
-        'alter order according to if we bought or sold so the labels and grh remain the same
-        if frmcomerciar.lasactionbuy then
-            frmcomerciar.list1(1).listindex = frmcomerciar.lastindex2
-            frmcomerciar.list1(0).listindex = frmcomerciar.lastindex1
-        else
-            frmcomerciar.list1(0).listindex = frmcomerciar.lastindex1
-            frmcomerciar.list1(1).listindex = frmcomerciar.lastindex2
-        end if
+        ' fill npc inventory
+        for i = 1 to 20
+            ' compraron la totalidad de un item, o vendieron un item que el npc no tenia
+            if npcinventory(i).objindex <> invcomnpc.objindex(i) then
+                with npcinventory(i)
+                    call invcomnpc.setitem(i, .objindex, _
+                    .amount, 0, .grhindex, _
+                    .objtype, .maxhit, .minhit, .maxdef, .mindef, _
+                    .valor, .name)
+                end with
+            ' compraron o vendieron cierta cantidad (no su totalidad)
+            elseif npcinventory(i).amount <> invcomnpc.amount(i) then
+                call invcomnpc.changeslotitemamount(i, npcinventory(i).amount)
+            end if
+        next i
+    
     end if
 end sub
 
@@ -4297,23 +4890,21 @@ private sub handlebankok()
     
     if frmbancoobj.visible then
         
-        call frmbancoobj.list1(1).clear
-        
-        for i = 1 to max_inventory_slots
-            if inventario.objindex(i) <> 0 then
-                call frmbancoobj.list1(1).additem(inventario.itemname(i))
-            else
-                call frmbancoobj.list1(1).additem("")
-            end if
+        for i = 1 to inventario.maxobjs
+            with inventario
+                call invbanco(1).setitem(i, .objindex(i), .amount(i), _
+                    .equipped(i), .grhindex(i), .objtype(i), .maxhit(i), _
+                    .minhit(i), .maxdef(i), .mindef(i), .valor(i), .itemname(i))
+            end with
         next i
         
         'alter order according to if we bought or sold so the labels and grh remain the same
         if frmbancoobj.lasactionbuy then
-            frmbancoobj.list1(1).listindex = frmbancoobj.lastindex2
-            frmbancoobj.list1(0).listindex = frmbancoobj.lastindex1
+            'frmbancoobj.list1(1).listindex = frmbancoobj.lastindex2
+            'frmbancoobj.list1(0).listindex = frmbancoobj.lastindex1
         else
-            frmbancoobj.list1(0).listindex = frmbancoobj.lastindex1
-            frmbancoobj.list1(1).listindex = frmbancoobj.lastindex2
+            'frmbancoobj.list1(0).listindex = frmbancoobj.lastindex1
+            'frmbancoobj.list1(1).listindex = frmbancoobj.lastindex2
         end if
         
         frmbancoobj.nopuedemover = false
@@ -4340,27 +4931,26 @@ on error goto errhandler
     dim buffer as new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
+    dim offerslot as byte
+    
     'remove packet id
     call buffer.readbyte
     
-    with otroinventario(1)
-        .objindex = buffer.readinteger()
-        .name = buffer.readasciistring()
-        .amount = buffer.readlong()
-        .grhindex = buffer.readinteger()
-        .objtype = buffer.readbyte()
-        .maxhit = buffer.readinteger()
-        .minhit = buffer.readinteger()
-        .def = buffer.readinteger()
-        .valor = buffer.readlong()
-        
-        frmcomerciarusu.list2.clear
-        
-        call frmcomerciarusu.list2.additem(.name)
-        frmcomerciarusu.list2.itemdata(frmcomerciarusu.list2.newindex) = .amount
-        
-        frmcomerciarusu.lblestadoresp.visible = false
+    offerslot = buffer.readbyte
+    
+    with buffer
+        if offerslot = gold_offer_slot then
+            call invorocomusu(2).setitem(1, .readinteger(), .readlong(), 0, _
+                                            .readinteger(), .readbyte(), .readinteger(), _
+                                            .readinteger(), .readinteger(), .readinteger(), .readlong(), .readasciistring())
+        else
+            call invoffercomusu(1).setitem(offerslot, .readinteger(), .readlong(), 0, _
+                                            .readinteger(), .readbyte(), .readinteger(), _
+                                            .readinteger(), .readinteger(), .readinteger(), .readlong(), .readasciistring())
+        end if
     end with
+    
+    call frmcomerciarusu.printcommercemsg(tradingusername & " ha modificado su oferta.", fonttypenames.fonttype_veneno)
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -4493,6 +5083,60 @@ on error goto 0
         err.raise error
 end sub
 
+
+
+''
+' handles the showsosform message.
+
+private sub handleshowpartyform()
+'***************************************************
+'author: budi
+'last modification: 11/26/09
+'
+'***************************************************
+    if incomingdata.length < 3 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as new clsbytequeue
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+    
+    dim members() as string
+    dim i as long
+    
+    espartyleader = cbool(buffer.readbyte())
+       
+    members = split(buffer.readasciistring(), separator)
+    for i = 0 to ubound(members())
+        call frmparty.lstmembers.additem(members(i))
+    next i
+    
+    frmparty.lbltotalexp.caption = buffer.readlong
+    frmparty.show , frmmain
+    
+    'if we got here then packet is complete, copy data back to original queue
+    call incomingdata.copybuffer(buffer)
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
+end sub
+
+
+
 ''
 ' handles the showmotdeditionform message.
 
@@ -4501,7 +5145,7 @@ private sub handleshowmotdeditionform()
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
-'***************************************************
+'*************************************su**************
     if incomingdata.length < 3 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
@@ -4609,9 +5253,71 @@ private sub handlepong()
 '***************************************************
     call incomingdata.readbyte
     
-    call addtorichtextbox(frmmain.rectxt, "el ping es " & (gettickcount - pingtime) & " ms.", 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmmain.rectxt, "el ping es " & (gettickcount - pingtime) & " ms.", 255, 0, 0, true, false, true)
     
     pingtime = 0
+end sub
+
+''
+' handles the pong message.
+
+private sub handleguildmemberinfo()
+'***************************************************
+'author: zama
+'last modification: 05/17/06
+'
+'***************************************************
+    if incomingdata.length < 3 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as new clsbytequeue
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+    
+    with frmguildmember
+        'clear guild's list
+        .lstclanes.clear
+        
+        guildnames = split(buffer.readasciistring(), separator)
+        
+        dim i as long
+        for i = 0 to ubound(guildnames())
+            call .lstclanes.additem(guildnames(i))
+        next i
+        
+        'get list of guild's members
+        guildmembers = split(buffer.readasciistring(), separator)
+        .lblcantmiembros.caption = cstr(ubound(guildmembers()) + 1)
+        
+        'empty the list
+        call .lstmiembros.clear
+        
+        for i = 0 to ubound(guildmembers())
+            call .lstmiembros.additem(guildmembers(i))
+        next i
+        
+        'if we got here then packet is complete, copy data back to original queue
+        call incomingdata.copybuffer(buffer)
+        
+        .show vbmodeless, frmmain
+    end with
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
 end sub
 
 ''
@@ -4637,20 +5343,22 @@ on error goto errhandler
     call buffer.readbyte
     
     dim charindex as integer
-    dim criminal as boolean
+    dim nickcolor as byte
     dim usertag as string
     
     charindex = buffer.readinteger()
-    criminal = buffer.readboolean()
+    nickcolor = buffer.readbyte()
     usertag = buffer.readasciistring()
     
     'update char status adn tag!
     with charlist(charindex)
-        if criminal then
+        if (nickcolor and enickcolor.iecriminal) <> 0 then
             .criminal = 1
         else
             .criminal = 0
         end if
+        
+        .atacable = (nickcolor and enickcolor.ieatacable) <> 0
         
         .nombre = usertag
     end with
@@ -4698,10 +5406,6 @@ public sub writeloginexistingchar()
         call .writebyte(app.major)
         call .writebyte(app.minor)
         call .writebyte(app.revision)
-        
-        for i = 1 to 7
-            call .writeinteger(versiones(i))
-        next i
         
 #if seguridadalkon then
         call .writeasciistringfixed(md5hushyo)
@@ -4751,10 +5455,6 @@ public sub writeloginnewchar()
         call .writebyte(app.minor)
         call .writebyte(app.revision)
         
-        for i = 1 to 7
-            call .writeinteger(versiones(i))
-        next i
-        
 #if seguridadalkon then
         call .writeasciistringfixed(md5hushyo)
 #end if
@@ -4762,10 +5462,7 @@ public sub writeloginnewchar()
         call .writebyte(userraza)
         call .writebyte(usersexo)
         call .writebyte(userclase)
-        
-        for i = 1 to numskills
-            call .writebyte(userskills(i))
-        next i
+        call .writeinteger(userhead)
         
         call .writeasciistring(useremail)
         
@@ -4895,20 +5592,6 @@ public sub writepickup()
 end sub
 
 ''
-' writes the "combatmodetoggle" message to the outgoing data buffer.
-'
-' @remarks  the data is not actually sent until the buffer is properly flushed.
-
-public sub writecombatmodetoggle()
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'writes the "combatmodetoggle" message to the outgoing data buffer
-'***************************************************
-    call outgoingdata.writebyte(clientpacketid.combatmodetoggle)
-end sub
-
-''
 ' writes the "safetoggle" message to the outgoing data buffer.
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
@@ -4948,6 +5631,32 @@ public sub writerequestguildleaderinfo()
 'writes the "requestguildleaderinfo" message to the outgoing data buffer
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.requestguildleaderinfo)
+end sub
+
+public sub writerequestpartyform()
+'***************************************************
+'author: budi
+'last modification: 11/26/09
+'writes the "requestpartyform" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.requestpartyform)
+
+end sub
+
+''
+' writes the "itemupgrade" message to the outgoing data buffer.
+'
+' @param    itemindex the index to the item to upgrade.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeitemupgrade(byval itemindex as integer)
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 12/09/09
+'writes the "itemupgrade" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.itemupgrade)
+    call outgoingdata.writeinteger(itemindex)
 end sub
 
 ''
@@ -5032,6 +5741,20 @@ public sub writeusercommerceend()
 'writes the "usercommerceend" message to the outgoing data buffer
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.usercommerceend)
+end sub
+
+''
+' writes the "usercommerceconfirm" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeusercommerceconfirm()
+'***************************************************
+'author: zama
+'last modification: 14/12/2009
+'writes the "usercommerceconfirm" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.usercommerceconfirm)
 end sub
 
 ''
@@ -5247,6 +5970,21 @@ public sub writecraftcarpenter(byval item as integer)
         call .writeinteger(item)
     end with
 end sub
+
+''
+' writes the "showguildnews" message to the outgoing data buffer.
+'
+
+public sub writeshowguildnews()
+'***************************************************
+'author: zama
+'last modification: 21/02/2010
+'writes the "showguildnews" message to the outgoing data buffer
+'***************************************************
+ 
+     outgoingdata.writebyte (clientpacketid.showguildnews)
+end sub
+
 
 ''
 ' writes the "workleftclick" message to the outgoing data buffer.
@@ -5498,7 +6236,7 @@ end sub
 ' @param    message the body of the message.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeforumpost(byval title as string, byval message as string)
+public sub writeforumpost(byval title as string, byval message as string, byval forummsgtype as byte)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
@@ -5507,6 +6245,7 @@ public sub writeforumpost(byval title as string, byval message as string)
     with outgoingdata
         call .writebyte(clientpacketid.forumpost)
         
+        call .writebyte(forummsgtype)
         call .writeasciistring(title)
         call .writeasciistring(message)
     end with
@@ -5593,7 +6332,7 @@ end sub
 ' @param    amount number of items to offer.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeusercommerceoffer(byval slot as byte, byval amount as long)
+public sub writeusercommerceoffer(byval slot as byte, byval amount as long, byval offerslot as byte)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
@@ -5604,8 +6343,23 @@ public sub writeusercommerceoffer(byval slot as byte, byval amount as long)
         
         call .writebyte(slot)
         call .writelong(amount)
+        call .writebyte(offerslot)
     end with
 end sub
+
+public sub writecommercechat(byval chat as string)
+'***************************************************
+'author: zama
+'last modification: 03/12/2009
+'writes the "commercechat" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.commercechat)
+        
+        call .writeasciistring(chat)
+    end with
+end sub
+
 
 ''
 ' writes the "guildacceptpeace" message to the outgoing data buffer.
@@ -6084,6 +6838,21 @@ public sub writepetfollow()
 end sub
 
 ''
+' writes the "releasepet" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writereleasepet()
+'***************************************************
+'author: zama
+'last modification: 18/11/2009
+'writes the "releasepet" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.releasepet)
+end sub
+
+
+''
 ' writes the "trainlist" message to the outgoing data buffer.
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
@@ -6137,6 +6906,21 @@ public sub writeresucitate()
 'writes the "resucitate" message to the outgoing data buffer
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.resucitate)
+end sub
+
+''
+' writes the "consulta" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeconsulta()
+'***************************************************
+'author: zama
+'last modification: 01/05/2010
+'writes the "consulta" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.consulta)
+
 end sub
 
 ''
@@ -6689,17 +7473,33 @@ end sub
 ''
 ' writes the "guildfundate" message to the outgoing data buffer.
 '
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeguildfundate()
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/21/2001
+'writes the "guildfundate" message to the outgoing data buffer
+'14/12/2009: zama - now first checks if the user can foundate a guild.
+'03/21/2001: pato - deleted de clantype param.
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.guildfundate)
+end sub
+
+''
+' writes the "guildfundation" message to the outgoing data buffer.
+'
 ' @param    clantype the alignment of the clan to be founded.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeguildfundate(byval clantype as eclantype)
+public sub writeguildfundation(byval clantype as eclantype)
 '***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'writes the "guildfundate" message to the outgoing data buffer
+'author: zama
+'last modification: 14/12/2009
+'writes the "guildfundation" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.guildfundate)
+        call .writebyte(clientpacketid.guildfundation)
         
         call .writebyte(clantype)
     end with
@@ -6775,11 +7575,48 @@ public sub writeguildmemberlist(byval guild as string)
 'writes the "guildmemberlist" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.guildmemberlist)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.guildmemberlist)
         
         call .writeasciistring(guild)
     end with
 end sub
+
+''
+' writes the "initcrafting" message to the outgoing data buffer.
+'
+' @param    cantidad the final aumont of item to craft.
+' @param    nroporciclo the amount of items to craft per cicle.
+
+public sub writeinitcrafting(byval cantidad as long, byval nroporciclo as integer)
+'***************************************************
+'author: zama
+'last modification: 29/01/2010
+'writes the "initcrafting" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.initcrafting)
+        call .writelong(cantidad)
+        
+        call .writeinteger(nroporciclo)
+    end with
+end sub
+
+''
+' writes the "home" message to the outgoing data buffer.
+'
+public sub writehome()
+'***************************************************
+'author: budi
+'last modification: 01/06/10
+'writes the "home" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.home)
+    end with
+end sub
+
+
 
 ''
 ' writes the "gmmessage" message to the outgoing data buffer.
@@ -6794,8 +7631,8 @@ public sub writegmmessage(byval message as string)
 'writes the "gmmessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.gmmessage)
-        
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.gmmessage)
         call .writeasciistring(message)
     end with
 end sub
@@ -6811,7 +7648,8 @@ public sub writeshowname()
 'last modification: 05/17/06
 'writes the "showname" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.showname)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.showname)
 end sub
 
 ''
@@ -6825,7 +7663,8 @@ public sub writeonlineroyalarmy()
 'last modification: 05/17/06
 'writes the "onlineroyalarmy" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.onlineroyalarmy)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.onlineroyalarmy)
 end sub
 
 ''
@@ -6839,7 +7678,8 @@ public sub writeonlinechaoslegion()
 'last modification: 05/17/06
 'writes the "onlinechaoslegion" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.onlinechaoslegion)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.onlinechaoslegion)
 end sub
 
 ''
@@ -6855,7 +7695,8 @@ public sub writegonearby(byval username as string)
 'writes the "gonearby" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.gonearby)
+        call outgoingdata.writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.gonearby)
         
         call .writeasciistring(username)
     end with
@@ -6874,7 +7715,8 @@ public sub writecomment(byval message as string)
 'writes the "comment" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.comment)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.comment)
         
         call .writeasciistring(message)
     end with
@@ -6891,7 +7733,8 @@ public sub writeservertime()
 'last modification: 05/17/06
 'writes the "servertime" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.servertime)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.servertime)
 end sub
 
 ''
@@ -6907,7 +7750,8 @@ public sub writewhere(byval username as string)
 'writes the "where" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.where)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.where)
         
         call .writeasciistring(username)
     end with
@@ -6926,7 +7770,8 @@ public sub writecreaturesinmap(byval map as integer)
 'writes the "creaturesinmap" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.creaturesinmap)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.creaturesinmap)
         
         call .writeinteger(map)
     end with
@@ -6943,7 +7788,8 @@ public sub writewarpmetotarget()
 'last modification: 05/17/06
 'writes the "warpmetotarget" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.warpmetotarget)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.warpmetotarget)
 end sub
 
 ''
@@ -6962,7 +7808,8 @@ public sub writewarpchar(byval username as string, byval map as integer, byval x
 'writes the "warpchar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.warpchar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.warpchar)
         
         call .writeasciistring(username)
         
@@ -6986,7 +7833,8 @@ public sub writesilence(byval username as string)
 'writes the "silence" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.silence)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.silence)
         
         call .writeasciistring(username)
     end with
@@ -7003,7 +7851,8 @@ public sub writesosshowlist()
 'last modification: 05/17/06
 'writes the "sosshowlist" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.sosshowlist)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.sosshowlist)
 end sub
 
 ''
@@ -7019,7 +7868,8 @@ public sub writesosremove(byval username as string)
 'writes the "sosremove" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.sosremove)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.sosremove)
         
         call .writeasciistring(username)
     end with
@@ -7038,7 +7888,8 @@ public sub writegotochar(byval username as string)
 'writes the "gotochar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.gotochar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.gotochar)
         
         call .writeasciistring(username)
     end with
@@ -7055,7 +7906,8 @@ public sub writeinvisible()
 'last modification: 05/17/06
 'writes the "invisible" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.invisible)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.invisible)
 end sub
 
 ''
@@ -7069,7 +7921,8 @@ public sub writegmpanel()
 'last modification: 05/17/06
 'writes the "gmpanel" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.gmpanel)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.gmpanel)
 end sub
 
 ''
@@ -7083,7 +7936,8 @@ public sub writerequestuserlist()
 'last modification: 05/17/06
 'writes the "requestuserlist" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.requestuserlist)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.requestuserlist)
 end sub
 
 ''
@@ -7097,7 +7951,8 @@ public sub writeworking()
 'last modification: 05/17/06
 'writes the "working" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.working)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.working)
 end sub
 
 ''
@@ -7111,7 +7966,8 @@ public sub writehiding()
 'last modification: 05/17/06
 'writes the "hiding" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.hiding)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.hiding)
 end sub
 
 ''
@@ -7129,7 +7985,8 @@ public sub writejail(byval username as string, byval reason as string, byval tim
 'writes the "jail" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.jail)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.jail)
         
         call .writeasciistring(username)
         call .writeasciistring(reason)
@@ -7149,7 +8006,8 @@ public sub writekillnpc()
 'last modification: 05/17/06
 'writes the "killnpc" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.killnpc)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.killnpc)
 end sub
 
 ''
@@ -7166,7 +8024,8 @@ public sub writewarnuser(byval username as string, byval reason as string)
 'writes the "warnuser" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.warnuser)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.warnuser)
         
         call .writeasciistring(username)
         call .writeasciistring(reason)
@@ -7189,7 +8048,8 @@ public sub writeeditchar(byval username as string, byval editoption as eeditopti
 'writes the "editchar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.editchar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.editchar)
         
         call .writeasciistring(username)
         
@@ -7213,7 +8073,8 @@ public sub writerequestcharinfo(byval username as string)
 'writes the "requestcharinfo" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharinfo)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharinfo)
         
         call .writeasciistring(username)
     end with
@@ -7232,7 +8093,8 @@ public sub writerequestcharstats(byval username as string)
 'writes the "requestcharstats" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharstats)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharstats)
         
         call .writeasciistring(username)
     end with
@@ -7251,7 +8113,8 @@ public sub writerequestchargold(byval username as string)
 'writes the "requestchargold" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestchargold)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestchargold)
         
         call .writeasciistring(username)
     end with
@@ -7270,7 +8133,8 @@ public sub writerequestcharinventory(byval username as string)
 'writes the "requestcharinventory" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharinventory)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharinventory)
         
         call .writeasciistring(username)
     end with
@@ -7289,7 +8153,8 @@ public sub writerequestcharbank(byval username as string)
 'writes the "requestcharbank" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharbank)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharbank)
         
         call .writeasciistring(username)
     end with
@@ -7308,7 +8173,8 @@ public sub writerequestcharskills(byval username as string)
 'writes the "requestcharskills" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharskills)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharskills)
         
         call .writeasciistring(username)
     end with
@@ -7327,7 +8193,8 @@ public sub writerevivechar(byval username as string)
 'writes the "revivechar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.revivechar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.revivechar)
         
         call .writeasciistring(username)
     end with
@@ -7344,7 +8211,8 @@ public sub writeonlinegm()
 'last modification: 05/17/06
 'writes the "onlinegm" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.onlinegm)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.onlinegm)
 end sub
 
 ''
@@ -7360,7 +8228,8 @@ public sub writeonlinemap(byval map as integer)
 '26/03/2009: now you don't need to be in the map to use the comand, so you send the map to server
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.onlinemap)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.onlinemap)
         
         call .writeinteger(map)
     end with
@@ -7379,7 +8248,8 @@ public sub writeforgive(byval username as string)
 'writes the "forgive" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.forgive)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.forgive)
         
         call .writeasciistring(username)
     end with
@@ -7398,7 +8268,8 @@ public sub writekick(byval username as string)
 'writes the "kick" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.kick)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.kick)
         
         call .writeasciistring(username)
     end with
@@ -7417,7 +8288,8 @@ public sub writeexecute(byval username as string)
 'writes the "execute" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.execute)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.execute)
         
         call .writeasciistring(username)
     end with
@@ -7437,7 +8309,8 @@ public sub writebanchar(byval username as string, byval reason as string)
 'writes the "banchar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.banchar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.banchar)
         
         call .writeasciistring(username)
         
@@ -7458,7 +8331,8 @@ public sub writeunbanchar(byval username as string)
 'writes the "unbanchar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.unbanchar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.unbanchar)
         
         call .writeasciistring(username)
     end with
@@ -7475,7 +8349,8 @@ public sub writenpcfollow()
 'last modification: 05/17/06
 'writes the "npcfollow" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.npcfollow)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.npcfollow)
 end sub
 
 ''
@@ -7491,7 +8366,8 @@ public sub writesummonchar(byval username as string)
 'writes the "summonchar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.summonchar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.summonchar)
         
         call .writeasciistring(username)
     end with
@@ -7508,7 +8384,8 @@ public sub writespawnlistrequest()
 'last modification: 05/17/06
 'writes the "spawnlistrequest" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.spawnlistrequest)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.spawnlistrequest)
 end sub
 
 ''
@@ -7524,7 +8401,8 @@ public sub writespawncreature(byval creatureindex as integer)
 'writes the "spawncreature" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.spawncreature)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.spawncreature)
         
         call .writeinteger(creatureindex)
     end with
@@ -7541,7 +8419,8 @@ public sub writeresetnpcinventory()
 'last modification: 05/17/06
 'writes the "resetnpcinventory" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.resetnpcinventory)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.resetnpcinventory)
 end sub
 
 ''
@@ -7555,7 +8434,8 @@ public sub writecleanworld()
 'last modification: 05/17/06
 'writes the "cleanworld" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.cleanworld)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.cleanworld)
 end sub
 
 ''
@@ -7571,7 +8451,8 @@ public sub writeservermessage(byval message as string)
 'writes the "servermessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.servermessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.servermessage)
         
         call .writeasciistring(message)
     end with
@@ -7590,7 +8471,8 @@ public sub writenicktoip(byval username as string)
 'writes the "nicktoip" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.nicktoip)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.nicktoip)
         
         call .writeasciistring(username)
     end with
@@ -7613,7 +8495,8 @@ public sub writeiptonick(byref ip() as byte)
     dim i as long
     
     with outgoingdata
-        call .writebyte(clientpacketid.iptonick)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.iptonick)
         
         for i = lbound(ip()) to ubound(ip())
             call .writebyte(ip(i))
@@ -7634,7 +8517,8 @@ public sub writeguildonlinemembers(byval guild as string)
 'writes the "guildonlinemembers" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.guildonlinemembers)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.guildonlinemembers)
         
         call .writeasciistring(guild)
     end with
@@ -7648,19 +8532,22 @@ end sub
 ' @param    y the position in the y axis to which the teleport will lead.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeteleportcreate(byval map as integer, byval x as byte, byval y as byte)
+public sub writeteleportcreate(byval map as integer, byval x as byte, byval y as byte, optional byval radio as byte = 0)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "teleportcreate" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.teleportcreate)
+            call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.teleportcreate)
         
         call .writeinteger(map)
         
         call .writebyte(x)
         call .writebyte(y)
+        
+        call .writebyte(radio)
     end with
 end sub
 
@@ -7675,7 +8562,8 @@ public sub writeteleportdestroy()
 'last modification: 05/17/06
 'writes the "teleportdestroy" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.teleportdestroy)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.teleportdestroy)
 end sub
 
 ''
@@ -7689,7 +8577,8 @@ public sub writeraintoggle()
 'last modification: 05/17/06
 'writes the "raintoggle" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.raintoggle)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.raintoggle)
 end sub
 
 ''
@@ -7705,7 +8594,8 @@ public sub writesetchardescription(byval desc as string)
 'writes the "setchardescription" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.setchardescription)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.setchardescription)
         
         call .writeasciistring(desc)
     end with
@@ -7725,7 +8615,8 @@ public sub writeforcemiditomap(byval midiid as byte, byval map as integer)
 'writes the "forcemiditomap" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.forcemiditomap)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.forcemiditomap)
         
         call .writebyte(midiid)
         
@@ -7749,7 +8640,8 @@ public sub writeforcewavetomap(byval waveid as byte, byval map as integer, byval
 'writes the "forcewavetomap" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.forcewavetomap)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.forcewavetomap)
         
         call .writebyte(waveid)
         
@@ -7773,7 +8665,8 @@ public sub writeroyalarmymessage(byval message as string)
 'writes the "royalarmymessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.royalarmymessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.royalarmymessage)
         
         call .writeasciistring(message)
     end with
@@ -7792,7 +8685,8 @@ public sub writechaoslegionmessage(byval message as string)
 'writes the "chaoslegionmessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.chaoslegionmessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.chaoslegionmessage)
         
         call .writeasciistring(message)
     end with
@@ -7811,7 +8705,8 @@ public sub writecitizenmessage(byval message as string)
 'writes the "citizenmessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.citizenmessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.citizenmessage)
         
         call .writeasciistring(message)
     end with
@@ -7830,7 +8725,8 @@ public sub writecriminalmessage(byval message as string)
 'writes the "criminalmessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.criminalmessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.criminalmessage)
         
         call .writeasciistring(message)
     end with
@@ -7849,7 +8745,8 @@ public sub writetalkasnpc(byval message as string)
 'writes the "talkasnpc" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.talkasnpc)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.talkasnpc)
         
         call .writeasciistring(message)
     end with
@@ -7866,7 +8763,8 @@ public sub writedestroyallitemsinarea()
 'last modification: 05/17/06
 'writes the "destroyallitemsinarea" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.destroyallitemsinarea)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.destroyallitemsinarea)
 end sub
 
 ''
@@ -7882,7 +8780,8 @@ public sub writeacceptroyalcouncilmember(byval username as string)
 'writes the "acceptroyalcouncilmember" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.acceptroyalcouncilmember)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.acceptroyalcouncilmember)
         
         call .writeasciistring(username)
     end with
@@ -7901,7 +8800,8 @@ public sub writeacceptchaoscouncilmember(byval username as string)
 'writes the "acceptchaoscouncilmember" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.acceptchaoscouncilmember)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.acceptchaoscouncilmember)
         
         call .writeasciistring(username)
     end with
@@ -7918,7 +8818,8 @@ public sub writeitemsinthefloor()
 'last modification: 05/17/06
 'writes the "itemsinthefloor" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.itemsinthefloor)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.itemsinthefloor)
 end sub
 
 ''
@@ -7934,7 +8835,8 @@ public sub writemakedumb(byval username as string)
 'writes the "makedumb" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.makedumb)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.makedumb)
         
         call .writeasciistring(username)
     end with
@@ -7953,7 +8855,8 @@ public sub writemakedumbnomore(byval username as string)
 'writes the "makedumbnomore" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.makedumbnomore)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.makedumbnomore)
         
         call .writeasciistring(username)
     end with
@@ -7970,7 +8873,8 @@ public sub writedumpiptables()
 'last modification: 05/17/06
 'writes the "dumpiptables" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.dumpiptables)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.dumpiptables)
 end sub
 
 ''
@@ -7986,7 +8890,8 @@ public sub writecouncilkick(byval username as string)
 'writes the "councilkick" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.councilkick)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.councilkick)
         
         call .writeasciistring(username)
     end with
@@ -8005,7 +8910,8 @@ public sub writesettrigger(byval trigger as etrigger)
 'writes the "settrigger" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.settrigger)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.settrigger)
         
         call .writebyte(trigger)
     end with
@@ -8022,7 +8928,8 @@ public sub writeasktrigger()
 'last modification: 04/13/07
 'writes the "asktrigger" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.asktrigger)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.asktrigger)
 end sub
 
 ''
@@ -8036,7 +8943,8 @@ public sub writebannediplist()
 'last modification: 05/17/06
 'writes the "bannediplist" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.bannediplist)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.bannediplist)
 end sub
 
 ''
@@ -8050,7 +8958,8 @@ public sub writebannedipreload()
 'last modification: 05/17/06
 'writes the "bannedipreload" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.bannedipreload)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.bannedipreload)
 end sub
 
 ''
@@ -8066,7 +8975,8 @@ public sub writeguildban(byval guild as string)
 'writes the "guildban" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.guildban)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.guildban)
         
         call .writeasciistring(guild)
     end with
@@ -8093,7 +9003,8 @@ public sub writebanip(byval byip as boolean, byref ip() as byte, byval nick as s
     dim i as long
     
     with outgoingdata
-        call .writebyte(clientpacketid.banip)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.banip)
         
         call .writeboolean(byip)
         
@@ -8126,7 +9037,8 @@ public sub writeunbanip(byref ip() as byte)
     dim i as long
     
     with outgoingdata
-        call .writebyte(clientpacketid.unbanip)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.unbanip)
         
         for i = lbound(ip()) to ubound(ip())
             call .writebyte(ip(i))
@@ -8147,8 +9059,8 @@ public sub writecreateitem(byval itemindex as long)
 'writes the "createitem" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.createitem)
-        
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.createitem)
         call .writeinteger(itemindex)
     end with
 end sub
@@ -8164,7 +9076,8 @@ public sub writedestroyitems()
 'last modification: 05/17/06
 'writes the "destroyitems" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.destroyitems)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.destroyitems)
 end sub
 
 ''
@@ -8180,7 +9093,8 @@ public sub writechaoslegionkick(byval username as string)
 'writes the "chaoslegionkick" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.chaoslegionkick)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.chaoslegionkick)
         
         call .writeasciistring(username)
     end with
@@ -8199,7 +9113,8 @@ public sub writeroyalarmykick(byval username as string)
 'writes the "royalarmykick" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.royalarmykick)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.royalarmykick)
         
         call .writeasciistring(username)
     end with
@@ -8218,7 +9133,8 @@ public sub writeforcemidiall(byval midiid as byte)
 'writes the "forcemidiall" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.forcemidiall)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.forcemidiall)
         
         call .writebyte(midiid)
     end with
@@ -8237,7 +9153,8 @@ public sub writeforcewaveall(byval waveid as byte)
 'writes the "forcewaveall" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.forcewaveall)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.forcewaveall)
         
         call .writebyte(waveid)
     end with
@@ -8257,7 +9174,8 @@ public sub writeremovepunishment(byval username as string, byval punishment as b
 'writes the "removepunishment" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.removepunishment)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.removepunishment)
         
         call .writeasciistring(username)
         call .writebyte(punishment)
@@ -8276,7 +9194,8 @@ public sub writetileblockedtoggle()
 'last modification: 05/17/06
 'writes the "tileblockedtoggle" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.tileblockedtoggle)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.tileblockedtoggle)
 end sub
 
 ''
@@ -8290,7 +9209,8 @@ public sub writekillnpcnorespawn()
 'last modification: 05/17/06
 'writes the "killnpcnorespawn" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.killnpcnorespawn)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.killnpcnorespawn)
 end sub
 
 ''
@@ -8304,7 +9224,8 @@ public sub writekillallnearbynpcs()
 'last modification: 05/17/06
 'writes the "killallnearbynpcs" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.killallnearbynpcs)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.killallnearbynpcs)
 end sub
 
 ''
@@ -8320,7 +9241,8 @@ public sub writelastip(byval username as string)
 'writes the "lastip" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.lastip)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.lastip)
         
         call .writeasciistring(username)
     end with
@@ -8337,7 +9259,8 @@ public sub writechangemotd()
 'last modification: 05/17/06
 'writes the "changemotd" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.changemotd)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.changemotd)
 end sub
 
 ''
@@ -8353,7 +9276,8 @@ public sub writesetmotd(byval message as string)
 'writes the "setmotd" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.setmotd)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.setmotd)
         
         call .writeasciistring(message)
     end with
@@ -8372,7 +9296,8 @@ public sub writesystemmessage(byval message as string)
 'writes the "systemmessage" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.systemmessage)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.systemmessage)
         
         call .writeasciistring(message)
     end with
@@ -8391,7 +9316,8 @@ public sub writecreatenpc(byval npcindex as integer)
 'writes the "createnpc" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.createnpc)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.createnpc)
         
         call .writeinteger(npcindex)
     end with
@@ -8410,7 +9336,8 @@ public sub writecreatenpcwithrespawn(byval npcindex as integer)
 'writes the "createnpcwithrespawn" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.createnpcwithrespawn)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.createnpcwithrespawn)
         
         call .writeinteger(npcindex)
     end with
@@ -8430,7 +9357,8 @@ public sub writeimperialarmour(byval armourindex as byte, byval objectindex as i
 'writes the "imperialarmour" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.imperialarmour)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.imperialarmour)
         
         call .writebyte(armourindex)
         
@@ -8452,7 +9380,8 @@ public sub writechaosarmour(byval armourindex as byte, byval objectindex as inte
 'writes the "chaosarmour" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.chaosarmour)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.chaosarmour)
         
         call .writebyte(armourindex)
         
@@ -8471,7 +9400,8 @@ public sub writenavigatetoggle()
 'last modification: 05/17/06
 'writes the "navigatetoggle" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.navigatetoggle)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.navigatetoggle)
 end sub
 
 ''
@@ -8485,7 +9415,8 @@ public sub writeserveropentouserstoggle()
 'last modification: 05/17/06
 'writes the "serveropentouserstoggle" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.serveropentouserstoggle)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.serveropentouserstoggle)
 end sub
 
 ''
@@ -8499,7 +9430,8 @@ public sub writeturnoffserver()
 'last modification: 05/17/06
 'writes the "turnoffserver" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.turnoffserver)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.turnoffserver)
 end sub
 
 ''
@@ -8515,7 +9447,8 @@ public sub writeturncriminal(byval username as string)
 'writes the "turncriminal" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.turncriminal)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.turncriminal)
         
         call .writeasciistring(username)
     end with
@@ -8534,7 +9467,8 @@ public sub writeresetfactions(byval username as string)
 'writes the "resetfactions" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.resetfactions)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.resetfactions)
         
         call .writeasciistring(username)
     end with
@@ -8553,7 +9487,8 @@ public sub writeremovecharfromguild(byval username as string)
 'writes the "removecharfromguild" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.removecharfromguild)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.removecharfromguild)
         
         call .writeasciistring(username)
     end with
@@ -8572,7 +9507,8 @@ public sub writerequestcharmail(byval username as string)
 'writes the "requestcharmail" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.requestcharmail)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.requestcharmail)
         
         call .writeasciistring(username)
     end with
@@ -8592,7 +9528,8 @@ public sub writealterpassword(byval username as string, byval copyfrom as string
 'writes the "alterpassword" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.alterpassword)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.alterpassword)
         
         call .writeasciistring(username)
         call .writeasciistring(copyfrom)
@@ -8613,7 +9550,8 @@ public sub writealtermail(byval username as string, byval newmail as string)
 'writes the "altermail" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.altermail)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.altermail)
         
         call .writeasciistring(username)
         call .writeasciistring(newmail)
@@ -8634,7 +9572,8 @@ public sub writealtername(byval username as string, byval newname as string)
 'writes the "altername" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.altername)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.altername)
         
         call .writeasciistring(username)
         call .writeasciistring(newname)
@@ -8652,7 +9591,8 @@ public sub writetogglecentinelactivated()
 'last modification: 05/17/06
 'writes the "togglecentinelactivated" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.togglecentinelactivated)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.togglecentinelactivated)
 end sub
 
 ''
@@ -8666,7 +9606,8 @@ public sub writedobackup()
 'last modification: 05/17/06
 'writes the "dobackup" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.dobackup)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.dobackup)
 end sub
 
 ''
@@ -8682,7 +9623,8 @@ public sub writeshowguildmessages(byval guild as string)
 'writes the "showguildmessages" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.showguildmessages)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.showguildmessages)
         
         call .writeasciistring(guild)
     end with
@@ -8699,7 +9641,8 @@ public sub writesavemap()
 'last modification: 05/17/06
 'writes the "savemap" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.savemap)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.savemap)
 end sub
 
 ''
@@ -8715,7 +9658,8 @@ public sub writechangemapinfopk(byval ispk as boolean)
 'writes the "changemapinfopk" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfopk)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfopk)
         
         call .writeboolean(ispk)
     end with
@@ -8734,7 +9678,8 @@ public sub writechangemapinfobackup(byval backup as boolean)
 'writes the "changemapinfobackup" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfobackup)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfobackup)
         
         call .writeboolean(backup)
     end with
@@ -8753,7 +9698,8 @@ public sub writechangemapinforestricted(byval restrict as string)
 'writes the "changemapinforestricted" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinforestricted)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinforestricted)
         
         call .writeasciistring(restrict)
     end with
@@ -8772,7 +9718,8 @@ public sub writechangemapinfonomagic(byval nomagic as boolean)
 'writes the "changemapinfonomagic" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfonomagic)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfonomagic)
         
         call .writeboolean(nomagic)
     end with
@@ -8791,7 +9738,8 @@ public sub writechangemapinfonoinvi(byval noinvi as boolean)
 'writes the "changemapinfonoinvi" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfonoinvi)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfonoinvi)
         
         call .writeboolean(noinvi)
     end with
@@ -8810,7 +9758,8 @@ public sub writechangemapinfonoresu(byval noresu as boolean)
 'writes the "changemapinfonoresu" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfonoresu)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfonoresu)
         
         call .writeboolean(noresu)
     end with
@@ -8829,7 +9778,8 @@ public sub writechangemapinfoland(byval land as string)
 'writes the "changemapinfoland" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfoland)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfoland)
         
         call .writeasciistring(land)
     end with
@@ -8848,7 +9798,8 @@ public sub writechangemapinfozone(byval zone as string)
 'writes the "changemapinfozone" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.changemapinfozone)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfozone)
         
         call .writeasciistring(zone)
     end with
@@ -8865,7 +9816,8 @@ public sub writesavechars()
 'last modification: 05/17/06
 'writes the "savechars" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.savechars)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.savechars)
 end sub
 
 ''
@@ -8879,7 +9831,8 @@ public sub writecleansos()
 'last modification: 05/17/06
 'writes the "cleansos" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.cleansos)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.cleansos)
 end sub
 
 ''
@@ -8893,7 +9846,8 @@ public sub writeshowserverform()
 'last modification: 05/17/06
 'writes the "showserverform" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.showserverform)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.showserverform)
 end sub
 
 ''
@@ -8907,7 +9861,8 @@ public sub writenight()
 'last modification: 05/17/06
 'writes the "night" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.night)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.night)
 end sub
 
 ''
@@ -8921,7 +9876,8 @@ public sub writekickallchars()
 'last modification: 05/17/06
 'writes the "kickallchars" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.kickallchars)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.kickallchars)
 end sub
 
 ''
@@ -8935,7 +9891,8 @@ public sub writereloadnpcs()
 'last modification: 05/17/06
 'writes the "reloadnpcs" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.reloadnpcs)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.reloadnpcs)
 end sub
 
 ''
@@ -8949,7 +9906,8 @@ public sub writereloadserverini()
 'last modification: 05/17/06
 'writes the "reloadserverini" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.reloadserverini)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.reloadserverini)
 end sub
 
 ''
@@ -8963,7 +9921,8 @@ public sub writereloadspells()
 'last modification: 05/17/06
 'writes the "reloadspells" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.reloadspells)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.reloadspells)
 end sub
 
 ''
@@ -8977,7 +9936,8 @@ public sub writereloadobjects()
 'last modification: 05/17/06
 'writes the "reloadobjects" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.reloadobjects)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.reloadobjects)
 end sub
 
 ''
@@ -8991,7 +9951,8 @@ public sub writerestart()
 'last modification: 05/17/06
 'writes the "restart" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.restart)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.restart)
 end sub
 
 ''
@@ -9005,7 +9966,8 @@ public sub writeresetautoupdate()
 'last modification: 05/17/06
 'writes the "resetautoupdate" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.resetautoupdate)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.resetautoupdate)
 end sub
 
 ''
@@ -9023,7 +9985,8 @@ public sub writechatcolor(byval r as byte, byval g as byte, byval b as byte)
 'writes the "chatcolor" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.chatcolor)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.chatcolor)
         
         call .writebyte(r)
         call .writebyte(g)
@@ -9042,7 +10005,8 @@ public sub writeignored()
 'last modification: 05/17/06
 'writes the "ignored" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.ignored)
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.ignored)
 end sub
 
 ''
@@ -9059,7 +10023,8 @@ public sub writecheckslot(byval username as string, byval slot as byte)
 'writes the "checkslot" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.checkslot)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.checkslot)
         call .writeasciistring(username)
         call .writebyte(slot)
     end with
@@ -9089,6 +10054,34 @@ public sub writeping()
 end sub
 
 ''
+' writes the "sharenpc" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writesharenpc()
+'***************************************************
+'author: zama
+'last modification: 15/04/2010
+'writes the "sharenpc" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.sharenpc)
+end sub
+
+''
+' writes the "stopsharingnpc" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writestopsharingnpc()
+'***************************************************
+'author: zama
+'last modification: 15/04/2010
+'writes the "stopsharingnpc" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.stopsharingnpc)
+end sub
+
+''
 ' writes the "setinivar" message to the outgoing data buffer.
 '
 ' @param    sllave the name of the key which contains the value to edit
@@ -9103,7 +10096,8 @@ public sub writesetinivar(byref sllave as string, byref sclave as string, byref 
 'writes the "setinivar" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
-        call .writebyte(clientpacketid.setinivar)
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.setinivar)
         
         call .writeasciistring(sllave)
         call .writeasciistring(sclave)

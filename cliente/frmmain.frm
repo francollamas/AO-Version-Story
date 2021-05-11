@@ -3,14 +3,13 @@ object = "{3b7c8863-d78f-101b-b9b5-04021c009402}#1.2#0"; "richtx32.ocx"
 object = "{33101c00-75c3-11cf-a8a0-444553540000}#1.0#0"; "cswsk32.ocx"
 object = "{248dd890-bb45-11cf-9abc-0080c7e7b78d}#1.0#0"; "mswinsck.ocx"
 begin vb.form frmmain 
-   backcolor       =   &h00000000&
-   borderstyle     =   1  'fixed single
-   caption         =   "argentum online"
-   clientheight    =   8625
-   clientleft      =   390
-   clienttop       =   690
-   clientwidth     =   11910
+   borderstyle     =   0  'none
+   clientheight    =   8700
+   clientleft      =   360
+   clienttop       =   300
+   clientwidth     =   12000
    clipcontrols    =   0   'false
+   controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"
       size            =   8.25
@@ -25,9 +24,11 @@ begin vb.form frmmain
    keypreview      =   -1  'true
    linktopic       =   "form1"
    maxbutton       =   0   'false
-   scaleheight     =   575
+   minbutton       =   0   'false
+   palettemode     =   1  'usezorder
+   scaleheight     =   580
    scalemode       =   3  'pixel
-   scalewidth      =   794
+   scalewidth      =   800
    startupposition =   2  'centerscreen
    visible         =   0   'false
    begin socketwrenchctrl.socket socket1 
@@ -62,6 +63,97 @@ begin vb.form frmmain
       type            =   1
       urgent          =   0   'false
    end
+   begin vb.picturebox picsm 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h80000005&
+      borderstyle     =   0  'none
+      forecolor       =   &h80000008&
+      height          =   450
+      index           =   3
+      left            =   11325
+      mousepointer    =   99  'custom
+      scaleheight     =   450
+      scalewidth      =   420
+      tabindex        =   30
+      top             =   8445
+      width           =   420
+   end
+   begin vb.picturebox picsm 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h80000005&
+      borderstyle     =   0  'none
+      forecolor       =   &h80000008&
+      height          =   450
+      index           =   2
+      left            =   10950
+      mousepointer    =   99  'custom
+      scaleheight     =   450
+      scalewidth      =   420
+      tabindex        =   29
+      top             =   8445
+      width           =   420
+   end
+   begin vb.picturebox picsm 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h80000005&
+      borderstyle     =   0  'none
+      forecolor       =   &h80000008&
+      height          =   450
+      index           =   1
+      left            =   10575
+      mousepointer    =   99  'custom
+      scaleheight     =   450
+      scalewidth      =   420
+      tabindex        =   28
+      top             =   8445
+      width           =   420
+   end
+   begin vb.picturebox picsm 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h80000005&
+      borderstyle     =   0  'none
+      forecolor       =   &h80000008&
+      height          =   450
+      index           =   0
+      left            =   10200
+      mousepointer    =   99  'custom
+      scaleheight     =   30
+      scalemode       =   3  'pixel
+      scalewidth      =   28
+      tabindex        =   27
+      top             =   8445
+      width           =   420
+   end
+   begin vb.picturebox picinv 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      causesvalidation=   0   'false
+      clipcontrols    =   0   'false
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000008&
+      height          =   1920
+      left            =   9000
+      scaleheight     =   128
+      scalemode       =   3  'pixel
+      scalewidth      =   160
+      tabindex        =   16
+      top             =   2400
+      width           =   2400
+   end
    begin mswinsocklib.winsock winsock2 
       left            =   5760
       top             =   1920
@@ -82,30 +174,20 @@ begin vb.form frmmain
       endproperty
       forecolor       =   &h000000ff&
       height          =   315
-      left            =   45
+      left            =   150
       maxlength       =   160
       multiline       =   -1  'true
-      tabindex        =   19
+      tabindex        =   2
       tabstop         =   0   'false
       tooltiptext     =   "chat"
-      top             =   1575
+      top             =   1839
       visible         =   0   'false
-      width           =   8160
+      width           =   8190
    end
    begin vb.timer macrotrabajo 
       enabled         =   0   'false
       left            =   7080
       top             =   2520
-   end
-   begin vb.picturebox picture1 
-      height          =   135
-      left            =   11760
-      scaleheight     =   75
-      scalewidth      =   75
-      tabindex        =   18
-      top             =   8520
-      visible         =   0   'false
-      width           =   135
    end
    begin vb.timer trainingmacro 
       enabled         =   0   'false
@@ -126,15 +208,15 @@ begin vb.form frmmain
       endproperty
       forecolor       =   &h000000ff&
       height          =   315
-      left            =   45
+      left            =   120
       maxlength       =   160
       multiline       =   -1  'true
-      tabindex        =   15
+      tabindex        =   1
       tabstop         =   0   'false
       tooltiptext     =   "chat"
-      top             =   8280
+      top             =   8520
       visible         =   0   'false
-      width           =   8160
+      width           =   8250
    end
    begin vb.timer macro 
       interval        =   750
@@ -151,433 +233,32 @@ begin vb.form frmmain
    begin vb.timer second 
       enabled         =   0   'false
       interval        =   1050
-      left            =   3600
+      left            =   4920
       top             =   2520
    end
    begin vb.timer spoofcheck 
       enabled         =   0   'false
       interval        =   60000
-      left            =   3120
+      left            =   4200
       top             =   2520
    end
-   begin vb.picturebox panelder 
-      autosize        =   -1  'true
-      backcolor       =   &h00000000&
-      borderstyle     =   0  'none
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   8145
-      left            =   8235
-      scaleheight     =   543
-      scalemode       =   3  'pixel
-      scalewidth      =   239
-      tabindex        =   1
-      top             =   -60
-      width           =   3585
-      begin vb.commandbutton despinv 
-         caption         =   "+"
-         beginproperty font 
-            name            =   "arial"
-            size            =   9
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   240
-         index           =   1
-         left            =   540
-         mouseicon       =   "frmmain.frx":030a
-         mousepointer    =   99  'custom
-         tabindex        =   9
-         top             =   4800
-         visible         =   0   'false
-         width           =   2430
-      end
-      begin vb.commandbutton despinv 
-         caption         =   "-"
-         beginproperty font 
-            name            =   "arial"
-            size            =   9
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   240
-         index           =   0
-         left            =   540
-         mouseicon       =   "frmmain.frx":045c
-         mousepointer    =   99  'custom
-         tabindex        =   8
-         top             =   2160
-         visible         =   0   'false
-         width           =   2430
-      end
-      begin vb.picturebox picinv 
-         appearance      =   0  'flat
-         autoredraw      =   -1  'true
-         backcolor       =   &h00000000&
-         borderstyle     =   0  'none
-         causesvalidation=   0   'false
-         clipcontrols    =   0   'false
-         beginproperty font 
-            name            =   "ms sans serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         forecolor       =   &h80000008&
-         height          =   2400
-         left            =   555
-         scaleheight     =   160
-         scalemode       =   3  'pixel
-         scalewidth      =   160
-         tabindex        =   7
-         top             =   2400
-         width           =   2400
-      end
-      begin vb.listbox hlst 
-         backcolor       =   &h00000000&
-         forecolor       =   &h00ffffff&
-         height          =   2790
-         left            =   420
-         tabindex        =   14
-         tabstop         =   0   'false
-         top             =   2040
-         visible         =   0   'false
-         width           =   2565
-      end
-      begin vb.label lblporclvl 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         caption         =   "33.33%"
-         forecolor       =   &h00ffff00&
-         height          =   195
-         left            =   1560
-         tabindex        =   17
-         top             =   450
-         width           =   660
-      end
-      begin vb.image cmdmoverhechi 
-         height          =   375
-         index           =   1
-         left            =   2940
-         mouseicon       =   "frmmain.frx":05ae
-         mousepointer    =   99  'custom
-         top             =   2100
-         visible         =   0   'false
-         width           =   315
-      end
-      begin vb.image cmdmoverhechi 
-         height          =   375
-         index           =   0
-         left            =   2940
-         mouseicon       =   "frmmain.frx":0700
-         mousepointer    =   99  'custom
-         top             =   2520
-         visible         =   0   'false
-         width           =   315
-      end
-      begin vb.image cmdinfo 
-         height          =   405
-         left            =   2310
-         mouseicon       =   "frmmain.frx":0852
-         mousepointer    =   99  'custom
-         top             =   4830
-         visible         =   0   'false
-         width           =   855
-      end
-      begin vb.image cmdlanzar 
-         height          =   405
-         left            =   450
-         mouseicon       =   "frmmain.frx":09a4
-         mousepointer    =   99  'custom
-         top             =   4830
-         visible         =   0   'false
-         width           =   1770
-      end
-      begin vb.label label1 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         caption         =   "+"
-         beginproperty font 
-            name            =   "ms serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         forecolor       =   &h00ffffff&
-         height          =   195
-         left            =   1185
-         tabindex        =   13
-         top             =   435
-         visible         =   0   'false
-         width           =   120
-      end
-      begin vb.label exp 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         caption         =   "exp:"
-         forecolor       =   &h00ffffff&
-         height          =   195
-         left            =   285
-         tabindex        =   12
-         top             =   675
-         width           =   345
-      end
-      begin vb.image image3 
-         height          =   195
-         index           =   2
-         left            =   2070
-         top             =   6540
-         width           =   360
-      end
-      begin vb.image image3 
-         height          =   195
-         index           =   1
-         left            =   2055
-         top             =   6255
-         width           =   360
-      end
-      begin vb.image image3 
-         height          =   195
-         index           =   0
-         left            =   2085
-         top             =   5955
-         width           =   360
-      end
-      begin vb.label gldlbl 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         caption         =   "1"
-         beginproperty font 
-            name            =   "ms serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         forecolor       =   &h000000ff&
-         height          =   195
-         left            =   2595
-         tabindex        =   11
-         top             =   5970
-         width           =   105
-      end
-      begin vb.image image1 
-         height          =   300
-         index           =   2
-         left            =   1905
-         mouseicon       =   "frmmain.frx":0af6
-         mousepointer    =   99  'custom
-         top             =   7575
-         width           =   1410
-      end
-      begin vb.image image1 
-         height          =   300
-         index           =   1
-         left            =   1905
-         mouseicon       =   "frmmain.frx":0c48
-         mousepointer    =   99  'custom
-         top             =   7200
-         width           =   1410
-      end
-      begin vb.image image1 
-         height          =   300
-         index           =   0
-         left            =   1920
-         mouseicon       =   "frmmain.frx":0d9a
-         mousepointer    =   99  'custom
-         top             =   6840
-         width           =   1410
-      end
-      begin vb.shape aguasp 
-         backcolor       =   &h00c00000&
-         backstyle       =   1  'opaque
-         borderstyle     =   0  'transparent
-         fillcolor       =   &h0000ffff&
-         height          =   75
-         left            =   315
-         top             =   7575
-         width           =   1290
-      end
-      begin vb.shape comidasp 
-         backcolor       =   &h0000c000&
-         backstyle       =   1  'opaque
-         borderstyle     =   0  'transparent
-         fillcolor       =   &h0000ffff&
-         height          =   75
-         left            =   315
-         top             =   7245
-         width           =   1290
-      end
-      begin vb.shape manshp 
-         backcolor       =   &h00ffff00&
-         backstyle       =   1  'opaque
-         borderstyle     =   0  'transparent
-         height          =   75
-         left            =   315
-         top             =   6585
-         width           =   1290
-      end
-      begin vb.shape stashp 
-         backcolor       =   &h0000ffff&
-         backstyle       =   1  'opaque
-         borderstyle     =   0  'transparent
-         fillcolor       =   &h0000ffff&
-         height          =   75
-         left            =   315
-         top             =   6240
-         width           =   1290
-      end
-      begin vb.shape hpshp 
-         bordercolor     =   &h8000000d&
-         borderstyle     =   0  'transparent
-         fillcolor       =   &h000000ff&
-         fillstyle       =   0  'solid
-         height          =   75
-         left            =   330
-         top             =   6900
-         width           =   1290
-      end
-      begin vb.label label8 
-         backstyle       =   0  'transparent
-         beginproperty font 
-            name            =   "ms sans serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         forecolor       =   &h000000ff&
-         height          =   195
-         left            =   420
-         tabindex        =   10
-         top             =   180
-         width           =   2625
-      end
-      begin vb.label label7 
-         backstyle       =   0  'transparent
-         beginproperty font 
-            name            =   "ms sans serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   450
-         left            =   1800
-         mouseicon       =   "frmmain.frx":0eec
-         mousepointer    =   99  'custom
-         tabindex        =   6
-         top             =   1290
-         width           =   1605
-      end
-      begin vb.label label4 
-         backstyle       =   0  'transparent
-         beginproperty font 
-            name            =   "ms sans serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   435
-         left            =   150
-         mouseicon       =   "frmmain.frx":103e
-         mousepointer    =   99  'custom
-         tabindex        =   5
-         top             =   1305
-         width           =   1605
-      end
-      begin vb.image invequ 
-         height          =   4395
-         left            =   120
-         top             =   1320
-         width           =   3240
-      end
-      begin vb.label lbcriatura 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         beginproperty font 
-            name            =   "verdana"
-            size            =   5.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         forecolor       =   &h000000ff&
-         height          =   120
-         left            =   555
-         tabindex        =   4
-         top             =   1965
-         width           =   30
-      end
-      begin vb.label lvllbl 
-         autosize        =   -1  'true
-         backstyle       =   0  'transparent
-         caption         =   "1"
-         forecolor       =   &h00ffffff&
-         height          =   195
-         left            =   765
-         tabindex        =   3
-         top             =   450
-         width           =   105
-      end
-      begin vb.label label6 
-         backstyle       =   0  'transparent
-         caption         =   "nivel"
-         forecolor       =   &h00ffffff&
-         height          =   225
-         left            =   285
-         tabindex        =   2
-         top             =   450
-         width           =   465
-      end
-   end
    begin richtextlib.richtextbox rectxt 
-      height          =   1500
-      left            =   45
+      height          =   1478
+      left            =   150
       tabindex        =   0
       tabstop         =   0   'false
       tooltiptext     =   "mensajes del servidor"
-      top             =   45
-      width           =   8175
-      _extentx        =   14420
-      _extenty        =   2646
+      top             =   360
+      width           =   8205
+      _extentx        =   14473
+      _extenty        =   2619
       _version        =   393217
       backcolor       =   0
       enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       disablenoscroll =   -1  'true
-      textrtf         =   $"frmmain.frx":1190
+      textrtf         =   $"frmmain.frx":030a
       beginproperty font {0be35203-8f91-11ce-9de3-00aa004bb851} 
          name            =   "tahoma"
          size            =   8.25
@@ -588,64 +269,635 @@ begin vb.form frmmain
          strikethrough   =   0   'false
       endproperty
    end
-   begin vb.image picresu 
-      borderstyle     =   1  'fixed single
-      height          =   510
-      left            =   9810
-      picture         =   "frmmain.frx":120e
-      stretch         =   -1  'true
-      top             =   8100
-      visible         =   0   'false
-      width           =   510
-   end
-   begin vb.image picau 
-      borderstyle     =   1  'fixed single
-      height          =   510
-      left            =   9300
-      picture         =   "frmmain.frx":2510
-      stretch         =   -1  'true
-      top             =   8100
-      visible         =   0   'false
-      width           =   510
-   end
-   begin vb.image picmh 
-      borderstyle     =   1  'fixed single
-      height          =   510
-      left            =   8790
-      picture         =   "frmmain.frx":3782
-      stretch         =   -1  'true
-      top             =   8100
-      visible         =   0   'false
-      width           =   510
-   end
-   begin vb.label coord 
-      autosize        =   -1  'true
+   begin vb.listbox hlst 
       backcolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
+      height          =   2790
+      left            =   8880
+      tabindex        =   17
+      tabstop         =   0   'false
+      top             =   2400
+      visible         =   0   'false
+      width           =   2565
+   end
+   begin vb.image imgmapa 
+      height          =   300
+      left            =   10230
+      top             =   6675
+      width           =   1395
+   end
+   begin vb.image imgclanes 
+      height          =   390
+      left            =   10245
+      top             =   7980
+      width           =   1380
+   end
+   begin vb.image imgestadisticas 
+      height          =   360
+      left            =   10215
+      top             =   7605
+      width           =   1425
+   end
+   begin vb.image imgopciones 
+      height          =   330
+      left            =   10215
+      top             =   7275
+      width           =   1425
+   end
+   begin vb.image imggrupo 
+      height          =   315
+      left            =   10215
+      top             =   6990
+      width           =   1410
+   end
+   begin vb.image imgasignarskill 
+      height          =   450
+      left            =   9975
+      mousepointer    =   99  'custom
+      top             =   690
+      width           =   450
+   end
+   begin vb.label lbldropgold 
       backstyle       =   0  'transparent
-      borderstyle     =   1  'fixed single
-      caption         =   "(000,00,00)"
+      height          =   255
+      left            =   10560
+      mousepointer    =   99  'custom
+      tabindex        =   33
+      top             =   6240
+      width           =   255
+   end
+   begin vb.label lblminimizar 
+      backstyle       =   0  'transparent
+      height          =   255
+      left            =   11280
+      mousepointer    =   99  'custom
+      tabindex        =   32
+      top             =   60
+      width           =   255
+   end
+   begin vb.label lblcerrar 
+      backstyle       =   0  'transparent
+      height          =   255
+      left            =   11550
+      mousepointer    =   99  'custom
+      tabindex        =   31
+      top             =   60
+      width           =   255
+   end
+   begin vb.label label7 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   450
+      left            =   10320
+      mouseicon       =   "frmmain.frx":0388
+      mousepointer    =   99  'custom
+      tabindex        =   19
+      top             =   1920
+      width           =   1125
+   end
+   begin vb.label lblfps 
+      backstyle       =   0  'transparent
+      caption         =   "101"
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   6705
+      tabindex        =   26
+      top             =   60
+      width           =   555
+   end
+   begin vb.image imginvscrolldown 
+      height          =   795
+      left            =   10020
+      top             =   5595
+      visible         =   0   'false
+      width           =   420
+   end
+   begin vb.image imginvscrollup 
+      height          =   1065
+      left            =   10005
+      top             =   4545
+      visible         =   0   'false
+      width           =   420
+   end
+   begin vb.image cmdinfo 
+      height          =   405
+      left            =   10680
+      mouseicon       =   "frmmain.frx":04da
+      mousepointer    =   99  'custom
+      top             =   5280
+      visible         =   0   'false
+      width           =   855
+   end
+   begin vb.label lblmapname 
+      backstyle       =   0  'transparent
+      enabled         =   0   'false
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h0000ffff&
       height          =   255
-      left            =   10680
-      tabindex        =   16
-      top             =   8250
-      width           =   1035
+      left            =   8700
+      tabindex        =   25
+      top             =   8445
+      visible         =   0   'false
+      width           =   1935
    end
-   begin vb.image picseg 
-      borderstyle     =   1  'fixed single
-      height          =   510
-      left            =   8280
-      picture         =   "frmmain.frx":4594
-      stretch         =   -1  'true
-      top             =   8100
-      width           =   510
+   begin vb.image cmdmoverhechi 
+      height          =   240
+      index           =   0
+      left            =   11430
+      mouseicon       =   "frmmain.frx":062c
+      mousepointer    =   99  'custom
+      picture         =   "frmmain.frx":077e
+      top             =   3480
+      visible         =   0   'false
+      width           =   225
+   end
+   begin vb.image cmdmoverhechi 
+      height          =   240
+      index           =   1
+      left            =   11430
+      mouseicon       =   "frmmain.frx":0ac2
+      mousepointer    =   99  'custom
+      picture         =   "frmmain.frx":0c14
+      top             =   3225
+      visible         =   0   'false
+      width           =   225
+   end
+   begin vb.image xz 
+      height          =   255
+      index           =   0
+      left            =   11400
+      top             =   0
+      width           =   255
+   end
+   begin vb.image xzz 
+      height          =   195
+      index           =   1
+      left            =   11445
+      top             =   0
+      width           =   225
+   end
+   begin vb.label lblname 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   195
+      left            =   8760
+      tabindex        =   24
+      top             =   360
+      width           =   2625
+   end
+   begin vb.label lbllvl 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "255"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      left            =   9825
+      tabindex        =   23
+      top             =   1140
+      width           =   270
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "nivel"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      left            =   9225
+      tabindex        =   22
+      top             =   1140
+      width           =   465
+   end
+   begin vb.label lblporclvl 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "33.33%"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffff00&
+      height          =   225
+      left            =   9225
+      tabindex        =   21
+      top             =   1320
+      width           =   555
+   end
+   begin vb.label lblexp 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "exp: 999999999/99999999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      left            =   9225
+      tabindex        =   20
+      top             =   1500
+      width           =   2010
+   end
+   begin vb.image cmdlanzar 
+      height          =   375
+      left            =   8760
+      mouseicon       =   "frmmain.frx":0f58
+      mousepointer    =   99  'custom
+      top             =   5280
+      visible         =   0   'false
+      width           =   1155
+   end
+   begin vb.label label4 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   435
+      left            =   8880
+      mouseicon       =   "frmmain.frx":10aa
+      mousepointer    =   99  'custom
+      tabindex        =   18
+      top             =   1920
+      width           =   1395
+   end
+   begin vb.label gldlbl 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "1"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   210
+      left            =   10920
+      tabindex        =   15
+      top             =   6270
+      width           =   90
+   end
+   begin vb.label lblstrg 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h0000ffff&
+      height          =   210
+      left            =   9720
+      tabindex        =   9
+      top             =   6225
+      width           =   210
+   end
+   begin vb.label lbldext 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h0000ffff&
+      height          =   210
+      left            =   9120
+      tabindex        =   8
+      top             =   6225
+      width           =   210
+   end
+   begin vb.label coord 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "000 x:00 y: 00"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h0000ffff&
+      height          =   255
+      left            =   8700
+      tabindex        =   7
+      top             =   8670
+      width           =   1335
+   end
+   begin vb.label lblweapon 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "000/000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   9.75
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   255
+      left            =   6960
+      tabindex        =   6
+      top             =   8640
+      width           =   855
+   end
+   begin vb.label lblshielder 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "00/00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   9.75
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   255
+      left            =   5130
+      tabindex        =   5
+      top             =   8640
+      width           =   855
+   end
+   begin vb.label lblhelm 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "00/00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   9.75
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   255
+      left            =   2940
+      tabindex        =   4
+      top             =   8640
+      width           =   855
+   end
+   begin vb.label lblarmor 
+      alignment       =   2  'center
+      backstyle       =   0  'transparent
+      caption         =   "00/00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   9.75
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   255
+      left            =   1170
+      tabindex        =   3
+      top             =   8640
+      width           =   855
+   end
+   begin vb.image imgscroll 
+      height          =   240
+      index           =   1000
+      left            =   11400
+      mousepointer    =   99  'custom
+      top             =   3225
+      width           =   225
    end
    begin vb.shape mainviewshp 
       bordercolor     =   &h00404040&
       height          =   6240
-      left            =   120
-      top             =   2040
-      width           =   8190
+      left            =   180
+      top             =   2235
+      visible         =   0   'false
+      width           =   8160
+   end
+   begin vb.image invequ 
+      height          =   4230
+      left            =   8715
+      top             =   1875
+      width           =   2970
+   end
+   begin vb.label lblmana 
+      alignment       =   2  'center
+      backcolor       =   &h00c0c000&
+      backstyle       =   0  'transparent
+      caption         =   "9999/9999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   8760
+      tabindex        =   11
+      top             =   7140
+      width           =   1095
+   end
+   begin vb.label lblenergia 
+      alignment       =   2  'center
+      backcolor       =   &h0000c0c0&
+      backstyle       =   0  'transparent
+      caption         =   "999/999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   8760
+      tabindex        =   10
+      top             =   6780
+      width           =   1095
+   end
+   begin vb.label lblvida 
+      alignment       =   2  'center
+      backcolor       =   &h000000ff&
+      backstyle       =   0  'transparent
+      caption         =   "999/999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   8760
+      tabindex        =   12
+      top             =   7455
+      width           =   1095
+   end
+   begin vb.label lblhambre 
+      alignment       =   2  'center
+      backcolor       =   &h00004000&
+      backstyle       =   0  'transparent
+      caption         =   "999/999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   8760
+      tabindex        =   13
+      top             =   7800
+      width           =   1095
+   end
+   begin vb.label lblsed 
+      alignment       =   2  'center
+      backcolor       =   &h00400000&
+      backstyle       =   0  'transparent
+      caption         =   "999/999"
+      beginproperty font 
+         name            =   "arial"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   180
+      left            =   8760
+      tabindex        =   14
+      top             =   8130
+      width           =   1095
+   end
+   begin vb.shape shpenergia 
+      fillstyle       =   0  'solid
+      height          =   180
+      left            =   8760
+      top             =   6795
+      width           =   1125
+   end
+   begin vb.shape shpmana 
+      fillstyle       =   0  'solid
+      height          =   180
+      left            =   8760
+      top             =   7155
+      width           =   1125
+   end
+   begin vb.shape shpvida 
+      fillstyle       =   0  'solid
+      height          =   180
+      left            =   8760
+      top             =   7470
+      width           =   1125
+   end
+   begin vb.shape shphambre 
+      fillstyle       =   0  'solid
+      height          =   180
+      left            =   8760
+      top             =   7815
+      width           =   1125
+   end
+   begin vb.shape shpsed 
+      fillstyle       =   0  'solid
+      height          =   180
+      left            =   8760
+      top             =   8160
+      width           =   1125
    end
    begin vb.menu mnuobj 
       caption         =   "objeto"
@@ -722,89 +974,221 @@ private clicy as long
 
 public isplaying as byte
 
+private clsformulario as clsformmovementmanager
+
+private cbotondiamarriba as clsgraphicalbutton
+private cbotondiamabajo as clsgraphicalbutton
+private cbotonmapa as clsgraphicalbutton
+private cbotongrupo as clsgraphicalbutton
+private cbotonopciones as clsgraphicalbutton
+private cbotonestadisticas as clsgraphicalbutton
+private cbotonclanes as clsgraphicalbutton
+private cbotonasignarskill as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+public picskillstar as picture
+
 dim puedemacrear as boolean
 
-private sub cmdmoverhechi_click(index as integer)
-    if hlst.listindex = -1 then exit sub
-    dim stemp as string
-
-    select case index
-        case 1 'subir
-            if hlst.listindex = 0 then exit sub
-        case 0 'bajar
-            if hlst.listindex = hlst.listcount - 1 then exit sub
-    end select
-
-    call writemovespell(index, hlst.listindex + 1)
+private sub form_load()
     
-    select case index
-        case 1 'subir
-            stemp = hlst.list(hlst.listindex - 1)
-            hlst.list(hlst.listindex - 1) = hlst.list(hlst.listindex)
-            hlst.list(hlst.listindex) = stemp
-            hlst.listindex = hlst.listindex - 1
-        case 0 'bajar
-            stemp = hlst.list(hlst.listindex + 1)
-            hlst.list(hlst.listindex + 1) = hlst.list(hlst.listindex)
-            hlst.list(hlst.listindex) = stemp
-            hlst.listindex = hlst.listindex + 1
-    end select
+    if nores then
+        ' handles form movement (drag and drop).
+        set clsformulario = new clsformmovementmanager
+        clsformulario.initialize me, 120
+    end if
+
+    me.picture = loadpicture(dirgraficos & "ventanaprincipal.jpg")
+    
+    invequ.picture = loadpicture(dirgraficos & "centroinventario.jpg")
+    
+    call loadbuttons
+    
+    me.left = 0
+    me.top = 0
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    dim i as integer
+    
+    grhpath = dirgraficos
+
+    set cbotondiamarriba = new clsgraphicalbutton
+    set cbotondiamabajo = new clsgraphicalbutton
+    set cbotongrupo = new clsgraphicalbutton
+    set cbotonopciones = new clsgraphicalbutton
+    set cbotonestadisticas = new clsgraphicalbutton
+    set cbotonclanes = new clsgraphicalbutton
+    set cbotonasignarskill = new clsgraphicalbutton
+    set cbotonmapa = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotondiamarriba.initialize(imginvscrollup, "", _
+                                    grhpath & "botondiamarribaf.bmp", _
+                                    grhpath & "botondiamarribaf.bmp", me)
+
+    call cbotondiamabajo.initialize(imginvscrolldown, "", _
+                                    grhpath & "botondiamabajof.bmp", _
+                                    grhpath & "botondiamabajof.bmp", me)
+    
+    call cbotonmapa.initialize(imgmapa, "", _
+                                    grhpath & "botonmaparollover.jpg", _
+                                    grhpath & "botonmapaclick.jpg", me)
+                                    
+    call cbotongrupo.initialize(imggrupo, "", _
+                                    grhpath & "botongruporollover.jpg", _
+                                    grhpath & "botongrupoclick.jpg", me)
+
+    call cbotonopciones.initialize(imgopciones, "", _
+                                    grhpath & "botonopcionesrollover.jpg", _
+                                    grhpath & "botonopcionesclick.jpg", me)
+
+    call cbotonestadisticas.initialize(imgestadisticas, "", _
+                                    grhpath & "botonestadisticasrollover.jpg", _
+                                    grhpath & "botonestadisticasclick.jpg", me)
+
+    call cbotonclanes.initialize(imgclanes, "", _
+                                    grhpath & "botonclanesrollover.jpg", _
+                                    grhpath & "botonclanesclick.jpg", me)
+
+    set picskillstar = loadpicture(grhpath & "botonasignarskills.bmp")
+
+    if skillpoints > 0 then imgasignarskill.picture = picskillstar
+    
+    imgasignarskill.mouseicon = picmouseicon
+    lbldropgold.mouseicon = picmouseicon
+    lblcerrar.mouseicon = picmouseicon
+    lblminimizar.mouseicon = picmouseicon
+    
+    for i = 0 to 3
+        picsm(i).mouseicon = picmouseicon
+    next i
+end sub
+
+public sub lightskillstar(byval bturnon as boolean)
+    if bturnon then
+        imgasignarskill.picture = picskillstar
+    else
+        set imgasignarskill.picture = nothing
+    end if
+end sub
+
+private sub cmdmoverhechi_click(index as integer)
+    if hlst.visible = true then
+        if hlst.listindex = -1 then exit sub
+        dim stemp as string
+    
+        select case index
+            case 1 'subir
+                if hlst.listindex = 0 then exit sub
+            case 0 'bajar
+                if hlst.listindex = hlst.listcount - 1 then exit sub
+        end select
+    
+        call writemovespell(index = 1, hlst.listindex + 1)
+        
+        select case index
+            case 1 'subir
+                stemp = hlst.list(hlst.listindex - 1)
+                hlst.list(hlst.listindex - 1) = hlst.list(hlst.listindex)
+                hlst.list(hlst.listindex) = stemp
+                hlst.listindex = hlst.listindex - 1
+            case 0 'bajar
+                stemp = hlst.list(hlst.listindex + 1)
+                hlst.list(hlst.listindex + 1) = hlst.list(hlst.listindex)
+                hlst.list(hlst.listindex) = stemp
+                hlst.listindex = hlst.listindex + 1
+        end select
+    end if
 end sub
 
 public sub activarmacrohechizos()
     if not hlst.visible then
-        call addtorichtextbox(frmmain.rectxt, "debes tener seleccionado el hechizo para activar el auto-lanzar", 0, 200, 200, false, true, false)
+        call addtorichtextbox(frmmain.rectxt, "debes tener seleccionado el hechizo para activar el auto-lanzar", 0, 200, 200, false, true, true)
         exit sub
     end if
+    
     trainingmacro.interval = int_macro_hechis
     trainingmacro.enabled = true
-    call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos activado", 0, 200, 200, false, true, false)
-    picmh.visible = true
+    call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos activado", 0, 200, 200, false, true, true)
+    call controlsm(esmtype.mspells, true)
 end sub
 
 public sub desactivarmacrohechizos()
-        picmh.visible = false
-        trainingmacro.enabled = false
-        call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos desactivado", 0, 150, 150, false, true, false)
+    trainingmacro.enabled = false
+    call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos desactivado", 0, 150, 150, false, true, true)
+    call controlsm(esmtype.mspells, false)
 end sub
 
-public sub controlseguroresu(byval mostrar as boolean)
-if mostrar then
-    if not picresu.visible then
-        picresu.visible = true
-    end if
-else
-    if picresu.visible then
-        picresu.visible = false
-    end if
-end if
-end sub
+public sub controlsm(byval index as byte, byval mostrar as boolean)
+dim grhindex as long
+dim sr as rect
+dim dr as rect
 
-public sub dibujarmh()
-picmh.visible = true
-end sub
+grhindex = grh_ini_sm + index + sm_cant * (cint(mostrar) + 1)
 
-public sub desdibujarmh()
-picmh.visible = false
-end sub
+with grhdata(grhindex)
+    sr.left = .sx
+    sr.right = sr.left + .pixelwidth
+    sr.top = .sy
+    sr.bottom = sr.top + .pixelheight
+    
+    dr.left = 0
+    dr.right = .pixelwidth
+    dr.top = 0
+    dr.bottom = .pixelheight
+end with
 
-public sub dibujarseguro()
-picseg.visible = true
-end sub
+call drawgrhtohdc(picsm(index).hdc, grhindex, sr, dr)
+picsm(index).refresh
 
-public sub desdibujarseguro()
-picseg.visible = false
-end sub
+select case index
+    case esmtype.sresucitation
+        if mostrar then
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_on, 0, 255, 0, true, false, true)
+            picsm(index).tooltiptext = "seguro de resucitaci�n activado."
+        else
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_off, 255, 0, 0, true, false, true)
+            picsm(index).tooltiptext = "seguro de resucitaci�n desactivado."
+        end if
+        
+    case esmtype.ssafemode
+        if mostrar then
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_activado, 0, 255, 0, true, false, true)
+            picsm(index).tooltiptext = "seguro activado."
+        else
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_desactivado, 255, 0, 0, true, false, true)
+            picsm(index).tooltiptext = "seguro desactivado."
+        end if
+        
+    case esmtype.mspells
+        if mostrar then
+            picsm(index).tooltiptext = "macro de hechizos activado."
+        else
+            picsm(index).tooltiptext = "macro de hechizos desactivado."
+        end if
+        
+    case esmtype.mwork
+        if mostrar then
+            picsm(index).tooltiptext = "macro de trabajo activado."
+        else
+            picsm(index).tooltiptext = "macro de trabajo desactivado."
+        end if
+end select
 
-public sub dibujarsatelite()
-picau.visible = true
-end sub
-
-public sub desdibujarsatelite()
-picau.visible = false
+smstatus(index) = mostrar
 end sub
 
 private sub form_keyup(keycode as integer, shift as integer)
+'***************************************************
+'autor: unknown
+'last modification: 18/11/2009
+'18/11/2009: zama - ahora se pueden poner comandos en los mensajes personalizados (execpto guildchat y privados)
+'***************************************************
 #if seguridadalkon then
     if logging then call cheatingdeath.storekey(keycode, false)
 #end if
@@ -816,13 +1200,15 @@ private sub form_keyup(keycode as integer, shift as integer)
             select case keycode
                 case customkeys.bindedkey(ekeytype.mkeytogglemusic)
                     audio.musicactivated = not audio.musicactivated
+                    
+                case customkeys.bindedkey(ekeytype.mkeytogglesound)
+                    audio.soundactivated = not audio.soundactivated
+                    
+                case customkeys.bindedkey(ekeytype.mkeytogglefxs)
+                    audio.soundeffectsactivated = not audio.soundeffectsactivated
                 
                 case customkeys.bindedkey(ekeytype.mkeygetobject)
                     call agarraritem
-                
-                case customkeys.bindedkey(ekeytype.mkeytogglecombatmode)
-                    call writecombatmodetoggle
-                    iscombate = not iscombate
                 
                 case customkeys.bindedkey(ekeytype.mkeyequipobject)
                     call equiparitem
@@ -861,7 +1247,7 @@ private sub form_keyup(keycode as integer, shift as integer)
                     call tiraritem
                 
                 case customkeys.bindedkey(ekeytype.mkeyuseobject)
-                    if macrotrabajo.enabled then desactivarmacrotrabajo
+                    if macrotrabajo.enabled then call desactivarmacrotrabajo
                         
                     if maintimer.check(timersindex.useitemwithu) then
                         call usaritem
@@ -873,11 +1259,8 @@ private sub form_keyup(keycode as integer, shift as integer)
                         beep
                     end if
                 case customkeys.bindedkey(ekeytype.mkeytogglesafemode)
-                    if frmmain.picseg.visible then
-                        addtorichtextbox frmmain.rectxt, "escribe /seg para quitar el seguro", 255, 255, 255, false, false, false
-                    else
-                        call writesafetoggle
-                    end if
+                    call writesafetoggle
+
                 case customkeys.bindedkey(ekeytype.mkeytoggleresuscitationsafe)
                     call writeresuscitationtoggle
             end select
@@ -885,8 +1268,16 @@ private sub form_keyup(keycode as integer, shift as integer)
             select case keycode
                 'custom messages!
                 case vbkey0 to vbkey9
-                    if lenb(custommessages.message((keycode - 39) mod 10)) <> 0 then
-                        call writetalk(custommessages.message((keycode - 39) mod 10))
+                    dim custommessage as string
+                    
+                    custommessage = custommessages.message((keycode - 39) mod 10)
+                    if lenb(custommessage) <> 0 then
+                        ' no se pueden mandar mensajes personalizados de clan o privado!
+                        if ucase(left(custommessage, 5)) <> "/cmsg" and _
+                            left(custommessage, 1) <> "\" then
+                            
+                            call parseusercommand(custommessage)
+                        end if
                     end if
             end select
         end if
@@ -896,9 +1287,8 @@ private sub form_keyup(keycode as integer, shift as integer)
         case customkeys.bindedkey(ekeytype.mkeytalkwithguild)
             if sendtxt.visible then exit sub
             
-            if (not frmcomerciar.visible) and (not frmcomerciarusu.visible) and _
-              (not frmbancoobj.visible) and (not frmskills3.visible) and _
-              (not frmmsg.visible) and (not frmforo.visible) and _
+            if (not comerciando) and (not mirandoasignarskills) and _
+              (not frmmsg.visible) and (not mirandoforo) and _
               (not frmestadisticas.visible) and (not frmcantidad.visible) then
                 sendcmstxt.visible = true
                 sendcmstxt.setfocus
@@ -906,12 +1296,7 @@ private sub form_keyup(keycode as integer, shift as integer)
         
         case customkeys.bindedkey(ekeytype.mkeytakescreenshot)
             call screencapture
-        
-        case customkeys.bindedkey(ekeytype.mkeytogglefps)
-            fpsflag = not fpsflag
-            if not fpsflag then _
-                frmmain.caption = "argentum online" & " v " & app.major & "." & app.minor & "." & app.revision
-        
+                
         case customkeys.bindedkey(ekeytype.mkeyshowoptions)
             call frmopciones.show(vbmodeless, frmmain)
         
@@ -926,7 +1311,7 @@ private sub form_keyup(keycode as integer, shift as integer)
             end if
                 
             if not puedemacrear then
-                addtorichtextbox frmmain.rectxt, "no tan r�pido..!", 255, 255, 255, false, false, false
+                addtorichtextbox frmmain.rectxt, "no tan r�pido..!", 255, 255, 255, false, false, true
             else
                 call writemeditate
                 puedemacrear = false
@@ -955,13 +1340,13 @@ private sub form_keyup(keycode as integer, shift as integer)
             end if
             
             if macrotrabajo.enabled then
-                desactivarmacrotrabajo
+                call desactivarmacrotrabajo
             else
-                activarmacrotrabajo
+                call activarmacrotrabajo
             end if
         
         case customkeys.bindedkey(ekeytype.mkeyexitgame)
-            if frmmain.macrotrabajo.enabled then desactivarmacrotrabajo
+            if frmmain.macrotrabajo.enabled then call desactivarmacrotrabajo
             call writequit
             
         case customkeys.bindedkey(ekeytype.mkeyattack)
@@ -974,16 +1359,15 @@ private sub form_keyup(keycode as integer, shift as integer)
                 if not maintimer.check(timersindex.attack) or userdescansar or usermeditar then exit sub
             end if
             
-            if trainingmacro.enabled then desactivarmacrohechizos
-            if macrotrabajo.enabled then desactivarmacrotrabajo
+            if trainingmacro.enabled then call desactivarmacrohechizos
+            if macrotrabajo.enabled then call desactivarmacrotrabajo
             call writeattack
         
         case customkeys.bindedkey(ekeytype.mkeytalk)
             if sendcmstxt.visible then exit sub
             
-            if (not frmcomerciar.visible) and (not frmcomerciarusu.visible) and _
-              (not frmbancoobj.visible) and (not frmskills3.visible) and _
-              (not frmmsg.visible) and (not frmforo.visible) and _
+            if (not comerciando) and (not mirandoasignarskills) and _
+              (not frmmsg.visible) and (not mirandoforo) and _
               (not frmestadisticas.visible) and (not frmcantidad.visible) then
                 sendtxt.visible = true
                 sendtxt.setfocus
@@ -1009,23 +1393,106 @@ private sub form_queryunload(cancel as integer, unloadmode as integer)
     end if
 end sub
 
+private sub imgasignarskill_click()
+    dim i as integer
+    
+    llegaronskills = false
+    call writerequestskills
+    call flushbuffer
+    
+    do while not llegaronskills
+        doevents 'esperamos a que lleguen y mantenemos la interfaz viva
+    loop
+    llegaronskills = false
+    
+    for i = 1 to numskills
+        frmskills3.text1(i).caption = userskills(i)
+    next i
+    
+    alocados = skillpoints
+    frmskills3.puntos.caption = skillpoints
+    frmskills3.show , frmmain
+
+end sub
+
+private sub imgclanes_click()
+    if frmguildleader.visible then unload frmguildleader
+    call writerequestguildleaderinfo
+end sub
+
+private sub imgestadisticas_click()
+    llegaronatrib = false
+    llegaronskills = false
+    llegofama = false
+    call writerequestatributes
+    call writerequestskills
+    call writerequestministats
+    call writerequestfame
+    call flushbuffer
+    do while not llegaronskills or not llegaronatrib or not llegofama
+        doevents 'esperamos a que lleguen y mantenemos la interfaz viva
+    loop
+    frmestadisticas.iniciar_labels
+    frmestadisticas.show , frmmain
+    llegaronatrib = false
+    llegaronskills = false
+    llegofama = false
+end sub
+
+private sub imggrupo_click()
+    call writerequestpartyform
+end sub
+
+private sub imginvscrolldown_click()
+    call inventario.scrollinventory(true)
+end sub
+
+private sub imginvscrollup_click()
+    call inventario.scrollinventory(false)
+end sub
+
+private sub imgmapa_click()
+    call frmmapa.show(vbmodeless, frmmain)
+end sub
+
+private sub imgopciones_click()
+    call frmopciones.show(vbmodeless, frmmain)
+end sub
+
+private sub invequ_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub lblscroll_click(index as integer)
+    inventario.scrollinventory (index = 0)
+end sub
+
+private sub lblcerrar_click()
+    prgrun = false
+end sub
+
+private sub lblminimizar_click()
+    me.windowstate = 1
+end sub
+
 private sub macro_timer()
     puedemacrear = true
 end sub
 
 private sub macrotrabajo_timer()
     if inventario.selecteditem = 0 then
-        desactivarmacrotrabajo
+        call desactivarmacrotrabajo
         exit sub
     end if
     
     'macros are disabled if not using argentum!
     if not application.isappactive() then
-        desactivarmacrotrabajo
+        call desactivarmacrotrabajo
         exit sub
     end if
     
-    if usingskill = eskill.pesca or usingskill = eskill.talar or usingskill = eskill.mineria or usingskill = fundirmetal or (usingskill = eskill.herreria and not frmherrero.visible) then
+    if usingskill = eskill.pesca or usingskill = eskill.talar or usingskill = eskill.mineria or _
+                usingskill = fundirmetal or (usingskill = eskill.herreria and not frmherrero.visible) then
         call writeworkleftclick(tx, ty, usingskill)
         usingskill = 0
     end if
@@ -1037,7 +1504,8 @@ end sub
 public sub activarmacrotrabajo()
     macrotrabajo.interval = int_macro_trabajo
     macrotrabajo.enabled = true
-    call addtorichtextbox(frmmain.rectxt, "macro trabajo activado", 0, 200, 200, false, true, false)
+    call addtorichtextbox(frmmain.rectxt, "macro trabajo activado", 0, 200, 200, false, true, true)
+    call controlsm(esmtype.mwork, true)
 end sub
 
 public sub desactivarmacrotrabajo()
@@ -1045,7 +1513,8 @@ public sub desactivarmacrotrabajo()
     macrobltindex = 0
     usingskill = 0
     mousepointer = vbdefault
-    call addtorichtextbox(frmmain.rectxt, "macro trabajo desactivado", 0, 200, 200, false, true, false)
+    call addtorichtextbox(frmmain.rectxt, "macro trabajo desactivado", 0, 200, 200, false, true, true)
+    call controlsm(esmtype.mwork, false)
 end sub
 
 
@@ -1070,20 +1539,50 @@ private sub mnuusar_click()
     call usaritem
 end sub
 
-private sub picau_click()
-    addtorichtextbox frmmain.rectxt, "hay actualizaciones pendientes. cierra el juego y ejecuta el autoupdate. (el mismo debe descargarse del sitio oficial http://ao.alkon.com.ar, y deber�s conectarte al puerto 7667 con la ip tradicional del juego)", 255, 255, 255, false, false, false
-end sub
-
 private sub picmh_click()
-    addtorichtextbox frmmain.rectxt, "auto lanzar hechizos. utiliza esta habilidad para entrenar �nicamente. para activarlo/desactivarlo utiliza f7.", 255, 255, 255, false, false, false
-end sub
-
-private sub picseg_click()
-    addtorichtextbox frmmain.rectxt, "el dibujo de la llave indica que tienes activado el seguro, esto evitar� que por accidente ataques a un ciudadano y te conviertas en criminal. para activarlo o desactivarlo utiliza la tecla '*' (asterisco)", 255, 255, 255, false, false, false
+    call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos. utiliza esta habilidad para entrenar �nicamente. para activarlo/desactivarlo utiliza f7.", 255, 255, 255, false, false, true)
 end sub
 
 private sub coord_click()
-    addtorichtextbox frmmain.rectxt, "estas coordenadas son tu ubicaci�n en el mapa. utiliza la letra l para corregirla si esta no se corresponde con la del servidor por efecto del lag.", 255, 255, 255, false, false, false
+    call addtorichtextbox(frmmain.rectxt, "estas coordenadas son tu ubicaci�n en el mapa. utiliza la letra l para corregirla si esta no se corresponde con la del servidor por efecto del lag.", 255, 255, 255, false, false, true)
+end sub
+
+private sub picsm_dblclick(index as integer)
+select case index
+    case esmtype.sresucitation
+        call writeresuscitationtoggle
+        
+    case esmtype.ssafemode
+        call writesafetoggle
+        
+    case esmtype.mspells
+        if userestado = 1 then
+            with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+            end with
+            exit sub
+        end if
+        
+        if trainingmacro.enabled then
+            call desactivarmacrohechizos
+        else
+            call activarmacrohechizos
+        end if
+        
+    case esmtype.mwork
+        if userestado = 1 then
+            with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+            end with
+            exit sub
+        end if
+        
+        if macrotrabajo.enabled then
+            call desactivarmacrotrabajo
+        else
+            call activarmacrotrabajo
+        end if
+end select
 end sub
 
 private sub sendtxt_keyup(keycode as integer, shift as integer)
@@ -1095,6 +1594,12 @@ private sub sendtxt_keyup(keycode as integer, shift as integer)
         sendtxt.text = ""
         keycode = 0
         sendtxt.visible = false
+        
+        if picinv.visible then
+            picinv.setfocus
+        else
+            hlst.setfocus
+        end if
     end if
 end sub
 
@@ -1136,7 +1641,7 @@ private sub tiraritem()
                 call writedrop(inventario.selecteditem, 1)
             else
                 if inventario.amount(inventario.selecteditem) > 1 then
-                frmcantidad.show , frmmain
+                    if not comerciando then frmcantidad.show , frmmain
                 end if
             end if
         end if
@@ -1156,6 +1661,8 @@ end sub
 private sub usaritem()
     if pausa then exit sub
     
+    if comerciando then exit sub
+    
     if trainingmacro.enabled then desactivarmacrohechizos
     
     if (inventario.selecteditem > 0) and (inventario.selecteditem < max_inventory_slots + 1) then _
@@ -1168,10 +1675,14 @@ private sub equiparitem()
                 call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
         end with
     else
+        if comerciando then exit sub
+        
         if (inventario.selecteditem > 0) and (inventario.selecteditem < max_inventory_slots + 1) then _
         call writeequipitem(inventario.selecteditem)
     end if
 end sub
+
+
 
 ''''''''''''''''''''''''''''''''''''''
 '     hechizos control               '
@@ -1263,14 +1774,14 @@ private sub form_click()
                     call writeleftclick(tx, ty)
                 else
                 
-                    if trainingmacro.enabled then desactivarmacrohechizos
-                    if macrotrabajo.enabled then desactivarmacrotrabajo
+                    if trainingmacro.enabled then call desactivarmacrohechizos
+                    if macrotrabajo.enabled then call desactivarmacrotrabajo
                     
                     if not maintimer.check(timersindex.arrows, false) then 'check if arrows interval has finished.
                         frmmain.mousepointer = vbdefault
                         usingskill = 0
                         with fonttypes(fonttypenames.fonttype_talk)
-                            call addtorichtextbox(frmmain.rectxt, "no pod�s lanzar flechas tan rapido.", .red, .green, .blue, .bold, .italic)
+                            call addtorichtextbox(frmmain.rectxt, "no puedes lanzar proyectiles tan r�pido.", .red, .green, .blue, .bold, .italic)
                         end with
                         exit sub
                     end if
@@ -1281,7 +1792,7 @@ private sub form_click()
                             frmmain.mousepointer = vbdefault
                             usingskill = 0
                             with fonttypes(fonttypenames.fonttype_talk)
-                                call addtorichtextbox(frmmain.rectxt, "no pod�s lanzar flechas tan rapido.", .red, .green, .blue, .bold, .italic)
+                                call addtorichtextbox(frmmain.rectxt, "no puedes lanzar proyectiles tan r�pido.", .red, .green, .blue, .bold, .italic)
                             end with
                             exit sub
                         end if
@@ -1303,7 +1814,7 @@ private sub form_click()
                                 frmmain.mousepointer = vbdefault
                                 usingskill = 0
                                 with fonttypes(fonttypenames.fonttype_talk)
-                                    call addtorichtextbox(frmmain.rectxt, "no pod�s lanzar hechizos tan rapido.", .red, .green, .blue, .bold, .italic)
+                                    call addtorichtextbox(frmmain.rectxt, "no puedes lanzar hechizos tan rapido.", .red, .green, .blue, .bold, .italic)
                                 end with
                                 exit sub
                             end if
@@ -1344,24 +1855,9 @@ private sub form_dblclick()
 'last modify date: 12/27/2007
 '12/28/2007: byval - chequea que la ventana de comercio y boveda no este abierta al hacer doble clic a un comerciante, sobrecarga la lista de items.
 '**************************************************************
-    if not frmforo.visible and not frmcomerciar.visible and not frmbancoobj.visible then
+    if not mirandoforo and not comerciando then 'frmcomerciar.visible and not frmbancoobj.visible then
         call writedoubleclick(tx, ty)
     end if
-end sub
-
-private sub form_load()
-    
-    
-    frmmain.caption = "argentum online" & " v " & app.major & "." & _
-    app.minor & "." & app.revision
-    panelder.picture = loadpicture(app.path & _
-    "\graficos\principalnuevo_sin_energia.jpg")
-    
-    invequ.picture = loadpicture(app.path & _
-    "\graficos\centronuevoinventario.jpg")
-    
-   me.left = 0
-   me.top = 0
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
@@ -1381,6 +1877,9 @@ private sub form_mousemove(button as integer, shift as integer, x as single, y a
     elseif mousey > mainviewshp.height then
         mousey = mainviewshp.height
     end if
+    
+    lastpressed.toggletonormal
+    
 end sub
 
 private sub hlst_keydown(keycode as integer, shift as integer)
@@ -1395,87 +1894,41 @@ private sub hlst_keyup(keycode as integer, shift as integer)
         keycode = 0
 end sub
 
-private sub image1_click(index as integer)
-    call audio.playwave(snd_click)
+private sub lbldropgold_click()
 
-    select case index
-        case 0
-            call frmopciones.show(vbmodeless, frmmain)
-            
-        case 1
-            llegaronatrib = false
-            llegaronskills = false
-            llegofama = false
-            call writerequestatributes
-            call writerequestskills
-            call writerequestministats
-            call writerequestfame
-            call flushbuffer
-            
-            do while not llegaronskills or not llegaronatrib or not llegofama
-                doevents 'esperamos a que lleguen y mantenemos la interfaz viva
-            loop
-            frmestadisticas.iniciar_labels
-            frmestadisticas.show , frmmain
-            llegaronatrib = false
-            llegaronskills = false
-            llegofama = false
-        
-        case 2
-            if frmguildleader.visible then unload frmguildleader
-            
-            call writerequestguildleaderinfo
-    end select
-end sub
-
-private sub image3_click(index as integer)
-    select case index
-        case 0
-            inventario.selectgold
-            if usergld > 0 then
-                frmcantidad.show , frmmain
-            end if
-    end select
-end sub
-
-private sub label1_click()
-    dim i as integer
-    for i = 1 to numskills
-        frmskills3.text1(i).caption = userskills(i)
-    next i
-    alocados = skillpoints
-    frmskills3.puntos.caption = "puntos:" & skillpoints
-    frmskills3.show , frmmain
+    inventario.selectgold
+    if usergld > 0 then
+        if not comerciando then frmcantidad.show , frmmain
+    end if
+    
 end sub
 
 private sub label4_click()
     call audio.playwave(snd_click)
 
-    invequ.picture = loadpicture(app.path & "\graficos\centronuevoinventario.jpg")
+    invequ.picture = loadpicture(app.path & "\graficos\centroinventario.jpg")
 
-    'despinv(0).visible = true
-    'despinv(1).visible = true
+    ' activo controles de inventario
     picinv.visible = true
+    imginvscrollup.visible = true
+    imginvscrolldown.visible = true
 
+    ' desactivo controles de hechizo
     hlst.visible = false
     cmdinfo.visible = false
     cmdlanzar.visible = false
     
-    cmdmoverhechi(0).visible = true
-    cmdmoverhechi(1).visible = true
+    cmdmoverhechi(0).visible = false
+    cmdmoverhechi(1).visible = false
     
-    cmdmoverhechi(0).enabled = false
-    cmdmoverhechi(1).enabled = false
 end sub
 
 private sub label7_click()
     call audio.playwave(snd_click)
 
-    invequ.picture = loadpicture(app.path & "\graficos\centronuevohechizos.jpg")
-    '%%%%%%ocultamos el inv&&&&&&&&&&&&
-    'despinv(0).visible = false
-    'despinv(1).visible = false
-    picinv.visible = false
+    invequ.picture = loadpicture(app.path & "\graficos\centrohechizos.jpg")
+    
+    ' activo controles de hechizos
     hlst.visible = true
     cmdinfo.visible = true
     cmdlanzar.visible = true
@@ -1483,8 +1936,11 @@ private sub label7_click()
     cmdmoverhechi(0).visible = true
     cmdmoverhechi(1).visible = true
     
-    cmdmoverhechi(0).enabled = true
-    cmdmoverhechi(1).enabled = true
+    ' desactivo controles de inventario
+    picinv.visible = false
+    imginvscrollup.visible = false
+    imginvscrolldown.visible = false
+
 end sub
 
 private sub picinv_dblclick()
@@ -1492,7 +1948,7 @@ private sub picinv_dblclick()
     
     if not maintimer.check(timersindex.useitemwithdblclick) then exit sub
     
-    if macrotrabajo.enabled then desactivarmacrotrabajo
+    if macrotrabajo.enabled then call desactivarmacrotrabajo
     
     call usaritem
 end sub
@@ -1509,11 +1965,15 @@ on error resume next  'el .setfocus causaba errores al salir y volver a entrar
         sendtxt.setfocus
     elseif me.sendcmstxt.visible then
         sendcmstxt.setfocus
-    elseif (not frmcomerciar.visible) and (not frmcomerciarusu.visible) and _
-      (not frmbancoobj.visible) and (not frmskills3.visible) and _
-      (not frmmsg.visible) and (not frmforo.visible) and _
-      (not frmestadisticas.visible) and (not frmcantidad.visible) and (picinv.visible) then
-        picinv.setfocus
+    elseif (not comerciando) and (not mirandoasignarskills) and _
+        (not frmmsg.visible) and (not mirandoforo) and _
+        (not frmestadisticas.visible) and (not frmcantidad.visible) then
+         
+        if picinv.visible then
+            picinv.setfocus
+        elseif hlst.visible then
+            hlst.setfocus
+        end if
     end if
 end sub
 
@@ -1574,6 +2034,12 @@ private sub sendcmstxt_keyup(keycode as integer, shift as integer)
         sendcmstxt.text = ""
         keycode = 0
         me.sendcmstxt.visible = false
+        
+        if picinv.visible then
+            picinv.setfocus
+        else
+            hlst.setfocus
+        end if
     end if
 end sub
 
@@ -1644,6 +2110,7 @@ private sub socket1_connect()
 #if seguridadalkon then
             call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
 #end if
+            call audio.playmidi("7.mid")
             frmcrearpersonaje.show vbmodal
     end select
 end sub
@@ -1658,15 +2125,17 @@ private sub socket1_disconnect()
     
     frmconnect.mousepointer = vbnormal
     
-    on local error resume next
-    for i = 0 to forms.count - 1
-        if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmoldpersonaje.name and forms(i).name <> frmcrearpersonaje.name and forms(i).name <> frmpasswd.name then
+    do while i < forms.count - 1
+        i = i + 1
+        
+        if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmcrearpersonaje.name then
             unload forms(i)
         end if
-    next i
+    loop
+    
     on local error goto 0
     
-    if not frmpasswd.visible and not frmcrearpersonaje.visible then
+    if not frmcrearpersonaje.visible then
         frmconnect.visible = true
     end if
     
@@ -1697,6 +2166,10 @@ private sub socket1_disconnect()
         useratributos(i) = 0
     next i
     
+    for i = 1 to max_inventory_slots
+        
+    next i
+    
     macrotrabajo.enabled = false
 
     skillpoints = 0
@@ -1718,10 +2191,6 @@ private sub socket1_lasterror(errorcode as integer, errorstring as string, respo
     second.enabled = false
 
     frmmain.socket1.disconnect
-    
-    if frmoldpersonaje.visible then
-        frmoldpersonaje.visible = false
-    end if
     
     if not frmcrearpersonaje.visible then
         frmconnect.show
@@ -1837,15 +2306,16 @@ private sub winsock1_close()
     
     frmconnect.mousepointer = vbnormal
     
-    on local error resume next
-    for i = 0 to forms.count - 1
-        if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmoldpersonaje.name and forms(i).name <> frmcrearpersonaje.name and forms(i).name <> frmpasswd.name then
+    do while i < forms.count - 1
+        i = i + 1
+        
+        if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmcrearpersonaje.name then
             unload forms(i)
         end if
-    next i
+    loop
     on local error goto 0
     
-    if not frmpasswd.visible and not frmcrearpersonaje.visible then
+    if not frmcrearpersonaje.visible then
         frmconnect.visible = true
     end if
     
@@ -1905,6 +2375,7 @@ private sub winsock1_connect()
 #if seguridadalkon then
             call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
 #end if
+            call audio.playmidi("7.mid")
             frmcrearpersonaje.show vbmodal
             
 #if seguridadalkon then
@@ -1944,10 +2415,6 @@ private sub winsock1_error(byval number as integer, description as string, byval
 
     if winsock1.state <> sckclosed then _
         winsock1.close
-    
-    if frmoldpersonaje.visible then
-        frmoldpersonaje.visible = false
-    end if
 
     if not frmcrearpersonaje.visible then
         frmconnect.show

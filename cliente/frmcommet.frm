@@ -1,11 +1,11 @@
 version 5.00
 begin vb.form frmcommet 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "oferta de paz o alianza"
-   clientheight    =   2820
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   4680
+   clientheight    =   3270
+   clientleft      =   0
+   clienttop       =   -105
+   clientwidth     =   5055
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
@@ -20,37 +20,42 @@ begin vb.form frmcommet
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   2820
-   scalewidth      =   4680
+   scaleheight     =   218
+   scalemode       =   3  'pixel
+   scalewidth      =   337
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command2 
-      cancel          =   -1  'true
-      caption         =   "cancelar"
-      height          =   495
-      left            =   120
-      mouseicon       =   "frmcommet.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2160
-      width           =   2055
-   end
-   begin vb.commandbutton command1 
-      caption         =   "enviar"
-      height          =   495
-      left            =   2400
-      mouseicon       =   "frmcommet.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   1
-      top             =   2160
-      width           =   2055
-   end
    begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   1935
-      left            =   120
+      left            =   240
       multiline       =   -1  'true
       tabindex        =   0
-      top             =   120
-      width           =   4335
+      top             =   480
+      width           =   4575
+   end
+   begin vb.image imgcerrar 
+      height          =   480
+      left            =   2880
+      top             =   2520
+      width           =   960
+   end
+   begin vb.image imgenviar 
+      height          =   480
+      left            =   1080
+      top             =   2520
+      width           =   960
    end
 end
 attribute vb_name = "frmcommet"
@@ -92,71 +97,120 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
 private const max_proposal_length as integer = 520
 
+private cbotonenviar as clsgraphicalbutton
+private cbotoncerrar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
 public nombre as string
+
 public t as tipo
+
 public enum tipo
     alianza = 1
     paz = 2
     rechazopj = 3
 end enum
 
-public sub settipo(byval t as tipo)
-    select case t
-        case tipo.alianza
-            me.caption = "detalle de solicitud de alianza"
-            me.text1.maxlength = 200
-        case tipo.paz
-            me.caption = "detalle de solicitud de paz"
-            me.text1.maxlength = 200
-        case tipo.rechazopj
-            me.caption = "detalle de rechazo de membres�a"
-            me.text1.maxlength = 50
-    end select
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+
+    call loadbackground
+    call loadbuttons
 end sub
 
-
-private sub command1_click()
-
-
-if text1 = "" then
-    if t = paz or t = alianza then
-        msgbox "debes redactar un mensaje solicitando la paz o alianza al l�der de " & nombre
-    else
-        msgbox "debes indicar el motivo por el cual rechazas la membres�a de " & nombre
-    end if
-    exit sub
-end if
-
-if t = paz then
-    call writeguildofferpeace(nombre, replace(text1, vbcrlf, "�"))
-elseif t = alianza then
-    call writeguildofferalliance(nombre, replace(text1, vbcrlf, "�"))
-elseif t = rechazopj then
-    call writeguildrejectnewmember(nombre, replace(replace(text1.text, ",", " "), vbcrlf, " "))
-    'sacamos el char de la lista de aspirantes
-    dim i as long
-    for i = 0 to frmguildleader.solicitudes.listcount - 1
-        if frmguildleader.solicitudes.list(i) = nombre then
-            frmguildleader.solicitudes.removeitem i
-            exit for
-        end if
-    next i
+private sub loadbuttons()
+    dim grhpath as string
     
-    me.hide
-    unload frmcharinfo
-    'call senddata("glinfo")
-end if
-unload me
+    grhpath = dirgraficos
 
+    set cbotonenviar = new clsgraphicalbutton
+    set cbotoncerrar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonenviar.initialize(imgenviar, grhpath & "botonenviarsolicitud.jpg", _
+                                    grhpath & "botonenviarrolloversolicitud.jpg", _
+                                    grhpath & "botonenviarclicksolicitud.jpg", me)
+
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarsolicitud.jpg", _
+                                    grhpath & "botoncerrarrolloversolicitud.jpg", _
+                                    grhpath & "botoncerrarclicksolicitud.jpg", me)
 end sub
 
-private sub command2_click()
-unload me
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub imgenviar_click()
+
+    if text1 = "" then
+        if t = paz or t = alianza then
+            msgbox "debes redactar un mensaje solicitando la paz o alianza al l�der de " & nombre
+        else
+            msgbox "debes indicar el motivo por el cual rechazas la membres�a de " & nombre
+        end if
+        
+        exit sub
+    end if
+    
+    if t = paz then
+        call writeguildofferpeace(nombre, replace(text1, vbcrlf, "�"))
+        
+    elseif t = alianza then
+        call writeguildofferalliance(nombre, replace(text1, vbcrlf, "�"))
+        
+    elseif t = rechazopj then
+        call writeguildrejectnewmember(nombre, replace(replace(text1.text, ",", " "), vbcrlf, " "))
+        'sacamos el char de la lista de aspirantes
+        dim i as long
+        
+        for i = 0 to frmguildleader.solicitudes.listcount - 1
+            if frmguildleader.solicitudes.list(i) = nombre then
+                frmguildleader.solicitudes.removeitem i
+                exit for
+            end if
+        next i
+        
+        me.hide
+        unload frmcharinfo
+    end if
+    
+    unload me
+
 end sub
 
 private sub text1_change()
     if len(text1.text) > max_proposal_length then _
         text1.text = left$(text1.text, max_proposal_length)
+end sub
+
+private sub loadbackground()
+
+    select case t
+        case tipo.alianza
+            me.picture = loadpicture(dirgraficos & "ventanapropuestaalianza.jpg")
+            
+        case tipo.paz
+            me.picture = loadpicture(dirgraficos & "ventanapropuestapaz.jpg")
+            
+        case tipo.rechazopj
+            me.picture = loadpicture(dirgraficos & "ventanamotivorechazo.jpg")
+            
+    end select
+    
+end sub
+
+private sub text1_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

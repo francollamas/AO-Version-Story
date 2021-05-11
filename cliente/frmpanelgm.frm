@@ -22,6 +22,15 @@ begin vb.form frmpanelgm
       tabindex        =   12
       top             =   360
       width           =   3975
+      begin vb.commandbutton cmdconsulta 
+         caption         =   "/consulta"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1320
+         tabindex        =   87
+         top             =   1320
+         width           =   1095
+      end
       begin vb.commandbutton cmdnoreal 
          caption         =   "/noreal"
          causesvalidation=   0   'false
@@ -1063,6 +1072,10 @@ private sub cmdconden_click()
     if lenb(nick) <> 0 then _
         if msgbox("�seguro desea volver criminal a " & nick & "?", vbyesno, "atencion!") = vbyes then _
             call writeturncriminal(nick)
+end sub
+
+private sub cmdconsulta_click()
+    writeconsulta
 end sub
 
 private sub cmdct_click()

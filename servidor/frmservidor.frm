@@ -524,6 +524,7 @@ attribute vb_exposed = false
 option explicit
 
 private sub command1_click()
+call resetforums
 call loadobjdata
 
 end sub
@@ -553,7 +554,7 @@ dim n as integer, k as integer
 
 dim sentrada as string
 
-sentrada = inputbox("escribe ""estoy de acuerdo"" entre comillas y con distici�n de mayusculas minusculas para desbanear a todos los personajes", "unban", "hola")
+sentrada = inputbox("escribe ""estoy de acuerdo"" entre comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes.", "unban", "hola")
 if sentrada = "estoy de acuerdo" then
 
     fn = app.path & "\logs\gentebanned.log"
@@ -596,7 +597,7 @@ dim i as long, n as long
 
 dim sentrada as string
 
-sentrada = inputbox("escribe ""estoy de acuerdo"" sin comillas y con distici�n de mayusculas minusculas para desbanear a todos los personajes", "unban", "hola")
+sentrada = inputbox("escribe ""estoy de acuerdo"" sin comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes", "unban", "hola")
 if sentrada = "estoy de acuerdo" then
     
     n = banips.count
@@ -616,7 +617,7 @@ end sub
 private sub command20_click()
 #if usarquesocket = 1 then
 
-if msgbox("esta seguro que desea reiniciar los sockets ? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
     call wsapireiniciarsockets
 end if
 
@@ -624,7 +625,7 @@ end if
 
 dim loopc as integer
 
-if msgbox("esta seguro que desea reiniciar los sockets ? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
     for loopc = 1 to maxusers
         if userlist(loopc).connid <> -1 and userlist(loopc).connidvalida then
             call closesocket(loopc)
@@ -659,13 +660,13 @@ private sub command22_click()
 end sub
 
 private sub command23_click()
-if msgbox("esta seguro que desea hacer worldsave, guardar pjs y cerrar ?", vbyesno, "apagar magicamente") = vbyes then
+if msgbox("�est� seguro que desea hacer worldsave, guardar pjs y cerrar?", vbyesno, "apagar magicamente") = vbyes then
     me.mousepointer = 11
     
     frmstat.show
    
     'worldsave
-    call dobackup
+    call es.dobackup
 
     'commit experiencia
     call mdparty.actualizaexperiencias
@@ -703,9 +704,9 @@ private sub command28_click()
 end sub
 
 private sub command3_click()
-if msgbox("��atencion!! si reinicia el servidor puede provocar la perdida de datos de los usarios. �desea reiniciar el servidor de todas maneras?", vbyesno) = vbyes then
+if msgbox("��atencion!! si reinicia el servidor puede provocar la p�rdida de datos de los usarios. �desea reiniciar el servidor de todas maneras?", vbyesno) = vbyes then
     me.visible = false
-    call restart
+    call general.restart
 end if
 end sub
 
@@ -713,7 +714,7 @@ private sub command4_click()
 on error goto eh
     me.mousepointer = 11
     frmstat.show
-    call dobackup
+    call es.dobackup
     me.mousepointer = 0
     msgbox "worldsave ok!!"
 exit sub

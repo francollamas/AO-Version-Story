@@ -1,79 +1,92 @@
 version 5.00
 begin vb.form frmguildnews 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "guildnews"
-   clientheight    =   6315
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   4935
+   clientheight    =   6780
+   clientleft      =   0
+   clienttop       =   -75
+   clientwidth     =   5010
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6315
-   scalewidth      =   4935
+   scaleheight     =   452
+   scalemode       =   3  'pixel
+   scalewidth      =   334
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.frame frame3 
-      caption         =   "clanes aliados"
-      height          =   1455
-      left            =   120
-      tabindex        =   5
-      top             =   4320
-      width           =   4575
-      begin vb.listbox aliados 
-         height          =   1035
-         itemdata        =   "frmguildnews.frx":0000
-         left            =   120
-         list            =   "frmguildnews.frx":0002
-         tabindex        =   6
-         top             =   240
-         width           =   4335
-      end
+   begin vb.textbox txtclanesaliados 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   1020
+      left            =   315
+      locked          =   -1  'true
+      multiline       =   -1  'true
+      scrollbars      =   2  'vertical
+      tabindex        =   2
+      top             =   5040
+      width           =   4275
    end
-   begin vb.frame frame2 
-      caption         =   "clanes con los que estamos en guerra"
-      height          =   1455
-      left            =   120
-      tabindex        =   3
-      top             =   2760
-      width           =   4575
-      begin vb.listbox guerra 
-         height          =   1035
-         itemdata        =   "frmguildnews.frx":0004
-         left            =   120
-         list            =   "frmguildnews.frx":0006
-         tabindex        =   4
-         top             =   240
-         width           =   4335
-      end
-   end
-   begin vb.frame frame1 
-      caption         =   "guildnews"
-      height          =   2535
-      left            =   120
+   begin vb.textbox txtclanesguerra 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   1020
+      left            =   315
+      locked          =   -1  'true
+      multiline       =   -1  'true
+      scrollbars      =   2  'vertical
       tabindex        =   1
-      top             =   120
-      width           =   4575
-      begin vb.textbox news 
-         height          =   2175
-         left            =   120
-         multiline       =   -1  'true
-         tabindex        =   2
-         top             =   240
-         width           =   4335
-      end
+      top             =   3480
+      width           =   4275
    end
-   begin vb.commandbutton command1 
-      cancel          =   -1  'true
-      caption         =   "aceptar"
-      height          =   375
-      left            =   240
-      mouseicon       =   "frmguildnews.frx":0008
-      mousepointer    =   99  'custom
+   begin vb.textbox news 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   2100
+      left            =   315
+      locked          =   -1  'true
+      multiline       =   -1  'true
       tabindex        =   0
-      top             =   5880
-      width           =   4335
+      top             =   825
+      width           =   4275
+   end
+   begin vb.image imgaceptar 
+      height          =   375
+      left            =   315
+      tag             =   "1"
+      top             =   6240
+      width           =   4350
    end
 end
 attribute vb_name = "frmguildnews"
@@ -115,8 +128,50 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-on error resume next
-unload me
-frmmain.setfocus
+private clsformulario as clsformmovementmanager
+
+private cbotonaceptar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private sub aliados_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaguildnews.jpg")
+    
+    loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonaceptar = new clsgraphicalbutton
+    set lastpressed = new clsgraphicalbutton
+    
+    call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarguildnews.jpg", grhpath & "botonaceptarrolloverguildnews.jpg", _
+                                    grhpath & "botonaceptarclickguildnews.jpg", me)
+   
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgaceptar_click()
+    on error resume next
+    unload me
+    frmmain.setfocus
+end sub
+
+private sub imgaceptar_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+

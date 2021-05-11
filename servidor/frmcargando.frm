@@ -43,15 +43,6 @@ begin vb.form frmcargando
          autosize        =   -1  'true
          backstyle       =   0  'transparent
          caption         =   "cargando, por favor espere..."
-         beginproperty font 
-            name            =   "ms sans serif"
-            size            =   8.25
-            charset         =   0
-            weight          =   400
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
          forecolor       =   &h000000ff&
          height          =   225
          index           =   3

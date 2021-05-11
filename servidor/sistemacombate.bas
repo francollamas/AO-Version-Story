@@ -1,4 +1,5 @@
 attribute vb_name = "sistemacombate"
+
 'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
@@ -56,10 +57,21 @@ public function maximoint(byval a as integer, byval b as integer) as integer
 end function
 
 private function poderevasionescudo(byval userindex as integer) as long
-    poderevasionescudo = (userlist(userindex).stats.userskills(eskill.defensa) * modclase(userlist(userindex).clase).evasion) / 2
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+    poderevasionescudo = (userlist(userindex).stats.userskills(eskill.defensa) * modclase(userlist(userindex).clase).escudo) / 2
 end function
 
 private function poderevasion(byval userindex as integer) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
     dim ltemp as long
     with userlist(userindex)
         ltemp = (.stats.userskills(eskill.tacticas) + _
@@ -70,6 +82,12 @@ private function poderevasion(byval userindex as integer) as long
 end function
 
 private function poderataquearma(byval userindex as integer) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim poderataquetemp as long
     
     with userlist(userindex)
@@ -88,6 +106,12 @@ private function poderataquearma(byval userindex as integer) as long
 end function
 
 private function poderataqueproyectil(byval userindex as integer) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim poderataquetemp as long
     
     with userlist(userindex)
@@ -106,17 +130,23 @@ private function poderataqueproyectil(byval userindex as integer) as long
 end function
 
 private function poderataquewrestling(byval userindex as integer) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim poderataquetemp as long
     
     with userlist(userindex)
         if .stats.userskills(eskill.wrestling) < 31 then
-            poderataquetemp = .stats.userskills(eskill.wrestling) * modclase(.clase).ataquearmas
+            poderataquetemp = .stats.userskills(eskill.wrestling) * modclase(.clase).ataquewrestling
         elseif .stats.userskills(eskill.wrestling) < 61 then
-            poderataquetemp = (.stats.userskills(eskill.wrestling) + .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquearmas
+            poderataquetemp = (.stats.userskills(eskill.wrestling) + .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquewrestling
         elseif .stats.userskills(eskill.wrestling) < 91 then
-            poderataquetemp = (.stats.userskills(eskill.wrestling) + 2 * .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquearmas
+            poderataquetemp = (.stats.userskills(eskill.wrestling) + 2 * .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquewrestling
         else
-            poderataquetemp = (.stats.userskills(eskill.wrestling) + 3 * .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquearmas
+            poderataquetemp = (.stats.userskills(eskill.wrestling) + 3 * .stats.useratributos(eatributos.agilidad)) * modclase(.clase).ataquewrestling
         end if
         
         poderataquewrestling = (poderataquetemp + (2.5 * maximoint(.stats.elv - 12, 0)))
@@ -124,6 +154,12 @@ private function poderataquewrestling(byval userindex as integer) as long
 end function
 
 public function userimpactonpc(byval userindex as integer, byval npcindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim poderataque as long
     dim arma as integer
     dim skill as eskill
@@ -150,7 +186,9 @@ public function userimpactonpc(byval userindex as integer, byval npcindex as int
     userimpactonpc = (randomnumber(1, 100) <= probexito)
     
     if userimpactonpc then
-        call subirskill(userindex, skill)
+        call subirskill(userindex, skill, true)
+    else
+        call subirskill(userindex, skill, false)
     end if
 end function
 
@@ -196,8 +234,10 @@ public function npcimpacto(byval npcindex as integer, byval userindex as integer
                 if rechazo then
                     'se rechazo el ataque con el escudo
                     call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_escudo, userlist(userindex).pos.x, userlist(userindex).pos.y))
-                    call writeblockedwithshielduser(userindex)
-                    call subirskill(userindex, defensa)
+                    call writemultimessage(userindex, emessages.blockedwithshielduser) 'call writeblockedwithshielduser(userindex)
+                    call subirskill(userindex, eskill.defensa, true)
+                else
+                    call subirskill(userindex, eskill.defensa, false)
                 end if
             end if
         end if
@@ -205,12 +245,20 @@ public function npcimpacto(byval npcindex as integer, byval userindex as integer
 end function
 
 public function calcularda�o(byval userindex as integer, optional byval npcindex as integer = 0) as long
+'***************************************************
+'author: unknown
+'last modification: 01/04/2010 (zama)
+'01/04/2010: zama - modifico el da�o de wrestling.
+'01/04/2010: zama - agrego bonificadores de wrestling para los guantes.
+'***************************************************
     dim da�oarma as long
     dim da�ousuario as long
     dim arma as objdata
     dim modifclase as single
     dim proyectil as objdata
     dim da�omaxarma as long
+    dim da�ominarma as long
+    dim objindex as integer
     
     ''sacar esto si no queremos q la matadracos mate el dragon si o si
     dim matodragon as boolean
@@ -277,8 +325,22 @@ public function calcularda�o(byval userindex as integer, optional byval npcind
             end if
         else
             modifclase = modclase(.clase).da�owrestling
-            da�oarma = randomnumber(1, 3) 'hacemos que sea "tipo" una daga el ataque de wrestling
-            da�omaxarma = 3
+            
+            ' da�o sin guantes
+            da�ominarma = 4
+            da�omaxarma = 9
+            
+            ' plus de guantes (en slot de anillo)
+            objindex = .invent.anilloeqpobjindex
+            if objindex > 0 then
+                if objdata(objindex).guante = 1 then
+                    da�ominarma = da�ominarma + objdata(objindex).minhit
+                    da�omaxarma = da�omaxarma + objdata(objindex).maxhit
+                end if
+            end if
+            
+            da�oarma = randomnumber(da�ominarma, da�omaxarma)
+            
         end if
         
         da�ousuario = randomnumber(.stats.minhit, .stats.maxhit)
@@ -293,33 +355,48 @@ public function calcularda�o(byval userindex as integer, optional byval npcind
 end function
 
 public sub userda�onpc(byval userindex as integer, byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 07/04/2010 (zama)
+'25/01/2010: zama - agrego poder acuchillar npcs.
+'07/04/2010: zama - los asesinos apu�alan acorde al da�o base sin descontar la defensa del npc.
+'***************************************************
+
     dim da�o as long
+    dim da�obase as long
     
-    da�o = calcularda�o(userindex, npcindex)
+    da�obase = calcularda�o(userindex, npcindex)
     
     'esta navegando? si es asi le sumamos el da�o del barco
-    if userlist(userindex).flags.navegando = 1 and userlist(userindex).invent.barcoobjindex > 0 then
-        da�o = da�o + randomnumber(objdata(userlist(userindex).invent.barcoobjindex).minhit, objdata(userlist(userindex).invent.barcoobjindex).maxhit)
+    if userlist(userindex).flags.navegando = 1 then
+        if userlist(userindex).invent.barcoobjindex > 0 then
+            da�obase = da�obase + randomnumber(objdata(userlist(userindex).invent.barcoobjindex).minhit, _
+                                        objdata(userlist(userindex).invent.barcoobjindex).maxhit)
+        end if
     end if
     
     with npclist(npcindex)
-        da�o = da�o - .stats.def
+        da�o = da�obase - .stats.def
         
         if da�o < 0 then da�o = 0
         
-        call writeuserhitnpc(userindex, da�o)
+        'call writeuserhitnpc(userindex, da�o)
+        call writemultimessage(userindex, emessages.userhitnpc, da�o)
         call calculardarexp(userindex, npcindex, da�o)
         .stats.minhp = .stats.minhp - da�o
         
         if .stats.minhp > 0 then
             'trata de apu�alar por la espalda al enemigo
             if puedeapu�alar(userindex) then
-               call doapu�alar(userindex, npcindex, 0, da�o)
-               call subirskill(userindex, apu�alar)
+               call doapu�alar(userindex, npcindex, 0, da�obase)
             end if
             
             'trata de dar golpe cr�tico
             call dogolpecritico(userindex, npcindex, 0, da�o)
+            
+            if puedeacuchillar(userindex) then
+                call doacuchillar(userindex, npcindex, 0, da�o)
+            end if
         end if
         
         
@@ -351,6 +428,12 @@ public sub userda�onpc(byval userindex as integer, byval npcindex as integer)
 end sub
 
 public sub npcda�o(byval npcindex as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim da�o as integer
     dim lugar as integer
     dim absorbido as integer
@@ -392,7 +475,8 @@ public sub npcda�o(byval npcindex as integer, byval userindex as integer)
         da�o = da�o - absorbido
         if da�o < 1 then da�o = 1
         
-        call writenpchituser(userindex, lugar, da�o)
+        call writemultimessage(userindex, emessages.npchituser, lugar, da�o)
+        'call writenpchituser(userindex, lugar, da�o)
         
         if .flags.privilegios and playertype.user then .stats.minhp = .stats.minhp - da�o
         
@@ -409,7 +493,7 @@ public sub npcda�o(byval npcindex as integer, byval userindex as integer)
         
         'muere el usuario
         if .stats.minhp <= 0 then
-            call writenpckilluser(userindex) ' le informamos que ha muerto ;)
+            call writemultimessage(userindex, emessages.npckilluser) 'call writenpckilluser(userindex) ' le informamos que ha muerto ;)
             
             'si lo mato un guardia
             if criminal(userindex) and npclist(npcindex).npctype = enpctype.guardiareal then
@@ -434,6 +518,12 @@ public sub npcda�o(byval npcindex as integer, byval userindex as integer)
 end sub
 
 public sub restarcriminalidad(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim eracriminal as boolean
     eracriminal = criminal(userindex)
     
@@ -453,21 +543,41 @@ public sub restarcriminalidad(byval userindex as integer)
 end sub
 
 public sub checkpets(byval npcindex as integer, byval userindex as integer, optional byval checkelementales as boolean = true)
+'***************************************************
+'author: unknown
+'last modification: 15/04/2010
+'15/04/2010: zama - las mascotas no se apropian de npcs.
+'***************************************************
+
     dim j as integer
     
-    for j = 1 to maxmascotas
-        if userlist(userindex).mascotasindex(j) > 0 then
-           if userlist(userindex).mascotasindex(j) <> npcindex then
-            if checkelementales or (npclist(userlist(userindex).mascotasindex(j)).numero <> elementalfuego and npclist(userlist(userindex).mascotasindex(j)).numero <> elementaltierra) then
-                if npclist(userlist(userindex).mascotasindex(j)).targetnpc = 0 then npclist(userlist(userindex).mascotasindex(j)).targetnpc = npcindex
-                npclist(userlist(userindex).mascotasindex(j)).movement = tipoai.npcatacanpc
+    ' si no tengo mascotas, para que cheaquear lo demas?
+    if userlist(userindex).nromascotas = 0 then exit sub
+    
+    if not puedeatacarnpc(userindex, npcindex, , true) then exit sub
+    
+    with userlist(userindex)
+        for j = 1 to maxmascotas
+            if .mascotasindex(j) > 0 then
+               if .mascotasindex(j) <> npcindex then
+                if checkelementales or (npclist(.mascotasindex(j)).numero <> elementalfuego and npclist(.mascotasindex(j)).numero <> elementaltierra) then
+                    
+                    if npclist(.mascotasindex(j)).targetnpc = 0 then npclist(.mascotasindex(j)).targetnpc = npcindex
+                    npclist(.mascotasindex(j)).movement = tipoai.npcatacanpc
+                end if
+               end if
             end if
-           end if
-        end if
-    next j
+        next j
+    end with
 end sub
 
 public sub allfollowamo(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim j as integer
     
     for j = 1 to maxmascotas
@@ -478,9 +588,16 @@ public sub allfollowamo(byval userindex as integer)
 end sub
 
 public function npcatacauser(byval npcindex as integer, byval userindex as integer) as boolean
+'*************************************************
+'author: unknown
+'last modified: -
+'
+'*************************************************
 
-    if userlist(userindex).flags.admininvisible = 1 then exit function
-    if (not userlist(userindex).flags.privilegios and playertype.user) <> 0 and not userlist(userindex).flags.adminperseguible then exit function
+    with userlist(userindex)
+        if .flags.admininvisible = 1 then exit function
+        if (not .flags.privilegios and playertype.user) <> 0 and not .flags.adminperseguible then exit function
+    end with
     
     with npclist(npcindex)
         ' el npc puede atacar ???
@@ -521,18 +638,24 @@ public function npcatacauser(byval npcindex as integer, byval userindex as integ
             '�puede envenenar?
             if npclist(npcindex).veneno = 1 then call npcenvenenaruser(userindex)
         end with
+        
+        call subirskill(userindex, eskill.tacticas, false)
     else
-        call writenpcswing(userindex)
+        call writemultimessage(userindex, emessages.npcswing)
+        call subirskill(userindex, eskill.tacticas, true)
     end if
-    
-    '-----tal vez suba los skills------
-    call subirskill(userindex, tacticas)
     
     'controla el nivel del usuario
     call checkuserlevel(userindex)
 end function
 
 private function npcimpactonpc(byval atacante as integer, byval victima as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim poderatt as long
     dim podereva as long
     dim probexito as long
@@ -546,6 +669,12 @@ private function npcimpactonpc(byval atacante as integer, byval victima as integ
 end function
 
 public sub npcda�onpc(byval atacante as integer, byval victima as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim da�o as integer
     
     with npclist(atacante)
@@ -625,13 +754,17 @@ public sub npcatacanpc(byval atacante as integer, byval victima as integer, opti
     end with
 end sub
 
-public sub usuarioatacanpc(byval userindex as integer, byval npcindex as integer)
+public function usuarioatacanpc(byval userindex as integer, byval npcindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'12/01/2010: zama - los druidas pierden la inmunidad de ser atacados por npcs cuando los atacan.
+'14/01/2010: zama - lo transformo en funci�n, para que no se pierdan municiones al atacar targets inv�lidos.
+'***************************************************
 
 on error goto errhandler
 
-    if not puedeatacarnpc(userindex, npcindex) then
-        exit sub
-    end if
+    if not puedeatacarnpc(userindex, npcindex) then exit function
     
     call npcatacado(npcindex, userindex)
     
@@ -645,16 +778,28 @@ on error goto errhandler
         call userda�onpc(userindex, npcindex)
     else
         call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_swing, userlist(userindex).pos.x, userlist(userindex).pos.y))
-        call writeuserswing(userindex)
+        call writemultimessage(userindex, emessages.userswing)
     end if
-exit sub
+    
+    ' revel� su condici�n de usuario al atacar, los npcs lo van a atacar
+    userlist(userindex).flags.ignorado = false
+    
+    usuarioatacanpc = true
+    
+    exit function
     
 errhandler:
     call logerror("error en usuarioatacanpc. error " & err.number & " : " & err.description)
     
-end sub
+end function
 
 public sub usuarioataca(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim index as integer
     dim attackpos as worldpos
     
@@ -675,9 +820,9 @@ public sub usuarioataca(byval userindex as integer)
             call quitarsta(userindex, randomnumber(1, 10))
         else
             if .genero = egenero.hombre then
-                call writeconsolemsg(userindex, "estas muy cansado para luchar.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "est�s muy cansado para luchar.", fonttypenames.fonttype_info)
             else
-                call writeconsolemsg(userindex, "estas muy cansada para luchar.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "est�s muy cansada para luchar.", fonttypenames.fonttype_info)
             end if
             exit sub
         end if
@@ -707,13 +852,13 @@ public sub usuarioataca(byval userindex as integer)
         if index > 0 then
             if npclist(index).attackable then
                 if npclist(index).maestrouser > 0 and mapinfo(npclist(index).pos.map).pk = false then
-                    call writeconsolemsg(userindex, "no pod�s atacar mascotas en zonas seguras", fonttypenames.fonttype_fight)
+                    call writeconsolemsg(userindex, "no puedes atacar mascotas en zona segura.", fonttypenames.fonttype_fight)
                     exit sub
                 end if
                 
                 call usuarioatacanpc(userindex, index)
             else
-                call writeconsolemsg(userindex, "no pod�s atacar a este npc", fonttypenames.fonttype_fight)
+                call writeconsolemsg(userindex, "no puedes atacar a este npc.", fonttypenames.fonttype_fight)
             end if
             
             call writeupdateuserstats(userindex)
@@ -731,7 +876,12 @@ public sub usuarioataca(byval userindex as integer)
 end sub
 
 public function usuarioimpacto(byval atacanteindex as integer, byval victimaindex as integer) as boolean
-    
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error goto errhandler
 
     dim probrechazo as long
@@ -743,6 +893,8 @@ on error goto errhandler
     dim arma as integer
     dim skilltacticas as long
     dim skilldefensa as long
+    dim probevadir as long
+    dim skill as eskill
     
     skilltacticas = userlist(victimaindex).stats.userskills(eskill.tacticas)
     skilldefensa = userlist(victimaindex).stats.userskills(eskill.defensa)
@@ -763,15 +915,24 @@ on error goto errhandler
     if userlist(atacanteindex).invent.weaponeqpobjindex > 0 then
         if objdata(arma).proyectil = 1 then
             poderataque = poderataqueproyectil(atacanteindex)
+            skill = eskill.proyectiles
         else
             poderataque = poderataquearma(atacanteindex)
+            skill = eskill.armas
         end if
     else
         poderataque = poderataquewrestling(atacanteindex)
+        skill = eskill.wrestling
     end if
     
     ' chances are rounded
     probexito = maximoint(10, minimoint(90, 50 + (poderataque - userpoderevasion) * 0.4))
+    
+    ' se reduce la evasion un 25%
+    if userlist(victimaindex).flags.meditando = true then
+        probevadir = (100 - probexito) * 0.75
+        probexito = minimoint(90, 100 - probevadir)
+    end if
     
     usuarioimpacto = (randomnumber(1, 100) <= probexito)
     
@@ -782,16 +943,22 @@ on error goto errhandler
             ' chances are rounded
             probrechazo = maximoint(10, minimoint(90, 100 * skilldefensa / (skilldefensa + skilltacticas)))
             rechazo = (randomnumber(1, 100) <= probrechazo)
-            if rechazo = true then
+            if rechazo then
                 'se rechazo el ataque con el escudo
                 call senddata(sendtarget.topcarea, victimaindex, preparemessageplaywave(snd_escudo, userlist(victimaindex).pos.x, userlist(victimaindex).pos.y))
                   
-                call writeblockedwithshieldother(atacanteindex)
-                call writeblockedwithshielduser(victimaindex)
+                call writemultimessage(atacanteindex, emessages.blockedwithshieldother)
+                call writemultimessage(victimaindex, emessages.blockedwithshielduser)
                 
-                call subirskill(victimaindex, defensa)
+                call subirskill(victimaindex, eskill.defensa, true)
+            else
+                call subirskill(victimaindex, eskill.defensa, false)
             end if
         end if
+    end if
+    
+    if not usuarioimpacto then
+        call subirskill(atacanteindex, skill, false)
     end if
     
     call flushbuffer(victimaindex)
@@ -799,19 +966,32 @@ on error goto errhandler
     exit function
     
 errhandler:
-    call logerror("error en usuarioimpacto. error " & err.number & " : " & err.description)
+    dim atacantenick as string
+    dim victimanick as string
+    
+    if atacanteindex > 0 then atacantenick = userlist(atacanteindex).name
+    if victimaindex > 0 then victimanick = userlist(victimaindex).name
+    
+    call logerror("error en usuarioimpacto. error " & err.number & " : " & err.description & " atacanteindex: " & _
+             atacanteindex & " nick: " & atacantenick & " victimaindex: " & victimaindex & " nick: " & victimanick)
 end function
 
-public sub usuarioatacausuario(byval atacanteindex as integer, byval victimaindex as integer)
+public function usuarioatacausuario(byval atacanteindex as integer, byval victimaindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - lo transformo en funci�n, para que no se pierdan municiones al atacar targets
+'                    inv�lidos, y evitar un doble chequeo innecesario
+'***************************************************
 
 on error goto errhandler
 
-    if not puedeatacar(atacanteindex, victimaindex) then exit sub
+    if not puedeatacar(atacanteindex, victimaindex) then exit function
     
     with userlist(atacanteindex)
         if distancia(.pos, userlist(victimaindex).pos) > maxdistanciaarco then
            call writeconsolemsg(atacanteindex, "est�s muy lejos para disparar.", fonttypenames.fonttype_fight)
-           exit sub
+           exit function
         end if
         
         call usuarioatacadoporusuario(atacanteindex, victimaindex)
@@ -825,12 +1005,14 @@ on error goto errhandler
             
             'pablo (toxicwaste): guantes de hurto del bandido en acci�n
             if .clase = eclass.bandit then
-                call dohurtar(atacanteindex, victimaindex)
+                call dodesequipar(atacanteindex, victimaindex)
+                
             'y ahora, el ladr�n puede llegar a paralizar con el golpe.
             elseif .clase = eclass.thief then
                 call dohandinmo(atacanteindex, victimaindex)
             end if
             
+            call subirskill(victimaindex, eskill.tacticas, false)
             call userda�ouser(atacanteindex, victimaindex)
         else
             ' invisible admins doesn't make sound to other clients except itself
@@ -840,24 +1022,34 @@ on error goto errhandler
                 call senddata(sendtarget.topcarea, atacanteindex, preparemessageplaywave(snd_swing, .pos.x, .pos.y))
             end if
             
-            call writeuserswing(atacanteindex)
-            call writeuserattackedswing(victimaindex, atacanteindex)
+            call writemultimessage(atacanteindex, emessages.userswing)
+            call writemultimessage(victimaindex, emessages.userattackedswing, atacanteindex)
+            call subirskill(victimaindex, eskill.tacticas, true)
         end if
         
         if .clase = eclass.thief then call desarmar(atacanteindex, victimaindex)
     end with
-exit sub
+    
+    usuarioatacausuario = true
+    
+    exit function
     
 errhandler:
     call logerror("error en usuarioatacausuario. error " & err.number & " : " & err.description)
-end sub
+end function
 
 public sub userda�ouser(byval atacanteindex as integer, byval victimaindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 12/01/2010 (zama)
+'12/01/2010: zama - implemento armas arrojadizas y probabilidad de acuchillar
+'11/03/2010: zama - ahora no cuenta la muerte si estaba en estado atacable, y no se vuelve criminal
+'***************************************************
     
 on error goto errhandler
 
     dim da�o as long
-    dim lugar as integer
+    dim lugar as byte
     dim absorbido as long
     dim defbarco as integer
     dim obj as objdata
@@ -912,42 +1104,51 @@ on error goto errhandler
                 end if
         end select
         
-        call writeuserhitteduser(atacanteindex, lugar, userlist(victimaindex).char.charindex, da�o)
-        call writeuserhittedbyuser(victimaindex, lugar, .char.charindex, da�o)
+        call writemultimessage(atacanteindex, emessages.userhitteduser, userlist(victimaindex).char.charindex, lugar, da�o)
+        call writemultimessage(victimaindex, emessages.userhittedbyuser, .char.charindex, lugar, da�o)
         
         userlist(victimaindex).stats.minhp = userlist(victimaindex).stats.minhp - da�o
-        
-        call subirskill(victimaindex, tacticas)
         
         if .flags.hambre = 0 and .flags.sed = 0 then
             'si usa un arma quizas suba "combate con armas"
             if .invent.weaponeqpobjindex > 0 then
                 if objdata(.invent.weaponeqpobjindex).proyectil then
                     'es un arco. sube armas a distancia
-                    call subirskill(atacanteindex, proyectiles)
+                    call subirskill(atacanteindex, eskill.proyectiles, true)
+                    
+                    ' si es arma arrojadiza..
+                    if objdata(.invent.weaponeqpobjindex).municion = 0 then
+                        ' si acuchilla
+                        if objdata(.invent.weaponeqpobjindex).acuchilla = 1 then
+                            call doacuchillar(atacanteindex, 0, victimaindex, da�o)
+                        end if
+                    end if
                 else
                     'sube combate con armas.
-                    call subirskill(atacanteindex, armas)
+                    call subirskill(atacanteindex, eskill.armas, true)
                 end if
             else
-            'sino tal vez lucha libre
-                call subirskill(atacanteindex, wrestling)
+                'sino tal vez lucha libre
+                call subirskill(atacanteindex, eskill.wrestling, true)
             end if
                     
             'trata de apu�alar por la espalda al enemigo
             if puedeapu�alar(atacanteindex) then
                 call doapu�alar(atacanteindex, 0, victimaindex, da�o)
-                call subirskill(atacanteindex, apu�alar)
             end if
             'e intenta dar un golpe cr�tico [pablo (toxicwaste)]
             call dogolpecritico(atacanteindex, 0, victimaindex, da�o)
         end if
         
         if userlist(victimaindex).stats.minhp <= 0 then
-            'store it!
-            call statistics.storefrag(atacanteindex, victimaindex)
             
-            call contarmuerte(victimaindex, atacanteindex)
+            ' no cuenta la muerte si estaba en estado atacable
+            if userlist(victimaindex).flags.atacablepor <> atacanteindex then
+                'store it!
+                call statistics.storefrag(atacanteindex, victimaindex)
+                
+                call contarmuerte(victimaindex, atacanteindex)
+            end if
             
             ' para que las mascotas no sigan intentando luchar y
             ' comiencen a seguir al amo
@@ -974,6 +1175,8 @@ on error goto errhandler
     
     call flushbuffer(victimaindex)
     
+    exit sub
+    
 errhandler:
     dim atacantenick as string
     dim victimanick as string
@@ -981,49 +1184,60 @@ errhandler:
     if atacanteindex > 0 then atacantenick = userlist(atacanteindex).name
     if victimaindex > 0 then victimanick = userlist(victimaindex).name
     
-    call logerror("error en usuarioimpacto. error " & err.number & " : " & err.description & " atacanteindex: " & _
+    call logerror("error en userda�ouser. error " & err.number & " : " & err.description & " atacanteindex: " & _
              atacanteindex & " nick: " & atacantenick & " victimaindex: " & victimaindex & " nick: " & victimanick)
 end sub
 
 sub usuarioatacadoporusuario(byval attackerindex as integer, byval victimindex as integer)
 '***************************************************
 'autor: unknown
-'last modification: 10/01/08
+'last modification: 05/05/2010
 'last modified by: lucas tavolaro ortiz (tavo)
-' 10/01/2008: tavo - se cancela la salida del juego si el user esta saliendo
+'10/01/2008: tavo - se cancela la salida del juego si el user esta saliendo
+'05/05/2010: zama - ahora no suma puntos de bandido al atacar a alguien en estado atacable.
 '***************************************************
 
     if triggerzonapelea(attackerindex, victimindex) = trigger6_permite then exit sub
     
     dim eracriminal as boolean
+    dim victimaesatacable as boolean
     
-    if not criminal(attackerindex) and not criminal(victimindex) then
-        call volvercriminal(attackerindex)
+    if not criminal(attackerindex) then
+        if not criminal(victimindex) then
+            ' si la victima no es atacable por el agresor, entonces se hace pk
+            victimaesatacable = userlist(victimindex).flags.atacablepor = attackerindex
+            if not victimaesatacable then call volvercriminal(attackerindex)
+        end if
     end if
     
-    if userlist(victimindex).flags.meditando then
-        userlist(victimindex).flags.meditando = false
-        call writemeditatetoggle(victimindex)
-        call writeconsolemsg(victimindex, "dejas de meditar.", fonttypenames.fonttype_info)
-        userlist(victimindex).char.fx = 0
-        userlist(victimindex).char.loops = 0
-        call senddata(sendtarget.topcarea, victimindex, preparemessagecreatefx(userlist(victimindex).char.charindex, 0, 0))
-    end if
+    with userlist(victimindex)
+        if .flags.meditando then
+            .flags.meditando = false
+            call writemeditatetoggle(victimindex)
+            call writeconsolemsg(victimindex, "dejas de meditar.", fonttypenames.fonttype_info)
+            .char.fx = 0
+            .char.loops = 0
+            call senddata(sendtarget.topcarea, victimindex, preparemessagecreatefx(.char.charindex, 0, 0))
+        end if
+    end with
     
     eracriminal = criminal(attackerindex)
     
-    with userlist(attackerindex).reputacion
-        if not criminal(victimindex) then
-            .bandidorep = .bandidorep + vlasalto
-            if .bandidorep > maxrep then .bandidorep = maxrep
-            
-            .noblerep = .noblerep / 2
-            if .noblerep < 0 then .noblerep = 0
-        else
-            .noblerep = .noblerep + vlnoble
-            if .noblerep > maxrep then .noblerep = maxrep
-        end if
-    end with
+    ' si ataco a un atacable, no suma puntos de bandido
+    if not victimaesatacable then
+        with userlist(attackerindex).reputacion
+            if not criminal(victimindex) then
+                .bandidorep = .bandidorep + vlasalto
+                if .bandidorep > maxrep then .bandidorep = maxrep
+                
+                .noblerep = .noblerep * 0.5
+                if .noblerep < 0 then .noblerep = 0
+            else
+                .noblerep = .noblerep + vlnoble
+                if .noblerep > maxrep then .noblerep = maxrep
+            end if
+        end with
+    end if
     
     if criminal(attackerindex) then
         if userlist(attackerindex).faccion.armadareal = 1 then call expulsarfaccionreal(attackerindex)
@@ -1042,6 +1256,11 @@ sub usuarioatacadoporusuario(byval attackerindex as integer, byval victimindex a
 end sub
 
 sub allmascotasatacanuser(byval victim as integer, byval maestro as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
     'reaccion de las mascotas
     dim icount as integer
     
@@ -1057,10 +1276,11 @@ end sub
 public function puedeatacar(byval attackerindex as integer, byval victimindex as integer) as boolean
 '***************************************************
 'autor: unknown
-'last modification: 24/02/2009
+'last modification: 02/04/2010
 'returns true if the attackerindex is allowed to attack the victimindex.
 '24/01/2007 pablo (toxicwaste) - ordeno todo y agrego situacion de defensa en ciudad armada y caos.
 '24/02/2009: zama - los usuarios pueden atacarse entre si.
+'02/04/2010: zama - los armadas no pueden atacar nunca a los ciudas, salvo que esten atacables.
 '***************************************************
 on error goto errhandler
 
@@ -1068,22 +1288,34 @@ on error goto errhandler
     
     'estas muerto no podes atacar
     if userlist(attackerindex).flags.muerto = 1 then
-        call writeconsolemsg(attackerindex, "no pod�s atacar porque estas muerto", fonttypenames.fonttype_info)
+        call writeconsolemsg(attackerindex, "��est�s muerto!!", fonttypenames.fonttype_info)
         puedeatacar = false
         exit function
     end if
     
     'no podes atacar a alguien muerto
     if userlist(victimindex).flags.muerto = 1 then
-        call writeconsolemsg(attackerindex, "no pod�s atacar a un espiritu", fonttypenames.fonttype_info)
+        call writeconsolemsg(attackerindex, "no puedes atacar a un esp�ritu.", fonttypenames.fonttype_info)
         puedeatacar = false
         exit function
     end if
     
+    ' no podes atacar si estas en consulta
+    if userlist(attackerindex).flags.enconsulta then
+        call writeconsolemsg(attackerindex, "no puedes atacar usuarios mientras estas en consulta.", fonttypenames.fonttype_info)
+        exit function
+    end if
+    
+    ' no podes atacar si esta en consulta
+    if userlist(victimindex).flags.enconsulta then
+        call writeconsolemsg(attackerindex, "no puedes atacar usuarios mientras estan en consulta.", fonttypenames.fonttype_info)
+        exit function
+    end if
+
     'estamos en una arena? o un trigger zona segura?
     select case triggerzonapelea(attackerindex, victimindex)
         case etrigger6.trigger6_permite
-            puedeatacar = true
+            puedeatacar = (userlist(victimindex).flags.admininvisible = 0)
             exit function
         
         case etrigger6.trigger6_prohibe
@@ -1093,32 +1325,63 @@ on error goto errhandler
         case etrigger6.trigger6_ausente
             'si no estamos en el trigger 6 entonces es imposible atacar un gm
             if (userlist(victimindex).flags.privilegios and playertype.user) = 0 then
-                if userlist(victimindex).flags.admininvisible = 0 then call writeconsolemsg(attackerindex, "el ser es demasiado poderoso", fonttypenames.fonttype_warning)
+                if userlist(victimindex).flags.admininvisible = 0 then call writeconsolemsg(attackerindex, "el ser es demasiado poderoso.", fonttypenames.fonttype_warning)
                 puedeatacar = false
                 exit function
             end if
     end select
     
-    'sos un armada atacando un ciudadano?
-    if (not criminal(victimindex)) and (esarmada(attackerindex)) then
-        call writeconsolemsg(attackerindex, "los soldados del ej�rcito real tienen prohibido atacar ciudadanos.", fonttypenames.fonttype_warning)
-        puedeatacar = false
-        exit function
-    end if
-    
-    'sos un caos atacando otro caos?
-    if escaos(victimindex) and escaos(attackerindex) then
-        call writeconsolemsg(attackerindex, "los miembros de la legi�n oscura tienen prohibido atacarse entre s�.", fonttypenames.fonttype_warning)
-        puedeatacar = false
-        exit function
+    'ataca un ciudadano?
+    if not criminal(victimindex) then
+        ' el atacante es ciuda?
+        if not criminal(attackerindex) then
+            ' el atacante es armada?
+            if esarmada(attackerindex) then
+                ' la victima es armada?
+                if esarmada(victimindex) then
+                    ' no puede
+                    call writeconsolemsg(attackerindex, "los soldados del ej�rcito real tienen prohibido atacar ciudadanos.", fonttypenames.fonttype_warning)
+                    exit function
+                end if
+            end if
+            
+            ' ciuda (o army) atacando a otro ciuda (o army)
+            if userlist(victimindex).flags.atacablepor = attackerindex then
+                ' se vuelve atacable.
+                if toogletoatackable(attackerindex, victimindex, false) then
+                    puedeatacar = true
+                    exit function
+                end if
+            end if
+        end if
+    ' ataca a un criminal
+    else
+        'sos un caos atacando otro caos?
+        if escaos(victimindex) then
+            if escaos(attackerindex) then
+                call writeconsolemsg(attackerindex, "los miembros de la legi�n oscura tienen prohibido atacarse entre s�.", fonttypenames.fonttype_warning)
+                exit function
+            end if
+        end if
     end if
     
     'tenes puesto el seguro?
     if userlist(attackerindex).flags.seguro then
         if not criminal(victimindex) then
-            call writeconsolemsg(attackerindex, "no podes atacar ciudadanos, para hacerlo debes desactivar el seguro ingresando /seg", fonttypenames.fonttype_warning)
+            call writeconsolemsg(attackerindex, "no puedes atacar ciudadanos, para hacerlo debes desactivar el seguro.", fonttypenames.fonttype_warning)
             puedeatacar = false
             exit function
+        end if
+    else
+        ' un ciuda es atacado
+        if not criminal(victimindex) then
+            ' por un armada sin seguro
+            if esarmada(attackerindex) then
+                ' no puede
+                call writeconsolemsg(attackerindex, "los soldados del ej�rcito real tienen prohibido atacar ciudadanos.", fonttypenames.fonttype_warning)
+                puedeatacar = false
+                exit function
+            end if
         end if
     end if
     
@@ -1127,7 +1390,7 @@ on error goto errhandler
         if esarmada(attackerindex) then
             if userlist(attackerindex).faccion.recompensasreal > 11 then
                 if userlist(victimindex).pos.map = 58 or userlist(victimindex).pos.map = 59 or userlist(victimindex).pos.map = 60 then
-                call writeconsolemsg(victimindex, "huye de la ciudad! estas siendo atacado y no podr�s defenderte.", fonttypenames.fonttype_warning)
+                call writeconsolemsg(victimindex, "�huye de la ciudad! est�s siendo atacado y no podr�s defenderte.", fonttypenames.fonttype_warning)
                 puedeatacar = true 'beneficio de armadas que atacan en su ciudad.
                 exit function
                 end if
@@ -1136,13 +1399,13 @@ on error goto errhandler
         if escaos(attackerindex) then
             if userlist(attackerindex).faccion.recompensascaos > 11 then
                 if userlist(victimindex).pos.map = 151 or userlist(victimindex).pos.map = 156 then
-                call writeconsolemsg(victimindex, "huye de la ciudad! estas siendo atacado y no podr�s defenderte.", fonttypenames.fonttype_warning)
+                call writeconsolemsg(victimindex, "�huye de la ciudad! est�s siendo atacado y no podr�s defenderte.", fonttypenames.fonttype_warning)
                 puedeatacar = true 'beneficio de caos que atacan en su ciudad.
                 exit function
                 end if
             end if
         end if
-        call writeconsolemsg(attackerindex, "esta es una zona segura, aqui no podes atacar otros usuarios.", fonttypenames.fonttype_warning)
+        call writeconsolemsg(attackerindex, "esta es una zona segura, aqu� no puedes atacar a otros usuarios.", fonttypenames.fonttype_warning)
         puedeatacar = false
         exit function
     end if
@@ -1150,7 +1413,7 @@ on error goto errhandler
     'estas atacando desde un trigger seguro? o tu victima esta en uno asi?
     if mapdata(userlist(victimindex).pos.map, userlist(victimindex).pos.x, userlist(victimindex).pos.y).trigger = etrigger.zonasegura or _
         mapdata(userlist(attackerindex).pos.map, userlist(attackerindex).pos.x, userlist(attackerindex).pos.y).trigger = etrigger.zonasegura then
-        call writeconsolemsg(attackerindex, "no podes pelear aqui.", fonttypenames.fonttype_warning)
+        call writeconsolemsg(attackerindex, "no puedes pelear aqu�.", fonttypenames.fonttype_warning)
         puedeatacar = false
         exit function
     end if
@@ -1162,48 +1425,48 @@ errhandler:
     call logerror("error en puedeatacar. error " & err.number & " : " & err.description)
 end function
 
-public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as integer) as boolean
+public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as integer, _
+                optional byval paraliza as boolean = false, optional byval ispet as boolean = false) as boolean
 '***************************************************
 'autor: unknown author (original version)
 'returns true if attackerindex can attack the npcindex
-'last modification: 24/01/2007
+'last modification: 16/11/2009
 '24/01/2007 pablo (toxicwaste) - orden y correcci�n de ataque sobre una mascota y guardias
 '14/08/2007 pablo (toxicwaste) - reescribo y agrego todos los casos posibles cosa de usar
 'esta funci�n para todo lo referente a ataque a un npc. ya sea magia, f�sico o a distancia.
+'16/11/2009: zama - agrego validacion de pertenencia de npc.
+'02/04/2010: zama - los armadas ya no peuden atacar npcs no hotiles.
 '***************************************************
-
+    
+    dim owneruserindex as integer
+    
     'estas muerto?
     if userlist(attackerindex).flags.muerto = 1 then
-        call writeconsolemsg(attackerindex, "no pod�s atacar porque estas muerto", fonttypenames.fonttype_info)
-        puedeatacarnpc = false
+        call writeconsolemsg(attackerindex, "��est�s muerto!!", fonttypenames.fonttype_info)
         exit function
     end if
     
     'sos consejero?
     if userlist(attackerindex).flags.privilegios and playertype.consejero then
         'no pueden atacar npc los consejeros.
-        puedeatacarnpc = false
         exit function
     end if
     
-    'estas en modo combate?
-    if not userlist(attackerindex).flags.modocombate then
-        call writeconsolemsg(attackerindex, "debes estar en modo de combate poder atacar al npc.", fonttypenames.fonttype_info)
-        puedeatacarnpc = false
+    ' no podes atacar si estas en consulta
+    if userlist(attackerindex).flags.enconsulta then
+        call writeconsolemsg(attackerindex, "no puedes atacar npcs mientras estas en consulta.", fonttypenames.fonttype_info)
         exit function
     end if
     
     'es una criatura atacable?
     if npclist(npcindex).attackable = 0 then
         call writeconsolemsg(attackerindex, "no puedes atacar esta criatura.", fonttypenames.fonttype_info)
-        puedeatacarnpc = false
         exit function
     end if
     
     'es valida la distancia a la cual estamos atacando?
     if distancia(userlist(attackerindex).pos, npclist(npcindex).pos) >= maxdistanciaarco then
        call writeconsolemsg(attackerindex, "est�s muy lejos para disparar.", fonttypenames.fonttype_fight)
-       puedeatacarnpc = false
        exit function
     end if
     
@@ -1213,25 +1476,22 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
         if npclist(npcindex).npctype = enpctype.guardiascaos then
             'lo quiere atacar un caos?
             if escaos(attackerindex) then
-                call writeconsolemsg(attackerindex, "no puedes atacar guardias del caos siendo legionario", fonttypenames.fonttype_info)
-                puedeatacarnpc = false
+                call writeconsolemsg(attackerindex, "no puedes atacar guardias del caos siendo de la legi�n oscura.", fonttypenames.fonttype_info)
                 exit function
             end if
         'es guardia real?
         elseif npclist(npcindex).npctype = enpctype.guardiareal then
             'lo quiere atacar un armada?
             if esarmada(attackerindex) then
-                call writeconsolemsg(attackerindex, "no puedes atacar guardias reales siendo armada real", fonttypenames.fonttype_info)
-                puedeatacarnpc = false
+                call writeconsolemsg(attackerindex, "no puedes atacar guardias reales siendo del ej�rcito real.", fonttypenames.fonttype_info)
                 exit function
             end if
             'tienes el seguro puesto?
             if userlist(attackerindex).flags.seguro then
-                call writeconsolemsg(attackerindex, "debes quitar el seguro para poder atacar guardias reales utilizando /seg", fonttypenames.fonttype_info)
-                puedeatacarnpc = false
+                call writeconsolemsg(attackerindex, "para poder atacar guardias reales debes quitarte el seguro.", fonttypenames.fonttype_info)
                 exit function
             else
-                call writeconsolemsg(attackerindex, "atacaste un guardia real! eres un criminal.", fonttypenames.fonttype_info)
+                call writeconsolemsg(attackerindex, "�atacaste un guardia real! eres un criminal.", fonttypenames.fonttype_info)
                 call volvercriminal(attackerindex)
                 puedeatacarnpc = true
                 exit function
@@ -1242,16 +1502,21 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
         elseif npclist(npcindex).maestrouser = 0 then
             'si sos ciudadano tenes que quitar el seguro para atacarla.
             if not criminal(attackerindex) then
+                
+                ' si sos armada no podes atacarlo directamente
+                if esarmada(attackerindex) then
+                    call writeconsolemsg(attackerindex, "los miembros del ej�rcito real no pueden atacar npcs no hostiles.", fonttypenames.fonttype_info)
+                    exit function
+                end if
+            
                 'sos ciudadano, tenes el seguro puesto?
                 if userlist(attackerindex).flags.seguro then
-                    call writeconsolemsg(attackerindex, "para atacar a este npc deb�s quitar el seguro", fonttypenames.fonttype_info)
-                    puedeatacarnpc = false
+                    call writeconsolemsg(attackerindex, "para atacar a este npc debes quitarte el seguro.", fonttypenames.fonttype_info)
                     exit function
                 else
                     'no tiene seguro puesto. puede atacar pero es penalizado.
-                    call writeconsolemsg(attackerindex, "atacaste un npc no-hostil. continua haciendolo y ser�s criminal.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(attackerindex, "atacaste un npc no-hostil. contin�a haci�ndolo y te podr�s convertir en criminal.", fonttypenames.fonttype_info)
                     'niconz: cambio para que al atacar npcs no hostiles no bajen puntos de nobleza
-                    'call disnobauban(attackerindex, 1000, 1000)
                     call disnobauban(attackerindex, 0, 1000)
                     puedeatacarnpc = true
                     exit function
@@ -1263,22 +1528,23 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
     'es el npc mascota de alguien?
     if npclist(npcindex).maestrouser > 0 then
         if not criminal(npclist(npcindex).maestrouser) then
+        
             'es mascota de un ciudadano.
             if esarmada(attackerindex) then
                 'el atacante es armada y esta intentando atacar mascota de un ciudadano
-                call writeconsolemsg(attackerindex, "los armadas no pueden atacar mascotas de ciudadanos.", fonttypenames.fonttype_info)
-                puedeatacarnpc = false
+                call writeconsolemsg(attackerindex, "los miembros del ej�rcito real no pueden atacar mascotas de ciudadanos.", fonttypenames.fonttype_info)
                 exit function
             end if
+            
             if not criminal(attackerindex) then
+                
                 'el atacante es ciudadano y esta intentando atacar mascota de un ciudadano.
                 if userlist(attackerindex).flags.seguro then
                     'el atacante tiene el seguro puesto. no puede atacar.
-                    call writeconsolemsg(attackerindex, "para atacar mascotas de ciudadanos debes quitar el seguro utilizando /seg", fonttypenames.fonttype_info)
-                    puedeatacarnpc = false
+                    call writeconsolemsg(attackerindex, "para atacar mascotas de ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
                     exit function
                 else
-                'el atacante no tiene el seguro puesto. recibe penalizaci�n.
+                    'el atacante no tiene el seguro puesto. recibe penalizaci�n.
                     call writeconsolemsg(attackerindex, "has atacado la mascota de un ciudadano. eres un criminal.", fonttypenames.fonttype_info)
                     call volvercriminal(attackerindex)
                     puedeatacarnpc = true
@@ -1287,8 +1553,7 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
             else
                 'el atacante es criminal y quiere atacar un elemental ciuda, pero tiene el seguro puesto (niconz)
                 if userlist(attackerindex).flags.seguro then
-                    call writeconsolemsg(attackerindex, "para atacar mascotas de ciudadanos debes quitar el seguro utilizando /seg", fonttypenames.fonttype_info)
-                    puedeatacarnpc = false
+                    call writeconsolemsg(attackerindex, "para atacar mascotas de ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
                     exit function
                 end if
             end if
@@ -1299,23 +1564,255 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
                 if escaos(attackerindex) then
                     'un caos intenta atacar una criatura de un caos. no puede atacar.
                     call writeconsolemsg(attackerindex, "los miembros de la legi�n oscura no pueden atacar mascotas de otros legionarios. ", fonttypenames.fonttype_info)
-                    puedeatacarnpc = false
                     exit function
                 end if
             end if
         end if
     end if
     
+    with npclist(npcindex)
+        ' el npc le pertenece a alguien?
+        owneruserindex = .owner
+        
+        if owneruserindex > 0 then
+            
+            ' puede atacar a su propia criatura!
+            if owneruserindex = attackerindex then
+                puedeatacarnpc = true
+                call intervaloperdionpc(owneruserindex, true) ' renuevo el timer
+                exit function
+            end if
+            
+            ' esta compartiendo el npc con el atacante? => puede atacar!
+            if userlist(owneruserindex).flags.sharenpcwith = attackerindex then
+                puedeatacarnpc = true
+                exit function
+            end if
+            
+            ' si son del mismo clan o party, pueden atacar (no renueva el timer)
+            if not sameclan(owneruserindex, attackerindex) and not sameparty(owneruserindex, attackerindex) then
+            
+                ' si se le agoto el tiempo
+                if intervaloperdionpc(owneruserindex) then ' se lo roba :p
+                    call perdionpc(owneruserindex)
+                    call apropionpc(attackerindex, npcindex)
+                    puedeatacarnpc = true
+                    exit function
+                    
+                ' si lanzo un hechizo de para o inmo
+                elseif paraliza then
+                
+                    ' si ya esta paralizado o inmobilizado, no puedo inmobilizarlo de nuevo
+                    if .flags.inmovilizado = 1 or .flags.paralizado = 1 then
+                        
+                        'todo_zama: si dejo esto asi, los pks con seguro peusto van a poder inmobilizar criaturas con due�o
+                        ' si es pk neutral, puede hacer lo que quiera :p.
+                        if not criminal(attackerindex) and not criminal(owneruserindex) then
+                        
+                             'el atacante es armada
+                            if esarmada(attackerindex) then
+                                
+                                 'intententa paralizar un npc de un armada?
+                                if esarmada(owneruserindex) then
+                                    'el atacante es armada y esta intentando paralizar un npc de un armada: no puede
+                                    call writeconsolemsg(attackerindex, "los miembros del ej�rcito real no pueden paralizar criaturas ya paralizadas pertenecientes a otros miembros del ej�rcito real", fonttypenames.fonttype_info)
+                                    exit function
+                                
+                                'el atacante es armada y esta intentando paralizar un npc de un ciuda
+                                else
+                                    ' si tiene seguro no puede
+                                    if userlist(attackerindex).flags.seguro then
+                                        call writeconsolemsg(attackerindex, "para paralizar criaturas ya paralizadas pertenecientes a ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
+                                        exit function
+                                    else
+                                        ' si ya estaba atacable, no podr� atacar a un npc perteneciente a otro ciuda
+                                        if toogletoatackable(attackerindex, owneruserindex) then
+                                            call writeconsolemsg(attackerindex, "has paralizado la criatura de un ciudadano, ahora eres atacable por �l.", fonttypenames.fonttype_info)
+                                            puedeatacarnpc = true
+                                        end if
+                                        
+                                        exit function
+                                        
+                                    end if
+                                end if
+                                
+                            ' el atacante es ciuda
+                            else
+                                'el atacante tiene el seguro puesto, no puede paralizar
+                                if userlist(attackerindex).flags.seguro then
+                                    call writeconsolemsg(attackerindex, "para paralizar criaturas ya paralizadas pertenecientes a ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
+                                    exit function
+                                    
+                                'el atacante no tiene el seguro puesto, ataca.
+                                else
+                                    ' si ya estaba atacable, no podr� atacar a un npc perteneciente a otro ciuda
+                                    if toogletoatackable(attackerindex, owneruserindex) then
+                                        call writeconsolemsg(attackerindex, "has paralizado la criatura de un ciudadano, ahora eres atacable por �l.", fonttypenames.fonttype_info)
+                                        puedeatacarnpc = true
+                                    end if
+                                    
+                                    exit function
+                                end if
+                            end if
+                            
+                        ' al menos uno de los dos es criminal
+                        else
+                            ' si ambos son caos
+                            if escaos(attackerindex) and escaos(owneruserindex) then
+                                'el atacante es caos y esta intentando paralizar un npc de un caos
+                                call writeconsolemsg(attackerindex, "los miembros de la legi�n oscura no pueden paralizar criaturas ya paralizadas por otros legionarios.", fonttypenames.fonttype_info)
+                                exit function
+                            end if
+                        end if
+                    
+                    ' el npc no esta inmobilizado ni paralizado
+                    else
+                        ' si no tiene due�o, puede apropiarselo
+                        if owneruserindex = 0 then
+                            ' siempre que no posea uno ya (el inmo/para no cambia pertenencia de npcs).
+                            if userlist(attackerindex).flags.ownednpc = 0 then
+                                call apropionpc(attackerindex, npcindex)
+                            end if
+                        end if
+                        
+                        ' siempre se pueden paralizar/inmobilizar npcs con o sin due�o
+                        ' que no tengan ese estado
+                        puedeatacarnpc = true
+                        exit function
+
+                    end if
+                    
+                ' no lanz� hechizos inmobilizantes
+                else
+                    
+                    ' el npc le pertenece a un ciudadano
+                    if not criminal(owneruserindex) then
+                        
+                        'el atacante es armada y esta intentando atacar un npc de un ciudadano
+                        if esarmada(attackerindex) then
+                        
+                            'intententa atacar un npc de un armada?
+                            if esarmada(owneruserindex) then
+                                'el atacante es armada y esta intentando atacar el npc de un armada: no puede
+                                call writeconsolemsg(attackerindex, "los miembros del ej�rcito real no pueden atacar criaturas pertenecientes a otros miembros del ej�rcito real", fonttypenames.fonttype_info)
+                                exit function
+                            
+                            'el atacante es armada y esta intentando atacar un npc de un ciuda
+                            else
+                                
+                                ' si tiene seguro no puede
+                                if userlist(attackerindex).flags.seguro then
+                                    call writeconsolemsg(attackerindex, "para atacar criaturas ya pertenecientes a ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
+                                    exit function
+                                else
+                                    ' si ya estaba atacable, no podr� atacar a un npc perteneciente a otro ciuda
+                                    if toogletoatackable(attackerindex, owneruserindex) then
+                                        call writeconsolemsg(attackerindex, "has atacado a la criatura de un ciudadano, ahora eres atacable por �l.", fonttypenames.fonttype_info)
+                                        puedeatacarnpc = true
+                                    end if
+                                    
+                                    exit function
+                                end if
+                            end if
+                            
+                        ' no es aramda, puede ser criminal o ciuda
+                        else
+                            
+                            'el atacante es ciudadano y esta intentando atacar un npc de un ciudadano.
+                            if not criminal(attackerindex) then
+                                
+                                if userlist(attackerindex).flags.seguro then
+                                    'el atacante tiene el seguro puesto. no puede atacar.
+                                    call writeconsolemsg(attackerindex, "para atacar criaturas pertenecientes a ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
+                                    exit function
+                                
+                                'el atacante no tiene el seguro puesto, ataca.
+                                else
+                                    if toogletoatackable(attackerindex, owneruserindex) then
+                                        call writeconsolemsg(attackerindex, "has atacado a la criatura de un ciudadano, ahora eres atacable por �l.", fonttypenames.fonttype_info)
+                                        puedeatacarnpc = true
+                                    end if
+                                    
+                                    exit function
+                                end if
+                                
+                            'el atacante es criminal y esta intentando atacar un npc de un ciudadano.
+                            else
+                                ' es criminal atacando un npc de un ciuda, con seguro puesto.
+                                if userlist(attackerindex).flags.seguro then
+                                    call writeconsolemsg(attackerindex, "para atacar criaturas pertenecientes a ciudadanos debes quitarte el seguro.", fonttypenames.fonttype_info)
+                                    exit function
+                                end if
+                                
+                                puedeatacarnpc = true
+                            end if
+                        end if
+                        
+                    ' es npc de un criminal
+                    else
+                        if escaos(owneruserindex) then
+                            'es caos el due�o.
+                            if escaos(attackerindex) then
+                                'un caos intenta atacar una npc de un caos. no puede atacar.
+                                call writeconsolemsg(attackerindex, "los miembros de la legi�n oscura no pueden atacar criaturas de otros legionarios. ", fonttypenames.fonttype_info)
+                                exit function
+                            end if
+                        end if
+                    end if
+                end if
+            end if
+            
+        ' si no tiene due�o el npc, se lo apropia
+        else
+            ' solo pueden apropiarse de npcs los caos, armadas o ciudas.
+            if not criminal(attackerindex) or escaos(attackerindex) then
+                ' no puede apropiarse de los pretos!
+                if not (espretoriano(npcindex) <> 0) then
+                    ' si es una mascota atacando, no se apropia del npc
+                    if not ispet then
+                        ' no es due�o de ningun npc => se lo apropia.
+                        if userlist(attackerindex).flags.ownednpc = 0 then
+                            call apropionpc(attackerindex, npcindex)
+                        ' es due�o de un npc, pero no puede ser de este porque no tiene propietario.
+                        else
+                            ' se va a adue�ar del npc (y perder el otro) solo si no inmobiliza/paraliza
+                            if not paraliza then call apropionpc(attackerindex, npcindex)
+                        end if
+                    end if
+                end if
+            end if
+        end if
+    end with
+    
     'es el rey preatoriano?
     if espretoriano(npcindex) = 4 then
         if pretorianosvivos > 0 then
-            call writeconsolemsg(attackerindex, "debes matar al resto del ej�rcito antes de atacar al rey!", fonttypenames.fonttype_fight)
-            puedeatacarnpc = false
+            call writeconsolemsg(attackerindex, "debes matar al resto del ej�rcito antes de atacar al rey.", fonttypenames.fonttype_fight)
             exit function
         end if
     end if
     
     puedeatacarnpc = true
+end function
+
+private function sameclan(byval userindex as integer, byval otheruserindex as integer) as boolean
+'***************************************************
+'autor: zama
+'returns true if both players belong to the same clan.
+'last modification: 16/11/2009
+'***************************************************
+    sameclan = (userlist(userindex).guildindex = userlist(otheruserindex).guildindex) and _
+                userlist(userindex).guildindex <> 0
+end function
+
+private function sameparty(byval userindex as integer, byval otheruserindex as integer) as boolean
+'***************************************************
+'autor: zama
+'returns true if both players belong to the same party.
+'last modification: 16/11/2009
+'***************************************************
+    sameparty = userlist(userindex).partyindex = userlist(otheruserindex).partyindex and _
+                userlist(userindex).partyindex <> 0
 end function
 
 sub calculardarexp(byval userindex as integer, byval npcindex as integer, byval elda�o as long)
@@ -1362,6 +1859,12 @@ sub calculardarexp(byval userindex as integer, byval npcindex as integer, byval 
 end sub
 
 public function triggerzonapelea(byval origen as integer, byval destino as integer) as etrigger6
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'todo: pero que rebuscado!!
 'nigo:  te lo redise�e, pero no te borro el todo para que lo revises.
 on error goto errhandler
@@ -1388,6 +1891,12 @@ errhandler:
 end function
 
 sub userenvenena(byval atacanteindex as integer, byval victimaindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim objind as integer
     
     objind = userlist(atacanteindex).invent.weaponeqpobjindex
@@ -1402,8 +1911,8 @@ sub userenvenena(byval atacanteindex as integer, byval victimaindex as integer)
                 
                 if randomnumber(1, 100) < 60 then
                     userlist(victimaindex).flags.envenenado = 1
-                    call writeconsolemsg(victimaindex, userlist(atacanteindex).name & " te ha envenenado!!", fonttypenames.fonttype_fight)
-                    call writeconsolemsg(atacanteindex, "has envenenado a " & userlist(victimaindex).name & "!!", fonttypenames.fonttype_fight)
+                    call writeconsolemsg(victimaindex, "��" & userlist(atacanteindex).name & " te ha envenenado!!", fonttypenames.fonttype_fight)
+                    call writeconsolemsg(atacanteindex, "��has envenenado a " & userlist(victimaindex).name & "!!", fonttypenames.fonttype_fight)
                 end if
             end if
         end if

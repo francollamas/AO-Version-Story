@@ -42,6 +42,12 @@ option explicit
 ' @param y y
 
 sub accion(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim tempindex as integer
     
 on error resume next
@@ -62,7 +68,7 @@ on error resume next
                 if npclist(tempindex).comercia = 1 then
                     '�esta el user muerto? si es asi no puede comerciar
                     if .flags.muerto = 1 then
-                        call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -72,7 +78,7 @@ on error resume next
                     end if
                     
                     if distancia(npclist(tempindex).pos, .pos) > 3 then
-                        call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "est�s demasiado lejos del vendedor.", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -82,7 +88,7 @@ on error resume next
                 elseif npclist(tempindex).npctype = enpctype.banquero then
                     '�esta el user muerto? si es asi no puede comerciar
                     if .flags.muerto = 1 then
-                        call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -92,7 +98,7 @@ on error resume next
                     end if
                     
                     if distancia(npclist(tempindex).pos, .pos) > 3 then
-                        call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "est�s demasiado lejos del vendedor.", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -101,7 +107,7 @@ on error resume next
                 
                 elseif npclist(tempindex).npctype = enpctype.revividor or npclist(tempindex).npctype = enpctype.resucitadornewbie then
                     if distancia(.pos, npclist(tempindex).pos) > 10 then
-                        call writeconsolemsg(userindex, "el sacerdote no puede curarte debido a que estas demasiado lejos.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "el sacerdote no puede curarte debido a que est�s demasiado lejos.", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -169,49 +175,39 @@ on error resume next
     end if
 end sub
 
-sub accionparaforo(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
+public sub accionparaforo(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 02/01/2010
+'02/01/2010: zama - agrego foros faccionarios
+'***************************************************
+
 on error resume next
 
-dim pos as worldpos
-pos.map = map
-pos.x = x
-pos.y = y
-
-if distancia(pos, userlist(userindex).pos) > 2 then
-    call writeconsolemsg(userindex, "estas demasiado lejos.", fonttypenames.fonttype_info)
-    exit sub
-end if
-
-'�hay mensajes?
-dim f as string, tit as string, men as string, base as string, auxcad as string
-f = app.path & "\foros\" & ucase$(objdata(mapdata(map, x, y).objinfo.objindex).foroid) & ".for"
-if fileexist(f, vbnormal) then
-    dim num as integer
-    num = val(getvar(f, "info", "cantmsg"))
-    base = left$(f, len(f) - 4)
-    dim i as integer
-    dim n as integer
-    for i = 1 to num
-        n = freefile
-        f = base & i & ".for"
-        open f for input shared as #n
-        input #n, tit
-        men = vbnullstring
-        auxcad = vbnullstring
-        do while not eof(n)
-            input #n, auxcad
-            men = men & vbcrlf & auxcad
-        loop
-        close #n
-        call writeaddforummsg(userindex, tit, men)
-        
-    next
-end if
-call writeshowforumform(userindex)
+    dim pos as worldpos
+    
+    pos.map = map
+    pos.x = x
+    pos.y = y
+    
+    if distancia(pos, userlist(userindex).pos) > 2 then
+        call writeconsolemsg(userindex, "estas demasiado lejos.", fonttypenames.fonttype_info)
+        exit sub
+    end if
+    
+    if sendposts(userindex, objdata(mapdata(map, x, y).objinfo.objindex).foroid) then
+        call writeshowforumform(userindex)
+    end if
+    
 end sub
 
-
 sub accionparapuerta(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
 if not (distance(userlist(userindex).pos.x, userlist(userindex).pos.y, x, y) > 2) then
@@ -257,15 +253,21 @@ if not (distance(userlist(userindex).pos.x, userlist(userindex).pos.y, x, y) > 2
         
         userlist(userindex).flags.targetobj = mapdata(map, x, y).objinfo.objindex
     else
-        call writeconsolemsg(userindex, "la puerta esta cerrada con llave.", fonttypenames.fonttype_info)
+        call writeconsolemsg(userindex, "la puerta est� cerrada con llave.", fonttypenames.fonttype_info)
     end if
 else
-    call writeconsolemsg(userindex, "estas demasiado lejos.", fonttypenames.fonttype_info)
+    call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
 end if
 
 end sub
 
 sub accionparacartel(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
 if objdata(mapdata(map, x, y).objinfo.objindex).objtype = 8 then
@@ -279,6 +281,12 @@ end if
 end sub
 
 sub accionpararamita(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
 dim suerte as byte
@@ -290,49 +298,53 @@ pos.map = map
 pos.x = x
 pos.y = y
 
-if distancia(pos, userlist(userindex).pos) > 2 then
-    call writeconsolemsg(userindex, "estas demasiado lejos.", fonttypenames.fonttype_info)
-    exit sub
-end if
-
-if mapdata(map, x, y).trigger = etrigger.zonasegura or mapinfo(map).pk = false then
-    call writeconsolemsg(userindex, "en zona segura no puedes hacer fogatas.", fonttypenames.fonttype_info)
-    exit sub
-end if
-
-if userlist(userindex).stats.userskills(supervivencia) > 1 and userlist(userindex).stats.userskills(supervivencia) < 6 then
-            suerte = 3
-elseif userlist(userindex).stats.userskills(supervivencia) >= 6 and userlist(userindex).stats.userskills(supervivencia) <= 10 then
-            suerte = 2
-elseif userlist(userindex).stats.userskills(supervivencia) >= 10 and userlist(userindex).stats.userskills(supervivencia) then
-            suerte = 1
-end if
-
-exito = randomnumber(1, suerte)
-
-if exito = 1 then
-    if mapinfo(userlist(userindex).pos.map).zona <> ciudad then
-        obj.objindex = fogata
-        obj.amount = 1
-        
-        call writeconsolemsg(userindex, "has prendido la fogata.", fonttypenames.fonttype_info)
-        
-        call makeobj(obj, map, x, y)
-        
-        'las fogatas prendidas se deben eliminar
-        dim fogatita as new cgarbage
-        fogatita.map = map
-        fogatita.x = x
-        fogatita.y = y
-        call trashcollector.add(fogatita)
-    else
-        call writeconsolemsg(userindex, "la ley impide realizar fogatas en las ciudades.", fonttypenames.fonttype_info)
+with userlist(userindex)
+    if distancia(pos, .pos) > 2 then
+        call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
         exit sub
     end if
-else
-    call writeconsolemsg(userindex, "no has podido hacer fuego.", fonttypenames.fonttype_info)
-end if
+    
+    if mapdata(map, x, y).trigger = etrigger.zonasegura or mapinfo(map).pk = false then
+        call writeconsolemsg(userindex, "no puedes hacer fogatas en zona segura.", fonttypenames.fonttype_info)
+        exit sub
+    end if
+    
+    if .stats.userskills(supervivencia) > 1 and .stats.userskills(supervivencia) < 6 then
+        suerte = 3
+    elseif .stats.userskills(supervivencia) >= 6 and .stats.userskills(supervivencia) <= 10 then
+        suerte = 2
+    elseif .stats.userskills(supervivencia) >= 10 and .stats.userskills(supervivencia) then
+        suerte = 1
+    end if
+    
+    exito = randomnumber(1, suerte)
+    
+    if exito = 1 then
+        if mapinfo(.pos.map).zona <> ciudad then
+            obj.objindex = fogata
+            obj.amount = 1
+            
+            call writeconsolemsg(userindex, "has prendido la fogata.", fonttypenames.fonttype_info)
+            
+            call makeobj(obj, map, x, y)
+            
+            'las fogatas prendidas se deben eliminar
+            dim fogatita as new cgarbage
+            fogatita.map = map
+            fogatita.x = x
+            fogatita.y = y
+            call trashcollector.add(fogatita)
+            
+            call subirskill(userindex, eskill.supervivencia, true)
+        else
+            call writeconsolemsg(userindex, "la ley impide realizar fogatas en las ciudades.", fonttypenames.fonttype_info)
+            exit sub
+        end if
+    else
+        call writeconsolemsg(userindex, "no has podido hacer fuego.", fonttypenames.fonttype_info)
+        call subirskill(userindex, eskill.supervivencia, false)
+    end if
 
-call subirskill(userindex, supervivencia)
+end with
 
 end sub

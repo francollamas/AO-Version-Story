@@ -122,7 +122,7 @@ on error goto error_handler
     
     if not userlist(centinela.revisandouserindex).flags.centinelaok then
         'logueamos el evento
-        call logcentinela("centinela baneo a " & userlist(centinela.revisandouserindex).name & " por uso de macro inasistido")
+        call logcentinela("centinela baneo a " & userlist(centinela.revisandouserindex).name & " por uso de macro inasistido.")
         
         'ponemos el ban
         userlist(centinela.revisandouserindex).flags.ban = 1
@@ -176,7 +176,7 @@ public sub centinelacheckclave(byval userindex as integer, byval clave as intege
 '############################################################
     if clave = centinela.clave and userindex = centinela.revisandouserindex then
         userlist(centinela.revisandouserindex).flags.centinelaok = true
-        call writechatoverhead(userindex, "�muchas gracias " & userlist(centinela.revisandouserindex).name & "! espero no haber sido una molestia", cstr(npclist(centinelanpcindex).char.charindex), vbwhite)
+        call writechatoverhead(userindex, "�muchas gracias " & userlist(centinela.revisandouserindex).name & "! espero no haber sido una molestia.", cstr(npclist(centinelanpcindex).char.charindex), vbwhite)
         centinela.revisandouserindex = 0
         call flushbuffer(userindex)
     else
@@ -279,7 +279,7 @@ public sub centinelauserlogout()
 '############################################################
     if centinela.revisandouserindex then
         'logueamos el evento
-        call logcentinela("el usuario " & userlist(centinela.revisandouserindex).name & " se desolgue� al pedirsele la contrase�a")
+        call logcentinela("el usuario " & userlist(centinela.revisandouserindex).name & " se desolgue� al pedirsele la contrase�a.")
         
         'reseteamos y esperamos a otro pasarminuto para ir al siguiente user
         centinela.clave = 0

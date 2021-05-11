@@ -7,10 +7,11 @@ begin vb.form frmpres
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   4680
-   clipcontrols    =   0   'false
+   controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
+   negotiatemenus  =   0   'false
    scaleheight     =   3195
    scalewidth      =   4680
    showintaskbar   =   0   'false
@@ -57,13 +58,12 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 option explicit
 
 dim puedo as boolean
 
-private sub form_keypress(keyascii as integer)
-    if keyascii = 27 then if puedo then unload me
+private sub form_keyup(keycode as integer, shift as integer)
+    if keycode = 27 then if puedo then unload me
 end sub
 
 private sub form_load()
@@ -75,13 +75,19 @@ end sub
 private sub timer1_timer()
 static ticks as long
 
+dim prespath as string
+
 ticks = ticks + 1
 
 if ticks = 1 then
-    me.picture = loadpicture(app.path & "\graficos\argentum.jpg")
+    prespath = dirgraficos & "hostingalkon.jpg"
+    me.picture = loadpicture(prespath)
     puedo = true
-'elseif ticks = 2 then
-'    me.picture = loadpicture(app.path & "\graficos\newfinal.jpg")
+
+elseif ticks = 2 then
+    prespath = dirgraficos & "presentacion" & randomnumber(5, 8) & ".jpg"
+    me.picture = loadpicture(prespath)
+    
 else
     unload me
 end if

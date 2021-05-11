@@ -1,54 +1,23 @@
 version 5.00
 begin vb.form frmforo 
-   backcolor       =   &h00404080&
-   borderstyle     =   3  'fixed dialog
+   backcolor       =   &h00e0e0e0&
+   borderstyle     =   0  'none
    clientheight    =   6855
-   clientleft      =   45
-   clienttop       =   45
-   clientwidth     =   6150
+   clientleft      =   0
+   clienttop       =   0
+   clientwidth     =   6210
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6855
-   scalewidth      =   6150
+   scaleheight     =   457
+   scalemode       =   3  'pixel
+   scalewidth      =   414
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command3 
-      backcolor       =   &h000000c0&
-      caption         =   "lista de mensajes"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   375
-      left            =   2205
-      mouseicon       =   "frmforo.frx":0000
-      mousepointer    =   99  'custom
-      style           =   1  'graphical
-      tabindex        =   8
-      top             =   6330
-      width           =   1560
-   end
-   begin vb.textbox mimensaje 
-      backcolor       =   &h00000000&
-      forecolor       =   &h80000005&
-      height          =   5070
-      index           =   1
-      left            =   330
-      multiline       =   -1  'true
-      tabindex        =   5
-      top             =   1005
-      visible         =   0   'false
-      width           =   5400
-   end
-   begin vb.textbox mimensaje 
+   begin vb.textbox txttitulo 
+      appearance      =   0  'flat
       backcolor       =   &h00000000&
       beginproperty font 
          name            =   "ms sans serif"
@@ -59,98 +28,20 @@ begin vb.form frmforo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h80000005&
-      height          =   345
-      index           =   0
-      left            =   330
-      tabindex        =   4
-      top             =   285
-      visible         =   0   'false
-      width           =   5400
-   end
-   begin vb.commandbutton command2 
-      backcolor       =   &h000000c0&
-      caption         =   "cerrar"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   375
-      left            =   4200
-      mouseicon       =   "frmforo.frx":0152
-      mousepointer    =   99  'custom
-      style           =   1  'graphical
-      tabindex        =   3
-      top             =   6330
-      width           =   1560
-   end
-   begin vb.commandbutton command1 
-      backcolor       =   &h000000c0&
-      caption         =   "dejar mensaje"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   375
-      left            =   345
-      mouseicon       =   "frmforo.frx":02a4
-      mousepointer    =   99  'custom
-      style           =   1  'graphical
+      forecolor       =   &h00ffffff&
+      height          =   315
+      left            =   1140
+      maxlength       =   35
       tabindex        =   2
-      top             =   6330
-      width           =   1560
-   end
-   begin vb.textbox text 
-      backcolor       =   &h00000000&
-      forecolor       =   &h80000005&
-      height          =   5505
-      index           =   0
-      left            =   330
-      locked          =   -1  'true
-      multiline       =   -1  'true
-      tabindex        =   1
-      text            =   "frmforo.frx":03f6
-      top             =   285
+      top             =   900
       visible         =   0   'false
-      width           =   5430
+      width           =   4620
    end
-   begin vb.listbox list 
+   begin vb.textbox txtpost 
+      appearance      =   0  'flat
       backcolor       =   &h00000000&
-      forecolor       =   &h80000005&
-      height          =   5520
-      left            =   330
-      tabindex        =   0
-      top             =   285
-      width           =   5430
-   end
-   begin vb.label label2 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "mensaje"
-      forecolor       =   &h8000000e&
-      height          =   195
-      left            =   330
-      tabindex        =   7
-      top             =   765
-      visible         =   0   'false
-      width           =   600
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "t�tulo"
       beginproperty font 
-         name            =   "tahoma"
+         name            =   "ms sans serif"
          size            =   8.25
          charset         =   0
          weight          =   700
@@ -158,13 +49,127 @@ begin vb.form frmforo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h8000000e&
-      height          =   195
-      left            =   330
-      tabindex        =   6
-      top             =   45
+      forecolor       =   &h00ffffff&
+      height          =   3960
+      left            =   780
+      multiline       =   -1  'true
+      tabindex        =   1
+      text            =   "frmforo.frx":0000
+      top             =   1935
       visible         =   0   'false
-      width           =   480
+      width           =   4770
+   end
+   begin vb.listbox lsttitulos 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   5100
+      left            =   765
+      tabindex        =   0
+      top             =   825
+      width           =   4785
+   end
+   begin vb.label lbltitulo 
+      appearance      =   0  'flat
+      backcolor       =   &h80000005&
+      backstyle       =   0  'transparent
+      caption         =   "label1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1125
+      tabindex        =   4
+      top             =   960
+      width           =   4695
+   end
+   begin vb.image imgmarcotexto 
+      height          =   465
+      left            =   1095
+      top             =   840
+      width           =   4725
+   end
+   begin vb.image imgcerrar 
+      height          =   255
+      left            =   4080
+      top             =   6060
+      width           =   1455
+   end
+   begin vb.image imglistamsg 
+      height          =   255
+      left            =   2400
+      top             =   6060
+      width           =   1455
+   end
+   begin vb.image imgdejarmsg 
+      height          =   255
+      left            =   720
+      top             =   6060
+      width           =   1455
+   end
+   begin vb.label lblautor 
+      appearance      =   0  'flat
+      backcolor       =   &h80000005&
+      backstyle       =   0  'transparent
+      caption         =   "nombre"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1125
+      tabindex        =   3
+      top             =   1455
+      width           =   4650
+   end
+   begin vb.image imgtab 
+      height          =   255
+      index           =   2
+      left            =   4320
+      top             =   360
+      width           =   1575
+   end
+   begin vb.image imgtab 
+      height          =   255
+      index           =   1
+      left            =   2520
+      top             =   360
+      width           =   1575
+   end
+   begin vb.image imgtab 
+      height          =   255
+      index           =   0
+      left            =   960
+      top             =   360
+      width           =   1575
+   end
+   begin vb.image imgdejaranuncio 
+      height          =   255
+      left            =   2400
+      top             =   6060
+      width           =   1455
    end
 end
 attribute vb_name = "frmforo"
@@ -208,73 +213,319 @@ attribute vb_exposed = false
 
 option explicit
 
-public foroindex as integer
-private sub command1_click()
-dim i
-for each i in text
-    i.visible = false
-next
+private clsformulario as clsformmovementmanager
 
-if not mimensaje(0).visible then
-    list.visible = false
-    mimensaje(0).visible = true
-    mimensaje(1).visible = true
-    mimensaje(0).setfocus
-    command1.enabled = false
-    label1.visible = true
-    label2.visible = true
-else
-    call writeforumpost(mimensaje(0).text, left$(mimensaje(1).text, 450))
-    list.additem mimensaje(0).text
-    load text(list.listcount)
-    text(list.listcount - 1).text = mimensaje(1).text
-    list.visible = true
+private cbotondejaranuncio as clsgraphicalbutton
+private cbotondejarmsg as clsgraphicalbutton
+private cbotoncerrar as clsgraphicalbutton
+private cbotonlistamsg as clsgraphicalbutton
+public lastpressed as clsgraphicalbutton
+
+' para controlar las imagenes de fondo y el envio de posteos
+private foroactual as eforumtype
+private verlistamsg as boolean
+private lectura as boolean
+
+public forolimpio as boolean
+private sticky as boolean
+
+' para restringir la visibilidad de los foros
+public privilegios as byte
+public forosvisibles as eforumtype
+public canpoststicky as byte
+
+' imagenes de fondo
+private fondosdejarmsg(0 to 2) as picture
+private fondoslistamsg(0 to 2) as picture
+
+private sub form_unload(cancel as integer)
+    mirandoforo = false
+    privilegios = 0
+end sub
+
+private sub imgdejaranuncio_click()
+    lectura = false
+    verlistamsg = false
+    sticky = true
     
-    mimensaje(0).visible = false
-    mimensaje(1).visible = false
-    'limpio los textboxs (niconz) 04/24/08
-    mimensaje(0).text = vbnullstring
-    mimensaje(1).text = vbnullstring
+    'switch to proper background
+    tooglescreen
+end sub
+
+private sub imgdejarmsg_click()
+    if not cbotondejarmsg.isenabled then exit sub
     
-    command1.enabled = true
-    label1.visible = false
-    label2.visible = false
-end if
+    dim poststyle as byte
+    
+    if not verlistamsg then
+        if not lectura then
+        
+            if sticky then
+                poststyle = getstickypost
+            else
+                poststyle = getnormalpost
+            end if
+
+            call writeforumpost(txttitulo.text, txtpost.text, poststyle)
+            
+            ' actualizo localmente
+            call clsforos.addpost(foroactual, txttitulo.text, username, txtpost.text, sticky)
+            call updatelist
+            
+            verlistamsg = true
+        end if
+    else
+        verlistamsg = false
+        sticky = false
+    end if
+    
+    lectura = false
+    
+    'switch to proper background
+    tooglescreen
 end sub
 
-private sub command2_click()
-unload me
+private sub imgcerrar_click()
+    unload me
 end sub
 
-private sub command3_click()
-
-mimensaje(0).visible = false
-mimensaje(1).visible = false
-command1.enabled = true
-label1.visible = false
-label2.visible = false
-dim i
-for each i in text
-    i.visible = false
-next
-list.visible = true
-end sub
-
-private sub form_deactivate()
-'me.setfocus
+private sub imglistamsg_click()
+    verlistamsg = true
+    tooglescreen
 end sub
 
 
-private sub list_click()
-list.visible = false
-text(list.listindex).visible = true
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    call loadbuttons
+    
+    ' initial config
+    foroactual = eforumtype.iegeneral
+    verlistamsg = true
+    updatelist
+    
+    ' default background
+    tooglescreen
+    
+    forolimpio = false
+    mirandoforo = true
+    
+    ' si no es caos o gms, no puede ver el tab de caos.
+    if (privilegios and eforumvisibility.iecaos_member) = 0 then imgtab(2).visible = false
+    
+    ' si no es armada o gm, no puede ver el tab de armadas.
+    if (privilegios and eforumvisibility.iereal_member) = 0 then imgtab(1).visible = false
+    
+end sub
+
+private sub loadbuttons()
+
+    dim grhpath as string
+    grhpath = dirgraficos
+    
+    ' load pictures
+    set fondoslistamsg(eforumtype.iegeneral) = loadpicture(grhpath & "forogeneral.jpg")
+    set fondoslistamsg(eforumtype.iereal) = loadpicture(grhpath & "fororeal.jpg")
+    set fondoslistamsg(eforumtype.iecaos) = loadpicture(grhpath & "forocaos.jpg")
+    
+    set fondosdejarmsg(eforumtype.iegeneral) = loadpicture(grhpath & "foromsggeneral.jpg")
+    set fondosdejarmsg(eforumtype.iereal) = loadpicture(grhpath & "foromsgreal.jpg")
+    set fondosdejarmsg(eforumtype.iecaos) = loadpicture(grhpath & "foromsgcaos.jpg")
+    
+    imgmarcotexto.picture = loadpicture(grhpath & "marcotextbox.jpg")
+
+    set cbotondejaranuncio = new clsgraphicalbutton
+    set cbotondejarmsg = new clsgraphicalbutton
+    set cbotoncerrar = new clsgraphicalbutton
+    set cbotonlistamsg = new clsgraphicalbutton
+
+    set lastpressed = new clsgraphicalbutton
+
+    ' initialize buttons
+    call cbotondejaranuncio.initialize(imgdejaranuncio, grhpath & "botondejaranuncioforo.jpg", _
+                                            grhpath & "botondejaranunciorolloverforo.jpg", _
+                                            grhpath & "botondejaranuncioclickforo.jpg", me)
+                                            
+    call cbotondejarmsg.initialize(imgdejarmsg, grhpath & "botondejarmsgforo.jpg", _
+                                            grhpath & "botondejarmsgrolloverforo.jpg", _
+                                            grhpath & "botondejarmsgclickforo.jpg", me, _
+                                            grhpath & "botondejarmsgdisabledforo.jpg")
+                                            
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarforo.jpg", _
+                                            grhpath & "botoncerrarrolloverforo.jpg", _
+                                            grhpath & "botoncerrarclickforo.jpg", me)
+                                            
+    call cbotonlistamsg.initialize(imglistamsg, grhpath & "botonlistamsgforo.jpg", _
+                                            grhpath & "botonlistamsgrolloverforo.jpg", _
+                                            grhpath & "botonlistamsgclickforo.jpg", me)
 
 end sub
 
-private sub mimensaje_change(index as integer)
-if len(mimensaje(0).text) <> 0 and len(mimensaje(1).text) <> 0 then
-command1.enabled = true
-end if
-
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub
 
+private sub imgtab_click(index as integer)
+
+    call audio.playwave(snd_click)
+    
+    if index <> foroactual then
+        foroactual = index
+        verlistamsg = true
+        lectura = false
+        updatelist
+        tooglescreen
+    else
+        if not verlistamsg then
+            verlistamsg = true
+            lectura = false
+            tooglescreen
+        end if
+    end if
+end sub
+
+private sub tooglescreen()
+    
+    dim postoffset as integer
+    
+    imgmarcotexto.visible = not verlistamsg and not lectura
+    txttitulo.visible = not verlistamsg and not lectura
+    lbltitulo.visible = not verlistamsg and lectura
+    
+    call cbotondejarmsg.enablebutton(verlistamsg or lectura)
+    
+    txtpost.visible = not verlistamsg
+    
+    imgdejaranuncio.visible = verlistamsg and puededejaranuncios
+    imglistamsg.visible = not verlistamsg
+    lsttitulos.visible = verlistamsg
+    
+    if verlistamsg then
+        me.picture = fondoslistamsg(foroactual)
+    else
+        if lectura then
+            with lsttitulos
+                postoffset = .itemdata(.listindex)
+                
+                ' normal post?
+                if postoffset < sticky_forum_offset then
+                    lbltitulo.caption = foros(foroactual).generaltitle(postoffset)
+                    txtpost.text = foros(foroactual).generalpost(postoffset)
+                    lblautor.caption = foros(foroactual).generalauthor(postoffset)
+                
+                ' sticky post
+                else
+                    postoffset = postoffset - sticky_forum_offset
+                    
+                    lbltitulo.caption = foros(foroactual).stickytitle(postoffset)
+                    txtpost.text = foros(foroactual).stickypost(postoffset)
+                    lblautor.caption = foros(foroactual).stickyauthor(postoffset)
+                end if
+            end with
+        else
+            lblautor.caption = username
+            txttitulo.text = vbnullstring
+            txtpost.text = vbnullstring
+            
+            txttitulo.setfocus
+        end if
+        
+        txtpost.locked = lectura
+        me.picture = fondosdejarmsg(foroactual)
+    end if
+    
+end sub
+
+private function puededejaranuncios() as boolean
+    
+    ' no puede
+    if canpoststicky = 0 then exit function
+
+    if foroactual = eforumtype.iegeneral then
+        ' solo puede dejar en el general si es gm
+        if canpoststicky <> 2 then exit function
+    end if
+    
+    puededejaranuncios = true
+    
+end function
+
+private sub lsttitulos_click()
+    verlistamsg = false
+    lectura = true
+    tooglescreen
+end sub
+
+private sub lsttitulos_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub txtpost_change()
+    if lectura then exit sub
+    
+    call cbotondejarmsg.enablebutton(len(txttitulo.text) <> 0 and len(txtpost.text) <> 0)
+end sub
+
+private sub txtpost_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub txttitulo_change()
+    if lectura then exit sub
+    
+    call cbotondejarmsg.enablebutton(len(txttitulo.text) <> 0 and len(txtpost.text) <> 0)
+end sub
+
+private sub updatelist()
+    dim postindex as long
+    
+    lsttitulos.clear
+    
+    with lsttitulos
+        ' sticky first
+        for postindex = 1 to clsforos.getnrosticky(foroactual)
+            .additem "[anuncio] " & foros(foroactual).stickytitle(postindex) & " (" & foros(foroactual).stickyauthor(postindex) & ")"
+            .itemdata(.newindex) = sticky_forum_offset + postindex
+        next postindex
+    
+        ' then normal posts
+        for postindex = 1 to clsforos.getnropost(foroactual)
+            .additem foros(foroactual).generaltitle(postindex) & " (" & foros(foroactual).generalauthor(postindex) & ")"
+            .itemdata(.newindex) = postindex
+        next postindex
+    end with
+    
+end sub
+
+private function getstickypost() as byte
+    select case foroactual
+        case 0
+            getstickypost = eforummsgtype.iegeneral_sticky
+            
+        case 1
+            getstickypost = eforummsgtype.iereal_sticky
+            
+        case 2
+            getstickypost = eforummsgtype.iecaos_sticky
+            
+    end select
+    
+end function
+
+private function getnormalpost() as byte
+    select case foroactual
+        case 0
+            getnormalpost = eforummsgtype.iegeneral
+            
+        case 1
+            getnormalpost = eforummsgtype.iereal
+            
+        case 2
+            getnormalpost = eforummsgtype.iecaos
+            
+    end select
+    
+end function

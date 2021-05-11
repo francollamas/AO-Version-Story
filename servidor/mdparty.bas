@@ -79,6 +79,12 @@ end type
 
 
 public function nextparty() as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim i as integer
 nextparty = -1
 for i = 1 to max_parties
@@ -90,6 +96,12 @@ next i
 end function
 
 public function puedecrearparty(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     puedecrearparty = true
 '    if userlist(userindex).stats.elv < minpartylevel then
     
@@ -97,80 +109,104 @@ public function puedecrearparty(byval userindex as integer) as boolean
         call writeconsolemsg(userindex, "tu carisma y liderazgo no son suficientes para liderar una party.", fonttypenames.fonttype_party)
         puedecrearparty = false
     elseif userlist(userindex).flags.muerto = 1 then
-        call writeconsolemsg(userindex, "est�s muerto!", fonttypenames.fonttype_party)
+        call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_party)
         puedecrearparty = false
     end if
 end function
 
 public sub crearparty(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim tint as integer
-if userlist(userindex).partyindex = 0 then
-    if userlist(userindex).flags.muerto = 0 then
-        if userlist(userindex).stats.userskills(eskill.liderazgo) >= 5 then
-            tint = mdparty.nextparty
-            if tint = -1 then
-                call writeconsolemsg(userindex, "por el momento no se pueden crear mas parties", fonttypenames.fonttype_party)
-                exit sub
-            else
-                set parties(tint) = new clsparty
-                if not parties(tint).nuevomiembro(userindex) then
-                    call writeconsolemsg(userindex, "la party est� llena, no puedes entrar", fonttypenames.fonttype_party)
-                    set parties(tint) = nothing
+
+with userlist(userindex)
+    if .partyindex = 0 then
+        if .flags.muerto = 0 then
+            if .stats.userskills(eskill.liderazgo) >= 5 then
+                tint = mdparty.nextparty
+                if tint = -1 then
+                    call writeconsolemsg(userindex, "por el momento no se pueden crear m�s parties.", fonttypenames.fonttype_party)
                     exit sub
                 else
-                    call writeconsolemsg(userindex, "�has formado una party!", fonttypenames.fonttype_party)
-                    userlist(userindex).partyindex = tint
-                    userlist(userindex).partysolicitud = 0
-                    if not parties(tint).hacerleader(userindex) then
-                        call writeconsolemsg(userindex, "no puedes hacerte l�der.", fonttypenames.fonttype_party)
+                    set parties(tint) = new clsparty
+                    if not parties(tint).nuevomiembro(userindex) then
+                        call writeconsolemsg(userindex, "la party est� llena, no puedes entrar.", fonttypenames.fonttype_party)
+                        set parties(tint) = nothing
+                        exit sub
                     else
-                        call writeconsolemsg(userindex, "� te has convertido en l�der de la party !", fonttypenames.fonttype_party)
+                        call writeconsolemsg(userindex, "�has formado una party!", fonttypenames.fonttype_party)
+                        .partyindex = tint
+                        .partysolicitud = 0
+                        if not parties(tint).hacerleader(userindex) then
+                            call writeconsolemsg(userindex, "no puedes hacerte l�der.", fonttypenames.fonttype_party)
+                        else
+                            call writeconsolemsg(userindex, "�te has convertido en l�der de la party!", fonttypenames.fonttype_party)
+                        end if
                     end if
                 end if
+            else
+                call writeconsolemsg(userindex, "no tienes suficientes puntos de liderazgo para liderar una party.", fonttypenames.fonttype_party)
             end if
         else
-            call writeconsolemsg(userindex, " no tienes suficientes puntos de liderazgo para liderar una party.", fonttypenames.fonttype_party)
+            call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_party)
         end if
     else
-        call writeconsolemsg(userindex, "est�s muerto!", fonttypenames.fonttype_party)
+        call writeconsolemsg(userindex, "ya perteneces a una party.", fonttypenames.fonttype_party)
     end if
-else
-    call writeconsolemsg(userindex, " ya perteneces a una party.", fonttypenames.fonttype_party)
-end if
+end with
 end sub
 
 public sub solicitaringresoaparty(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'esto es enviado por el pj para solicitar el ingreso a la party
 dim tint as integer
 
-    if userlist(userindex).partyindex > 0 then
-        'si ya esta en una party
-        call writeconsolemsg(userindex, " ya perteneces a una party, escribe /salirparty para abandonarla", fonttypenames.fonttype_party)
-        userlist(userindex).partysolicitud = 0
-        exit sub
-    end if
-    if userlist(userindex).flags.muerto = 1 then
-        call writeconsolemsg(userindex, " �est�s muerto!", fonttypenames.fonttype_info)
-        userlist(userindex).partysolicitud = 0
-        exit sub
-    end if
-    tint = userlist(userindex).flags.targetuser
-    if tint > 0 then
-        if userlist(tint).partyindex > 0 then
-            userlist(userindex).partysolicitud = userlist(tint).partyindex
-            call writeconsolemsg(userindex, " el fundador decidir� si te acepta en la party", fonttypenames.fonttype_party)
-        else
-            call writeconsolemsg(userindex, userlist(tint).name & " no es fundador de ninguna party.", fonttypenames.fonttype_info)
-            userlist(userindex).partysolicitud = 0
+    with userlist(userindex)
+        if .partyindex > 0 then
+            'si ya esta en una party
+            call writeconsolemsg(userindex, "ya perteneces a una party, escribe /salirparty para abandonarla", fonttypenames.fonttype_party)
+            .partysolicitud = 0
             exit sub
         end if
-    else
-        call writeconsolemsg(userindex, " para ingresar a una party debes hacer click sobre el fundador y luego escribir /party", fonttypenames.fonttype_party)
-        userlist(userindex).partysolicitud = 0
-    end if
+        if .flags.muerto = 1 then
+            call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_info)
+            .partysolicitud = 0
+            exit sub
+        end if
+        tint = .flags.targetuser
+        if tint > 0 then
+            if userlist(tint).partyindex > 0 then
+                .partysolicitud = userlist(tint).partyindex
+                call writeconsolemsg(userindex, "el fundador decidir� si te acepta en la party.", fonttypenames.fonttype_party)
+            else
+                call writeconsolemsg(userindex, userlist(tint).name & " no es fundador de ninguna party.", fonttypenames.fonttype_info)
+                .partysolicitud = 0
+                exit sub
+            end if
+        else
+            call writeconsolemsg(userindex, "para ingresar a una party debes hacer click sobre el fundador y luego escribir /party", fonttypenames.fonttype_party)
+            .partysolicitud = 0
+        end if
+    end with
+
 end sub
 
 public sub salirdeparty(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim pi as integer
 pi = userlist(userindex).partyindex
 if pi > 0 then
@@ -181,12 +217,18 @@ if pi > 0 then
         userlist(userindex).partyindex = 0
     end if
 else
-    call writeconsolemsg(userindex, " no eres miembro de ninguna party.", fonttypenames.fonttype_info)
+    call writeconsolemsg(userindex, "no eres miembro de ninguna party.", fonttypenames.fonttype_info)
 end if
 
 end sub
 
 public sub expulsardeparty(byval leader as integer, byval oldmember as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim pi as integer
 pi = userlist(leader).partyindex
 
@@ -233,45 +275,85 @@ public function userpuedeejecutarcomandos(byval user as integer) as boolean
 end function
 
 public sub aprobaringresoaparty(byval leader as integer, byval newmember as integer)
-'el ui es el leader
-dim pi as integer
-dim razon as string
+'***************************************************
+'author: unknown
+'last modification: 11/03/2010
+'11/03/2010: zama - le avisa al lider si intenta aceptar a alguien que sea mimebro de su propia party.
+'***************************************************
 
-pi = userlist(leader).partyindex
-
-if userlist(newmember).partysolicitud = pi then
-    if not userlist(newmember).flags.muerto = 1 then
-        if userlist(newmember).partyindex = 0 then
-            if parties(pi).puedeentrar(newmember, razon) then
-                if parties(pi).nuevomiembro(newmember) then
-                    call parties(pi).mandarmensajeaconsola(userlist(leader).name & " ha aceptado a " & userlist(newmember).name & " en la party.", "servidor")
-                    userlist(newmember).partyindex = pi
-                    userlist(newmember).partysolicitud = 0
-                else
-                    'no pudo entrar
-                    'aca uno puede codificar otro tipo de errores...
-                    call senddata(sendtarget.toadmins, leader, preparemessageconsolemsg(" servidor> catastrofe en parties, nuevomiembro dio false! :s ", fonttypenames.fonttype_party))
+    'el ui es el leader
+    dim pi as integer
+    dim razon as string
+    
+    pi = userlist(leader).partyindex
+    
+    with userlist(newmember)
+        if .partysolicitud = pi then
+            if not .flags.muerto = 1 then
+                if .partyindex = 0 then
+                    if parties(pi).puedeentrar(newmember, razon) then
+                        if parties(pi).nuevomiembro(newmember) then
+                            call parties(pi).mandarmensajeaconsola(userlist(leader).name & _
+                                " ha aceptado a " & .name & " en la party.", "servidor")
+                            .partyindex = pi
+                            .partysolicitud = 0
+                        else
+                            'no pudo entrar
+                            'aca uno puede codificar otro tipo de errores...
+                            call senddata(sendtarget.toadmins, leader, _
+                                preparemessageconsolemsg(" servidor> cat�strofe en parties, nuevomiembro dio false! :s ", _
+                                fonttypenames.fonttype_party))
+                            end if
+                        else
+                        'no debe entrar
+                        call writeconsolemsg(leader, razon, fonttypenames.fonttype_party)
                     end if
                 else
-                'no debe entrar
-                call writeconsolemsg(leader, razon, fonttypenames.fonttype_party)
+                    if .partyindex = pi then
+                        call writeconsolemsg(leader, lcase(.name) & _
+                            " ya es miembro de la party.", fonttypenames.fonttype_party)
+                    else
+                        call writeconsolemsg(leader, .name & " ya es miembro de otra party.", _
+                            fonttypenames.fonttype_party)
+                    end if
+                    
+                    exit sub
+                end if
+            else
+                call writeconsolemsg(leader, "�est� muerto, no puedes aceptar miembros en ese estado!", _
+                    fonttypenames.fonttype_party)
+                exit sub
             end if
         else
-            call writeconsolemsg(leader, userlist(newmember).name & " ya es miembro de otra party.", fonttypenames.fonttype_party)
+            if .partyindex = pi then
+                call writeconsolemsg(leader, lcase(.name) & _
+                    " ya es miembro de la party.", fonttypenames.fonttype_party)
+            else
+                call writeconsolemsg(leader, lcase(.name) & _
+                    " no ha solicitado ingresar a tu party.", fonttypenames.fonttype_party)
+            end if
+            
             exit sub
         end if
-    else
-        call writeconsolemsg(leader, "�est� muerto, no puedes aceptar miembros en ese estado!", fonttypenames.fonttype_party)
-        exit sub
-    end if
-else
-    call writeconsolemsg(leader, lcase(userlist(newmember).name) & " no ha solicitado ingresar a tu party.", fonttypenames.fonttype_party)
-    exit sub
-end if
-
+    end with
+    
 end sub
 
+private function ispartymember(byval userindex as integer, byval partyindex as integer)
+    dim memberindex as integer
+    
+    for memberindex = 1 to party_maxmembers
+        
+    next memberindex
+end function
+
 public sub broadcastparty(byval userindex as integer, byref texto as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim pi as integer
     
     pi = userlist(userindex).partyindex
@@ -292,10 +374,11 @@ dim i as integer
 dim pi as integer
 dim text as string
 dim membersonline(1 to party_maxmembers) as integer
+
     pi = userlist(userindex).partyindex
     
     if pi > 0 then
-        call parties(pi).obtenermiembrosonline(membersonline)
+        call parties(pi).obtenermiembrosonline(membersonline())
         text = "nombre(exp): "
         for i = 1 to party_maxmembers
             if membersonline(i) > 0 then
@@ -310,6 +393,12 @@ end sub
 
 
 public sub transformarenlider(byval oldleader as integer, byval newleader as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim pi as integer
 
 if oldleader = newleader then exit sub
@@ -334,6 +423,12 @@ end sub
 
 
 public sub actualizaexperiencias()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'esta funcion se invoca antes de worlsaves, y apagar servidores
 'en caso que la experiencia sea acumulada y no por golpe
 'para que grabe los datos en los charfiles
@@ -359,6 +454,12 @@ end if
 end sub
 
 public sub obtenerexito(byval userindex as integer, byval exp as long, mapa as integer, x as integer, y as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if exp <= 0 then
         if not castigos then exit sub
     end if
@@ -369,6 +470,12 @@ public sub obtenerexito(byval userindex as integer, byval exp as long, mapa as i
 end sub
 
 public function cantmiembros(byval userindex as integer) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 cantmiembros = 0
 if userlist(userindex).partyindex > 0 then
     cantmiembros = parties(userlist(userindex).partyindex).cantmiembros

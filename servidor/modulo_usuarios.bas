@@ -35,7 +35,13 @@ option explicit
 'rutinas de los usuarios
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
-sub actstats(byval victimindex as integer, byval attackerindex as integer)
+public sub actstats(byval victimindex as integer, byval attackerindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 11/03/2010
+'11/03/2010: zama - ahora no te vuelve cirminal por matar un atacable
+'***************************************************
+
     dim daexp as integer
     dim eracriminal as boolean
     
@@ -45,37 +51,41 @@ sub actstats(byval victimindex as integer, byval attackerindex as integer)
         .stats.exp = .stats.exp + daexp
         if .stats.exp > maxexp then .stats.exp = maxexp
         
-        'lo mata
-        call writeconsolemsg(attackerindex, "has matado a " & userlist(victimindex).name & "!", fonttypenames.fonttype_fight)
-        call writeconsolemsg(attackerindex, "has ganado " & daexp & " puntos de experiencia.", fonttypenames.fonttype_fight)
-              
-        call writeconsolemsg(victimindex, "�" & .name & " te ha matado!", fonttypenames.fonttype_fight)
-        
         if triggerzonapelea(victimindex, attackerindex) <> trigger6_permite then
-            eracriminal = criminal(attackerindex)
-            
-            with .reputacion
-                if not criminal(victimindex) then
-                    .asesinorep = .asesinorep + vlasesino * 2
-                    if .asesinorep > maxrep then .asesinorep = maxrep
-                    .burguesrep = 0
-                    .noblerep = 0
-                    .pleberep = 0
+        
+            ' es legal matarlo si estaba en atacable
+            if userlist(victimindex).flags.atacablepor <> attackerindex then
+                eracriminal = criminal(attackerindex)
+                
+                with .reputacion
+                    if not criminal(victimindex) then
+                        .asesinorep = .asesinorep + vlasesino * 2
+                        if .asesinorep > maxrep then .asesinorep = maxrep
+                        .burguesrep = 0
+                        .noblerep = 0
+                        .pleberep = 0
+                    else
+                        .noblerep = .noblerep + vlnoble
+                        if .noblerep > maxrep then .noblerep = maxrep
+                    end if
+                end with
+                
+                if criminal(attackerindex) then
+                    if not eracriminal then call refreshcharstatus(attackerindex)
                 else
-                    .noblerep = .noblerep + vlnoble
-                    if .noblerep > maxrep then .noblerep = maxrep
+                    if eracriminal then call refreshcharstatus(attackerindex)
                 end if
-            end with
-            
-            if criminal(attackerindex) then
-                if not eracriminal then call refreshcharstatus(attackerindex)
-            else
-                if eracriminal then call refreshcharstatus(attackerindex)
             end if
         end if
         
-        'call userdie(victimindex)
+        'lo mata
+        'call writeconsolemsg(attackerindex, "has matado a " & userlist(victimindex).name & "!", fonttypenames.fonttype_fight)
+        'call writeconsolemsg(attackerindex, "has ganado " & daexp & " puntos de experiencia.", fonttypenames.fonttype_fight)
+        'call writeconsolemsg(victimindex, "�" & .name & " te ha matado!", fonttypenames.fonttype_fight)
+        call writemultimessage(attackerindex, emessages.havekilleduser, victimindex, daexp)
+        call writemultimessage(victimindex, emessages.userkill, attackerindex)
         
+        'call userdie(victimindex)
         call flushbuffer(victimindex)
         
         'log
@@ -83,7 +93,13 @@ sub actstats(byval victimindex as integer, byval attackerindex as integer)
     end with
 end sub
 
-sub revivirusuario(byval userindex as integer)
+public sub revivirusuario(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with userlist(userindex)
         .flags.muerto = 0
         .stats.minhp = .stats.useratributos(eatributos.constitucion)
@@ -93,47 +109,17 @@ sub revivirusuario(byval userindex as integer)
         end if
         
         if .flags.navegando = 1 then
-            dim barco as objdata
-            barco = objdata(.invent.barcoobjindex)
-            .char.head = 0
-            
-            if .faccion.armadareal = 1 then
-                .char.body = ifragatareal
-            elseif .faccion.fuerzascaos = 1 then
-                .char.body = ifragatacaos
-            else
-                if criminal(userindex) then
-                    select case barco.ropaje
-                        case ibarca
-                            .char.body = ibarcapk
-                        
-                        case igalera
-                            .char.body = igalerapk
-                        
-                        case igaleon
-                            .char.body = igaleonpk
-                    end select
-                else
-                    select case barco.ropaje
-                        case ibarca
-                            .char.body = ibarcaciuda
-                        
-                        case igalera
-                            .char.body = igaleraciuda
-                        
-                        case igaleon
-                            .char.body = igaleonciuda
-                    end select
-                end if
-            end if
-            
-            .char.shieldanim = ningunescudo
-            .char.weaponanim = ningunarma
-            .char.cascoanim = ninguncasco
+            call toogleboatbody(userindex)
         else
             call darcuerpodesnudo(userindex)
             
             .char.head = .origchar.head
+        end if
+        
+        if .flags.traveling then
+            .flags.traveling = 0
+            .counters.gohome = 0
+            call writemultimessage(userindex, emessages.cancelhome)
         end if
         
         call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
@@ -141,9 +127,71 @@ sub revivirusuario(byval userindex as integer)
     end with
 end sub
 
-sub changeuserchar(byval userindex as integer, byval body as integer, byval head as integer, byval heading as byte, _
-                    byval arma as integer, byval escudo as integer, byval casco as integer)
+public sub toogleboatbody(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 13/01/2010
+'gives boat body depending on user alignment.
+'***************************************************
 
+    dim ropaje as integer
+    
+    with userlist(userindex)
+        
+ 
+        .char.head = 0
+        
+        ' barco de armada
+        if .faccion.armadareal = 1 then
+            .char.body = ifragatareal
+            
+        ' barco de caos
+        elseif .faccion.fuerzascaos = 1 then
+            .char.body = ifragatacaos
+        
+        'barcos neutrales
+        else
+            ropaje = objdata(.invent.barcoobjindex).ropaje
+            
+            if criminal(userindex) then
+                select case ropaje
+                    case ibarca
+                        .char.body = ibarcapk
+                    
+                    case igalera
+                        .char.body = igalerapk
+                    
+                    case igaleon
+                        .char.body = igaleonpk
+                end select
+            else
+                select case ropaje
+                    case ibarca
+                        .char.body = ibarcaciuda
+                    
+                    case igalera
+                        .char.body = igaleraciuda
+                    
+                    case igaleon
+                        .char.body = igaleonciuda
+                end select
+            end if
+        end if
+        
+        .char.shieldanim = ningunescudo
+        .char.weaponanim = ningunarma
+        .char.cascoanim = ninguncasco
+    end with
+
+end sub
+
+public sub changeuserchar(byval userindex as integer, byval body as integer, byval head as integer, byval heading as byte, _
+                    byval arma as integer, byval escudo as integer, byval casco as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
     with userlist(userindex).char
         .body = body
         .head = head
@@ -156,7 +204,35 @@ sub changeuserchar(byval userindex as integer, byval body as integer, byval head
     end with
 end sub
 
-sub enviarfama(byval userindex as integer)
+public function getweaponanim(byval userindex as integer, byval objindex as integer) as integer
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 03/29/10
+'
+'***************************************************
+    dim tmp as integer
+
+    with userlist(userindex)
+        tmp = objdata(objindex).weaponrazaenanaanim
+            
+        if tmp > 0 then
+            if .raza = eraza.enano or .raza = eraza.gnomo then
+                getweaponanim = tmp
+                exit function
+            end if
+        end if
+        
+        getweaponanim = objdata(objindex).weaponanim
+    end with
+end function
+
+public sub enviarfama(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim l as long
     
     with userlist(userindex).reputacion
@@ -174,7 +250,7 @@ sub enviarfama(byval userindex as integer)
     call writefame(userindex)
 end sub
 
-sub eraseuserchar(byval userindex as integer, byval isadmininvisible as boolean)
+public sub eraseuserchar(byval userindex as integer, byval isadmininvisible as boolean)
 '*************************************************
 'author: unknown
 'last modified: 08/01/2009
@@ -214,29 +290,28 @@ errorhandler:
     call logerror("error en eraseuserchar " & err.number & ": " & err.description)
 end sub
 
-sub refreshcharstatus(byval userindex as integer)
+public sub refreshcharstatus(byval userindex as integer)
 '*************************************************
 'author: tararira
 'last modified: 04/07/2009
 'refreshes the status and tag of userindex.
 '04/07/2009: zama - ahora mantenes la fragata fantasmal si estas muerto.
 '*************************************************
-    dim klan as string
-    dim barco as objdata
-    dim escriminal as boolean
+    dim clantag as string
+    dim nickcolor as byte
     
     with userlist(userindex)
         if .guildindex > 0 then
-            klan = modguilds.guildname(.guildindex)
-            klan = " <" & klan & ">"
+            clantag = modguilds.guildname(.guildindex)
+            clantag = " <" & clantag & ">"
         end if
         
-        escriminal = criminal(userindex)
+        nickcolor = getnickcolor(userindex)
         
         if .showname then
-            call senddata(sendtarget.topcarea, userindex, preparemessageupdatetagandstatus(userindex, escriminal, .name & klan))
+            call senddata(sendtarget.topcarea, userindex, preparemessageupdatetagandstatus(userindex, nickcolor, .name & clantag))
         else
-            call senddata(sendtarget.topcarea, userindex, preparemessageupdatetagandstatus(userindex, escriminal, vbnullstring))
+            call senddata(sendtarget.topcarea, userindex, preparemessageupdatetagandstatus(userindex, nickcolor, vbnullstring))
         end if
         
         'si esta navengando, se cambia la barca.
@@ -244,53 +319,50 @@ sub refreshcharstatus(byval userindex as integer)
             if .flags.muerto = 1 then
                 .char.body = ifragatafantasmal
             else
-                barco = objdata(.invent.object(.invent.barcoslot).objindex)
-                
-                if .faccion.armadareal = 1 then
-                    .char.body = ifragatareal
-                elseif userlist(userindex).faccion.fuerzascaos = 1 then
-                    .char.body = ifragatacaos
-                else
-                    if escriminal then
-                        select case barco.ropaje
-                            case ibarca
-                                .char.body = ibarcapk
-                            
-                            case igalera
-                                .char.body = igalerapk
-                            
-                            case igaleon
-                                .char.body = igaleonpk
-                        end select
-                    else
-                        select case barco.ropaje
-                            case ibarca
-                                .char.body = ibarcaciuda
-                            
-                            case igalera
-                                .char.body = igaleraciuda
-                            
-                            case igaleon
-                                .char.body = igaleonciuda
-                        end select
-                    end if
-                end if
+                call toogleboatbody(userindex)
             end if
+            
             call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
         end if
     end with
 end sub
 
-sub makeuserchar(byval tomap as boolean, byval sndindex as integer, byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
+public function getnickcolor(byval userindex as integer) as byte
+'*************************************************
+'author: zama
+'last modified: 15/01/2010
+'
+'*************************************************
+    
+    with userlist(userindex)
+        
+        if criminal(userindex) then
+            getnickcolor = enickcolor.iecriminal
+        else
+            getnickcolor = enickcolor.ieciudadano
+        end if
+        
+        if .flags.atacablepor > 0 then getnickcolor = getnickcolor or enickcolor.ieatacable
+    end with
+    
+end function
+
+public sub makeuserchar(byval tomap as boolean, byval sndindex as integer, byval userindex as integer, _
+        byval map as integer, byval x as integer, byval y as integer, optional butindex as boolean = false)
 '*************************************************
 'author: unknown
-'last modified: 23/07/2009
-'
+'last modified: 15/01/2010
 '23/07/2009: budi - ahora se env�a el nick
+'15/01/2010: zama - ahora se envia el color del nick.
 '*************************************************
 
-on error goto hayerror
+on error goto errhandler
+
     dim charindex as integer
+    dim clantag as string
+    dim nickcolor as byte
+    dim username as string
+    dim privileges as byte
     
     with userlist(userindex)
     
@@ -306,58 +378,48 @@ on error goto hayerror
             if tomap then mapdata(map, x, y).userindex = userindex
             
             'send make character command to clients
-            dim klan as string
-            if .guildindex > 0 then
-                klan = modguilds.guildname(.guildindex)
-            end if
-            
-            dim bcr as byte
-            dim bnick as string
-            dim bpriv as byte
-            
-            bcr = criminal(userindex)
-            bpriv = .flags.privilegios
-            'preparo el nick
-            if .showname then
-                if userlist(sndindex).flags.privilegios and playertype.user then
-                    if lenb(klan) <> 0 then
-                        bnick = .name & " <" & klan & ">"
+            if not tomap then
+                if .guildindex > 0 then
+                    clantag = modguilds.guildname(.guildindex)
+                end if
+                
+                nickcolor = getnickcolor(userindex)
+                privileges = .flags.privilegios
+                
+                'preparo el nick
+                if .showname then
+                    username = .name
+                    
+                    if .flags.enconsulta then
+                        username = username & " " & tag_consult_mode
                     else
-                        bnick = .name
-                    end if
-'                    bpriv = .flags.privilegios
-                else
-                    if .flags.invisible or .flags.oculto then
-                        bnick = .name & " " & tag_user_invisible
-                    else
-                        if lenb(klan) <> 0 then
-                            bnick = .name & " <" & klan & ">"
+                        if userlist(sndindex).flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then
+                            if lenb(clantag) <> 0 then _
+                                username = username & " <" & clantag & ">"
                         else
-                            bnick = .name
+                            if (.flags.invisible or .flags.oculto) and (not .flags.admininvisible = 1) then
+                                username = username & " " & tag_user_invisible
+                            else
+                                if lenb(clantag) <> 0 then _
+                                    username = username & " <" & clantag & ">"
+                            end if
                         end if
                     end if
-'                    bpriv = .flags.privilegios
                 end if
-            else
-                bnick = vbnullstring
-'                bpriv = playertype.user
-            end if
             
-            if not tomap then
                 call writecharactercreate(sndindex, .char.body, .char.head, .char.heading, _
                             .char.charindex, x, y, _
                             .char.weaponanim, .char.shieldanim, .char.fx, 999, .char.cascoanim, _
-                            bnick, bcr, bpriv)
+                            username, nickcolor, privileges)
             else
                 'hide the name and clan - set privs as normal user
-                 call agregaruser(userindex, .pos.map)
+                 call agregaruser(userindex, .pos.map, butindex)
             end if
-            
         end if
     end with
 exit sub
 
-hayerror:
+errhandler:
     logerror ("makeuserchar: num: " & err.number & " desc: " & err.description)
     'resume next
     call closesocket(userindex)
@@ -368,10 +430,10 @@ end sub
 '
 ' @param userindex specifies reference to user
 
-sub checkuserlevel(byval userindex as integer)
+public sub checkuserlevel(byval userindex as integer)
 '*************************************************
 'author: unknown
-'last modified: 12/09/2007
+'last modified: 11/19/2009
 'chequea que el usuario no halla alcanzado el siguiente nivel,
 'de lo contrario le da la vida, mana, etc, correspodiente.
 '07/08/2006 integer - modificacion de los valores
@@ -382,6 +444,8 @@ sub checkuserlevel(byval userindex as integer)
 '09/01/2008 pablo (toxicwaste) - ahora el incremento de vida por consituci�n se controla desde balance.dat
 '12/09/2008 marco vanotti (marco) - ahora si se llega a nivel 25 y est� en un clan, se lo expulsa para no sumar antifacci�n
 '02/03/2009 zama - arreglada la validacion de expulsion para miembros de clanes faccionarios que llegan a 25.
+'11/19/2009 pato - modifico la nueva f�rmula de man� ganada para el bandido y se la limito a 499
+'02/04/2010: zama - modifico la ganancia de hit por nivel del ladron.
 '*************************************************
     dim pts as integer
     dim aumentohit as integer
@@ -462,34 +526,24 @@ on error goto errhandler
             else
                 'es promedio entero
                 
-'todo : sacar este if en la 0.13 y dejar s�lo el else (toxicwaste)
-                if .clase = eclass.mage then
-                    if aux <= 33 then
-                        aumentohp = promedio + 1
-                    elseif aux <= 66 then
-                        aumentohp = promedio
-                    else
-                        aumentohp = promedio - 1
-                    end if
+                distvida(1) = distribucionsemienteravida(1)
+                distvida(2) = distvida(1) + distribucionenteravida(2)
+                distvida(3) = distvida(2) + distribucionenteravida(3)
+                distvida(4) = distvida(3) + distribucionenteravida(4)
+                distvida(5) = distvida(4) + distribucionenteravida(5)
+                
+                if aux <= distvida(1) then
+                    aumentohp = promedio + 2
+                elseif aux <= distvida(2) then
+                    aumentohp = promedio + 1
+                elseif aux <= distvida(3) then
+                    aumentohp = promedio
+                elseif aux <= distvida(4) then
+                    aumentohp = promedio - 1
                 else
-                    distvida(1) = distribucionsemienteravida(1)
-                    distvida(2) = distvida(1) + distribucionenteravida(2)
-                    distvida(3) = distvida(2) + distribucionenteravida(3)
-                    distvida(4) = distvida(3) + distribucionenteravida(4)
-                    distvida(5) = distvida(4) + distribucionenteravida(5)
-                    
-                    if aux <= distvida(1) then
-                        aumentohp = promedio + 2
-                    elseif aux <= distvida(2) then
-                        aumentohp = promedio + 1
-                    elseif aux <= distvida(3) then
-                        aumentohp = promedio
-                    elseif aux <= distvida(4) then
-                        aumentohp = promedio - 1
-                    else
-                        aumentohp = promedio - 2
-                    end if
+                    aumentohp = promedio - 2
                 end if
+                
             end if
         
             select case .clase
@@ -511,7 +565,7 @@ on error goto errhandler
                     aumentosta = aumentostdef
                 
                 case eclass.thief
-                    aumentohit = 1
+                    aumentohit = 2
                     aumentosta = aumentostladron
                 
                 case eclass.mage
@@ -519,17 +573,9 @@ on error goto errhandler
                     aumentomana = 2.8 * .stats.useratributos(eatributos.inteligencia)
                     aumentosta = aumentostmago
                 
-                case eclass.lumberjack
+                case eclass.worker
                     aumentohit = 2
-                    aumentosta = aumentostle�ador
-                
-                case eclass.miner
-                    aumentohit = 2
-                    aumentosta = aumentostminero
-                
-                case eclass.fisher
-                    aumentohit = 1
-                    aumentosta = aumentostpescador
+                    aumentosta = aumentosttrabajador
                 
                 case eclass.cleric
                     aumentohit = 2
@@ -550,16 +596,11 @@ on error goto errhandler
                     aumentohit = 2
                     aumentomana = 2 * .stats.useratributos(eatributos.inteligencia)
                     aumentosta = aumentostdef
-                
-                case eclass.blacksmith, eclass.carpenter
-                    aumentohit = 2
-                    aumentosta = aumentostdef
                     
                 case eclass.bandit
                     aumentohit = iif(.stats.elv > 35, 1, 3)
-                    aumentomana = iif(.stats.maxman = 300, 0, .stats.useratributos(eatributos.inteligencia) - 10)
-                    if aumentomana < 4 then aumentomana = 4
-                    aumentosta = aumentostle�ador
+                    aumentomana = .stats.useratributos(eatributos.inteligencia) / 3 * 2
+                    aumentosta = aumentostbandido
                 
                 case else
                     aumentohit = 2
@@ -577,12 +618,6 @@ on error goto errhandler
             'actualizamos mana
             .stats.maxman = .stats.maxman + aumentomana
             if .stats.maxman > stat_maxman then .stats.maxman = stat_maxman
-            
-            if .clase = eclass.bandit then 'mana del bandido restringido hasta 300
-                if .stats.maxman > 300 then
-                    .stats.maxman = 300
-                end if
-            end if
             
             'actualizamos golpe m�ximo
             .stats.maxhit = .stats.maxhit + aumentohit
@@ -609,14 +644,14 @@ on error goto errhandler
                 call writeconsolemsg(userindex, "has ganado " & aumentohp & " puntos de vida.", fonttypenames.fonttype_info)
             end if
             if aumentosta > 0 then
-                call writeconsolemsg(userindex, "has ganado " & aumentosta & " puntos de vitalidad.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "has ganado " & aumentosta & " puntos de energ�a.", fonttypenames.fonttype_info)
             end if
             if aumentomana > 0 then
-                call writeconsolemsg(userindex, "has ganado " & aumentomana & " puntos de magia.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "has ganado " & aumentomana & " puntos de man�.", fonttypenames.fonttype_info)
             end if
             if aumentohit > 0 then
                 call writeconsolemsg(userindex, "tu golpe m�ximo aument� en " & aumentohit & " puntos.", fonttypenames.fonttype_info)
-                call writeconsolemsg(userindex, "tu golpe minimo aument� en " & aumentohit & " puntos.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "tu golpe m�nimo aument� en " & aumentohit & " puntos.", fonttypenames.fonttype_info)
             end if
             
             call logdesarrollo(.name & " paso a nivel " & .stats.elv & " gano hp: " & aumentohp)
@@ -630,7 +665,7 @@ on error goto errhandler
             if .stats.elv = 25 then
                 gi = .guildindex
                 if gi > 0 then
-                    if modguilds.guildalignment(gi) = "legi�n oscura" or modguilds.guildalignment(gi) = "armada real" then
+                    if modguilds.guildalignment(gi) = "del mal" or modguilds.guildalignment(gi) = "real" then
                         'we get here, so guild has factionary alignment, we have to expulse the user
                         call modguilds.m_echarmiembrodeclan(-1, .name)
                         call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg(.name & " deja el clan.", fonttypenames.fonttype_guild))
@@ -669,6 +704,12 @@ errhandler:
 end sub
 
 public function puedeatravesaragua(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     puedeatravesaragua = userlist(userindex).flags.navegando = 1 _
                     or userlist(userindex).flags.vuela = 1
 end function
@@ -706,7 +747,7 @@ sub moveuserchar(byval userindex as integer, byval nheading as eheading)
                     if triggerzonapelea(userindex, casperindex) = trigger6_prohibe then
                         if userlist(casperindex).flags.seguroresu = false then
                             userlist(casperindex).flags.seguroresu = true
-                            call writeresuscitationsafeon(casperindex)
+                            call writemultimessage(casperindex, emessages.resuscitationsafeon)
                         end if
                     end if
     
@@ -792,11 +833,23 @@ public function invertheading(byval nheading as eheading) as eheading
 end function
 
 sub changeuserinv(byval userindex as integer, byval slot as byte, byref object as userobj)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     userlist(userindex).invent.object(slot) = object
     call writechangeinventoryslot(userindex, slot)
 end sub
 
 function nextopencharindex() as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim loopc as long
     
     for loopc = 1 to maxchars
@@ -813,6 +866,12 @@ function nextopencharindex() as integer
 end function
 
 function nextopenuser() as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim loopc as long
     
     for loopc = 1 to maxusers + 1
@@ -824,12 +883,18 @@ function nextopenuser() as integer
 end function
 
 public sub senduserstatstxt(byval sendindex as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim guildi as integer
     
     with userlist(userindex)
-        call writeconsolemsg(sendindex, "estadisticas de: " & .name, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "estad�sticas de: " & .name, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "nivel: " & .stats.elv & "  exp: " & .stats.exp & "/" & .stats.elu, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "salud: " & .stats.minhp & "/" & .stats.maxhp & "  mana: " & .stats.minman & "/" & .stats.maxman & "  vitalidad: " & .stats.minsta & "/" & .stats.maxsta, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "salud: " & .stats.minhp & "/" & .stats.maxhp & "  man�: " & .stats.minman & "/" & .stats.maxman & "  energ�a: " & .stats.minsta & "/" & .stats.maxsta, fonttypenames.fonttype_info)
         
         if .invent.weaponeqpobjindex > 0 then
             call writeconsolemsg(sendindex, "menor golpe/mayor golpe: " & .stats.minhit & "/" & .stats.maxhit & " (" & objdata(.invent.weaponeqpobjindex).minhit & "/" & objdata(.invent.weaponeqpobjindex).maxhit & ")", fonttypenames.fonttype_info)
@@ -839,25 +904,25 @@ public sub senduserstatstxt(byval sendindex as integer, byval userindex as integ
         
         if .invent.armoureqpobjindex > 0 then
             if .invent.escudoeqpobjindex > 0 then
-                call writeconsolemsg(sendindex, "(cuerpo) min def/max def: " & objdata(.invent.armoureqpobjindex).mindef + objdata(.invent.escudoeqpobjindex).mindef & "/" & objdata(.invent.armoureqpobjindex).maxdef + objdata(.invent.escudoeqpobjindex).maxdef, fonttypenames.fonttype_info)
+                call writeconsolemsg(sendindex, "(cuerpo) m�n def/m�x def: " & objdata(.invent.armoureqpobjindex).mindef + objdata(.invent.escudoeqpobjindex).mindef & "/" & objdata(.invent.armoureqpobjindex).maxdef + objdata(.invent.escudoeqpobjindex).maxdef, fonttypenames.fonttype_info)
             else
-                call writeconsolemsg(sendindex, "(cuerpo) min def/max def: " & objdata(.invent.armoureqpobjindex).mindef & "/" & objdata(.invent.armoureqpobjindex).maxdef, fonttypenames.fonttype_info)
+                call writeconsolemsg(sendindex, "(cuerpo) m�n def/m�x def: " & objdata(.invent.armoureqpobjindex).mindef & "/" & objdata(.invent.armoureqpobjindex).maxdef, fonttypenames.fonttype_info)
             end if
         else
-            call writeconsolemsg(sendindex, "(cuerpo) min def/max def: 0", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "(cuerpo) m�n def/m�x def: 0", fonttypenames.fonttype_info)
         end if
         
         if .invent.cascoeqpobjindex > 0 then
-            call writeconsolemsg(sendindex, "(cabeza) min def/max def: " & objdata(.invent.cascoeqpobjindex).mindef & "/" & objdata(.invent.cascoeqpobjindex).maxdef, fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "(cabeza) m�n def/m�x def: " & objdata(.invent.cascoeqpobjindex).mindef & "/" & objdata(.invent.cascoeqpobjindex).maxdef, fonttypenames.fonttype_info)
         else
-            call writeconsolemsg(sendindex, "(cabeza) min def/max def: 0", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "(cabeza) m�n def/m�x def: 0", fonttypenames.fonttype_info)
         end if
         
         guildi = .guildindex
         if guildi > 0 then
             call writeconsolemsg(sendindex, "clan: " & modguilds.guildname(guildi), fonttypenames.fonttype_info)
             if ucase$(modguilds.guildleader(guildi)) = ucase$(.name) then
-                call writeconsolemsg(sendindex, "status: lider", fonttypenames.fonttype_info)
+                call writeconsolemsg(sendindex, "status: l�der", fonttypenames.fonttype_info)
             end if
             'guildpts no tienen objeto
         end if
@@ -873,7 +938,7 @@ public sub senduserstatstxt(byval sendindex as integer, byval userindex as integ
         call writeconsolemsg(sendindex, "total: " & tempstr, fonttypenames.fonttype_info)
 #end if
         
-        call writeconsolemsg(sendindex, "oro: " & .stats.gld & "  posicion: " & .pos.x & "," & .pos.y & " en mapa " & .pos.map, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "oro: " & .stats.gld & "  posici�n: " & .pos.x & "," & .pos.y & " en mapa " & .pos.map, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "dados: " & .stats.useratributos(eatributos.fuerza) & ", " & .stats.useratributos(eatributos.agilidad) & ", " & .stats.useratributos(eatributos.inteligencia) & ", " & .stats.useratributos(eatributos.carisma) & ", " & .stats.useratributos(eatributos.constitucion), fonttypenames.fonttype_info)
     end with
 end sub
@@ -887,27 +952,27 @@ sub senduserministatstxt(byval sendindex as integer, byval userindex as integer)
 '*************************************************
     with userlist(userindex)
         call writeconsolemsg(sendindex, "pj: " & .name, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "ciudadanosmatados: " & .faccion.ciudadanosmatados & " criminalesmatados: " & .faccion.criminalesmatados & " usuariosmatados: " & .stats.usuariosmatados, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "npcsmuertos: " & .stats.npcsmuertos, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "ciudadanos matados: " & .faccion.ciudadanosmatados & " criminales matados: " & .faccion.criminalesmatados & " usuarios matados: " & .stats.usuariosmatados, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "npcs muertos: " & .stats.npcsmuertos, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "clase: " & listaclases(.clase), fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "pena: " & .counters.pena, fonttypenames.fonttype_info)
         
         if .faccion.armadareal = 1 then
-            call writeconsolemsg(sendindex, "armada real desde: " & .faccion.fechaingreso, fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "ej�rcito real desde: " & .faccion.fechaingreso, fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "ingres� en nivel: " & .faccion.nivelingreso & " con " & .faccion.matadosingreso & " ciudadanos matados.", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & .faccion.reenlistadas, fonttypenames.fonttype_info)
         
         elseif .faccion.fuerzascaos = 1 then
-            call writeconsolemsg(sendindex, "legion oscura desde: " & .faccion.fechaingreso, fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "legi�n oscura desde: " & .faccion.fechaingreso, fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "ingres� en nivel: " & .faccion.nivelingreso, fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & .faccion.reenlistadas, fonttypenames.fonttype_info)
         
         elseif .faccion.recibioexpinicialreal = 1 then
-            call writeconsolemsg(sendindex, "fue armada real", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "fue ej�rcito real", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & .faccion.reenlistadas, fonttypenames.fonttype_info)
         
         elseif .faccion.recibioexpinicialcaos = 1 then
-            call writeconsolemsg(sendindex, "fue legionario", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "fue legi�n oscura", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & .faccion.reenlistadas, fonttypenames.fonttype_info)
         end if
         
@@ -936,27 +1001,27 @@ sub senduserministatstxtfromchar(byval sendindex as integer, byval charname as s
     
     if fileexist(charfile) then
         call writeconsolemsg(sendindex, "pj: " & charname, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "ciudadanosmatados: " & getvar(charfile, "facciones", "ciudmatados") & " criminalesmatados: " & getvar(charfile, "facciones", "crimmatados") & " usuariosmatados: " & getvar(charfile, "muertes", "usermuertes"), fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "npcsmuertos: " & getvar(charfile, "muertes", "npcsmuertes"), fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "ciudadanos matados: " & getvar(charfile, "facciones", "ciudmatados") & " criminalesmatados: " & getvar(charfile, "facciones", "crimmatados") & " usuarios matados: " & getvar(charfile, "muertes", "usermuertes"), fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "npcs muertos: " & getvar(charfile, "muertes", "npcsmuertes"), fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "clase: " & listaclases(getvar(charfile, "init", "clase")), fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "pena: " & getvar(charfile, "counters", "pena"), fonttypenames.fonttype_info)
         
         if cbyte(getvar(charfile, "facciones", "ejercitoreal")) = 1 then
-            call writeconsolemsg(sendindex, "armada real desde: " & getvar(charfile, "facciones", "fechaingreso"), fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "ej�rcito real desde: " & getvar(charfile, "facciones", "fechaingreso"), fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "ingres� en nivel: " & cint(getvar(charfile, "facciones", "nivelingreso")) & " con " & cint(getvar(charfile, "facciones", "matadosingreso")) & " ciudadanos matados.", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & cbyte(getvar(charfile, "facciones", "reenlistadas")), fonttypenames.fonttype_info)
         
         elseif cbyte(getvar(charfile, "facciones", "ejercitocaos")) = 1 then
-            call writeconsolemsg(sendindex, "legion oscura desde: " & getvar(charfile, "facciones", "fechaingreso"), fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "legi�n oscura desde: " & getvar(charfile, "facciones", "fechaingreso"), fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "ingres� en nivel: " & cint(getvar(charfile, "facciones", "nivelingreso")), fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & cbyte(getvar(charfile, "facciones", "reenlistadas")), fonttypenames.fonttype_info)
         
         elseif cbyte(getvar(charfile, "facciones", "rexreal")) = 1 then
-            call writeconsolemsg(sendindex, "fue armada real", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "fue ej�rcito real", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & cbyte(getvar(charfile, "facciones", "reenlistadas")), fonttypenames.fonttype_info)
         
         elseif cbyte(getvar(charfile, "facciones", "rexcaos")) = 1 then
-            call writeconsolemsg(sendindex, "fue legionario", fonttypenames.fonttype_info)
+            call writeconsolemsg(sendindex, "fue legi�n oscura", fonttypenames.fonttype_info)
             call writeconsolemsg(sendindex, "veces que ingres�: " & cbyte(getvar(charfile, "facciones", "reenlistadas")), fonttypenames.fonttype_info)
         end if
 
@@ -980,6 +1045,12 @@ sub senduserministatstxtfromchar(byval sendindex as integer, byval charname as s
 end sub
 
 sub senduserinvtxt(byval sendindex as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
     dim j as long
@@ -988,15 +1059,21 @@ on error resume next
         call writeconsolemsg(sendindex, .name, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "tiene " & .invent.nroitems & " objetos.", fonttypenames.fonttype_info)
         
-        for j = 1 to max_inventory_slots
+        for j = 1 to .currentinventoryslots
             if .invent.object(j).objindex > 0 then
-                call writeconsolemsg(sendindex, " objeto " & j & " " & objdata(.invent.object(j).objindex).name & " cantidad:" & .invent.object(j).amount, fonttypenames.fonttype_info)
+                call writeconsolemsg(sendindex, "objeto " & j & " " & objdata(.invent.object(j).objindex).name & " cantidad:" & .invent.object(j).amount, fonttypenames.fonttype_info)
             end if
         next j
     end with
 end sub
 
 sub senduserinvtxtfromchar(byval sendindex as integer, byval charname as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
     dim j as long
@@ -1007,14 +1084,14 @@ on error resume next
     
     if fileexist(charfile, vbnormal) then
         call writeconsolemsg(sendindex, charname, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, " tiene " & getvar(charfile, "inventory", "cantidaditems") & " objetos.", fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "tiene " & getvar(charfile, "inventory", "cantidaditems") & " objetos.", fonttypenames.fonttype_info)
         
         for j = 1 to max_inventory_slots
             tmp = getvar(charfile, "inventory", "obj" & j)
             objind = readfield(1, tmp, asc("-"))
             objcant = readfield(2, tmp, asc("-"))
             if objind > 0 then
-                call writeconsolemsg(sendindex, " objeto " & j & " " & objdata(objind).name & " cantidad:" & objcant, fonttypenames.fonttype_info)
+                call writeconsolemsg(sendindex, "objeto " & j & " " & objdata(objind).name & " cantidad:" & objcant, fonttypenames.fonttype_info)
             end if
         next j
     else
@@ -1023,6 +1100,12 @@ on error resume next
 end sub
 
 sub senduserskillstxt(byval sendindex as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
     dim j as integer
     
@@ -1032,10 +1115,15 @@ on error resume next
         call writeconsolemsg(sendindex, skillsnames(j) & " = " & userlist(userindex).stats.userskills(j), fonttypenames.fonttype_info)
     next j
     
-    call writeconsolemsg(sendindex, " skilllibres:" & userlist(userindex).stats.skillpts, fonttypenames.fonttype_info)
+    call writeconsolemsg(sendindex, "skilllibres:" & userlist(userindex).stats.skillpts, fonttypenames.fonttype_info)
 end sub
 
 private function esmascotaciudadano(byval npcindex as integer, byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
     if npclist(npcindex).maestrouser > 0 then
         esmascotaciudadano = not criminal(npclist(npcindex).maestrouser)
@@ -1048,10 +1136,11 @@ end function
 sub npcatacado(byval npcindex as integer, byval userindex as integer)
 '**********************************************
 'author: unknown
-'last modification: 06/28/2008
+'last modification: 02/04/2010
 '24/01/2007 -> pablo (toxicwaste): agrego para que se actualize el tag si corresponde.
 '24/07/2007 -> pablo (toxicwaste): guardar primero que ataca npc y el que atacas ahora.
 '06/28/2008 -> niconz: los elementales al atacarlos por su amo no se paran m�s al lado de �l sin hacer nada.
+'02/04/2010: zama: un ciuda no se vuelve mas criminal al atacar un npc no hostil.
 '**********************************************
     dim eracriminal as boolean
     
@@ -1101,10 +1190,6 @@ sub npcatacado(byval npcindex as integer, byval userindex as integer)
         if npclist(npcindex).stats.alineacion = 0 then
            if npclist(npcindex).npctype = enpctype.guardiareal then
                 call volvercriminal(userindex)
-           else
-                if not npclist(npcindex).maestrouser > 0 then   'mascotas nooo!
-                    call volvercriminal(userindex)
-                end if
            end if
         
         elseif npclist(npcindex).stats.alineacion = 1 then
@@ -1125,6 +1210,11 @@ sub npcatacado(byval npcindex as integer, byval userindex as integer)
     end if
 end sub
 public function puedeapu�alar(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
     if userlist(userindex).invent.weaponeqpobjindex > 0 then
         if objdata(userlist(userindex).invent.weaponeqpobjindex).apu�ala = 1 then
@@ -1134,47 +1224,70 @@ public function puedeapu�alar(byval userindex as integer) as boolean
     end if
 end function
 
-sub subirskill(byval userindex as integer, byval skill as integer)
+public function puedeacuchillar(byval userindex as integer) as boolean
+'***************************************************
+'author: zama
+'last modification: 25/01/2010 (zama)
+'
+'***************************************************
+    
+    with userlist(userindex)
+        if .clase = eclass.pirat then
+            if .invent.weaponeqpobjindex > 0 then
+                puedeacuchillar = (objdata(.invent.weaponeqpobjindex).acuchilla = 1)
+            end if
+        end if
+    end with
+    
+end function
 
+sub subirskill(byval userindex as integer, byval skill as integer, byval acerto as boolean)
+'*************************************************
+'author: unknown
+'last modified: 11/19/2009
+'11/19/2009 pato - implement the new system to train the skills.
+'*************************************************
     with userlist(userindex)
         if .flags.hambre = 0 and .flags.sed = 0 then
-            
-            if .stats.userskills(skill) = maxskillpoints then exit sub
-            
-            dim lvl as integer
-            lvl = .stats.elv
-            
-            if lvl > ubound(levelskill) then lvl = ubound(levelskill)
-            
-            if .stats.userskills(skill) >= levelskill(lvl).levelvalue then exit sub
-            
-            dim prob as integer
-            
-            if lvl <= 3 then
-                prob = 25
-            elseif lvl > 3 and lvl < 6 then
-                prob = 35
-            elseif lvl >= 6 and lvl < 10 then
-                prob = 40
-            elseif lvl >= 10 and lvl < 20 then
-                prob = 45
-            else
-                prob = 50
+            if .counters.asignedskills < 10 then
+                if not .flags.ultimomensaje = 7 then
+                    call writeconsolemsg(userindex, "para poder entrenar un skill debes asignar los 10 skills iniciales.", fonttypenames.fonttype_info)
+                    .flags.ultimomensaje = 7
+                end if
+                
+                exit sub
             end if
-            
-            
-            if randomnumber(1, prob) = 7 then
-                .stats.userskills(skill) = .stats.userskills(skill) + 1
-                call writeconsolemsg(userindex, "�has mejorado tu skill " & skillsnames(skill) & " en un punto!. ahora tienes " & .stats.userskills(skill) & " pts.", fonttypenames.fonttype_info)
                 
-                .stats.exp = .stats.exp + 50
-                if .stats.exp > maxexp then .stats.exp = maxexp
+            with .stats
+                if .userskills(skill) = maxskillpoints then exit sub
                 
-                call writeconsolemsg(userindex, "�has ganado 50 puntos de experiencia!", fonttypenames.fonttype_fight)
+                dim lvl as integer
+                lvl = .elv
                 
-                call writeupdateexp(userindex)
-                call checkuserlevel(userindex)
-            end if
+                if lvl > ubound(levelskill) then lvl = ubound(levelskill)
+                
+                if .userskills(skill) >= levelskill(lvl).levelvalue then exit sub
+                
+                if acerto then
+                    .expskills(skill) = .expskills(skill) + exp_acierto_skill
+                else
+                    .expskills(skill) = .expskills(skill) + exp_fallo_skill
+                end if
+                
+                if .expskills(skill) >= .eluskills(skill) then
+                    .userskills(skill) = .userskills(skill) + 1
+                    call writeconsolemsg(userindex, "�has mejorado tu skill " & skillsnames(skill) & " en un punto! ahora tienes " & .userskills(skill) & " pts.", fonttypenames.fonttype_info)
+                    
+                    .exp = .exp + 50
+                    if .exp > maxexp then .exp = maxexp
+                    
+                    call writeconsolemsg(userindex, "�has ganado 50 puntos de experiencia!", fonttypenames.fonttype_fight)
+                    
+                    call writeupdateexp(userindex)
+                    call checkuserlevel(userindex)
+                    call checkeluskill(userindex, skill, false)
+                end if
+            end with
         end if
     end with
 end sub
@@ -1188,11 +1301,14 @@ end sub
 sub userdie(byval userindex as integer)
 '************************************************
 'author: uknown
-'last modified: 21/07/2009
+'last modified: 12/01/2010 (zama)
 '04/15/2008: niconz - ahora se resetea el counter del invi
 '13/02/2009: zama - ahora se borran las mascotas cuando moris en agua.
 '27/05/2009: zama - el seguro de resu no se activa si estas en una arena.
 '21/07/2009: marco - al morir se desactiva el comercio seguro.
+'16/11/2009: zama - al morir perdes la criatura que te pertenecia.
+'27/11/2009: budi - al morir envia los atributos originales.
+'12/01/2010: zama - los druidas pierden la inmunidad de ser atacados cuando mueren.
 '************************************************
 on error goto errorhandler
     dim i as long
@@ -1217,10 +1333,10 @@ on error goto errorhandler
         ' no se activa en arenas
         if triggerzonapelea(userindex, userindex) <> trigger6_permite then
             .flags.seguroresu = true
-            call writeresuscitationsafeon(userindex)
+            call writemultimessage(userindex, emessages.resuscitationsafeon) 'call writeresuscitationsafeon(userindex)
         else
             .flags.seguroresu = false
-            call writeresuscitationsafeoff(userindex)
+            call writemultimessage(userindex, emessages.resuscitationsafeoff) 'call writeresuscitationsafeoff(userindex)
         end if
         
         an = .flags.atacadopornpc
@@ -1238,6 +1354,13 @@ on error goto errorhandler
         end if
         .flags.atacadopornpc = 0
         .flags.npcatacado = 0
+        call perdionpc(userindex)
+        
+        '<<<< atacable >>>>
+        if .flags.atacablepor > 0 then
+            .flags.atacablepor = 0
+            call refreshcharstatus(userindex)
+        end if
         
         '<<<< paralisis >>>>
         if .flags.paralizado = 1 then
@@ -1276,7 +1399,7 @@ on error goto errorhandler
         
         if triggerzonapelea(userindex, userindex) <> etrigger6.trigger6_permite then
             ' << si es newbie no pierde el inventario >>
-            if not esnewbie(userindex) or criminal(userindex) then
+            if not esnewbie(userindex) then
                 call tirartodo(userindex)
             else
                 call tirartodoslositemsnonewbies(userindex)
@@ -1329,6 +1452,8 @@ on error goto errorhandler
             .char.weaponanim = .charmimetizado.weaponanim
             .counters.mimetismo = 0
             .flags.mimetizado = 0
+            ' puede ser atacado por npcs (cuando resucite)
+            .flags.ignorado = false
         end if
         
         ' << restauramos los atributos >>
@@ -1363,7 +1488,7 @@ on error goto errorhandler
         '<< actualizamos clientes >>
         call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, ningunescudo, ninguncasco)
         call writeupdateuserstats(userindex)
-        
+        call writeupdatestrenghtanddexterity(userindex)
         '<<castigos por party>>
         if .partyindex > 0 then
             call mdparty.obtenerexito(userindex, .stats.elv * -10 * mdparty.cantmiembros(userindex), .pos.map, .pos.x, .pos.y)
@@ -1379,6 +1504,11 @@ errorhandler:
 end sub
 
 sub contarmuerte(byval muerto as integer, byval atacante as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
     if esnewbie(muerto) then exit sub
     
@@ -1457,11 +1587,12 @@ sub tilelibre(byref pos as worldpos, byref npos as worldpos, byref obj as obj, b
     loop
 end sub
 
-sub warpuserchar(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer, byval fx as boolean)
+sub warpuserchar(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer, byval fx as boolean, optional byval teletransported as boolean)
 '**************************************************************
 'author: unknown
-'last modify date: 15/07/2009
+'last modify date: 13/11/2009
 '15/07/2009 - zama: automatic toogle navigate after warping to water.
+'13/11/2009 - zama: now it's activated the timer which determines if the npc can atacak the user.
 '**************************************************************
     dim oldmap as integer
     dim oldx as integer
@@ -1491,6 +1622,22 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
             if mapinfo(oldmap).numusers < 0 then
                 mapinfo(oldmap).numusers = 0
             end if
+        
+            'si el mapa al que entro no es superficial and en el que estaba tampoco es superficial, entonces
+            dim nextmap, previousmap as boolean
+            nextmap = iif(distancetocities(map).distancetocity(.hogar) >= 0, true, false)
+            previousmap = iif(distancetocities(.pos.map).distancetocity(.hogar) >= 0, true, false)
+
+            if previousmap and nextmap then '138 => 139 (ambos superficiales, no tiene que pasar nada)
+                'no pasa nada porque no entro a un dungeon.
+            elseif previousmap and not nextmap then '139 => 140 (139 es superficial, 140 no. por lo tanto 139 es el ultimo mapa superficial)
+                .flags.lastmap = .pos.map
+            elseif not previousmap and nextmap then '140 => 139 (140 es no es superficial, 139 si. por lo tanto, el �ltimo mapa es 0 ya que no esta en un dungeon)
+                .flags.lastmap = 0
+            elseif not previousmap and not nextmap then '140 => 141 (ninguno es superficial, el ultimo mapa es el mismo de antes)
+                .flags.lastmap = .flags.lastmap
+            end if
+        
         end if
         
         .pos.x = x
@@ -1509,6 +1656,14 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
             'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, true))
         end if
         
+        if teletransported then
+            if .flags.traveling = 1 then
+                .flags.traveling = 0
+                .counters.gohome = 0
+                call writemultimessage(userindex, emessages.cancelhome)
+            end if
+        end if
+        
         if fx and .flags.admininvisible = 0 then 'fx
             call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_warp, x, y))
             call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, fxids.fxwarp, 0))
@@ -1516,6 +1671,11 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         
         if .nromascotas then call warpmascotas(userindex)
         
+        ' no puede ser atacado cuando cambia de mapa, por cierto tiempo
+        call intervalopermiteseratacado(userindex, true)
+        
+        ' perdes el npc al cambiar de mapa
+        call perdionpc(userindex)
         
         ' automatic toogle navigate
         if (.flags.privilegios and (playertype.user or playertype.consejero)) = 0 then
@@ -1610,9 +1770,6 @@ private sub warpmascotas(byval userindex as integer)
                 npclist(index).stats.minhp = iif(iminhp = 0, npclist(index).stats.minhp, iminhp)
             
                 npclist(index).maestrouser = userindex
-                npclist(index).movement = tipoai.sigueamo
-                npclist(index).target = 0
-                npclist(index).targetnpc = 0
                 npclist(index).contadores.tiempoexistencia = pettiempodevida
                 call followamo(index)
             end if
@@ -1630,6 +1787,61 @@ private sub warpmascotas(byval userindex as integer)
     userlist(userindex).nromascotas = nropets
 end sub
 
+public sub warpmascota(byval userindex as integer, byval petindex as integer)
+'************************************************
+'author: zama
+'last modified: 18/11/2009
+'warps a pet without changing its stats
+'************************************************
+    dim pettype as integer
+    dim npcindex as integer
+    dim iminhp as integer
+    dim targetpos as worldpos
+    
+    with userlist(userindex)
+        
+        targetpos.map = .flags.targetmap
+        targetpos.x = .flags.targetx
+        targetpos.y = .flags.targety
+        
+        npcindex = .mascotasindex(petindex)
+            
+        'store data and remove npc to recreate it after warp
+        pettype = .mascotastype(petindex)
+        
+        ' guardamos el hp, para restaurarlo cuando se cree el npc
+        iminhp = npclist(npcindex).stats.minhp
+        
+        call quitarnpc(npcindex)
+        
+        ' restauramos el valor de la variable
+        .mascotastype(petindex) = pettype
+        .nromascotas = .nromascotas + 1
+        npcindex = spawnnpc(pettype, targetpos, false, false)
+        
+        'controlamos que se sumoneo ok - should never happen. continue to allow removal of other pets if not alone
+        ' exception: pets don't spawn in water if they can't swim
+        if npcindex = 0 then
+            call writeconsolemsg(userindex, "tu mascota no pueden transitar este sector del mapa, intenta invocarla en otra parte.", fonttypenames.fonttype_info)
+        else
+            .mascotasindex(petindex) = npcindex
+
+            with npclist(npcindex)
+                ' nos aseguramos de que conserve el hp, si estaba da�ado
+                .stats.minhp = iif(iminhp = 0, .stats.minhp, iminhp)
+            
+                .maestrouser = userindex
+                .movement = tipoai.sigueamo
+                .target = 0
+                .targetnpc = 0
+            end with
+            
+            call followamo(npcindex)
+        end if
+    end with
+end sub
+
+
 ''
 ' se inicia la salida de un usuario.
 '
@@ -1642,22 +1854,46 @@ sub cerrar_usuario(byval userindex as integer)
 '
 '***************************************************
     dim isnotvisible as boolean
+    dim hiddenpirat as boolean
     
-    if userlist(userindex).flags.userlogged and not userlist(userindex).counters.saliendo then
-        userlist(userindex).counters.saliendo = true
-        userlist(userindex).counters.salir = iif((userlist(userindex).flags.privilegios and playertype.user) and mapinfo(userlist(userindex).pos.map).pk, intervalocerrarconexion, 0)
-        
-        isnotvisible = (userlist(userindex).flags.oculto or userlist(userindex).flags.invisible)
-        if isnotvisible then
-            userlist(userindex).flags.oculto = 0
-            userlist(userindex).flags.invisible = 0
-            call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-            call setinvisible(userindex, userlist(userindex).char.charindex, false)
-            'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
+    with userlist(userindex)
+        if .flags.userlogged and not .counters.saliendo then
+            .counters.saliendo = true
+            .counters.salir = iif((.flags.privilegios and playertype.user) and mapinfo(.pos.map).pk, intervalocerrarconexion, 0)
+            
+            isnotvisible = (.flags.oculto or .flags.invisible)
+            if isnotvisible then
+                .flags.invisible = 0
+                
+                if .flags.oculto then
+                    if .flags.navegando = 1 then
+                        if .clase = eclass.pirat then
+                            ' pierde la apariencia de fragata fantasmal
+                            call toogleboatbody(userindex)
+                            call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
+                            call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
+                                                ningunescudo, ninguncasco)
+                            hiddenpirat = true
+                        end if
+                    end if
+                end if
+                
+                .flags.oculto = 0
+                
+                ' para no repetir mensajes
+                if not hiddenpirat then call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
+                
+                call setinvisible(userindex, .char.charindex, false)
+
+            end if
+            
+            if .flags.traveling = 1 then
+                call writemultimessage(userindex, emessages.cancelhome)
+            end if
+            
+            call writeconsolemsg(userindex, "cerrando...se cerrar� el juego en " & .counters.salir & " segundos...", fonttypenames.fonttype_info)
         end if
-        
-        call writeconsolemsg(userindex, "cerrando...se cerrar� el juego en " & userlist(userindex).counters.salir & " segundos...", fonttypenames.fonttype_info)
-    end if
+    end with
 end sub
 
 ''
@@ -1690,6 +1926,12 @@ end sub
 'userindexdestino: slot del usuario destino, a quien cambiarle el nick
 'nuevonick: nuevo nick de userindexdestino
 public sub cambiarnick(byval userindex as integer, byval userindexdestino as integer, byval nuevonick as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim viejonick as string
     dim viejocharbackup as string
     
@@ -1704,13 +1946,19 @@ public sub cambiarnick(byval userindex as integer, byval userindexdestino as int
 end sub
 
 sub senduserstatstxtoff(byval sendindex as integer, byval nombre as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if fileexist(charpath & nombre & ".chr", vbarchive) = false then
         call writeconsolemsg(sendindex, "pj inexistente", fonttypenames.fonttype_info)
     else
-        call writeconsolemsg(sendindex, "estadisticas de: " & nombre, fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "estad�sticas de: " & nombre, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "nivel: " & getvar(charpath & nombre & ".chr", "stats", "elv") & "  exp: " & getvar(charpath & nombre & ".chr", "stats", "exp") & "/" & getvar(charpath & nombre & ".chr", "stats", "elu"), fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "vitalidad: " & getvar(charpath & nombre & ".chr", "stats", "minsta") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxsta"), fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, "salud: " & getvar(charpath & nombre & ".chr", "stats", "minhp") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxhp") & "  mana: " & getvar(charpath & nombre & ".chr", "stats", "minman") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxman"), fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "energ�a: " & getvar(charpath & nombre & ".chr", "stats", "minsta") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxsta"), fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "salud: " & getvar(charpath & nombre & ".chr", "stats", "minhp") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxhp") & "  man�: " & getvar(charpath & nombre & ".chr", "stats", "minman") & "/" & getvar(charpath & nombre & ".chr", "stats", "maxman"), fonttypenames.fonttype_info)
         
         call writeconsolemsg(sendindex, "menor golpe/mayor golpe: " & getvar(charpath & nombre & ".chr", "stats", "maxhit"), fonttypenames.fonttype_info)
         
@@ -1720,7 +1968,7 @@ sub senduserstatstxtoff(byval sendindex as integer, byval nombre as string)
         dim tempsecs as long
         dim tempstr as string
         tempsecs = getvar(charpath & nombre & ".chr", "init", "uptime")
-        tempstr = (tempsecs \ 86400) & " dias, " & ((tempsecs mod 86400) \ 3600) & " horas, " & ((tempsecs mod 86400) mod 3600) \ 60 & " minutos, " & (((tempsecs mod 86400) mod 3600) mod 60) & " segundos."
+        tempstr = (tempsecs \ 86400) & " d�as, " & ((tempsecs mod 86400) \ 3600) & " horas, " & ((tempsecs mod 86400) mod 3600) \ 60 & " minutos, " & (((tempsecs mod 86400) mod 3600) mod 60) & " segundos."
         call writeconsolemsg(sendindex, "tiempo logeado: " & tempstr, fonttypenames.fonttype_info)
 #end if
     
@@ -1728,6 +1976,12 @@ sub senduserstatstxtoff(byval sendindex as integer, byval nombre as string)
 end sub
 
 sub senduserorotxtfromchar(byval sendindex as integer, byval charname as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim charfile as string
     
 on error resume next
@@ -1735,7 +1989,7 @@ on error resume next
     
     if fileexist(charfile, vbnormal) then
         call writeconsolemsg(sendindex, charname, fonttypenames.fonttype_info)
-        call writeconsolemsg(sendindex, " tiene " & getvar(charfile, "stats", "banco") & " en el banco.", fonttypenames.fonttype_info)
+        call writeconsolemsg(sendindex, "tiene " & getvar(charfile, "stats", "banco") & " en el banco.", fonttypenames.fonttype_info)
     else
         call writeconsolemsg(sendindex, "usuario inexistente: " & charname, fonttypenames.fonttype_info)
     end if
@@ -1744,8 +1998,9 @@ end sub
 sub volvercriminal(byval userindex as integer)
 '**************************************************************
 'author: unknown
-'last modify date: 21/06/2006
+'last modify date: 21/02/2010
 'nacho: actualiza el tag al cliente
+'21/02/2010: zama - ahora deja de ser atacable si se hace criminal.
 '**************************************************************
     with userlist(userindex)
         if mapdata(.pos.map, .pos.x, .pos.y).trigger = etrigger.zonapelea then exit sub
@@ -1757,6 +2012,9 @@ sub volvercriminal(byval userindex as integer)
             .reputacion.bandidorep = .reputacion.bandidorep + vlasalto
             if .reputacion.bandidorep > maxrep then .reputacion.bandidorep = maxrep
             if .faccion.armadareal = 1 then call expulsarfaccionreal(userindex)
+            
+            if .flags.atacablepor > 0 then .flags.atacablepor = 0
+
         end if
     end with
     
@@ -1803,18 +2061,369 @@ public function bodyisboat(byval body as integer) as boolean
 end function
 
 public sub setinvisible(byval userindex as integer, byval usercharindex as integer, byval invisible as boolean)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim sndnick as string
-dim klan as string
-call senddata(sendtarget.tousersareabutgms, userindex, preparemessagesetinvisible(usercharindex, invisible))
 
-if invisible then
-    sndnick = userlist(userindex).name & " " & tag_user_invisible
-else
-    sndnick = userlist(userindex).name
-    if userlist(userindex).guildindex > 0 then
-        sndnick = sndnick & " <" & modguilds.guildname(userlist(userindex).guildindex) & ">"
+with userlist(userindex)
+    call senddata(sendtarget.tousersandrmsandcounselorsareabutgms, userindex, preparemessagesetinvisible(usercharindex, invisible))
+    
+    sndnick = .name
+    
+    if invisible then
+        sndnick = sndnick & " " & tag_user_invisible
+    else
+        if .guildindex > 0 then
+            sndnick = sndnick & " <" & modguilds.guildname(.guildindex) & ">"
+        end if
     end if
-end if
+    
+    call senddata(sendtarget.togmsareabutrmsorcounselors, userindex, preparemessagecharacterchangenick(usercharindex, sndnick))
+end with
+end sub
 
-call senddata(sendtarget.togmsarea, userindex, preparemessagecharacterchangenick(usercharindex, sndnick))
+public sub setconsulatmode(byval userindex as integer)
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 05/06/10
+'
+'***************************************************
+
+dim sndnick as string
+
+with userlist(userindex)
+    sndnick = .name
+    
+    if .flags.enconsulta then
+        sndnick = sndnick & " " & tag_consult_mode
+    else
+        if .guildindex > 0 then
+            sndnick = sndnick & " <" & modguilds.guildname(.guildindex) & ">"
+        end if
+    end if
+    
+    call senddata(sendtarget.topcarea, userindex, preparemessagecharacterchangenick(.char.charindex, sndnick))
+end with
+end sub
+
+public function isarena(byval userindex as integer) as boolean
+'**************************************************************
+'author: zama
+'last modify date: 10/11/2009
+'returns true if the user is in an arena
+'**************************************************************
+    isarena = (triggerzonapelea(userindex, userindex) = trigger6_permite)
+end function
+
+public sub perdionpc(byval userindex as integer)
+'**************************************************************
+'author: zama
+'last modify date: 18/01/2010 (zama)
+'the user loses his owned npc
+'18/01/2010: zama - las mascotas dejan de atacar al npc que se perdi�.
+'**************************************************************
+
+    dim petindex as long
+    
+    with userlist(userindex)
+        if .flags.ownednpc > 0 then
+            npclist(.flags.ownednpc).owner = 0
+            .flags.ownednpc = 0
+            
+            ' dejan de atacar las mascotas
+            if .nromascotas > 0 then
+                for petindex = 1 to maxmascotas
+                    if .mascotastype(petindex) > 0 then call followamo(petindex)
+                next petindex
+            end if
+        end if
+    end with
+end sub
+
+public sub apropionpc(byval userindex as integer, byval npcindex as integer)
+'**************************************************************
+'author: zama
+'last modify date: 18/01/2010 (zama)
+'the user owns a new npc
+'18/01/2010: zama - el sistema no aplica a zonas seguras.
+'19/04/2010: zama - ahora los admins no se pueden apropiar de npcs.
+'**************************************************************
+
+    with userlist(userindex)
+        ' los admins no se pueden apropiar de npcs
+        if esgm(userindex) then exit sub
+        
+        'no aplica a zonas seguras
+        if mapdata(.pos.map, .pos.x, .pos.y).trigger = etrigger.zonasegura then exit sub
+        
+        ' no aplica a algunos mapas que permiten el robo de npcs
+        if mapinfo(.pos.map).robonpcspermitido = 1 then exit sub
+        
+        ' pierde el npc anterior
+        if .flags.ownednpc > 0 then npclist(.flags.ownednpc).owner = 0
+        
+        ' si tenia otro due�o, lo perdio aca
+        npclist(npcindex).owner = userindex
+        .flags.ownednpc = npcindex
+    end with
+    
+    ' inicializo o actualizo el timer de pertenencia
+    call intervaloperdionpc(userindex, true)
+end sub
+
+public function getdireccion(byval userindex as integer, byval otheruserindex as integer) as string
+'**************************************************************
+'author: zama
+'last modify date: 17/11/2009
+'devuelve la direccion hacia donde esta el usuario
+'**************************************************************
+    dim x as integer
+    dim y as integer
+    
+    x = userlist(userindex).pos.x - userlist(otheruserindex).pos.x
+    y = userlist(userindex).pos.y - userlist(otheruserindex).pos.y
+    
+    if x = 0 and y > 0 then
+        getdireccion = "sur"
+    elseif x = 0 and y < 0 then
+        getdireccion = "norte"
+    elseif x > 0 and y = 0 then
+        getdireccion = "este"
+    elseif x < 0 and y = 0 then
+        getdireccion = "oeste"
+    elseif x > 0 and y < 0 then
+        getdireccion = "noreste"
+    elseif x < 0 and y < 0 then
+        getdireccion = "noroeste"
+    elseif x > 0 and y > 0 then
+        getdireccion = "sureste"
+    elseif x < 0 and y > 0 then
+        getdireccion = "suroeste"
+    end if
+
+end function
+
+public function samefaccion(byval userindex as integer, byval otheruserindex as integer) as boolean
+'**************************************************************
+'author: zama
+'last modify date: 17/11/2009
+'devuelve true si son de la misma faccion
+'**************************************************************
+    samefaccion = (escaos(userindex) and escaos(otheruserindex)) or _
+                    (esarmada(userindex) and esarmada(otheruserindex))
+end function
+
+public function farthestpet(byval userindex as integer) as integer
+'**************************************************************
+'author: zama
+'last modify date: 18/11/2009
+'devuelve el indice de la mascota mas lejana.
+'**************************************************************
+on error goto errhandler
+    
+    dim petindex as integer
+    dim distancia as integer
+    dim otradistancia as integer
+    
+    with userlist(userindex)
+        if .nromascotas = 0 then exit function
+    
+        for petindex = 1 to maxmascotas
+            ' solo pos invocar criaturas que exitan!
+            if .mascotasindex(petindex) > 0 then
+                ' solo aplica a mascota, nada de elementales..
+                if npclist(.mascotasindex(petindex)).contadores.tiempoexistencia = 0 then
+                    if farthestpet = 0 then
+                        ' por si tiene 1 sola mascota
+                        farthestpet = petindex
+                        distancia = abs(.pos.x - npclist(.mascotasindex(petindex)).pos.x) + _
+                                    abs(.pos.y - npclist(.mascotasindex(petindex)).pos.y)
+                    else
+                        ' la distancia de la proxima mascota
+                        otradistancia = abs(.pos.x - npclist(.mascotasindex(petindex)).pos.x) + _
+                                        abs(.pos.y - npclist(.mascotasindex(petindex)).pos.y)
+                        ' esta mas lejos?
+                        if otradistancia > distancia then
+                            distancia = otradistancia
+                            farthestpet = petindex
+                        end if
+                    end if
+                end if
+            end if
+        next petindex
+    end with
+
+    exit function
+    
+errhandler:
+    call logerror("error en farthestpet")
+end function
+
+''
+' set the eluskill value at the skill.
+'
+' @param userindex  specifies reference to user
+' @param skill      number of the skill to check
+' @param allocation true if the motive of the modification is the allocation, false if the skill increase by training
+
+public sub checkeluskill(byval userindex as integer, byval skill as byte, byval allocation as boolean)
+'*************************************************
+'author: torres patricio (pato)
+'last modified: 11/20/2009
+'
+'*************************************************
+
+with userlist(userindex).stats
+    if .userskills(skill) < maxskillpoints then
+        if allocation then
+            .expskills(skill) = 0
+        else
+            .expskills(skill) = .expskills(skill) - .eluskills(skill)
+        end if
+        
+        .eluskills(skill) = elu_skill_inicial * 1.05 ^ .userskills(skill)
+    else
+        .expskills(skill) = 0
+        .eluskills(skill) = 0
+    end if
+end with
+
+end sub
+
+public function hasenoughitems(byval userindex as integer, byval objindex as integer, byval amount as long) as boolean
+'**************************************************************
+'author: zama
+'last modify date: 25/11/2009
+'cheks wether the user has the required amount of items in the inventory or not
+'**************************************************************
+
+    dim slot as long
+    dim iteminvamount as long
+    
+    for slot = 1 to userlist(userindex).currentinventoryslots
+        ' si es el item que busco
+        if userlist(userindex).invent.object(slot).objindex = objindex then
+            ' lo sumo a la cantidad total
+            iteminvamount = iteminvamount + userlist(userindex).invent.object(slot).amount
+        end if
+    next slot
+
+    hasenoughitems = amount <= iteminvamount
+end function
+
+public function totalofferitems(byval objindex as integer, byval userindex as integer) as long
+'**************************************************************
+'author: zama
+'last modify date: 25/11/2009
+'cheks the amount of items the user has in offerslots.
+'**************************************************************
+    dim slot as byte
+    
+    for slot = 1 to max_offer_slots
+            ' si es el item que busco
+        if userlist(userindex).comusu.objeto(slot) = objindex then
+            ' lo sumo a la cantidad total
+            totalofferitems = totalofferitems + userlist(userindex).comusu.cant(slot)
+        end if
+    next slot
+
+end function
+
+public function getmaxinventoryslots(byval userindex as integer) as byte
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+if userlist(userindex).invent.mochilaeqpobjindex > 0 then
+    getmaxinventoryslots = max_normal_inventory_slots + objdata(userlist(userindex).invent.mochilaeqpobjindex).mochilatype * 5 '5=slots por fila, hacer constante
+else
+    getmaxinventoryslots = max_normal_inventory_slots
+end if
+end function
+
+public sub gohome(byval userindex as integer)
+dim distance as integer
+dim tiempo as long
+
+with userlist(userindex)
+    if .flags.muerto = 1 then
+        if .flags.lastmap = 0 then
+            distance = distancetocities(.pos.map).distancetocity(.hogar)
+        else
+            distance = distancetocities(.flags.lastmap).distancetocity(.hogar) + gohome_penalty
+        end if
+        
+        tiempo = (distance + 1) * 30 'segundos
+        
+        .counters.gohome = tiempo / 6 'se va a chequear cada 6 segundos.
+        
+        .flags.traveling = 1
+
+        call writemultimessage(userindex, emessages.home, distance, tiempo, , mapinfo(ciudades(.hogar).map).name)
+    else
+        call writeconsolemsg(userindex, "debes estar muerto para poder utilizar este comando.", fonttypenames.fonttype_fight)
+    end if
+end with
+end sub
+
+public function toogletoatackable(byval userindex as integer, byval ownerindex as integer, optional byval stealingnpc as boolean = true) as boolean
+'***************************************************
+'author: zama
+'last modification: 15/01/2010
+'change to atackable mode.
+'***************************************************
+    
+    dim atacablepor as integer
+    
+    with userlist(userindex)
+    
+        atacablepor = .flags.atacablepor
+            
+        if atacablepor > 0 then
+            ' intenta robar un npc
+            if stealingnpc then
+                ' puede atacar el mismo npc que ya estaba robando, pero no una nuevo.
+                if atacablepor <> ownerindex then
+                    call writeconsolemsg(userindex, "no puedes atacar otra criatura con due�o hasta que haya terminado tu castigo.", fonttypenames.fonttype_info)
+                    exit function
+                end if
+            ' esta atacando a alguien en estado atacable => se renueva el timer de atacable
+            else
+                ' renovar el timer
+                call intervaloestadoatacable(userindex, true)
+                toogletoatackable = true
+                exit function
+            end if
+        end if
+        
+        .flags.atacablepor = ownerindex
+    
+        ' actualizar clientes
+        call refreshcharstatus(userindex)
+        
+        ' inicializar el timer
+        call intervaloestadoatacable(userindex, true)
+        
+        toogletoatackable = true
+        
+    end with
+    
+end function
+
+public sub sethome(byval userindex as integer, byval newhome as eciudad, byval npcindex as integer)
+'***************************************************
+'author: budi
+'last modification: 30/04/2010
+'30/04/2010: zama - ahora el npc avisa que se cambio de hogar.
+'***************************************************
+    if newhome < eciudad.cullathorpe or newhome > carghal then exit sub
+    userlist(userindex).hogar = newhome
+    
+    call writechatoverhead(userindex, "���bienvenido a nuestra humilde comunidad, este es ahora tu nuevo hogar!!!", npclist(npcindex).char.charindex, vbwhite)
 end sub

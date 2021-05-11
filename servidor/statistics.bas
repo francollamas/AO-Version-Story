@@ -49,6 +49,12 @@ public sub initialize()
 end sub
 
 public sub userconnected(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'a new user connected, load it's trainning time count
     trainninginfo(userindex).trainningtime = val(getvar(charpath & ucase$(userlist(userindex).name) & ".chr", "research", "trainningtime", 30))
     
@@ -56,6 +62,12 @@ public sub userconnected(byval userindex as integer)
 end sub
 
 public sub userdisconnected(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with trainninginfo(userindex)
         'update trainning time
         .trainningtime = .trainningtime + ((gettickcount() and &h7fffffff) - .starttick) / 1000
@@ -68,6 +80,12 @@ public sub userdisconnected(byval userindex as integer)
 end sub
 
 public sub userlevelup(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim handle as integer
     handle = freefile()
     
@@ -86,6 +104,12 @@ public sub userlevelup(byval userindex as integer)
 end sub
 
 public sub storefrag(byval killer as integer, byval victim as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim clase as integer
     dim raza as integer
     dim alignment as integer
@@ -156,6 +180,12 @@ public sub storefrag(byval killer as integer, byval victim as integer)
 end sub
 
 public sub dumpstatistics()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim handle as integer
     handle = freefile()
     
@@ -494,6 +524,12 @@ public sub dumpstatistics()
 end sub
 
 public sub parsechat(byref s as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim i as long
     dim key as integer
     

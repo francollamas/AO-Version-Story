@@ -1,4 +1,5 @@
 version 5.00
+object = "{eab22ac0-30c1-11cf-a7eb-0000c05bae0b}#1.1#0"; "ieframe.dll"
 begin vb.form frmconnect 
    backcolor       =   &h00e0e0e0&
    borderstyle     =   0  'none
@@ -8,25 +9,83 @@ begin vb.form frmconnect
    clienttop       =   0
    clientwidth     =   12000
    clipcontrols    =   0   'false
+   controlbox      =   0   'false
    fillcolor       =   &h00000040&
    icon            =   "frmconnect.frx":0000
    keypreview      =   -1  'true
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   moveable        =   0   'false
+   palettemode     =   1  'usezorder
    scaleheight     =   600
    scalemode       =   3  'pixel
    scalewidth      =   800
    startupposition =   2  'centerscreen
    visible         =   0   'false
-   begin vb.commandbutton downloadserver 
-      caption         =   "descargar c�digo del servidor"
-      height          =   375
-      left            =   240
-      tabindex        =   3
-      top             =   8280
-      width           =   2415
+   begin shdocvwctl.webbrowser webnoticias 
+      height          =   4440
+      left            =   435
+      tabindex        =   5
+      top             =   1680
+      width           =   2850
+      extentx         =   5027
+      extenty         =   7832
+      viewmode        =   0
+      offline         =   0
+      silent          =   0
+      registerasbrowser=   0
+      registerasdroptarget=   1
+      autoarrange     =   0   'false
+      noclientedge    =   0   'false
+      alignleft       =   0   'false
+      nowebview       =   0   'false
+      hidefilenames   =   0   'false
+      singleclick     =   0   'false
+      singleselection =   0   'false
+      nofolders       =   0   'false
+      transparent     =   0   'false
+      viewid          =   "{0057d0e0-3573-11cf-ae69-08002b2e1262}"
+      location        =   "http:///"
+   end
+   begin vb.textbox txtpasswd 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      imemode         =   3  'disable
+      left            =   4920
+      passwordchar    =   "*"
+      tabindex        =   1
+      top             =   3720
+      width           =   2460
+   end
+   begin vb.textbox txtnombre 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      left            =   4905
+      tabindex        =   0
+      top             =   3210
+      width           =   2460
    end
    begin vb.textbox porttxt 
       alignment       =   2  'center
@@ -43,12 +102,12 @@ begin vb.form frmconnect
          strikethrough   =   0   'false
       endproperty
       forecolor       =   &h0000ff00&
-      height          =   225
-      left            =   3000
-      tabindex        =   0
+      height          =   195
+      left            =   4890
+      tabindex        =   2
       text            =   "7666"
-      top             =   2460
-      width           =   1875
+      top             =   2760
+      width           =   825
    end
    begin vb.textbox iptxt 
       alignment       =   2  'center
@@ -65,27 +124,106 @@ begin vb.form frmconnect
          strikethrough   =   0   'false
       endproperty
       forecolor       =   &h0000ff00&
-      height          =   225
-      left            =   5340
-      tabindex        =   2
+      height          =   195
+      left            =   5760
+      tabindex        =   4
       text            =   "localhost"
-      top             =   2460
-      width           =   3375
+      top             =   2760
+      width           =   1575
+   end
+   begin shdocvwctl.webbrowser webauxiliar 
+      height          =   360
+      left            =   960
+      tabindex        =   6
+      top             =   0
+      visible         =   0   'false
+      width           =   330
+      extentx         =   582
+      extenty         =   635
+      viewmode        =   0
+      offline         =   0
+      silent          =   0
+      registerasbrowser=   0
+      registerasdroptarget=   1
+      autoarrange     =   0   'false
+      noclientedge    =   0   'false
+      alignleft       =   0   'false
+      nowebview       =   0   'false
+      hidefilenames   =   0   'false
+      singleclick     =   0   'false
+      singleselection =   0   'false
+      nofolders       =   0   'false
+      transparent     =   0   'false
+      viewid          =   "{0057d0e0-3573-11cf-ae69-08002b2e1262}"
+      location        =   "http:///"
+   end
+   begin vb.image imgteclas 
+      height          =   375
+      left            =   6120
+      top             =   3960
+      width           =   1335
+   end
+   begin vb.image imgconectarse 
+      height          =   375
+      left            =   4800
+      top             =   3960
+      width           =   1335
+   end
+   begin vb.image imgverforo 
+      height          =   465
+      left            =   450
+      top             =   6120
+      width           =   2835
+   end
+   begin vb.image imgsalir 
+      height          =   375
+      left            =   9960
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgborrarpj 
+      height          =   375
+      left            =   8400
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgcodigofuente 
+      height          =   375
+      left            =   6840
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgreglamento 
+      height          =   375
+      left            =   5280
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgmanual 
+      height          =   375
+      left            =   3720
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgrecuperar 
+      height          =   375
+      left            =   2160
+      top             =   8400
+      width           =   1335
+   end
+   begin vb.image imgcrearpj 
+      height          =   375
+      left            =   600
+      top             =   8400
+      width           =   1335
    end
    begin vb.image imgservargentina 
       height          =   795
-      left            =   -195
+      left            =   360
       mousepointer    =   99  'custom
-      top             =   6765
+      top             =   9240
       visible         =   0   'false
       width           =   2595
-   end
-   begin vb.image imggetpass 
-      height          =   495
-      left            =   3600
-      mousepointer    =   99  'custom
-      top             =   8220
-      width           =   4575
    end
    begin vb.label version 
       autosize        =   -1  'true
@@ -102,40 +240,10 @@ begin vb.form frmconnect
       endproperty
       forecolor       =   &h000000ff&
       height          =   195
-      left            =   120
-      tabindex        =   1
-      top             =   120
+      left            =   240
+      tabindex        =   3
+      top             =   240
       width           =   555
-   end
-   begin vb.image image1 
-      height          =   585
-      index           =   0
-      left            =   8625
-      mousepointer    =   99  'custom
-      top             =   6705
-      width           =   3090
-   end
-   begin vb.image image1 
-      height          =   495
-      index           =   1
-      left            =   8655
-      mousepointer    =   99  'custom
-      top             =   5400
-      width           =   3045
-   end
-   begin vb.image image1 
-      height          =   570
-      index           =   2
-      left            =   8610
-      mousepointer    =   99  'custom
-      top             =   8025
-      width           =   3120
-   end
-   begin vb.image fondo 
-      height          =   9000
-      left            =   0
-      top             =   -45
-      width           =   12000
    end
 end
 attribute vb_name = "frmconnect"
@@ -184,20 +292,19 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub downloadserver_click()
-'***********************************
-'importante!
-'
-'no debe eliminarse la posibilidad de bajar el c�digo de sus servidor de esta forma.
-'caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor,
-'incurriendo de esta forma en un delito punible por ley.
-'
-'argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los
-'cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo,
-'no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.
-'***********************************
-    call shellexecute(0, "open", "https://sourceforge.net/project/downloading.php?group_id=67718&filename=aoserversrc0.12.2.zip&a=42868900", "", app.path, sw_shownormal)
-end sub
+private cbotoncrearpj as clsgraphicalbutton
+private cbotonrecuperarpass as clsgraphicalbutton
+private cbotonmanual as clsgraphicalbutton
+private cbotonreglamento as clsgraphicalbutton
+private cbotoncodigofuente as clsgraphicalbutton
+private cbotonborrarpj as clsgraphicalbutton
+private cbotonsalir as clsgraphicalbutton
+private cbotonleermas as clsgraphicalbutton
+private cbotonforo as clsgraphicalbutton
+private cbotonconectarse as clsgraphicalbutton
+private cbotonteclas as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
 
 private sub form_activate()
 'on error resume next
@@ -246,99 +353,233 @@ private sub form_load()
     enginerun = false
     '[end]
     
- dim j
- for each j in image1()
-    j.tag = "0"
- next
- porttxt.text = config_inicio.puerto
+    webnoticias.navigate ("http://ao.alkon.com.ar/noticiascliente/noticias.php")
+    
+    porttxt.text = config_inicio.puerto
  
- fondo.picture = loadpicture(app.path & "\graficos\conectar.jpg")
+     '[code]:matux
+    '
+    '  el c�digo para mostrar la versi�n se genera ac� para
+    ' evitar que por x razones luego desaparezca, como suele
+    ' pasar a veces :)
+       version.caption = "v" & app.major & "." & app.minor & " build: " & app.revision
+    '[end]'
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaconectar.jpg")
+    
+    call loadbuttons
 
+    call checklicenseagreement
+        
+end sub
 
- '[code]:matux
- '
- '  el c�digo para mostrar la versi�n se genera ac� para
- ' evitar que por x razones luego desaparezca, como suele
- ' pasar a veces :)
-    version.caption = "v" & app.major & "." & app.minor & " build: " & app.revision
- '[end]'
-
-'recordatorio para cumplir la licencia, por si borr�s el bot�n sin leer el code...
-dim i as long
-
-for i = 0 to me.controls.count - 1
-    if me.controls(i).name = "downloadserver" then
-        exit for
+private sub checklicenseagreement()
+    'recordatorio para cumplir la licencia, por si borr�s el boton sin leer el code...
+    dim i as long
+    
+    for i = 0 to me.controls.count - 1
+        if me.controls(i).name = "imgcodigofuente" then
+            exit for
+        end if
+    next i
+    
+    if i = me.controls.count then
+        msgbox "no debe eliminarse la posibilidad de bajar el c�digo de sus servidor. caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor, incurriendo de esta forma en un delito punible por ley." & vbcrlf & vbcrlf & vbcrlf & _
+                "argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo, no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.", vbcritical or vbapplicationmodal
     end if
-next i
-
-if i = me.controls.count then
-    msgbox "no debe eliminarse la posibilidad de bajar el c�digo de sus servidor. caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor, incurriendo de esta forma en un delito punible por ley." & vbcrlf & vbcrlf & vbcrlf & _
-            "argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo, no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.", vbcritical or vbapplicationmodal
-end if
 
 end sub
 
-private sub image1_click(index as integer)
+private sub loadbuttons()
+    
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+    
+    set cbotoncrearpj = new clsgraphicalbutton
+    set cbotonrecuperarpass = new clsgraphicalbutton
+    set cbotonmanual = new clsgraphicalbutton
+    set cbotonreglamento = new clsgraphicalbutton
+    set cbotoncodigofuente = new clsgraphicalbutton
+    set cbotonborrarpj = new clsgraphicalbutton
+    set cbotonsalir = new clsgraphicalbutton
+    set cbotonleermas = new clsgraphicalbutton
+    set cbotonforo = new clsgraphicalbutton
+    set cbotonconectarse = new clsgraphicalbutton
+    set cbotonteclas = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
 
-call audio.playwave(snd_click)
+        
+    call cbotoncrearpj.initialize(imgcrearpj, grhpath & "botoncrearpersonajeconectar.jpg", _
+                                    grhpath & "botoncrearpersonajerolloverconectar.jpg", _
+                                    grhpath & "botoncrearpersonajeclickconectar.jpg", me)
+                                    
+    call cbotonrecuperarpass.initialize(imgrecuperar, grhpath & "botonrecuperarpass.jpg", _
+                                    grhpath & "botonrecuperarpassrollover.jpg", _
+                                    grhpath & "botonrecuperarpassclick.jpg", me)
+                                    
+    call cbotonmanual.initialize(imgmanual, grhpath & "botonmanual.jpg", _
+                                    grhpath & "botonmanualrollover.jpg", _
+                                    grhpath & "botonmanualclick.jpg", me)
+                                    
+    call cbotonreglamento.initialize(imgreglamento, grhpath & "botonreglamento.jpg", _
+                                    grhpath & "botonreglamentorollover.jpg", _
+                                    grhpath & "botonreglamentoclick.jpg", me)
+                                    
+    call cbotoncodigofuente.initialize(imgcodigofuente, grhpath & "botoncodigofuente.jpg", _
+                                    grhpath & "botoncodigofuenterollover.jpg", _
+                                    grhpath & "botoncodigofuenteclick.jpg", me)
+                                    
+    call cbotonborrarpj.initialize(imgborrarpj, grhpath & "botonborrarpersonaje.jpg", _
+                                    grhpath & "botonborrarpersonajerollover.jpg", _
+                                    grhpath & "botonborrarpersonajeclick.jpg", me)
+                                    
+    call cbotonsalir.initialize(imgsalir, grhpath & "botonsalirconnect.jpg", _
+                                    grhpath & "botonbotonsalirrolloverconnect.jpg", _
+                                    grhpath & "botonsalirclickconnect.jpg", me)
+                                    
+    call cbotonforo.initialize(imgverforo, grhpath & "botonverforo.jpg", _
+                                    grhpath & "botonverfororollover.jpg", _
+                                    grhpath & "botonverforoclick.jpg", me)
+                                    
+    call cbotonconectarse.initialize(imgconectarse, grhpath & "botonconectarse.jpg", _
+                                    grhpath & "botonconectarserollover.jpg", _
+                                    grhpath & "botonconectarseclick.jpg", me)
+                                    
+    call cbotonteclas.initialize(imgteclas, grhpath & "botonteclas.jpg", _
+                                    grhpath & "botonteclasrollover.jpg", _
+                                    grhpath & "botonteclasclick.jpg", me)
 
-if serversrecibidos then
-    if not isip(iptxt) and curserver <> 0 then
-        if msgbox("atencion, est� intentando conectarse a un servidor no oficial, noland studios no se hace responsable de los posibles problemas que estos servidores presenten. �desea continuar?", vbyesno) = vbno then
-            if curserver <> 0 then
-                iptxt = serverslst(curserver).ip
-                porttxt = serverslst(curserver).puerto
-            else
-                iptxt = ipdelservidor
-                porttxt = puertodelservidor
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub checkservers()
+    if serversrecibidos then
+        if not isip(iptxt) and curserver <> 0 then
+            if msgbox("atencion, est� intentando conectarse a un servidor no oficial, noland studios no se hace responsable de los posibles problemas que estos servidores presenten. �desea continuar?", vbyesno) = vbno then
+                if curserver <> 0 then
+                    iptxt = serverslst(curserver).ip
+                    porttxt = serverslst(curserver).puerto
+                else
+                    iptxt = ipdelservidor
+                    porttxt = puertodelservidor
+                end if
+                exit sub
             end if
-            exit sub
         end if
     end if
-end if
-curserver = 0
-ipdelservidor = iptxt
-puertodelservidor = porttxt
+    curserver = 0
+    ipdelservidor = iptxt
+    puertodelservidor = porttxt
+end sub
 
-select case index
-    case 0
-        call audio.playmidi("7.mid")
-        
-        estadologin = e_modo.dados
-#if usarwrench = 1 then
-        if frmmain.socket1.connected then
-            frmmain.socket1.disconnect
-            frmmain.socket1.cleanup
-            doevents
-        end if
-        frmmain.socket1.hostname = curserverip
-        frmmain.socket1.remoteport = curserverport
-        frmmain.socket1.connect
-#else
-        if frmmain.winsock1.state <> sckclosed then
-            frmmain.winsock1.close
-            doevents
-        end if
-        frmmain.winsock1.connect curserverip, curserverport
-#end if
+private sub imgborrarpj_click()
 
-    case 1
-    
-        frmoldpersonaje.show vbmodal
-        
-    case 2
-        on error goto errh
-        call shell(app.path & "\recuperar.exe", vbnormalfocus)
+on error goto errh
+    call shell(app.path & "\recuperar.exe", vbnormalfocus)
 
-end select
-exit sub
+    exit sub
 
 errh:
     call msgbox("no se encuentra el programa recuperar.exe", vbcritical, "argentum online")
 end sub
 
-private sub imggetpass_click()
+private sub imgcodigofuente_click()
+'***********************************
+'importante!
+'
+'no debe eliminarse la posibilidad de bajar el c�digo de sus servidor de esta forma.
+'caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor,
+'incurriendo de esta forma en un delito punible por ley.
+'
+'argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los
+'cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo,
+'no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.
+'***********************************
+    call shellexecute(0, "open", "https://sourceforge.net/project/downloading.php?group_id=67718&filename=aoserversrc0.12.2.zip&a=42868900", "", app.path, sw_shownormal)
+
+end sub
+
+private sub imgconectarse_click()
+    call checkservers
+    
+#if usarwrench = 1 then
+    if frmmain.socket1.connected then
+        frmmain.socket1.disconnect
+        frmmain.socket1.cleanup
+        doevents
+    end if
+#else
+    if frmmain.winsock1.state <> sckclosed then
+        frmmain.winsock1.close
+        doevents
+    end if
+#end if
+    
+    'update user info
+    username = txtnombre.text
+    
+    dim aux as string
+    aux = txtpasswd.text
+    
+#if seguridadalkon then
+    userpassword = md5.getmd5string(aux)
+    call md5.md5reset
+#else
+    userpassword = aux
+#end if
+    if checkuserdata(false) = true then
+        estadologin = normal
+        
+#if usarwrench = 1 then
+    frmmain.socket1.hostname = curserverip
+    frmmain.socket1.remoteport = curserverport
+    frmmain.socket1.connect
+#else
+    frmmain.winsock1.connect curserverip, curserverport
+#end if
+
+    end if
+    
+end sub
+
+private sub imgcrearpj_click()
+    
+    call checkservers
+    
+    estadologin = e_modo.dados
+#if usarwrench = 1 then
+    if frmmain.socket1.connected then
+        frmmain.socket1.disconnect
+        frmmain.socket1.cleanup
+        doevents
+    end if
+    frmmain.socket1.hostname = curserverip
+    frmmain.socket1.remoteport = curserverport
+    frmmain.socket1.connect
+#else
+    if frmmain.winsock1.state <> sckclosed then
+        frmmain.winsock1.close
+        doevents
+    end if
+    frmmain.winsock1.connect curserverip, curserverport
+#end if
+
+end sub
+
+private sub imgleermas_click()
+    call shellexecute(0, "open", "http://ao.alkon.com.ar", "", app.path, sw_shownormal)
+end sub
+
+private sub imgmanual_click()
+    call shellexecute(0, "open", "http://ao.alkon.com.ar/manual/", "", app.path, sw_shownormal)
+end sub
+
+private sub imgrecuperar_click()
 on error goto errh
 
     call audio.playwave(snd_click)
@@ -348,9 +589,51 @@ errh:
     call msgbox("no se encuentra el programa recuperar.exe", vbcritical, "argentum online")
 end sub
 
+private sub imgreglamento_click()
+    call shellexecute(0, "open", "http://ao.alkon.com.ar/reglamento.html", "", app.path, sw_shownormal)
+end sub
+
+private sub imgsalir_click()
+    prgrun = false
+end sub
+
 private sub imgservargentina_click()
     call audio.playwave(snd_click)
     iptxt.text = ipdelservidor
     porttxt.text = puertodelservidor
 end sub
 
+private sub imgteclas_click()
+    load frmkeypad
+    frmkeypad.show vbmodal
+    unload frmkeypad
+    txtpasswd.setfocus
+end sub
+
+private sub imgverforo_click()
+    call shellexecute(0, "open", "http://www.alkon.com.ar/foro/argentum-online.53/", "", app.path, sw_shownormal)
+end sub
+
+private sub txtpasswd_keypress(keyascii as integer)
+    if keyascii = vbkeyreturn then imgconectarse_click
+end sub
+
+private sub webauxiliar_beforenavigate2(byval pdisp as object, url as variant, flags as variant, targetframename as variant, postdata as variant, headers as variant, cancel as boolean)
+    
+    if instr(1, url, "alkon") <> 0 then
+        call shellexecute(hwnd, "open", url, vbnullstring, vbnullstring, sw_shownormal)
+        cancel = true
+    end if
+    
+end sub
+
+private sub webnoticias_navigateerror(byval pdisp as object, url as variant, frame as variant, statuscode as variant, cancel as boolean)
+    if statuscode = 500 then webnoticias.visible = false
+end sub
+
+private sub webnoticias_newwindow2(ppdisp as object, cancel as boolean)
+    
+    webauxiliar.registerasbrowser = true
+    set ppdisp = webauxiliar.object
+    
+end sub

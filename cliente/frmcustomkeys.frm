@@ -1,626 +1,572 @@
 version 5.00
 begin vb.form frmcustomkeys 
-   backcolor       =   &h00000000&
+   backcolor       =   &h8000000b&
    borderstyle     =   0  'none
    caption         =   "form1"
-   clientheight    =   6570
+   clientheight    =   7500
    clientleft      =   0
    clienttop       =   0
-   clientwidth     =   8220
+   clientwidth     =   8205
    clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   438
+   scaleheight     =   500
    scalemode       =   3  'pixel
-   scalewidth      =   548
+   scalewidth      =   547
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command2 
-      caption         =   "guardar y salir"
-      height          =   375
-      left            =   3960
-      tabindex        =   46
-      top             =   6000
-      width           =   4095
-   end
-   begin vb.commandbutton command1 
-      caption         =   "cargar teclas por defecto"
-      height          =   375
-      left            =   3960
-      tabindex        =   45
-      top             =   5520
-      width           =   4095
-   end
-   begin vb.frame frame5 
+   begin vb.textbox text1 
       backcolor       =   &h00000000&
-      caption         =   "otros"
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h00ffffff&
-      height          =   3855
-      left            =   3960
+      height          =   225
+      index           =   6
+      left            =   6270
+      tabindex        =   17
+      top             =   1620
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   7
+      left            =   6270
+      tabindex        =   18
+      top             =   1980
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   9
+      left            =   6270
+      tabindex        =   16
+      top             =   1245
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   8
+      left            =   6270
+      tabindex        =   15
+      top             =   885
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   5
+      left            =   6270
+      tabindex        =   14
+      top             =   525
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   22
+      left            =   6270
+      tabindex        =   19
+      top             =   2835
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   23
+      left            =   6270
+      tabindex        =   20
+      top             =   3240
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   24
+      left            =   6270
+      tabindex        =   21
+      top             =   3660
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   25
+      left            =   6270
+      tabindex        =   22
+      top             =   4080
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   26
+      left            =   6270
+      tabindex        =   23
+      top             =   4485
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   27
+      left            =   6270
+      tabindex        =   24
+      top             =   4890
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   15
+      left            =   6270
+      tabindex        =   26
+      top             =   5685
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      index           =   14
+      left            =   6270
+      tabindex        =   25
+      top             =   5280
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   20
+      left            =   2070
+      tabindex        =   12
+      top             =   5565
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   21
+      left            =   2070
+      tabindex        =   13
+      top             =   5925
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   10
+      left            =   2070
       tabindex        =   4
-      top             =   1560
-      width           =   4095
-      begin vb.textbox text1 
-         height          =   285
-         index           =   9
-         left            =   2280
-         tabindex        =   57
-         text            =   "text1"
-         top             =   2760
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   13
-         left            =   2280
-         tabindex        =   56
-         text            =   "text1"
-         top             =   3120
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   14
-         left            =   2280
-         tabindex        =   55
-         text            =   "text1"
-         top             =   3480
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   27
-         left            =   2280
-         tabindex        =   53
-         text            =   "text1"
-         top             =   2400
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   26
-         left            =   2280
-         tabindex        =   52
-         text            =   "text1"
-         top             =   2040
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   21
-         left            =   2280
-         tabindex        =   48
-         text            =   "text1"
-         top             =   240
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   25
-         left            =   2280
-         tabindex        =   44
-         text            =   "text1"
-         top             =   1680
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   24
-         left            =   2280
-         tabindex        =   43
-         text            =   "text1"
-         top             =   1320
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   23
-         left            =   2280
-         tabindex        =   42
-         text            =   "text1"
-         top             =   960
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   22
-         left            =   2280
-         tabindex        =   41
-         text            =   "text1"
-         top             =   600
-         width           =   1695
-      end
-      begin vb.label label9 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "modo combate"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   960
-         tabindex        =   60
-         top             =   2760
-         width           =   1215
-      end
-      begin vb.label label13 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "modo seguro"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   960
-         tabindex        =   59
-         top             =   3120
-         width           =   1215
-      end
-      begin vb.label label26 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "seg. de resucitaci�n"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   58
-         top             =   3480
-         width           =   1695
-      end
-      begin vb.label label27 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "salir"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   54
-         top             =   2400
-         width           =   1695
-      end
-      begin vb.label label25 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "capturar pantalla"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   47
-         top             =   600
-         width           =   1695
-      end
-      begin vb.label label24 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "macro trabajo"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   40
-         top             =   2040
-         width           =   1695
-      end
-      begin vb.label label23 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "macro hechizos"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   39
-         top             =   1680
-         width           =   1695
-      end
-      begin vb.label label22 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "meditar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   38
-         top             =   1320
-         width           =   1695
-      end
-      begin vb.label label21 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "mostrar opciones"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   37
-         top             =   960
-         width           =   1695
-      end
-      begin vb.label label20 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "mostrar/ocultar fps"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   480
-         tabindex        =   36
-         top             =   240
-         width           =   1695
-      end
+      top             =   2325
+      width           =   1620
    end
-   begin vb.frame frame4 
+   begin vb.textbox text1 
       backcolor       =   &h00000000&
-      caption         =   "hablar"
-      forecolor       =   &h00ffffff&
-      height          =   975
-      left            =   120
-      tabindex        =   3
-      top             =   5160
-      width           =   3735
-      begin vb.textbox text1 
-         height          =   285
-         index           =   20
-         left            =   1920
-         tabindex        =   51
-         text            =   "text1"
-         top             =   600
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   19
-         left            =   1920
-         tabindex        =   35
-         text            =   "text1"
-         top             =   240
-         width           =   1695
-      end
-      begin vb.label label19 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "hablar al clan"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   34
-         top             =   600
-         width           =   1215
-      end
-      begin vb.label label18 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "hablar a todos"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   33
-         top             =   240
-         width           =   1215
-      end
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   11
+      left            =   2070
+      tabindex        =   5
+      top             =   2685
+      width           =   1620
    end
-   begin vb.frame frame3 
+   begin vb.textbox text1 
       backcolor       =   &h00000000&
-      caption         =   "acciones"
-      forecolor       =   &h00ffffff&
-      height          =   3135
-      left            =   120
-      tabindex        =   2
-      top             =   1920
-      width           =   3735
-      begin vb.textbox text1 
-         height          =   285
-         index           =   18
-         left            =   1920
-         tabindex        =   50
-         text            =   "text1"
-         top             =   2760
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   17
-         left            =   1920
-         tabindex        =   32
-         text            =   "text1"
-         top             =   2400
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   16
-         left            =   1920
-         tabindex        =   31
-         text            =   "text1"
-         top             =   2040
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   15
-         left            =   1920
-         tabindex        =   30
-         text            =   "text1"
-         top             =   1680
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   12
-         left            =   1920
-         tabindex        =   29
-         text            =   "text1"
-         top             =   1320
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   11
-         left            =   1920
-         tabindex        =   28
-         text            =   "text1"
-         top             =   960
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   10
-         left            =   1920
-         tabindex        =   27
-         text            =   "text1"
-         top             =   600
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   8
-         left            =   1920
-         tabindex        =   26
-         text            =   "text1"
-         top             =   240
-         width           =   1695
-      end
-      begin vb.label label17 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "atacar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   25
-         top             =   2760
-         width           =   1215
-      end
-      begin vb.label label16 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "usar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   24
-         top             =   2400
-         width           =   1215
-      end
-      begin vb.label label15 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "tirar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   23
-         top             =   2040
-         width           =   1215
-      end
-      begin vb.label label14 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "ocultar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   22
-         top             =   1680
-         width           =   1215
-      end
-      begin vb.label label12 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "robar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   21
-         top             =   1320
-         width           =   1215
-      end
-      begin vb.label label11 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "domar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   20
-         top             =   960
-         width           =   1215
-      end
-      begin vb.label label10 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "equipar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   19
-         top             =   600
-         width           =   1215
-      end
-      begin vb.label label8 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "agarrar"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   18
-         top             =   240
-         width           =   1215
-      end
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   12
+      left            =   2070
+      tabindex        =   6
+      top             =   3045
+      width           =   1620
    end
-   begin vb.frame frame2 
+   begin vb.textbox text1 
       backcolor       =   &h00000000&
-      caption         =   "opciones personales"
-      forecolor       =   &h00ffffff&
-      height          =   1335
-      left            =   3960
-      tabindex        =   1
-      top             =   120
-      width           =   4095
-      begin vb.textbox text1 
-         height          =   285
-         index           =   5
-         left            =   2280
-         tabindex        =   49
-         text            =   "text1"
-         top             =   240
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   7
-         left            =   2280
-         tabindex        =   17
-         text            =   "text1"
-         top             =   960
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   6
-         left            =   2280
-         tabindex        =   16
-         text            =   "text1"
-         top             =   600
-         width           =   1695
-      end
-      begin vb.label label7 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "mostrar/ocultar nombres"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   120
-         tabindex        =   11
-         top             =   960
-         width           =   2055
-      end
-      begin vb.label label6 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "corregir posicion"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   120
-         tabindex        =   10
-         top             =   600
-         width           =   2055
-      end
-      begin vb.label label5 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "activar/desactivar musica"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   120
-         tabindex        =   9
-         top             =   240
-         width           =   2055
-      end
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   13
+      left            =   2070
+      tabindex        =   7
+      top             =   3405
+      width           =   1620
    end
-   begin vb.frame frame1 
+   begin vb.textbox text1 
       backcolor       =   &h00000000&
-      caption         =   "movimiento"
-      forecolor       =   &h00ffffff&
-      height          =   1695
-      left            =   120
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   16
+      left            =   2070
+      tabindex        =   8
+      top             =   3765
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   17
+      left            =   2070
+      tabindex        =   9
+      top             =   4125
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   18
+      left            =   2070
+      tabindex        =   10
+      top             =   4485
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   19
+      left            =   2070
+      tabindex        =   11
+      top             =   4845
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   1
+      left            =   2070
       tabindex        =   0
-      top             =   120
-      width           =   3735
-      begin vb.textbox text1 
-         height          =   285
-         index           =   4
-         left            =   1920
-         tabindex        =   15
-         text            =   "text1"
-         top             =   1320
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   3
-         left            =   1920
-         tabindex        =   14
-         text            =   "text1"
-         top             =   960
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   2
-         left            =   1920
-         tabindex        =   13
-         text            =   "text1"
-         top             =   600
-         width           =   1695
-      end
-      begin vb.textbox text1 
-         height          =   285
-         index           =   1
-         left            =   1920
-         tabindex        =   12
-         text            =   "text1"
-         top             =   240
-         width           =   1695
-      end
-      begin vb.label label4 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "derecha"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   8
-         top             =   1320
-         width           =   1215
-      end
-      begin vb.label label3 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "izquierda"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   7
-         top             =   960
-         width           =   1215
-      end
-      begin vb.label label2 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "abajo"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   6
-         top             =   600
-         width           =   1215
-      end
-      begin vb.label label1 
-         alignment       =   1  'right justify
-         backcolor       =   &h00000000&
-         caption         =   "arriba"
-         forecolor       =   &h00ffffff&
-         height          =   255
-         left            =   600
-         tabindex        =   5
-         top             =   240
-         width           =   1215
-      end
+      top             =   510
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   2
+      left            =   2070
+      tabindex        =   1
+      top             =   870
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   3
+      left            =   2070
+      tabindex        =   2
+      top             =   1230
+      width           =   1620
+   end
+   begin vb.textbox text1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   225
+      index           =   4
+      left            =   2070
+      tabindex        =   3
+      top             =   1590
+      width           =   1620
+   end
+   begin vb.image imgdefaultkeys 
+      height          =   375
+      left            =   960
+      top             =   6720
+      width           =   2655
+   end
+   begin vb.image imgguardar 
+      height          =   375
+      left            =   4680
+      top             =   6720
+      width           =   2655
    end
 end
 attribute vb_name = "frmcustomkeys"
@@ -672,35 +618,73 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-call customkeys.loaddefaults
-dim i as long
+private clsformulario as clsformmovementmanager
 
-for i = 1 to customkeys.count
-    text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
-next i
-end sub
+private cbotonguardar as clsgraphicalbutton
+private cbotondefaultkeys as clsgraphicalbutton
 
-private sub command2_click()
-
-dim i as long
-
-for i = 1 to customkeys.count
-    if lenb(text1(i).text) = 0 then
-        call msgbox("hay una o mas teclas no validas, por favor verifique.", vbcritical or vbokonly or vbapplicationmodal or vbdefaultbutton1, "argentum online")
-        exit sub
-    end if
-next i
-
-unload me
-end sub
+public lastpressed as clsgraphicalbutton
 
 private sub form_load()
+    dim i as long
+    
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaconfigurarteclas.jpg")
+    
+    call loadbuttons
+    
+    for i = 1 to customkeys.count
+        text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
+    next i
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonguardar = new clsgraphicalbutton
+    set cbotondefaultkeys = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonguardar.initialize(imgguardar, grhpath & "botonguardarconfigkey.jpg", _
+                                    grhpath & "botonguardarrolloverconfigkey.jpg", _
+                                    grhpath & "botonguardarclickconfigkey.jpg", me)
+
+    call cbotondefaultkeys.initialize(imgdefaultkeys, grhpath & "botondefaultkeys.jpg", _
+                                    grhpath & "botondefaultkeysrollover.jpg", _
+                                    grhpath & "botondefaultkeysclick.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgdefaultkeys_click()
+    call customkeys.loaddefaults
     dim i as long
     
     for i = 1 to customkeys.count
         text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
     next i
+end sub
+
+private sub imgguardar_click()
+    dim i as long
+    
+    for i = 1 to customkeys.count
+        if lenb(text1(i).text) = 0 then
+            call msgbox("hay una o m�s teclas no v�lidas, por favor verifique.", vbcritical or vbokonly or vbapplicationmodal or vbdefaultbutton1, "argentum online")
+            exit sub
+        end if
+    next i
+    
+    unload me
 end sub
 
 private sub text1_keydown(index as integer, keycode as integer, shift as integer)
@@ -727,9 +711,13 @@ private sub text1_keydown(index as integer, keycode as integer, shift as integer
 end sub
 
 private sub text1_keypress(index as integer, keyascii as integer)
-keyascii = 0
+    keyascii = 0
 end sub
 
 private sub text1_keyup(index as integer, keycode as integer, shift as integer)
-call text1_keydown(index, keycode, shift)
+    call text1_keydown(index, keycode, shift)
+end sub
+
+private sub text1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

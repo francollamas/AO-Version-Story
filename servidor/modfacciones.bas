@@ -30,11 +30,17 @@ attribute vb_name = "modfacciones"
 
 option explicit
 
-public armaduraimperial1 as integer 'primer jerarquia
-public armaduraimperial2 as integer 'segunda jerarqu�a
-public armaduraimperial3 as integer 'enanos
-public tunicamagoimperial as integer 'magos
-public tunicamagoimperialenanos as integer 'magos
+
+public armaduraimperial1 as integer
+public armaduraimperial2 as integer
+public armaduraimperial3 as integer
+public tunicamagoimperial as integer
+public tunicamagoimperialenanos as integer
+public armaduracaos1 as integer
+public armaduracaos2 as integer
+public armaduracaos3 as integer
+public tunicamagocaos as integer
+public tunicamagocaosenanos as integer
 
 public vestimentaimperialhumano as integer
 public vestimentaimperialenano as integer
@@ -52,326 +58,421 @@ public tunicaegregiahumano as integer
 public tunicaegregiaenano as integer
 public sacerdotedemoniaco as integer
 
-public armaduracaos1 as integer
-public tunicamagocaos as integer
-public tunicamagocaosenanos as integer
-public armaduracaos2 as integer
-public armaduracaos3 as integer
 
-public const expalunirse as long = 50000
-public const expx100 as integer = 5000
 
+public const num_rangos_faccion as integer = 15
+private const num_def_faccion_armours as byte = 3
+
+public enum etipodefarmors
+    iebaja
+    iemedia
+    iealta
+end enum
+
+public type tfaccionarmaduras
+    armada(num_def_faccion_armours - 1) as integer
+    caos(num_def_faccion_armours - 1) as integer
+end type
+
+' matriz que contiene las armaduras faccionarias segun raza, clase, faccion y defensa de armadura
+public armadurasfaccion(1 to numclases, 1 to numrazas) as tfaccionarmaduras
+
+' contiene la cantidad de exp otorgada cada vez que aumenta el rango
+public recompensafacciones(num_rangos_faccion) as long
+
+private function getarmouramount(byval rango as integer, byval tipodef as etipodefarmors) as integer
+'***************************************************
+'autor: zama
+'last modification: 15/04/2010
+'returns the amount of armours to give, depending on the specified rank
+'***************************************************
+
+    select case tipodef
+        
+        case etipodefarmors.iebaja
+            getarmouramount = 20 / (rango + 1)
+            
+        case etipodefarmors.iemedia
+            getarmouramount = rango * 2 / maximoint((rango - 4), 1)
+            
+        case etipodefarmors.iealta
+            getarmouramount = rango * 1.35
+            
+    end select
+    
+end function
+
+private sub givefactionarmours(byval userindex as integer, byval iscaos as boolean)
+'***************************************************
+'autor: zama
+'last modification: 15/04/2010
+'gives faction armours to user
+'***************************************************
+    
+    dim objarmour as obj
+    dim rango as integer
+    
+    with userlist(userindex)
+    
+        rango = val(iif(iscaos, .faccion.recompensascaos, .faccion.recompensasreal)) + 1
+    
+    
+        ' entrego armaduras de defensa baja
+        objarmour.amount = getarmouramount(rango, etipodefarmors.iebaja)
+        
+        if iscaos then
+            objarmour.objindex = armadurasfaccion(.clase, .raza).caos(etipodefarmors.iebaja)
+        else
+            objarmour.objindex = armadurasfaccion(.clase, .raza).armada(etipodefarmors.iebaja)
+        end if
+        
+        if not meteritemeninventario(userindex, objarmour) then
+            call tiraritemalpiso(.pos, objarmour)
+        end if
+        
+        
+        ' entrego armaduras de defensa media
+        objarmour.amount = getarmouramount(rango, etipodefarmors.iemedia)
+        
+        if iscaos then
+            objarmour.objindex = armadurasfaccion(.clase, .raza).caos(etipodefarmors.iemedia)
+        else
+            objarmour.objindex = armadurasfaccion(.clase, .raza).armada(etipodefarmors.iemedia)
+        end if
+        
+        if not meteritemeninventario(userindex, objarmour) then
+            call tiraritemalpiso(.pos, objarmour)
+        end if
+
+    
+        ' entrego armaduras de defensa alta
+        objarmour.amount = getarmouramount(rango, etipodefarmors.iealta)
+        
+        if iscaos then
+            objarmour.objindex = armadurasfaccion(.clase, .raza).caos(etipodefarmors.iealta)
+        else
+            objarmour.objindex = armadurasfaccion(.clase, .raza).armada(etipodefarmors.iealta)
+        end if
+        
+        if not meteritemeninventario(userindex, objarmour) then
+            call tiraritemalpiso(.pos, objarmour)
+        end if
+
+    end with
+
+end sub
+
+public sub giveexpreward(byval userindex as integer, byval rango as long)
+'***************************************************
+'autor: zama
+'last modification: 15/04/2010
+'gives reward exp to user
+'***************************************************
+    
+    dim givenexp as long
+    
+    with userlist(userindex)
+        
+        givenexp = recompensafacciones(rango)
+        
+        .stats.exp = .stats.exp + givenexp
+        
+        if .stats.exp > maxexp then .stats.exp = maxexp
+        
+        call writeconsolemsg(userindex, "has sido recompensado con " & givenexp & " puntos de experiencia.", fonttypenames.fonttype_fight)
+
+        call checkuserlevel(userindex)
+        
+    end with
+    
+end sub
 
 public sub enlistararmadareal(byval userindex as integer)
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 15/03/2009
-'15/03/2009: zama - no se puede enlistar el fundador de un clan con alineaci�n neutral.
+'last modification: 15/04/2010
 'handles the entrance of users to the "armada real"
+'15/03/2009: zama - no se puede enlistar el fundador de un clan con alineaci�n neutral.
+'27/11/2009: zama - ahora no se puede enlistar un miembro de un clan neutro, por ende saque la antifaccion.
+'15/04/2010: zama - cambio en recompensas iniciales.
 '***************************************************
-if userlist(userindex).faccion.armadareal = 1 then
-    call writechatoverhead(userindex, "���ya perteneces a las tropas reales!!! ve a combatir criminales", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.fuerzascaos = 1 then
-    call writechatoverhead(userindex, "���maldito insolente!!! vete de aqui seguidor de las sombras", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if criminal(userindex) then
-    call writechatoverhead(userindex, "���no se permiten criminales en el ej�rcito imperial!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.criminalesmatados < 30 then
-    call writechatoverhead(userindex, "para unirte a nuestras fuerzas debes matar al menos 30 criminales, solo has matado " & userlist(userindex).faccion.criminalesmatados, str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).stats.elv < 25 then
-    call writechatoverhead(userindex, "���para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
- 
-if userlist(userindex).faccion.ciudadanosmatados > 0 then
-    call writechatoverhead(userindex, "�has asesinado gente inocente, no aceptamos asesinos en las tropas reales!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.reenlistadas > 4 then
-    call writechatoverhead(userindex, "�has sido expulsado de las fuerzas reales demasiadas veces!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).reputacion.noblerep < 1000000 then
-    call writechatoverhead(userindex, "necesitas ser a�n m�s noble para integrar el ej�rcito del rey, solo tienes " & userlist(userindex).reputacion.noblerep & "/1.000.000 puntos de nobleza", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
 
 with userlist(userindex)
+    if .faccion.armadareal = 1 then
+        call writechatoverhead(userindex, "���ya perteneces a las tropas reales!!! ve a combatir criminales.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.fuerzascaos = 1 then
+        call writechatoverhead(userindex, "���maldito insolente!!! vete de aqu� seguidor de las sombras.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if criminal(userindex) then
+        call writechatoverhead(userindex, "���no se permiten criminales en el ej�rcito real!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.criminalesmatados < 30 then
+        call writechatoverhead(userindex, "para unirte a nuestras fuerzas debes matar al menos 30 criminales, s�lo has matado " & .faccion.criminalesmatados & ".", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .stats.elv < 25 then
+        call writechatoverhead(userindex, "���para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+     
+    if .faccion.ciudadanosmatados > 0 then
+        call writechatoverhead(userindex, "�has asesinado gente inocente, no aceptamos asesinos en las tropas reales!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.reenlistadas > 4 then
+        call writechatoverhead(userindex, "�has sido expulsado de las fuerzas reales demasiadas veces!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .reputacion.noblerep < 1000000 then
+        call writechatoverhead(userindex, "necesitas ser a�n m�s noble para integrar el ej�rcito real, s�lo tienes " & .reputacion.noblerep & "/1.000.000 puntos de nobleza", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
     if .guildindex > 0 then
-        if modguilds.guildfounder(.guildindex) = .name then
-            if modguilds.guildalignment(.guildindex) = "neutro" then
-                call writechatoverhead(userindex, "���eres el fundador de un clan neutro!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
-                exit sub
-            end if
+        if modguilds.guildalignment(.guildindex) = "neutral" then
+            call writechatoverhead(userindex, "���perteneces a un clan neutro, sal de �l si quieres unirte a nuestras fuerzas!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+            exit sub
         end if
     end if
-end with
-
-userlist(userindex).faccion.armadareal = 1
-userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas + 1
-
-call writechatoverhead(userindex, "���bienvenido al ej�rcito imperial!!!, aqui tienes tus vestimentas. cumple bien tu labor exterminando criminales y me encargar� de recompensarte.", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-
-if userlist(userindex).faccion.recibioarmadurareal = 0 then
-    dim miobj as obj
-    dim miobj2 as obj
-    miobj.amount = 20
-    miobj2.amount = 10
+    
+    .faccion.armadareal = 1
+    .faccion.reenlistadas = .faccion.reenlistadas + 1
+    
+    call writechatoverhead(userindex, "���bienvenido al ej�rcito real!!! aqu� tienes tus vestimentas. cumple bien tu labor exterminando criminales y me encargar� de recompensarte.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+    
+    ' todo: dejo esta variable por ahora, pero con chequear las reenlistadas deberia ser suficiente :s
+    if .faccion.recibioarmadurareal = 0 then
         
-    if userlist(userindex).raza = eraza.enano or userlist(userindex).raza = eraza.gnomo then
-        miobj.objindex = vestimentaimperialenano
-        select case userlist(userindex).clase
-            case eclass.mage
-                miobj2.objindex = tunicaconspicuaenano
-            case else
-                miobj2.objindex = armaduranobilisimaenano
-        end select
-    else
-        miobj.objindex = vestimentaimperialhumano
-        select case userlist(userindex).clase
-            case eclass.mage
-                miobj2.objindex = tunicaconspicuahumano
-            case eclass.cleric, eclass.druid, eclass.bard
-                miobj2.objindex = armaduragransacerdote
-            case else
-                miobj2.objindex = armaduranobilisimahumano
-        end select
+        call givefactionarmours(userindex, false)
+        call giveexpreward(userindex, 0)
+        
+        .faccion.recibioarmadurareal = 1
+        .faccion.nivelingreso = .stats.elv
+        .faccion.fechaingreso = date
+        'esto por ahora es in�til, siempre va a ser cero, pero bueno, despues va a servir.
+        .faccion.matadosingreso = .faccion.ciudadanosmatados
+        
+        .faccion.recibioexpinicialreal = 1
+        .faccion.recompensasreal = 0
+        .faccion.nextrecompensa = 70
+        
     end if
     
-    if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(userlist(userindex).pos, miobj)
-    end if
-    if not meteritemeninventario(userindex, miobj2) then
-            call tiraritemalpiso(userlist(userindex).pos, miobj2)
-    end if
+    if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
     
-    userlist(userindex).faccion.recibioarmadurareal = 1
-    userlist(userindex).faccion.nivelingreso = userlist(userindex).stats.elv
-    userlist(userindex).faccion.fechaingreso = date
-    'esto por ahora es in�til, siempre va a ser cero, pero bueno, despues va a servir.
-    userlist(userindex).faccion.matadosingreso = userlist(userindex).faccion.ciudadanosmatados
-
-end if
-
-if userlist(userindex).faccion.recibioexpinicialreal = 0 then
-    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expalunirse
-    if userlist(userindex).stats.exp > maxexp then _
-        userlist(userindex).stats.exp = maxexp
-    call writeconsolemsg(userindex, "has ganado " & expalunirse & " puntos de experiencia.", fonttypenames.fonttype_fight)
-    userlist(userindex).faccion.recibioexpinicialreal = 1
-    userlist(userindex).faccion.recompensasreal = 0
-    userlist(userindex).faccion.nextrecompensa = 70
-    call checkuserlevel(userindex)
-end if
-
-'agregado para que no hayan armadas en un clan neutro
-if userlist(userindex).guildindex > 0 then
-    if modguilds.guildalignment(userlist(userindex).guildindex) = "neutro" then
-        call modguilds.m_echarmiembrodeclan(-1, userlist(userindex).name)
-        call writeconsolemsg(userindex, "has sido expulsado del clan por tu nueva facci�n.", fonttypenames.fonttype_guild)
-    end if
-end if
-
-if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
-
-call logejercitoreal(userlist(userindex).name & " ingres� el " & date & " cuando era nivel " & userlist(userindex).stats.elv)
+    call logejercitoreal(.name & " ingres� el " & date & " cuando era nivel " & .stats.elv)
+end with
 
 end sub
 
 public sub recompensaarmadareal(byval userindex as integer)
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 23/01/2007
+'last modification: 15/04/2010
 'handles the way of gaining new ranks in the "armada real"
+'15/04/2010: zama - agrego recompensas de oro y armaduras
 '***************************************************
 dim crimis as long
 dim lvl as byte
 dim nextrecom as long
 dim nobleza as long
-lvl = userlist(userindex).stats.elv
-crimis = userlist(userindex).faccion.criminalesmatados
-nextrecom = userlist(userindex).faccion.nextrecompensa
-nobleza = userlist(userindex).reputacion.noblerep
 
-if crimis < nextrecom then
-    call writechatoverhead(userindex, "mata " & nextrecom - crimis & " criminales m�s para recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-select case nextrecom
-    case 70:
-        userlist(userindex).faccion.recompensasreal = 1
-        userlist(userindex).faccion.nextrecompensa = 130
+with userlist(userindex)
+    lvl = .stats.elv
+    crimis = .faccion.criminalesmatados
+    nextrecom = .faccion.nextrecompensa
+    nobleza = .reputacion.noblerep
     
-    case 130:
-        userlist(userindex).faccion.recompensasreal = 2
-        userlist(userindex).faccion.nextrecompensa = 210
-    
-    case 210:
-        userlist(userindex).faccion.recompensasreal = 3
-        userlist(userindex).faccion.nextrecompensa = 320
-    
-    case 320:
-        userlist(userindex).faccion.recompensasreal = 4
-        userlist(userindex).faccion.nextrecompensa = 460
-    
-    case 460:
-        userlist(userindex).faccion.recompensasreal = 5
-        userlist(userindex).faccion.nextrecompensa = 640
-    
-    case 640:
-        if lvl < 27 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 27 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 6
-        userlist(userindex).faccion.nextrecompensa = 870
-    
-    case 870:
-        userlist(userindex).faccion.recompensasreal = 7
-        userlist(userindex).faccion.nextrecompensa = 1160
-    
-    case 1160:
-        userlist(userindex).faccion.recompensasreal = 8
-        userlist(userindex).faccion.nextrecompensa = 2000
-    
-    case 2000:
-        if lvl < 30 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 30 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 9
-        userlist(userindex).faccion.nextrecompensa = 2500
-    
-    case 2500:
-        if nobleza < 2000000 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 2000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 10
-        userlist(userindex).faccion.nextrecompensa = 3000
-    
-    case 3000:
-        if nobleza < 3000000 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 3000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 11
-        userlist(userindex).faccion.nextrecompensa = 3500
-    
-    case 3500:
-        if lvl < 35 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 35 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        if nobleza < 4000000 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 4000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 12
-        userlist(userindex).faccion.nextrecompensa = 4000
-    
-    case 4000:
-        if lvl < 36 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 36 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        if nobleza < 5000000 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 5000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 13
-        userlist(userindex).faccion.nextrecompensa = 5000
-    
-    case 5000:
-        if lvl < 37 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 37 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        if nobleza < 6000000 then
-            call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 6000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensasreal = 14
-        userlist(userindex).faccion.nextrecompensa = 10000
-    
-    case 10000:
-        call writechatoverhead(userindex, "eres uno de mis mejores soldados. mataste " & crimis & ", sigue asi. ya no tengo m�s recompensa para darte que mi agradescimiento. �felicidades!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
+    if crimis < nextrecom then
+        call writechatoverhead(userindex, "mata " & nextrecom - crimis & " criminales m�s para recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
         exit sub
+    end if
     
-    case else:
-        exit sub
-end select
+    select case nextrecom
+        case 70:
+            .faccion.recompensasreal = 1
+            .faccion.nextrecompensa = 130
+        
+        case 130:
+            .faccion.recompensasreal = 2
+            .faccion.nextrecompensa = 210
+        
+        case 210:
+            .faccion.recompensasreal = 3
+            .faccion.nextrecompensa = 320
+        
+        case 320:
+            .faccion.recompensasreal = 4
+            .faccion.nextrecompensa = 460
+        
+        case 460:
+            .faccion.recompensasreal = 5
+            .faccion.nextrecompensa = 640
+        
+        case 640:
+            if lvl < 27 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 27 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 6
+            .faccion.nextrecompensa = 870
+        
+        case 870:
+            .faccion.recompensasreal = 7
+            .faccion.nextrecompensa = 1160
+        
+        case 1160:
+            .faccion.recompensasreal = 8
+            .faccion.nextrecompensa = 2000
+        
+        case 2000:
+            if lvl < 30 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 30 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 9
+            .faccion.nextrecompensa = 2500
+        
+        case 2500:
+            if nobleza < 2000000 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 2000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 10
+            .faccion.nextrecompensa = 3000
+        
+        case 3000:
+            if nobleza < 3000000 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 3000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 11
+            .faccion.nextrecompensa = 3500
+        
+        case 3500:
+            if lvl < 35 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 35 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            if nobleza < 4000000 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 4000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 12
+            .faccion.nextrecompensa = 4000
+        
+        case 4000:
+            if lvl < 36 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 36 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            if nobleza < 5000000 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 5000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 13
+            .faccion.nextrecompensa = 5000
+        
+        case 5000:
+            if lvl < 37 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 37 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            if nobleza < 6000000 then
+                call writechatoverhead(userindex, "mataste suficientes criminales, pero te faltan " & 6000000 - nobleza & " puntos de nobleza para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensasreal = 14
+            .faccion.nextrecompensa = 10000
+        
+        case 10000:
+            call writechatoverhead(userindex, "eres uno de mis mejores soldados. mataste " & crimis & " criminales, sigue as�. ya no tengo m�s recompensa para darte que mi agradecimiento. �felicidades!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+            exit sub
+        
+        case else:
+            exit sub
+    end select
+    
+    call writechatoverhead(userindex, "���aqu� tienes tu recompensa " & tituloreal(userindex) & "!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
 
-call writechatoverhead(userindex, "���aqui tienes tu recompensa " + tituloreal(userindex) + "!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-userlist(userindex).stats.exp = userlist(userindex).stats.exp + expx100
-if userlist(userindex).stats.exp > maxexp then
-    userlist(userindex).stats.exp = maxexp
-end if
-call writeconsolemsg(userindex, "has ganado " & expx100 & " puntos de experiencia.", fonttypenames.fonttype_fight)
+    ' recompensas de armaduras y exp
+    call givefactionarmours(userindex, false)
+    call giveexpreward(userindex, .faccion.recompensasreal)
 
-call checkuserlevel(userindex)
-
+end with
 
 end sub
 
 public sub expulsarfaccionreal(byval userindex as integer, optional expulsado as boolean = true)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-    userlist(userindex).faccion.armadareal = 0
+with userlist(userindex)
+    .faccion.armadareal = 0
     'call perderitemsfaccionarios(userindex)
     if expulsado then
-        call writeconsolemsg(userindex, "���has sido expulsado de las tropas reales!!!.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "���has sido expulsado del ej�rcito real!!!", fonttypenames.fonttype_fight)
     else
-        call writeconsolemsg(userindex, "���te has retirado de las tropas reales!!!.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "���te has retirado del ej�rcito real!!!", fonttypenames.fonttype_fight)
     end if
     
-    if userlist(userindex).invent.armoureqpobjindex then
+    if .invent.armoureqpobjindex <> 0 then
         'desequipamos la armadura real si est� equipada
-        if objdata(userlist(userindex).invent.armoureqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+        if objdata(.invent.armoureqpobjindex).real = 1 then call desequipar(userindex, .invent.armoureqpslot)
     end if
     
-    if userlist(userindex).invent.escudoeqpobjindex then
+    if .invent.escudoeqpobjindex <> 0 then
         'desequipamos el escudo de caos si est� equipado
-        if objdata(userlist(userindex).invent.escudoeqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.escudoeqpobjindex)
+        if objdata(.invent.escudoeqpobjindex).real = 1 then call desequipar(userindex, .invent.escudoeqpobjindex)
     end if
     
-    if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
+    if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
+end with
+
 end sub
 
 public sub expulsarfaccioncaos(byval userindex as integer, optional expulsado as boolean = true)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-    userlist(userindex).faccion.fuerzascaos = 0
+with userlist(userindex)
+    .faccion.fuerzascaos = 0
     'call perderitemsfaccionarios(userindex)
     if expulsado then
-        call writeconsolemsg(userindex, "���has sido expulsado de la legi�n oscura!!!.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "���has sido expulsado de la legi�n oscura!!!", fonttypenames.fonttype_fight)
     else
-        call writeconsolemsg(userindex, "���te has retirado de la legi�n oscura!!!.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "���te has retirado de la legi�n oscura!!!", fonttypenames.fonttype_fight)
     end if
     
-    if userlist(userindex).invent.armoureqpobjindex then
+    if .invent.armoureqpobjindex <> 0 then
         'desequipamos la armadura de caos si est� equipada
-        if objdata(userlist(userindex).invent.armoureqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+        if objdata(.invent.armoureqpobjindex).caos = 1 then call desequipar(userindex, .invent.armoureqpslot)
     end if
     
-    if userlist(userindex).invent.escudoeqpobjindex then
+    if .invent.escudoeqpobjindex <> 0 then
         'desequipamos el escudo de caos si est� equipado
-        if objdata(userlist(userindex).invent.escudoeqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.escudoeqpobjindex)
+        if objdata(.invent.escudoeqpobjindex).caos = 1 then call desequipar(userindex, .invent.escudoeqpobjindex)
     end if
     
-    if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
+    if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
+end with
+
 end sub
 
 public function tituloreal(byval userindex as integer) as string
@@ -380,6 +481,7 @@ public function tituloreal(byval userindex as integer) as string
 'last modification: 23/01/2007 pablo (toxicwaste)
 'handles the titles of the members of the "armada real"
 '***************************************************
+
 select case userlist(userindex).faccion.recompensasreal
 'rango 1: aprendiz (30 criminales)
 'rango 2: escudero (70 criminales)
@@ -436,256 +538,215 @@ end function
 public sub enlistarcaos(byval userindex as integer)
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 15/3/2009
+'last modification: 27/11/2009
 '15/03/2009: zama - no se puede enlistar el fundador de un clan con alineaci�n neutral.
+'27/11/2009: zama - ahora no se puede enlistar un miembro de un clan neutro, por ende saque la antifaccion.
 'handles the entrance of users to the "legi�n oscura"
 '***************************************************
-if not criminal(userindex) then
-    call writechatoverhead(userindex, "���l�rgate de aqui, buf�n!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.fuerzascaos = 1 then
-    call writechatoverhead(userindex, "���ya perteneces a la legi�n oscura!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.armadareal = 1 then
-    call writechatoverhead(userindex, "las sombras reinar�n en argentum. ���fuera de aqui insecto real!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-'[barrin 17-12-03] si era miembro de la armada real no se puede enlistar
-if userlist(userindex).faccion.recibioexpinicialreal = 1 then 'tomamos el valor de ah�: �recibio la experiencia para entrar?
-    call writechatoverhead(userindex, "no permitir� que ning�n insecto real ingrese a mis tropas.", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-'[/barrin]
-
-if not criminal(userindex) then
-    call writechatoverhead(userindex, "��ja ja ja!! tu no eres bienvenido aqui asqueroso ciudadano", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).faccion.ciudadanosmatados < 70 then
-    call writechatoverhead(userindex, "para unirte a nuestras fuerzas debes matar al menos 70 ciudadanos, solo has matado " & userlist(userindex).faccion.ciudadanosmatados, str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-if userlist(userindex).stats.elv < 25 then
-    call writechatoverhead(userindex, "���para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
 
 with userlist(userindex)
+    if not criminal(userindex) then
+        call writechatoverhead(userindex, "���l�rgate de aqu�, buf�n!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.fuerzascaos = 1 then
+        call writechatoverhead(userindex, "���ya perteneces a la legi�n oscura!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.armadareal = 1 then
+        call writechatoverhead(userindex, "las sombras reinar�n en argentum. ���fuera de aqu� insecto real!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    '[barrin 17-12-03] si era miembro de la armada real no se puede enlistar
+    if .faccion.recibioexpinicialreal = 1 then 'tomamos el valor de ah�: �recibio la experiencia para entrar?
+        call writechatoverhead(userindex, "no permitir� que ning�n insecto real ingrese a mis tropas.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    '[/barrin]
+    
+    if not criminal(userindex) then
+        call writechatoverhead(userindex, "��ja ja ja!! t� no eres bienvenido aqu� asqueroso ciudadano.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .faccion.ciudadanosmatados < 70 then
+        call writechatoverhead(userindex, "para unirte a nuestras fuerzas debes matar al menos 70 ciudadanos, s�lo has matado " & .faccion.ciudadanosmatados & ".", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
+    if .stats.elv < 25 then
+        call writechatoverhead(userindex, "���para unirte a nuestras fuerzas debes ser al menos nivel 25!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        exit sub
+    end if
+    
     if .guildindex > 0 then
-        if modguilds.guildfounder(.guildindex) = .name then
-            if modguilds.guildalignment(.guildindex) = "neutro" then
-                call writechatoverhead(userindex, "���eres el fundador de un clan neutro!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
-                exit sub
-            end if
+        if modguilds.guildalignment(.guildindex) = "neutral" then
+            call writechatoverhead(userindex, "���perteneces a un clan neutro, sal de �l si quieres unirte a nuestras fuerzas!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+            exit sub
         end if
     end if
+    
+    
+    if .faccion.reenlistadas > 4 then
+        if .faccion.reenlistadas = 200 then
+            call writechatoverhead(userindex, "has sido expulsado de las fuerzas oscuras y durante tu rebeld�a has atacado a mi ej�rcito. �vete de aqu�!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        else
+            call writechatoverhead(userindex, "�has sido expulsado de las fuerzas oscuras demasiadas veces!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+        end if
+        exit sub
+    end if
+    
+    .faccion.reenlistadas = .faccion.reenlistadas + 1
+    .faccion.fuerzascaos = 1
+    
+    call writechatoverhead(userindex, "���bienvenido al lado oscuro!!! aqu� tienes tus armaduras. derrama sangre ciudadana y real, y ser�s recompensado, lo prometo.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+    
+    if .faccion.recibioarmaduracaos = 0 then
+                
+        call givefactionarmours(userindex, true)
+        call giveexpreward(userindex, 0)
+        
+        .faccion.recibioarmaduracaos = 1
+        .faccion.nivelingreso = .stats.elv
+        .faccion.fechaingreso = date
+    
+        .faccion.recibioexpinicialcaos = 1
+        .faccion.recompensascaos = 0
+        .faccion.nextrecompensa = 160
+    end if
+    
+    if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
+
+    call logejercitocaos(.name & " ingres� el " & date & " cuando era nivel " & .stats.elv)
 end with
-
-
-if userlist(userindex).faccion.reenlistadas > 4 then
-    if userlist(userindex).faccion.reenlistadas = 200 then
-        call writechatoverhead(userindex, "has sido expulsado de las fuerzas oscuras y durante tu rebeld�a has atacado a mi ej�rcito. �vete de aqu�!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    else
-        call writechatoverhead(userindex, "�has sido expulsado de las fuerzas oscuras demasiadas veces!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    end if
-    exit sub
-end if
-
-userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas + 1
-userlist(userindex).faccion.fuerzascaos = 1
-
-call writechatoverhead(userindex, "���bienvenido al lado oscuro!!! aqui tienes tus armaduras. derrama sangre ciudadana y real y ser�s recompensado, lo prometo.", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-if userlist(userindex).faccion.recibioarmaduracaos = 0 then
-    dim miobj as obj
-    dim miobj2 as obj
-    miobj.amount = 20
-    miobj2.amount = 10
-    
-    if userlist(userindex).raza = eraza.enano or userlist(userindex).raza = eraza.gnomo then
-        miobj.objindex = vestimentalegionenano
-        select case userlist(userindex).clase
-            case eclass.mage
-                miobj2.objindex = tunicaegregiaenano
-            case else
-                miobj2.objindex = tunicalobregaenano
-        end select
-    else
-        miobj.objindex = vestimentalegionhumano
-        select case userlist(userindex).clase
-            case eclass.mage
-                miobj2.objindex = tunicaegregiahumano
-            case eclass.cleric, eclass.druid, eclass.bard
-                miobj2.objindex = sacerdotedemoniaco
-            case else
-                miobj2.objindex = tunicalobregahumano
-        end select
-    end if
-    
-    if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(userlist(userindex).pos, miobj)
-    end if
-    if not meteritemeninventario(userindex, miobj2) then
-            call tiraritemalpiso(userlist(userindex).pos, miobj2)
-    end if
-    
-    userlist(userindex).faccion.recibioarmaduracaos = 1
-    userlist(userindex).faccion.nivelingreso = userlist(userindex).stats.elv
-    userlist(userindex).faccion.fechaingreso = date
-
-end if
-
-if userlist(userindex).faccion.recibioexpinicialcaos = 0 then
-    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expalunirse
-    if userlist(userindex).stats.exp > maxexp then _
-        userlist(userindex).stats.exp = maxexp
-    call writeconsolemsg(userindex, "has ganado " & expalunirse & " puntos de experiencia.", fonttypenames.fonttype_fight)
-    userlist(userindex).faccion.recibioexpinicialcaos = 1
-    userlist(userindex).faccion.recompensascaos = 0
-    userlist(userindex).faccion.nextrecompensa = 160
-    call checkuserlevel(userindex)
-end if
-
-'agregado para que no hayan armadas en un clan neutro
-if userlist(userindex).guildindex > 0 then
-    if modguilds.guildalignment(userlist(userindex).guildindex) = "neutro" then
-        call modguilds.m_echarmiembrodeclan(-1, userlist(userindex).name)
-        call writeconsolemsg(userindex, "has sido expulsado del clan por tu nueva facci�n.", fonttypenames.fonttype_guild)
-    end if
-end if
-
-if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
-
-call logejercitocaos(userlist(userindex).name & " ingres� el " & date & " cuando era nivel " & userlist(userindex).stats.elv)
 
 end sub
 
 public sub recompensacaos(byval userindex as integer)
 '***************************************************
 'author: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 23/01/2007
+'last modification: 15/04/2010
 'handles the way of gaining new ranks in the "legi�n oscura"
+'15/04/2010: zama - agrego recompensas de oro y armaduras
 '***************************************************
 dim ciudas as long
 dim lvl as byte
 dim nextrecom as long
-lvl = userlist(userindex).stats.elv
-ciudas = userlist(userindex).faccion.ciudadanosmatados
-nextrecom = userlist(userindex).faccion.nextrecompensa
 
-if ciudas < nextrecom then
-    call writechatoverhead(userindex, "mata " & nextrecom - ciudas & " cuidadanos m�s para recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-    exit sub
-end if
-
-select case nextrecom
-    case 160:
-        userlist(userindex).faccion.recompensascaos = 1
-        userlist(userindex).faccion.nextrecompensa = 300
+with userlist(userindex)
+    lvl = .stats.elv
+    ciudas = .faccion.ciudadanosmatados
+    nextrecom = .faccion.nextrecompensa
     
-    case 300:
-        userlist(userindex).faccion.recompensascaos = 2
-        userlist(userindex).faccion.nextrecompensa = 490
-    
-    case 490:
-        userlist(userindex).faccion.recompensascaos = 3
-        userlist(userindex).faccion.nextrecompensa = 740
-    
-    case 740:
-        userlist(userindex).faccion.recompensascaos = 4
-        userlist(userindex).faccion.nextrecompensa = 1100
-    
-    case 1100:
-        userlist(userindex).faccion.recompensascaos = 5
-        userlist(userindex).faccion.nextrecompensa = 1500
-    
-    case 1500:
-        if lvl < 27 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 27 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 6
-        userlist(userindex).faccion.nextrecompensa = 2010
-    
-    case 2010:
-        userlist(userindex).faccion.recompensascaos = 7
-        userlist(userindex).faccion.nextrecompensa = 2700
-    
-    case 2700:
-        userlist(userindex).faccion.recompensascaos = 8
-        userlist(userindex).faccion.nextrecompensa = 4600
-    
-    case 4600:
-        if lvl < 30 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 30 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 9
-        userlist(userindex).faccion.nextrecompensa = 5800
-    
-    case 5800:
-        if lvl < 31 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 31 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 10
-        userlist(userindex).faccion.nextrecompensa = 6990
-    
-    case 6990:
-        if lvl < 33 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 33 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 11
-        userlist(userindex).faccion.nextrecompensa = 8100
-    
-    case 8100:
-        if lvl < 35 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 35 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 12
-        userlist(userindex).faccion.nextrecompensa = 9300
-    
-    case 9300:
-        if lvl < 36 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 36 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 13
-        userlist(userindex).faccion.nextrecompensa = 11500
-    
-    case 11500:
-        if lvl < 37 then
-            call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 37 - lvl & " niveles para poder recibir la pr�xima recompensa", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-            exit sub
-        end if
-        userlist(userindex).faccion.recompensascaos = 14
-        userlist(userindex).faccion.nextrecompensa = 23000
-    
-    case 23000:
-        call writechatoverhead(userindex, "eres uno de mis mejores soldados. mataste " & ciudas & ". tu �nica recompensa ser� la sangre derramada. ��continua as�!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
+    if ciudas < nextrecom then
+        call writechatoverhead(userindex, "mata " & nextrecom - ciudas & " cuidadanos m�s para recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
         exit sub
+    end if
     
-    case else:
-        exit sub
+    select case nextrecom
+        case 160:
+            .faccion.recompensascaos = 1
+            .faccion.nextrecompensa = 300
         
-end select
-
-call writechatoverhead(userindex, "���bien hecho " + titulocaos(userindex) + ", aqu� tienes tu recompensa!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
-userlist(userindex).stats.exp = userlist(userindex).stats.exp + expx100
-if userlist(userindex).stats.exp > maxexp then
-    userlist(userindex).stats.exp = maxexp
-end if
-call writeconsolemsg(userindex, "has ganado " & expx100 & " puntos de experiencia.", fonttypenames.fonttype_fight)
-call checkuserlevel(userindex)
-
+        case 300:
+            .faccion.recompensascaos = 2
+            .faccion.nextrecompensa = 490
+        
+        case 490:
+            .faccion.recompensascaos = 3
+            .faccion.nextrecompensa = 740
+        
+        case 740:
+            .faccion.recompensascaos = 4
+            .faccion.nextrecompensa = 1100
+        
+        case 1100:
+            .faccion.recompensascaos = 5
+            .faccion.nextrecompensa = 1500
+        
+        case 1500:
+            if lvl < 27 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 27 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 6
+            .faccion.nextrecompensa = 2010
+        
+        case 2010:
+            .faccion.recompensascaos = 7
+            .faccion.nextrecompensa = 2700
+        
+        case 2700:
+            .faccion.recompensascaos = 8
+            .faccion.nextrecompensa = 4600
+        
+        case 4600:
+            if lvl < 30 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 30 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 9
+            .faccion.nextrecompensa = 5800
+        
+        case 5800:
+            if lvl < 31 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 31 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 10
+            .faccion.nextrecompensa = 6990
+        
+        case 6990:
+            if lvl < 33 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 33 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 11
+            .faccion.nextrecompensa = 8100
+        
+        case 8100:
+            if lvl < 35 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 35 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 12
+            .faccion.nextrecompensa = 9300
+        
+        case 9300:
+            if lvl < 36 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 36 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 13
+            .faccion.nextrecompensa = 11500
+        
+        case 11500:
+            if lvl < 37 then
+                call writechatoverhead(userindex, "mataste suficientes ciudadanos, pero te faltan " & 37 - lvl & " niveles para poder recibir la pr�xima recompensa.", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+            .faccion.recompensascaos = 14
+            .faccion.nextrecompensa = 23000
+        
+        case 23000:
+            call writechatoverhead(userindex, "eres uno de mis mejores soldados. mataste " & ciudas & " ciudadanos . tu �nica recompensa ser� la sangre derramada. ��contin�a as�!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+            exit sub
+        
+        case else:
+            exit sub
+            
+    end select
+    
+    call writechatoverhead(userindex, "���bien hecho " & titulocaos(userindex) & ", aqu� tienes tu recompensa!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+    
+    ' recompensas de armaduras y exp
+    call givefactionarmours(userindex, true)
+    call giveexpreward(userindex, .faccion.recompensascaos)
+    
+end with
 
 end sub
 

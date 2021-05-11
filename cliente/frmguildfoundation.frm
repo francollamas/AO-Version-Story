@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmguildfoundation 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "creaci�n de un clan"
    clientheight    =   3840
-   clientleft      =   45
-   clienttop       =   330
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   4050
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,111 +20,44 @@ begin vb.form frmguildfoundation
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3840
-   scalewidth      =   4050
+   scaleheight     =   256
+   scalemode       =   3  'pixel
+   scalewidth      =   270
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command2 
-      cancel          =   -1  'true
-      caption         =   "cancelar"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   375
-      left            =   120
-      mouseicon       =   "frmguildfoundation.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   7
-      top             =   3360
-      width           =   975
-   end
-   begin vb.commandbutton command1 
-      caption         =   "siguiente"
-      height          =   375
-      left            =   3000
-      mouseicon       =   "frmguildfoundation.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   6
-      top             =   3360
-      width           =   975
-   end
-   begin vb.frame frame2 
-      caption         =   "web site del clan"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   855
-      left            =   120
-      tabindex        =   4
-      top             =   2400
-      width           =   3855
-      begin vb.textbox text2 
-         height          =   285
-         left            =   120
-         tabindex        =   5
-         top             =   360
-         width           =   3495
-      end
-   end
-   begin vb.frame frame1 
-      caption         =   "informaci�n b�sica"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   2175
-      left            =   120
+   begin vb.textbox txtclanname 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      forecolor       =   &h00ffffff&
+      height          =   285
+      left            =   360
       tabindex        =   0
-      top             =   120
-      width           =   3855
-      begin vb.textbox txtclanname 
-         height          =   285
-         left            =   240
-         tabindex        =   2
-         top             =   1680
-         width           =   3375
-      end
-      begin vb.label label2 
-         caption         =   $"frmguildfoundation.frx":02a4
-         beginproperty font 
-            name            =   "tahoma"
-            size            =   8.25
-            charset         =   0
-            weight          =   400
-            underline       =   0   'false
-            italic          =   -1  'true
-            strikethrough   =   0   'false
-         endproperty
-         height          =   975
-         left            =   240
-         tabindex        =   3
-         top             =   600
-         width           =   3495
-      end
-      begin vb.label label1 
-         caption         =   "nombre del clan:"
-         height          =   255
-         left            =   240
-         tabindex        =   1
-         top             =   360
-         width           =   1455
-      end
+      top             =   1815
+      width           =   3345
+   end
+   begin vb.textbox txtweb 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      forecolor       =   &h00ffffff&
+      height          =   285
+      left            =   360
+      tabindex        =   1
+      top             =   2760
+      width           =   3345
+   end
+   begin vb.image imgsiguiente 
+      height          =   375
+      left            =   2400
+      tag             =   "1"
+      top             =   3240
+      width           =   1335
+   end
+   begin vb.image imgcancelar 
+      height          =   375
+      left            =   240
+      tag             =   "1"
+      top             =   3240
+      width           =   1335
    end
 end
 attribute vb_name = "frmguildfoundation"
@@ -165,34 +98,75 @@ attribute vb_exposed = false
 'pablo ignacio m�rquez
 
 option explicit
+private clsformulario as clsformmovementmanager
 
-private sub command1_click()
-clanname = txtclanname
-site = text2
-unload me
-frmguilddetails.show , me
-end sub
+private cbotonsiguiente as clsgraphicalbutton
+private cbotoncancelar as clsgraphicalbutton
 
-private sub command2_click()
-unload me
-end sub
+public lastpressed as clsgraphicalbutton
 
 private sub form_deactivate()
-me.setfocus
+    me.setfocus
 end sub
 
 private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
 
-if len(txtclanname.text) <= 30 then
-    if not asciivalidos(txtclanname) then
-        msgbox "nombre invalido."
-        exit sub
-    end if
-else
+    me.picture = loadpicture(app.path & "\graficos\ventananombreclan.jpg")
+        
+    call loadbuttons
+    
+    if len(txtclanname.text) <= 30 then
+        if not asciivalidos(txtclanname) then
+            msgbox "nombre invalido."
+            exit sub
+        end if
+    else
         msgbox "nombre demasiado extenso."
         exit sub
-end if
+    end if
+
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonsiguiente = new clsgraphicalbutton
+    set cbotoncancelar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonsiguiente.initialize(imgsiguiente, grhpath & "botonsiguientenombreclan.jpg", _
+                                    grhpath & "botonsiguienterollovernombreclan.jpg", _
+                                    grhpath & "botonsiguienteclicknombreclan.jpg", me)
+
+    call cbotoncancelar.initialize(imgcancelar, grhpath & "botoncancelarnombreclan.jpg", _
+                                    grhpath & "botoncancelarrollovernombreclan.jpg", _
+                                    grhpath & "botoncancelarclicknombreclan.jpg", me)
+
+end sub
 
 
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
 
+private sub imgcancelar_click()
+    unload me
+end sub
+
+private sub imgsiguiente_click()
+    clanname = txtclanname.text
+    site = txtweb.text
+    unload me
+    frmguilddetails.show , frmmain
+end sub
+
+private sub txtweb_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

@@ -505,7 +505,7 @@ dim hfile as long
 
 end function
 
-public sub screencapture()
+public sub screencapture(optional byval autofragshooter as boolean = false)
 'medio desprolijo donde pongo la pic, pero es lo que hay por ahora
 on error goto err:
     dim hwnd as long
@@ -515,21 +515,24 @@ on error goto err:
     dim i as long
     dim hdcc as long
     
+    dim dirfile as string
+    
     hdcc = getdc(frmmain.hwnd)
     
     frmscreenshots.picture1.autoredraw = true
-    frmscreenshots.picture1.width = 11900
-    frmscreenshots.picture1.height = 8650
-    
-    call bitblt(frmscreenshots.picture1.hdc, 0, 0, 794, 580, hdcc, 0, 0, srccopy)
-    
+    frmscreenshots.picture1.width = 12090
+    frmscreenshots.picture1.height = 9075
+
+    call bitblt(frmscreenshots.picture1.hdc, 0, 0, 800, 600, hdcc, 0, 0, srccopy)
     call releasedc(frmmain.hwnd, hdcc)
     
     hdcc = invalid_handle
     
-    if not fileexist(app.path & "\screenshots", vbdirectory) then mkdir (app.path & "\screenshots")
+    dirfile = iif(autofragshooter, "\screenshots\fragshooter", "\screenshots")
     
-    file = app.path & "\screenshots\" & format(now, "dd-mm-yyyy hh-mm-ss") & ".jpg"
+    if not fileexist(app.path & dirfile, vbdirectory) then mkdir (app.path & dirfile)
+    
+    file = app.path & dirfile & "\" & format(now, "dd-mm-yyyy hh-mm-ss") & ".jpg"
     
     frmscreenshots.picture1.refresh
     frmscreenshots.picture1.picture = frmscreenshots.picture1.image
@@ -538,11 +541,11 @@ on error goto err:
     
     savejpg c, file
     
-    addtorichtextbox frmmain.rectxt, "screen capturada!", 200, 200, 200, false, false, false
+    addtorichtextbox frmmain.rectxt, "screen capturada!", 200, 200, 200, false, false, true
 exit sub
 
 err:
-    addtorichtextbox frmmain.rectxt, err.number & "-" & err.description, 200, 200, 200, false, false, false
+    call addtorichtextbox(frmmain.rectxt, err.number & "-" & err.description, 200, 200, 200, false, false, true)
     
     if hdcc <> invalid_handle then _
         call releasedc(frmmain.hwnd, hdcc)

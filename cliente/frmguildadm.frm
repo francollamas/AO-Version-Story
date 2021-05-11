@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmguildadm 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "lista de clanes registrados"
-   clientheight    =   3390
-   clientleft      =   45
-   clienttop       =   330
+   clientheight    =   5535
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   4065
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,43 +20,15 @@ begin vb.form frmguildadm
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3390
-   scalewidth      =   4065
+   scaleheight     =   369
+   scalemode       =   3  'pixel
+   scalewidth      =   271
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command3 
-      cancel          =   -1  'true
-      caption         =   "cancelar"
-      height          =   375
-      left            =   120
-      mouseicon       =   "frmguildadm.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   4
-      top             =   2880
-      width           =   855
-   end
-   begin vb.commandbutton command2 
-      caption         =   "solicitar ingreso"
-      height          =   375
-      left            =   1080
-      mouseicon       =   "frmguildadm.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   3
-      top             =   2880
-      visible         =   0   'false
-      width           =   1455
-   end
-   begin vb.commandbutton command1 
-      caption         =   "detalles"
-      height          =   375
-      left            =   2640
-      mouseicon       =   "frmguildadm.frx":02a4
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2880
-      width           =   1335
-   end
-   begin vb.frame frame1 
-      caption         =   "clanes"
+   begin vb.textbox txtbuscar 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -66,20 +38,47 @@ begin vb.form frmguildadm
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   2655
-      left            =   120
+      forecolor       =   &h00ffffff&
+      height          =   240
+      left            =   495
+      tabindex        =   1
+      top             =   4650
+      width           =   3105
+   end
+   begin vb.listbox guildslist 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   3540
+      itemdata        =   "frmguildadm.frx":0000
+      left            =   495
+      list            =   "frmguildadm.frx":0002
       tabindex        =   0
-      top             =   120
-      width           =   3855
-      begin vb.listbox guildslist 
-         height          =   2010
-         itemdata        =   "frmguildadm.frx":03f6
-         left            =   240
-         list            =   "frmguildadm.frx":03f8
-         tabindex        =   1
-         top             =   360
-         width           =   3255
-      end
+      top             =   570
+      width           =   3075
+   end
+   begin vb.image imgdetalles 
+      height          =   375
+      left            =   2280
+      tag             =   "1"
+      top             =   5025
+      width           =   1335
+   end
+   begin vb.image imgcerrar 
+      height          =   375
+      left            =   480
+      tag             =   "1"
+      top             =   5025
+      width           =   855
    end
 end
 attribute vb_name = "frmguildadm"
@@ -121,11 +120,97 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+private cbotondetalles as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+        
+    me.picture = loadpicture(app.path & "\graficos\ventanalistaclanes.jpg")
+    
+    call loadbuttons
+    
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    set cbotondetalles = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarlistaclanes.jpg", _
+                                    grhpath & "botoncerrarrolloverlistaclanes.jpg", _
+                                    grhpath & "botoncerrarclicklistaclanes.jpg", me)
+
+    call cbotondetalles.initialize(imgdetalles, grhpath & "botondetalleslistaclanes.jpg", _
+                                    grhpath & "botondetallesrolloverlistaclanes.jpg", _
+                                    grhpath & "botondetallesclicklistaclanes.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub guildslist_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
+    frmmain.setfocus
+end sub
+
+private sub imgdetalles_click()
     frmguildbrief.esleader = false
+
     call writeguildrequestdetails(guildslist.list(guildslist.listindex))
 end sub
 
-private sub command3_click()
-    unload me
+private sub txtbuscar_change()
+    call filtrarlistaclanes(txtbuscar.text)
+end sub
+
+private sub txtbuscar_gotfocus()
+    with txtbuscar
+        .selstart = 0
+        .sellength = len(.text)
+    end with
+end sub
+
+public sub filtrarlistaclanes(byref scompare as string)
+
+    dim lindex as long
+    
+    if ubound(guildnames) <> 0 then
+        with guildslist
+            'limpio la lista
+            .clear
+            
+            .visible = false
+            
+            ' recorro los arrays
+            for lindex = 0 to ubound(guildnames)
+                ' si coincide con los patrones
+                if instr(1, ucase$(guildnames(lindex)), ucase$(scompare)) then
+                    ' lo agrego a la lista
+                    .additem guildnames(lindex)
+                end if
+            next lindex
+            
+            .visible = true
+        end with
+    end if
+
 end sub

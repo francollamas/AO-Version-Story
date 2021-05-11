@@ -2,43 +2,36 @@ version 5.00
 object = "{3b7c8863-d78f-101b-b9b5-04021c009402}#1.2#0"; "richtx32.ocx"
 begin vb.form frmcargando 
    autoredraw      =   -1  'true
-   backcolor       =   &h00000000&
-   borderstyle     =   3  'fixed dialog
-   clientheight    =   7245
-   clientleft      =   45
-   clienttop       =   45
-   clientwidth     =   9630
+   backcolor       =   &h80000000&
+   borderstyle     =   0  'none
+   clientheight    =   7650
+   clientleft      =   0
+   clienttop       =   0
+   clientwidth     =   10020
    clipcontrols    =   0   'false
    controlbox      =   0   'false
+   keypreview      =   -1  'true
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   483
+   scaleheight     =   510
    scalemode       =   3  'pixel
-   scalewidth      =   642
+   scalewidth      =   668
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
-   begin vb.filelistbox mp3files 
-      height          =   480
-      left            =   180
-      pattern         =   "*.mp3"
-      tabindex        =   2
-      top             =   240
-      visible         =   0   'false
-      width           =   1215
-   end
    begin richtextlib.richtextbox status 
-      height          =   2400
-      left            =   2340
+      height          =   1545
+      left            =   2400
       tabindex        =   1
       tabstop         =   0   'false
       tooltiptext     =   "mensajes del servidor"
-      top             =   2940
+      top             =   4320
       width           =   5160
       _extentx        =   9102
-      _extenty        =   4233
+      _extenty        =   2725
       _version        =   393217
-      backcolor       =   16512
+      backcolor       =   0
+      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       textrtf         =   $"frmcargando.frx":0000
@@ -56,12 +49,12 @@ begin vb.form frmcargando
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       height          =   7200
-      left            =   45
+      left            =   240
       scaleheight     =   480
       scalemode       =   3  'pixel
       scalewidth      =   640
       tabindex        =   0
-      top             =   60
+      top             =   240
       width           =   9600
    end
 end
@@ -105,6 +98,14 @@ attribute vb_exposed = false
 option explicit
 
 private sub form_load()
-logo.picture = loadpicture(dirgraficos & "cargando.jpg")
+    me.picture = loadpicture(dirgraficos & "ventanacargando.jpg")
+    logo.picture = loadpicture(dirgraficos & "imagencargando.jpg")
 end sub
 
+private sub logo_keypress(keyascii as integer)
+    debug.print 2
+end sub
+
+private sub status_keypress(keyascii as integer)
+    debug.print 1
+end sub

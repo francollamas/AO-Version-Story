@@ -1,68 +1,24 @@
 version 5.00
 begin vb.form frmspawnlist 
-   borderstyle     =   3  'fixed dialog
+   borderstyle     =   0  'none
    caption         =   "invocar"
    clientheight    =   3465
-   clientleft      =   45
-   clienttop       =   330
+   clientleft      =   0
+   clienttop       =   -105
    clientwidth     =   3300
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3465
-   scalewidth      =   3300
+   scaleheight     =   231
+   scalemode       =   3  'pixel
+   scalewidth      =   220
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
-   begin vb.commandbutton command1 
-      caption         =   "spawn"
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   390
-      left            =   345
-      mouseicon       =   "frmspawnlist.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2985
-      width           =   1650
-   end
-   begin vb.commandbutton command2 
-      caption         =   "salir"
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   390
-      left            =   2025
-      mouseicon       =   "frmspawnlist.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   1
-      top             =   2985
-      width           =   810
-   end
    begin vb.listbox lstcriaturas 
-      height          =   2400
-      left            =   345
-      tabindex        =   0
-      top             =   480
-      width           =   2490
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      caption         =   "selecciona la criatura:"
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
       beginproperty font 
          name            =   "ms sans serif"
          size            =   8.25
@@ -72,11 +28,24 @@ begin vb.form frmspawnlist
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   195
-      left            =   645
-      tabindex        =   3
-      top             =   75
-      width           =   1935
+      forecolor       =   &h00ffffff&
+      height          =   2175
+      left            =   420
+      tabindex        =   0
+      top             =   495
+      width           =   2355
+   end
+   begin vb.image imgsalir 
+      height          =   375
+      left            =   360
+      top             =   2910
+      width           =   855
+   end
+   begin vb.image imginvocar 
+      height          =   375
+      left            =   1500
+      top             =   2910
+      width           =   1335
    end
 end
 attribute vb_name = "frmspawnlist"
@@ -118,15 +87,55 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
+private clsformulario as clsformmovementmanager
+
+private cbotoninvocar as clsgraphicalbutton
+private cbotonsalir as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanainvocar.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoninvocar = new clsgraphicalbutton
+    set cbotonsalir = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoninvocar.initialize(imginvocar, grhpath & "botoninvocar.jpg", _
+                                    grhpath & "botoninvocarrollover.jpg", _
+                                    grhpath & "botoninvocarclick.jpg", me)
+
+    call cbotonsalir.initialize(imgsalir, grhpath & "botonsalirinvocar.jpg", _
+                                    grhpath & "botonsalirrolloverinvocar.jpg", _
+                                    grhpath & "botonsalirclickinvocar.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imginvocar_click()
     call writespawncreature(lstcriaturas.listindex + 1)
 end sub
 
-private sub command2_click()
+private sub imgsalir_click()
     unload me
 end sub
 
-private sub form_deactivate()
-    'me.setfocus
+private sub lstcriaturas_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub
-

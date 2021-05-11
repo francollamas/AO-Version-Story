@@ -1,11 +1,10 @@
 version 5.00
 begin vb.form frmentrenador 
-   borderstyle     =   1  'fixed single
-   caption         =   "seleccione la criatura"
-   clientheight    =   3705
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   4230
+   borderstyle     =   0  'none
+   clientheight    =   3675
+   clientleft      =   0
+   clienttop       =   -75
+   clientwidth     =   4215
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
@@ -20,48 +19,14 @@ begin vb.form frmentrenador
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3705
-   scalewidth      =   4230
+   scaleheight     =   245
+   scalemode       =   3  'pixel
+   scalewidth      =   281
+   showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
-   begin vb.commandbutton command2 
-      caption         =   "salir"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   390
-      left            =   2460
-      mouseicon       =   "frmentrenador.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   3
-      top             =   3000
-      width           =   870
-   end
-   begin vb.commandbutton command1 
-      caption         =   "luchar"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   390
-      left            =   780
-      mouseicon       =   "frmentrenador.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   3000
-      width           =   1710
-   end
    begin vb.listbox lstcriaturas 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -71,30 +36,26 @@ begin vb.form frmentrenador
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   2400
-      left            =   780
-      tabindex        =   1
-      top             =   540
-      width           =   2490
-   end
-   begin vb.label label1 
-      alignment       =   2  'center
-      autosize        =   -1  'true
-      caption         =   "�con qu� criatura deseas combatir?"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   9.75
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   240
-      left            =   375
+      forecolor       =   &h00ffffff&
+      height          =   2175
+      left            =   870
       tabindex        =   0
-      top             =   105
-      width           =   3525
+      top             =   675
+      width           =   2355
+   end
+   begin vb.image imgsalir 
+      height          =   375
+      left            =   2160
+      tag             =   "1"
+      top             =   3120
+      width           =   1335
+   end
+   begin vb.image imgluchar 
+      height          =   375
+      left            =   600
+      tag             =   "1"
+      top             =   3120
+      width           =   1335
    end
 end
 attribute vb_name = "frmentrenador"
@@ -146,11 +107,58 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
+private clsformulario as clsformmovementmanager
+
+private cbotonluchar as clsgraphicalbutton
+private cbotonsalir as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+        
+    me.picture = loadpicture(app.path & "\graficos\ventanaentrenador.jpg")
+    
+    call loadbuttons
+    
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonluchar = new clsgraphicalbutton
+    set cbotonsalir = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonluchar.initialize(imgluchar, grhpath & "botonluchar.jpg", _
+                                    grhpath & "botonlucharrollover.jpg", _
+                                    grhpath & "botonlucharclick.jpg", me)
+
+    call cbotonsalir.initialize(imgsalir, grhpath & "botonsalirentrenador.jpg", _
+                                    grhpath & "botonsalirrolloverentrenador.jpg", _
+                                    grhpath & "botonsalirclickentrenador.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgluchar_click()
     call writetrain(lstcriaturas.listindex + 1)
     unload me
 end sub
 
-private sub command2_click()
+private sub imgsalir_click()
     unload me
+end sub
+
+private sub lstcriaturas_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

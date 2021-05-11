@@ -129,7 +129,7 @@ public sub areasoptimizacion()
     end if
 end sub
 
-public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
+public sub checkupdateneededuser(byval userindex as integer, byval head as byte, optional byval butindex as boolean = false)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
 'last modify date: 15/07/2009
@@ -192,7 +192,7 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
         if maxy > 100 then maxy = 100
         if maxx > 100 then maxx = 100
         
-        map = userlist(userindex).pos.map
+        map = .pos.map
         
         'esto es para ke el cliente elimine lo "fuera de area..."
         call writeareachanged(userindex)
@@ -214,19 +214,19 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
                             
                             'si el user estaba invisible le avisamos al nuevo cliente de eso
                             if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
-                                if userlist(userindex).flags.privilegios and playertype.user then
+                                if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then
                                     call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
                                 end if
                             end if
                         end if
                         
                         ' solo avisa al otro cliente si no es un admin invisible
-                        if not (userlist(userindex).flags.admininvisible = 1) then
+                        if not (.flags.admininvisible = 1) then
                             call makeuserchar(false, tempint, userindex, .pos.map, .pos.x, .pos.y)
                             
-                            if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
+                            if .flags.invisible or .flags.oculto then
                                 if userlist(tempint).flags.privilegios and playertype.user then
-                                    call writesetinvisible(tempint, userlist(userindex).char.charindex, true)
+                                    call writesetinvisible(tempint, .char.charindex, true)
                                 end if
                             end if
                         end if
@@ -234,14 +234,16 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
                         call flushbuffer(tempint)
                     
                     elseif head = user_nuevo then
-                        call makeuserchar(false, userindex, userindex, map, x, y)
+                        if not butindex then
+                            call makeuserchar(false, userindex, userindex, map, x, y)
+                        end if
                     end if
                 end if
                 
                 '<<< npc >>>
                 if mapdata(map, x, y).npcindex then
                     call makenpcchar(false, userindex, mapdata(map, x, y).npcindex, map, x, y)
-                 end if
+                end if
                  
                 '<<< item >>>
                 if mapdata(map, x, y).objinfo.objindex then
@@ -389,7 +391,7 @@ public sub quitaruser(byval userindex as integer, byval map as integer)
     end if
 end sub
 
-public sub agregaruser(byval userindex as integer, byval map as integer)
+public sub agregaruser(byval userindex as integer, byval map as integer, optional byval butindex as boolean = false)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
 'last modify date: 04/01/2007
@@ -425,15 +427,17 @@ public sub agregaruser(byval userindex as integer, byval map as integer)
         conngroups(map).userentrys(tempval) = userindex
     end if
     
-    'update user
-    userlist(userindex).areasinfo.areaid = 0
+    with userlist(userindex)
+        'update user
+        .areasinfo.areaid = 0
+        
+        .areasinfo.areapertenecex = 0
+        .areasinfo.areapertenecey = 0
+        .areasinfo.arearecivex = 0
+        .areasinfo.arearecivey = 0
+    end with
     
-    userlist(userindex).areasinfo.areapertenecex = 0
-    userlist(userindex).areasinfo.areapertenecey = 0
-    userlist(userindex).areasinfo.arearecivex = 0
-    userlist(userindex).areasinfo.arearecivey = 0
-    
-    call checkupdateneededuser(userindex, user_nuevo)
+    call checkupdateneededuser(userindex, user_nuevo, butindex)
 end sub
 
 public sub agregarnpc(byval npcindex as integer)
@@ -442,12 +446,14 @@ public sub agregarnpc(byval npcindex as integer)
 'last modify date: unknow
 '
 '**************************************************************
-    npclist(npcindex).areasinfo.areaid = 0
-    
-    npclist(npcindex).areasinfo.areapertenecex = 0
-    npclist(npcindex).areasinfo.areapertenecey = 0
-    npclist(npcindex).areasinfo.arearecivex = 0
-    npclist(npcindex).areasinfo.arearecivey = 0
+    with npclist(npcindex)
+        .areasinfo.areaid = 0
+        
+        .areasinfo.areapertenecex = 0
+        .areasinfo.areapertenecey = 0
+        .areasinfo.arearecivex = 0
+        .areasinfo.arearecivey = 0
+    end with
     
     call checkupdateneedednpc(npcindex, user_nuevo)
 end sub

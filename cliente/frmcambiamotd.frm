@@ -1,135 +1,122 @@
 version 5.00
 begin vb.form frmcambiamotd 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   """zmotd"""
    clientheight    =   5415
-   clientleft      =   45
-   clienttop       =   330
+   clientleft      =   0
+   clienttop       =   -105
    clientwidth     =   5175
    clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   5415
-   scalewidth      =   5175
+   scaleheight     =   361
+   scalemode       =   3  'pixel
+   scalewidth      =   345
+   showintaskbar   =   0   'false
    startupposition =   3  'windows default
-   begin vb.checkbox chkitalic 
-      caption         =   "cursiva"
-      height          =   255
-      left            =   2880
-      tabindex        =   12
-      top             =   4320
-      width           =   855
-   end
-   begin vb.checkbox chkbold 
-      caption         =   "negrita"
-      height          =   255
-      left            =   1080
-      tabindex        =   11
-      top             =   4320
-      width           =   855
-   end
-   begin vb.commandbutton cmdmarron 
-      caption         =   "marron"
-      height          =   375
-      left            =   3480
-      tabindex        =   10
-      top             =   3840
-      width           =   855
-   end
-   begin vb.commandbutton cmdverde 
-      caption         =   "verde"
-      height          =   375
-      left            =   2520
-      tabindex        =   9
-      top             =   3840
-      width           =   855
-   end
-   begin vb.commandbutton cmdmorado 
-      caption         =   "morado"
-      height          =   375
-      left            =   1560
-      tabindex        =   8
-      top             =   3840
-      width           =   855
-   end
-   begin vb.commandbutton cmdamarillo 
-      caption         =   "amarillo"
-      height          =   375
-      left            =   600
-      tabindex        =   7
-      top             =   3840
-      width           =   855
-   end
-   begin vb.commandbutton cmdgris 
-      caption         =   "gris"
-      height          =   375
-      left            =   3480
-      tabindex        =   6
-      top             =   3240
-      width           =   855
-   end
-   begin vb.commandbutton cmdblanco 
-      caption         =   "blanco"
-      height          =   375
-      left            =   2520
-      tabindex        =   5
-      top             =   3240
-      width           =   855
-   end
-   begin vb.commandbutton cmdrojo 
-      caption         =   "rojo"
-      height          =   375
-      left            =   1560
-      tabindex        =   4
-      top             =   3240
-      width           =   855
-   end
-   begin vb.commandbutton cmdazul 
-      backcolor       =   &h00ff0000&
-      caption         =   "azul"
-      height          =   375
-      left            =   600
-      maskcolor       =   &h00ff0000&
-      tabindex        =   3
-      top             =   3240
-      width           =   855
-   end
-   begin vb.commandbutton cmdok 
-      caption         =   "aceptar"
-      height          =   375
-      left            =   600
-      tabindex        =   2
-      top             =   4800
-      width           =   3855
-   end
    begin vb.textbox txtmotd 
-      height          =   2415
-      left            =   360
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   2250
+      left            =   435
       multiline       =   -1  'true
       scrollbars      =   3  'both
       tabindex        =   0
-      top             =   660
-      width           =   4455
+      top             =   795
+      width           =   4290
    end
-   begin vb.label label1 
-      alignment       =   2  'center
-      backstyle       =   0  'transparent
-      caption         =   "no olvides agregar los colores al final de cada l�nea (ver tabla de abajo)"
-      beginproperty font 
-         name            =   "arial"
-         size            =   9.75
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   -1  'true
-         strikethrough   =   0   'false
-      endproperty
-      height          =   495
-      left            =   360
-      tabindex        =   1
-      top             =   60
-      width           =   4455
+   begin vb.image imgoptcursiva 
+      height          =   255
+      index           =   1
+      left            =   3360
+      top             =   4320
+      width           =   615
+   end
+   begin vb.image imgoptnegrita 
+      height          =   255
+      index           =   1
+      left            =   1440
+      top             =   4320
+      width           =   615
+   end
+   begin vb.image imgoptcursiva 
+      height          =   195
+      index           =   0
+      left            =   3060
+      top             =   4380
+      width           =   180
+   end
+   begin vb.image imgoptnegrita 
+      height          =   195
+      index           =   0
+      left            =   1170
+      top             =   4380
+      width           =   180
+   end
+   begin vb.image imgaceptar 
+      height          =   375
+      left            =   480
+      top             =   4800
+      width           =   4350
+   end
+   begin vb.image imgmarron 
+      height          =   375
+      left            =   3720
+      top             =   3720
+      width           =   855
+   end
+   begin vb.image imgverde 
+      height          =   375
+      left            =   2640
+      top             =   3720
+      width           =   855
+   end
+   begin vb.image imgmorado 
+      height          =   375
+      left            =   1560
+      top             =   3720
+      width           =   855
+   end
+   begin vb.image imgamarillo 
+      height          =   375
+      left            =   480
+      top             =   3720
+      width           =   855
+   end
+   begin vb.image imggris 
+      height          =   375
+      left            =   3720
+      top             =   3240
+      width           =   855
+   end
+   begin vb.image imgblanco 
+      height          =   375
+      left            =   2640
+      top             =   3240
+      width           =   855
+   end
+   begin vb.image imgrojo 
+      height          =   375
+      left            =   1560
+      top             =   3240
+      width           =   855
+   end
+   begin vb.image imgazul 
+      height          =   375
+      left            =   480
+      top             =   3240
+      width           =   855
    end
 end
 attribute vb_name = "frmcambiamotd"
@@ -158,7 +145,99 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub cmdok_click()
+private clsformulario as clsformmovementmanager
+
+private cbotonazul as clsgraphicalbutton
+private cbotonrojo as clsgraphicalbutton
+private cbotonblanco as clsgraphicalbutton
+private cbotongris as clsgraphicalbutton
+private cbotonamarillo as clsgraphicalbutton
+private cbotonmorado as clsgraphicalbutton
+private cbotonverde as clsgraphicalbutton
+private cbotonmarron as clsgraphicalbutton
+private cbotonaceptar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private picnegrita as picture
+private piccursiva as picture
+
+private ynegrita as byte
+private ycursiva as byte
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(dirgraficos & "ventanacambiomotd.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonazul = new clsgraphicalbutton
+    set cbotonrojo = new clsgraphicalbutton
+    set cbotonblanco = new clsgraphicalbutton
+    set cbotongris = new clsgraphicalbutton
+    set cbotonamarillo = new clsgraphicalbutton
+    set cbotonmorado = new clsgraphicalbutton
+    set cbotonverde = new clsgraphicalbutton
+    set cbotonmarron = new clsgraphicalbutton
+    set cbotonaceptar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonazul.initialize(imgazul, grhpath & "botonazul.jpg", _
+                                    grhpath & "botonazulrollover.jpg", _
+                                    grhpath & "botonazulclick.jpg", me)
+
+    call cbotonrojo.initialize(imgrojo, grhpath & "botonrojo.jpg", _
+                                    grhpath & "botonrojorollover.jpg", _
+                                    grhpath & "botonrojoclick.jpg", me)
+
+    call cbotonblanco.initialize(imgblanco, grhpath & "botonblanco.jpg", _
+                                    grhpath & "botonblancorollover.jpg", _
+                                    grhpath & "botonblancoclick.jpg", me)
+
+    call cbotongris.initialize(imggris, grhpath & "botongris.jpg", _
+                                    grhpath & "botongrisrollover.jpg", _
+                                    grhpath & "botongrisclick.jpg", me)
+                                    
+    call cbotonamarillo.initialize(imgamarillo, grhpath & "botonamarillo.jpg", _
+                                    grhpath & "botonamarillorollover.jpg", _
+                                    grhpath & "botonamarilloclick.jpg", me)
+
+    call cbotonmorado.initialize(imgmorado, grhpath & "botonmorado.jpg", _
+                                    grhpath & "botonmoradorollover.jpg", _
+                                    grhpath & "botonmoradoclick.jpg", me)
+
+    call cbotonverde.initialize(imgverde, grhpath & "botonverde.jpg", _
+                                    grhpath & "botonverderollover.jpg", _
+                                    grhpath & "botonverdeclick.jpg", me)
+
+    call cbotonmarron.initialize(imgmarron, grhpath & "botonmarron.jpg", _
+                                    grhpath & "botonmarronrollover.jpg", _
+                                    grhpath & "botonmarronclick.jpg", me)
+
+    call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarmotd.jpg", _
+                                    grhpath & "botonaceptarrollovermotd.jpg", _
+                                    grhpath & "botonaceptarclickmotd.jpg", me)
+                                    
+    set picnegrita = loadpicture(dirgraficos & "opcionprendidan.jpg")
+    set piccursiva = loadpicture(dirgraficos & "opcionprendidac.jpg")
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgaceptar_click()
     dim t() as string
     dim i as long, n as long, pos as long
     
@@ -167,8 +246,6 @@ private sub cmdok_click()
     end if
     
     t = split(txtmotd.text, vbcrlf)
-    
-    'hola~1~1~1~1~1
     
     for i = lbound(t) to ubound(t)
         n = 0
@@ -185,37 +262,69 @@ private sub cmdok_click()
     
     call writesetmotd(txtmotd.text)
     unload me
+
 end sub
 
-'a partir de command2_click son todos buttons para agregar color al texto
-private sub cmdazul_click()
-    txtmotd.text = txtmotd & "~50~70~250~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgamarillo_click()
+    txtmotd.text = txtmotd & "~244~244~0~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdrojo_click()
-    txtmotd.text = txtmotd & "~255~0~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgazul_click()
+    txtmotd.text = txtmotd & "~50~70~250~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdblanco_click()
-    txtmotd.text = txtmotd & "~255~255~255~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgblanco_click()
+    txtmotd.text = txtmotd & "~255~255~255~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdgris_click()
-    txtmotd.text = txtmotd & "~157~157~157~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imggris_click()
+    txtmotd.text = txtmotd & "~157~157~157~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdamarillo_click()
-    txtmotd.text = txtmotd & "~244~244~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgmarron_click()
+    txtmotd.text = txtmotd & "~97~58~31~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdmorado_click()
-    txtmotd.text = txtmotd & "~128~0~128~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgmorado_click()
+    txtmotd.text = txtmotd & "~128~0~128~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub
 
-private sub cmdverde_click()
-  txtmotd.text = txtmotd & "~23~104~26~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgoptcursiva_click(index as integer)
+    
+    if ycursiva = 0 then
+        imgoptcursiva(0).picture = piccursiva
+        ycursiva = 1
+    else
+        set imgoptcursiva(0).picture = nothing
+        ycursiva = 0
+    end if
+
 end sub
 
-private sub cmdmarron_click()
-    txtmotd.text = txtmotd & "~97~58~31~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+private sub imgoptcursiva_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgoptnegrita_click(index as integer)
+    
+    if ynegrita = 0 then
+        imgoptnegrita(0).picture = picnegrita
+        ynegrita = 1
+    else
+        set imgoptnegrita(0).picture = nothing
+        ynegrita = 0
+    end if
+    
+end sub
+
+private sub imgoptnegrita_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgrojo_click()
+    txtmotd.text = txtmotd & "~255~0~0~" & cstr(ynegrita) & "~" & cstr(ycursiva)
+end sub
+
+private sub imgverde_click()
+    txtmotd.text = txtmotd & "~23~104~26~" & cstr(ynegrita) & "~" & cstr(ycursiva)
 end sub

@@ -73,10 +73,11 @@ private mappedkeys(1 to num_custom_keys) as integer
 '@param mkeyleft key for moving character left
 '@param mkeyright key for moving character right
 '@param mkeytogglemusic key for toggling background music
+'@param mkeytogglesound key for toggling sound
+'@param mkeytogglefxs key for togglig the 3d fxs
 '@param mkeyrequestrefresh key for sending a request refreshing packet
 '@param mkeytogglenames key for toggling characters' names
 '@param mkeygetobject key for retrieving an object from the ground
-'@param mkeytogglecombatmode key for toggling combat mode
 '@param mkeyequipobject key for equiping an inventory object
 '@param mkeytamanimal key for taming animals
 '@param mkeysteal key for stealing other users' gold or objects
@@ -88,7 +89,6 @@ private mappedkeys(1 to num_custom_keys) as integer
 '@param mkeyattack key for attacking other users/npcs
 '@param mkeytalk key for talking (to all)
 '@param mkeytalkwithguild key for talking (only to guild members)
-'@param mkeytogglefps key for toggling the fps counter
 '@param mkeytakescreenshot key for taking a snapshot of the screen
 '@param mkeyshowoptions key for showing the "options" form
 '@param mkeymeditate key for start/stop meditation
@@ -101,10 +101,11 @@ public enum ekeytype
     mkeyleft
     mkeyright
     mkeytogglemusic
+    mkeytogglesound
+    mkeytogglefxs
     mkeyrequestrefresh
     mkeytogglenames
     mkeygetobject
-    mkeytogglecombatmode
     mkeyequipobject
     mkeytamanimal
     mkeysteal
@@ -116,7 +117,6 @@ public enum ekeytype
     mkeyattack
     mkeytalk
     mkeytalkwithguild
-    mkeytogglefps
     mkeytakescreenshot
     mkeyshowoptions
     mkeymeditate
@@ -347,10 +347,11 @@ public sub loaddefaults()
     mappedkeys(ekeytype.mkeyleft) = keycodeconstants.vbkeyleft
     mappedkeys(ekeytype.mkeyright) = keycodeconstants.vbkeyright
     mappedkeys(ekeytype.mkeytogglemusic) = keycodeconstants.vbkeym
+    mappedkeys(ekeytype.mkeytogglesound) = keycodeconstants.vbkeys
+    mappedkeys(ekeytype.mkeytogglefxs) = keycodeconstants.vbkeyf
     mappedkeys(ekeytype.mkeyrequestrefresh) = keycodeconstants.vbkeyl
     mappedkeys(ekeytype.mkeytogglenames) = keycodeconstants.vbkeyn
     mappedkeys(ekeytype.mkeygetobject) = keycodeconstants.vbkeya
-    mappedkeys(ekeytype.mkeytogglecombatmode) = keycodeconstants.vbkeyc
     mappedkeys(ekeytype.mkeyequipobject) = keycodeconstants.vbkeye
     mappedkeys(ekeytype.mkeytamanimal) = keycodeconstants.vbkeyd
     mappedkeys(ekeytype.mkeysteal) = keycodeconstants.vbkeyr
@@ -362,7 +363,6 @@ public sub loaddefaults()
     mappedkeys(ekeytype.mkeyattack) = keycodeconstants.vbkeycontrol
     mappedkeys(ekeytype.mkeytalk) = keycodeconstants.vbkeyreturn
     mappedkeys(ekeytype.mkeytalkwithguild) = keycodeconstants.vbkeydelete
-    mappedkeys(ekeytype.mkeytogglefps) = keycodeconstants.vbkeyf4
     mappedkeys(ekeytype.mkeytakescreenshot) = keycodeconstants.vbkeyf2
     mappedkeys(ekeytype.mkeyshowoptions) = keycodeconstants.vbkeyf5
     mappedkeys(ekeytype.mkeymeditate) = keycodeconstants.vbkeyf6

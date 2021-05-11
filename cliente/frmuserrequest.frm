@@ -1,9 +1,9 @@
 version 5.00
 begin vb.form frmuserrequest 
-   caption         =   "peticion"
+   borderstyle     =   0  'none
    clientheight    =   2430
-   clientleft      =   60
-   clienttop       =   345
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   4650
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -17,24 +17,37 @@ begin vb.form frmuserrequest
       strikethrough   =   0   'false
    endproperty
    linktopic       =   "form1"
-   scaleheight     =   2430
-   scalewidth      =   4650
+   scaleheight     =   162
+   scalemode       =   3  'pixel
+   scalewidth      =   310
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      caption         =   "cerrar"
-      height          =   495
-      left            =   120
-      tabindex        =   1
-      top             =   1800
-      width           =   4335
-   end
    begin vb.textbox text1 
-      height          =   1575
-      left            =   120
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   1395
+      left            =   225
       multiline       =   -1  'true
       tabindex        =   0
-      top             =   120
-      width           =   4335
+      top             =   405
+      width           =   4185
+   end
+   begin vb.image imgcerrar 
+      height          =   375
+      left            =   120
+      tag             =   "1"
+      top             =   1920
+      width           =   4350
    end
 end
 attribute vb_name = "frmuserrequest"
@@ -76,13 +89,51 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-unload me
-end sub
+private cbotoncerrar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private clsformulario as new clsformmovementmanager
 
 public sub recievepeticion(byval p as string)
 
-text1 = replace$(p, "�", vbcrlf)
-me.show vbmodeless, frmmain
+    text1 = replace$(p, "�", vbcrlf)
+    me.show vbmodeless, frmmain
 
+end sub
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanapeticion.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarpeticion.jpg", _
+                                    grhpath & "botoncerrarrolloverpeticion.jpg", _
+                                    grhpath & "botoncerrarclickpeticion.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub text1_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

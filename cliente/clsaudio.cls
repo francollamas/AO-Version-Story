@@ -49,6 +49,9 @@ attribute vb_exposed = false
 '
 '28/07/2008 - franco zeoli (noich) - (zeolifranco@gmail.com)
 '   -add: optional sound effects
+'
+'23/03/2010 - torres patricio(pato) - (paatoo.torres@gmail.com)
+'   -add: ore code to reproduce mp3
 
 ''
 ' controls all audio using directsound and directmusic 7.
@@ -170,6 +173,12 @@ dim lastposy as integer
 'states wether sound effects are currently activated or not
 dim seffectsactivated as boolean
 
+'**** used by mp3 playing. *****
+dim imc   as imediacontrol
+dim iba   as ibasicaudio
+dim ime   as imediaevent
+dim impos as imediaposition
+
 ''
 'constructor. performs no action at all.
 
@@ -187,17 +196,13 @@ end sub
 private sub class_terminate()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 16/03/04
+'last modification: 12/31/09
 'destroy's all directmusic and directsound objects
+'12/31/09 - pato: use stopwave method to prevent errors.
 '***************************************************
 on local error resume next
-    dim loopc as long
-    
     'stop every channel being used and destroy the buffer
-    for loopc = 1 to numsoundbuffers
-        call dsbuffers(loopc).buffer.stop
-        set dsbuffers(loopc).buffer = nothing
-    next loopc
+    call stopwave
     
     'stop music
     call performance.stop(segment, segstate, 0, 0)
@@ -356,6 +361,25 @@ exit function
 
 errhandler:
 end function
+
+private sub resetsoundvalues()
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 03/04/10
+'reset the frequency, volume and pan.
+'***************************************************
+    dim i as long
+    
+    for i = 1 to numsoundbuffers
+        if not dsbuffers(i).buffer is nothing then
+            with dsbuffers(i)
+                call .buffer.setfrequency(.normalfq)
+                call .buffer.setvolume(sndvolume)
+                call .buffer.setpan(0)
+            end with
+        end if
+    next i
+end sub
 
 private sub update3dsound(byval bufferindex as long, byval deltax as integer, byval deltay as integer)
 '***************************************************
@@ -589,9 +613,11 @@ public property get playingsound() as boolean
     dim i as long
     
     for i = 1 to numsoundbuffers
-        if dsbuffers(i).buffer.getstatus() and dsbstatus_playing then
-            playingsound = true
-            exit property
+        if not dsbuffers(i).buffer is nothing then
+            if dsbuffers(i).buffer.getstatus() and dsbstatus_playing then
+                playingsound = true
+                exit property
+            end if
         end if
     next i
 end property
@@ -667,6 +693,8 @@ on error goto errhandler
         'make sure we have a loaded segment
         if segment is nothing then exit function
     end if
+    
+    musicmp3stop
     
     'play it
     call segment.setrepeats(loops)
@@ -834,6 +862,195 @@ public property get musiclenght() as long
 end property
 
 ''
+' destroy the mp3 objects.
+'
+' @return   true if the objects were destroy.
+
+public function musicmp3empty() as boolean
+'**************************************
+'* created by: fredrik alexandersson  *
+'* modify date: 20/5/2003             *
+'**************************************
+    on error goto errorhandl
+    
+    if objptr(imc) > 0 then
+        call musicmp3stop
+    end if
+    
+    set iba = nothing
+    set ime = nothing
+    set impos = nothing
+    set imc = nothing
+    
+    musicmp3empty = true
+    exit function
+
+errorhandl:
+    musicmp3empty = false
+    end
+end function
+
+''
+' loads a new mp3 file.
+'
+' @param    filepath    the path to the file to be loaded.
+' @return   true    if file was properly loaded and started playing, false otherwise.
+
+public function musicmp3load(byval filepath as string, optional byval volume as long = 0, optional byval balance as long = 0) as boolean '**** loads a mp3 *****
+'**************************************
+'* created by: fredrik alexandersson  *
+'* modify date: 20/5/2003             *
+'**************************************
+    on error goto errorhandl
+    
+    if not fileexist(filepath, vbarchive) then exit function
+    
+    if not musicmp3empty() = true then goto errorhandl
+    
+    set imc = new filgraphmanager
+    call imc.renderfile(filepath)
+    
+    set iba = imc
+    
+    if soundvolume > 0 then soundvolume = 0
+    if volume < -4000 then volume = -4000
+    
+    iba.volume = volume
+    
+    if balance > 5000 then balance = 5000
+    if balance < -5000 then balance = -5000
+    
+    iba.balance = balance
+    
+    set ime = imc
+    
+    set impos = imc
+    if objptr(impos) then impos.rate = 1#
+    impos.currentposition = 0
+    
+    musicmp3load = true
+    exit function
+
+errorhandl:
+    musicmp3load = false
+end function
+
+''
+' plays a new mp3 file.
+'
+' @param    filepath    the path to the file to be loaded. if the path is null then play the loaded mp3.
+'
+' @return   true    if file was properly loaded and started playing, false otherwise.
+
+public function musicmp3play(optional byval filepath as string = "") as boolean
+'**************************************
+'* created by: fredrik alexandersson  *
+'* modify date: 20/5/2003             *
+'**************************************
+    on error goto errorhandl
+    
+    if not musicactivated then exit function
+    
+    if not music then exit function
+    
+    if lenb(filepath) > 0 then
+        if not musicmp3load(filepath) then exit function
+    else
+        if imc is nothing then exit function
+    end if
+    
+    stopmidi
+    call imc.run
+    
+    musicmp3play = true
+    exit function
+
+errorhandl:
+    musicmp3play = false
+end function
+
+''
+' check if the song need looping.
+
+public sub musicmp3getloop()
+    on error goto errorhandl
+    
+    if impos.stoptime = impos.currentposition then
+        musicmp3stop
+        musicmp3play
+    end if
+errorhandl:
+end sub
+
+''
+' stop a the current mp3 file.
+'
+' @return   true    if file was properly stop, false otherwise.
+
+public function musicmp3stop() as boolean
+'**************************************
+'* created by: fredrik alexandersson  *
+'* modify date: 20/5/2003             *
+'**************************************
+    on error goto errorhandl
+    
+    imc.stop
+    impos.currentposition = 0
+    
+    musicmp3stop = true
+    exit function
+
+errorhandl:
+    musicmp3stop = false
+end function
+
+''
+' pause a the current mp3 file.
+'
+' @return   true    if file was properly pause, false otherwise.
+
+public function musicmp3pause() as boolean
+'***************************************************
+' created by: juan mart�n sotuyo dodero
+' modify date: 25/6/2004
+'***************************************************
+    on error goto errorhandl
+    
+    call imc.pause
+    
+    musicmp3pause = true
+    exit function
+
+errorhandl:
+    musicmp3pause = false
+end function
+
+''
+' set the volume to the current mp3.
+'
+' @param    soundvolume the new volume to the current mp3.
+' @return   true    if the volume was properly change, false otherwise.
+
+public function musicmp3volumeset(byval soundvolume as long) as boolean
+'**************************************
+'* created by: fredrik alexandersson  *
+'* modify date: 20/5/2003             *
+'**************************************
+    on error goto errorhandl
+    
+    if soundvolume > 0 then soundvolume = 0
+    if soundvolume < -4000 then soundvolume = -4000
+    
+    iba.volume = soundvolume
+
+    musicmp3volumeset = true
+    exit function
+
+errorhandl:
+    musicmp3volumeset = false
+end function
+
+''
 ' retrieves wether music is activated or not.
 '
 ' @return   true if music is activated, false otherwise.
@@ -911,10 +1128,15 @@ end property
 public property let soundeffectsactivated(byval nvalue as boolean)
 '***************************************************
 'author: franco zeoli (noich)
-'last modification: 28/07/08
+'last modification: 03/04/10
 'sets wether the sound effects are activated or not
+'03/04/10 - pato: if sound effects are disable, then reset the frequency, volume and pan.
 '***************************************************
     seffectsactivated = nvalue
+    
+    if not nvalue then
+        call resetsoundvalues
+    end if
 end property
 
 ''

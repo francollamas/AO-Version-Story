@@ -226,6 +226,12 @@ private sub addnewiplimiteconexiones(byval ip as long, byval index as long)
 end sub
 
 public sub iprestarconexion(byval ip as long)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim key as long
     debug.print "resta conexion a " & ip
     
@@ -305,9 +311,13 @@ dim middle as long
     end select
 end function
 
-
-
 public function dumptables()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim i as integer
 
     for i = 0 to maxcontablesentry * 2 - 1 step 2

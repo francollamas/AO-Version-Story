@@ -39,6 +39,13 @@ public enum tipoai
     sigueamo = 8
     npcatacanpc = 9
     npcpathfinding = 10
+    
+    'pretorianos
+    sacerdotepretorianoai = 20
+    guerreropretorianoai = 21
+    magopretorianoai = 22
+    cazadorpretorianoai = 23
+    reypretoriano = 24
 end enum
 
 public const elementalfuego as integer = 93
@@ -62,9 +69,16 @@ public const rango_vision_y as byte = 6
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 private sub guardiasai(byval npcindex as integer, byval delcaos as boolean)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 12/01/2010 (zama)
+'14/09/2009: zama - now npcs don't atack protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs
+'***************************************************
     dim npos as worldpos
     dim headingloop as byte
     dim ui as integer
+    dim userprotected as boolean
     
     with npclist(npcindex)
         for headingloop = eheading.north to eheading.west
@@ -74,7 +88,10 @@ private sub guardiasai(byval npcindex as integer, byval delcaos as boolean)
                 if inmapbounds(npos.map, npos.x, npos.y) then
                     ui = mapdata(npos.map, npos.x, npos.y).userindex
                     if ui > 0 then
-                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
+                        userprotected = not intervalopermiteseratacado(ui) and userlist(ui).flags.nopuedeseratacado
+                        userprotected = userprotected or userlist(ui).flags.ignorado or userlist(ui).flags.enconsulta
+                        
+                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible and not userprotected then
                             '�es criminal?
                             if not delcaos then
                                 if criminal(ui) then
@@ -120,14 +137,17 @@ end sub
 private sub hostilmalvadoai(byval npcindex as integer)
 '**************************************************************
 'author: unknown
-'last modify date: 28/04/2009
+'last modify date: 12/01/2010 (zama)
 '28/04/2009: zama - now those npcs who doble attack, have 50% of posibility of casting a spell on user.
+'14/09/200*: zama - now npcs don't atack protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs
 '**************************************************************
     dim npos as worldpos
     dim headingloop as byte
     dim ui as integer
     dim npci as integer
     dim atacopj as boolean
+    dim userprotected as boolean
     
     atacopj = false
     
@@ -140,25 +160,37 @@ private sub hostilmalvadoai(byval npcindex as integer)
                     ui = mapdata(npos.map, npos.x, npos.y).userindex
                     npci = mapdata(npos.map, npos.x, npos.y).npcindex
                     if ui > 0 and not atacopj then
-                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
+                        userprotected = not intervalopermiteseratacado(ui) and userlist(ui).flags.nopuedeseratacado
+                        userprotected = userprotected or userlist(ui).flags.ignorado or userlist(ui).flags.enconsulta
+                        
+                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible and (not userprotected) then
+                            
                             atacopj = true
-                            if .flags.lanzaspells then
-                                if .flags.atacadoble then
-                                    if (randomnumber(0, 1)) then
-                                        if npcatacauser(npcindex, ui) then
-                                            call changenpcchar(npcindex, .char.body, .char.head, headingloop)
+                            if .movement = npcobjeto then
+                                ' los npc objeto no atacan siempre al mismo usuario
+                                if randomnumber(1, 3) = 3 then atacopj = false
+                            end if
+                            
+                            if atacopj then
+                                if .flags.lanzaspells then
+                                    if .flags.atacadoble then
+                                        if (randomnumber(0, 1)) then
+                                            if npcatacauser(npcindex, ui) then
+                                                call changenpcchar(npcindex, .char.body, .char.head, headingloop)
+                                            end if
+                                            exit sub
                                         end if
-                                        exit sub
                                     end if
+                                    
+                                    call changenpcchar(npcindex, .char.body, .char.head, headingloop)
+                                    call npclanzaunspell(npcindex, ui)
                                 end if
-                                
-                                call changenpcchar(npcindex, .char.body, .char.head, headingloop)
-                                call npclanzaunspell(npcindex, ui)
                             end if
                             if npcatacauser(npcindex, ui) then
                                 call changenpcchar(npcindex, .char.body, .char.head, headingloop)
                             end if
                             exit sub
+
                         end if
                     elseif npci > 0 then
                         if npclist(npci).maestrouser > 0 and npclist(npci).flags.paralizado = 0 then
@@ -176,9 +208,16 @@ private sub hostilmalvadoai(byval npcindex as integer)
 end sub
 
 private sub hostilbuenoai(byval npcindex as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 12/01/2010 (zama)
+'14/09/2009: zama - now npcs don't atack protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs
+'***************************************************
     dim npos as worldpos
     dim headingloop as eheading
     dim ui as integer
+    dim userprotected as boolean
     
     with npclist(npcindex)
         for headingloop = eheading.north to eheading.west
@@ -189,7 +228,11 @@ private sub hostilbuenoai(byval npcindex as integer)
                     ui = mapdata(npos.map, npos.x, npos.y).userindex
                     if ui > 0 then
                         if userlist(ui).name = .flags.attackedby then
-                            if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
+                        
+                            userprotected = not intervalopermiteseratacado(ui) and userlist(ui).flags.nopuedeseratacado
+                            userprotected = userprotected or userlist(ui).flags.ignorado or userlist(ui).flags.enconsulta
+                            
+                            if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible and not userprotected then
                                 if .flags.lanzaspells > 0 then
                                     call npclanzaunspell(npcindex, ui)
                                 end if
@@ -210,11 +253,18 @@ private sub hostilbuenoai(byval npcindex as integer)
 end sub
 
 private sub irusuariocercano(byval npcindex as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 12/01/2010 (zama)
+'14/09/2009: zama - now npcs don't follow protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs
+'***************************************************
     dim theading as byte
-    dim ui as integer
+    dim userindex as integer
     dim signons as integer
     dim signoeo as integer
     dim i as long
+    dim userprotected as boolean
     
     with npclist(npcindex)
         if .flags.inmovilizado = 1 then
@@ -237,34 +287,76 @@ private sub irusuariocercano(byval npcindex as integer)
             end select
             
             for i = 1 to modareas.conngroups(.pos.map).countentrys
-                ui = modareas.conngroups(.pos.map).userentrys(i)
+                userindex = modareas.conngroups(.pos.map).userentrys(i)
                 
                 'is it in it's range of vision??
-                if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x and sgn(userlist(ui).pos.x - .pos.x) = signoeo then
-                    if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y and sgn(userlist(ui).pos.y - .pos.y) = signons then
+                if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x and sgn(userlist(userindex).pos.x - .pos.x) = signoeo then
+                    if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y and sgn(userlist(userindex).pos.y - .pos.y) = signons then
                         
-                        if userlist(ui).flags.muerto = 0 then
-                            if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
-                            exit sub
+                        userprotected = not intervalopermiteseratacado(userindex) and userlist(userindex).flags.nopuedeseratacado
+                        userprotected = userprotected or userlist(userindex).flags.ignorado or userlist(userindex).flags.enconsulta
+                        
+                        if userlist(userindex).flags.muerto = 0 then
+                            if not userprotected then
+                                if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, userindex)
+                                exit sub
+                            end if
                         end if
                         
                     end if
                 end if
             next i
+            
+        ' no esta inmobilizado
         else
-            for i = 1 to modareas.conngroups(.pos.map).countentrys
-                ui = modareas.conngroups(.pos.map).userentrys(i)
-                
+            
+            ' tiene prioridad de seguir al usuario al que le pertenece si esta en el rango de vision
+            dim ownerindex as integer
+            
+            ownerindex = .owner
+            if ownerindex > 0 then
+            
                 'is it in it's range of vision??
-                if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x then
-                    if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y then
+                if abs(userlist(ownerindex).pos.x - .pos.x) <= rango_vision_x then
+                    if abs(userlist(ownerindex).pos.y - .pos.y) <= rango_vision_y then
                         
-                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
-                            if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
-                            theading = finddirection(.pos, userlist(ui).pos)
+                        ' va hacia el si o esta invi ni oculto
+                        if userlist(ownerindex).flags.invisible = 0 and userlist(ownerindex).flags.oculto = 0 and not userlist(ownerindex).flags.enconsulta and not userlist(ownerindex).flags.ignorado then
+                            if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ownerindex)
+                                
+                            theading = finddirection(.pos, userlist(ownerindex).pos)
                             call movenpcchar(npcindex, theading)
                             exit sub
                         end if
+                    end if
+                end if
+                
+            end if
+            
+            ' no le pertenece a nadie o el due�o no esta en el rango de vision, sigue a cualquiera
+            for i = 1 to modareas.conngroups(.pos.map).countentrys
+                userindex = modareas.conngroups(.pos.map).userentrys(i)
+                
+                'is it in it's range of vision??
+                if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x then
+                    if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y then
+                        
+                        with userlist(userindex)
+                            
+                            userprotected = not intervalopermiteseratacado(userindex) and .flags.nopuedeseratacado
+                            userprotected = userprotected or .flags.ignorado or .flags.enconsulta
+                            
+                            if .flags.muerto = 0 and .flags.invisible = 0 and .flags.oculto = 0 and _
+                                .flags.adminperseguible and not userprotected then
+                                
+                                if npclist(npcindex).flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, userindex)
+                                
+                                theading = finddirection(npclist(npcindex).pos, .pos)
+                                call movenpcchar(npcindex, theading)
+                                exit sub
+                            end if
+                            
+                        end with
                         
                     end if
                 end if
@@ -275,6 +367,7 @@ private sub irusuariocercano(byval npcindex as integer)
             if randomnumber(0, 10) = 0 then
                 call movenpcchar(npcindex, cbyte(randomnumber(eheading.north, eheading.west)))
             end if
+            
         end if
     end with
     
@@ -330,7 +423,7 @@ private sub seguiragresor(byval npcindex as integer)
                         if userlist(ui).name = .flags.attackedby then
                             if .maestrouser > 0 then
                                 if not criminal(.maestrouser) and not criminal(ui) and (userlist(.maestrouser).flags.seguro or userlist(.maestrouser).faccion.armadareal = 1) then
-                                    call writeconsolemsg(.maestrouser, "la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado", fonttypenames.fonttype_info)
+                                    call writeconsolemsg(.maestrouser, "la mascota no atacar� a ciudadanos si eres miembro del ej�rcito real o tienes el seguro activado.", fonttypenames.fonttype_info)
                                     call flushbuffer(.maestrouser)
                                     .flags.attackedby = vbnullstring
                                     exit sub
@@ -367,7 +460,7 @@ private sub seguiragresor(byval npcindex as integer)
                         if userlist(ui).name = .flags.attackedby then
                             if .maestrouser > 0 then
                                 if not criminal(.maestrouser) and not criminal(ui) and (userlist(.maestrouser).flags.seguro or userlist(.maestrouser).faccion.armadareal = 1) then
-                                    call writeconsolemsg(.maestrouser, "la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado", fonttypenames.fonttype_info)
+                                    call writeconsolemsg(.maestrouser, "la mascota no atacar� a ciudadanos si eres miembro del ej�rcito real o tienes el seguro activado.", fonttypenames.fonttype_info)
                                     call flushbuffer(.maestrouser)
                                     .flags.attackedby = vbnullstring
                                     call followamo(npcindex)
@@ -415,24 +508,37 @@ private sub restoreoldmovement(byval npcindex as integer)
 end sub
 
 private sub persigueciudadano(byval npcindex as integer)
-    dim ui as integer
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 12/01/2010 (zama)
+'14/09/2009: zama - now npcs don't follow protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs.
+'***************************************************
+    dim userindex as integer
     dim theading as byte
     dim i as long
+    dim userprotected as boolean
     
     with npclist(npcindex)
         for i = 1 to modareas.conngroups(.pos.map).countentrys
-            ui = modareas.conngroups(.pos.map).userentrys(i)
+            userindex = modareas.conngroups(.pos.map).userentrys(i)
                 
             'is it in it's range of vision??
-            if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x then
-                if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y then
+            if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x then
+                if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y then
                     
-                    if not criminal(ui) then
-                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 then
+                    if not criminal(userindex) then
+                    
+                        userprotected = not intervalopermiteseratacado(userindex) and userlist(userindex).flags.nopuedeseratacado
+                        userprotected = userprotected or userlist(userindex).flags.ignorado or userlist(userindex).flags.enconsulta
+                        
+                        if userlist(userindex).flags.muerto = 0 and userlist(userindex).flags.invisible = 0 and _
+                            userlist(userindex).flags.oculto = 0 and userlist(userindex).flags.adminperseguible and not userprotected then
+                            
                             if .flags.lanzaspells > 0 then
-                                call npclanzaunspell(npcindex, ui)
+                                call npclanzaunspell(npcindex, userindex)
                             end if
-                            theading = finddirection(.pos, userlist(ui).pos)
+                            theading = finddirection(.pos, userlist(userindex).pos)
                             call movenpcchar(npcindex, theading)
                             exit sub
                         end if
@@ -448,11 +554,18 @@ private sub persigueciudadano(byval npcindex as integer)
 end sub
 
 private sub persiguecriminal(byval npcindex as integer)
-    dim ui as integer
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 12/01/2010 (zama)
+'14/09/2009: zama - now npcs don't follow protected users.
+'12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs.
+'***************************************************
+    dim userindex as integer
     dim theading as byte
     dim i as long
     dim signons as integer
     dim signoeo as integer
+    dim userprotected as boolean
     
     with npclist(npcindex)
         if .flags.inmovilizado = 1 then
@@ -475,40 +588,52 @@ private sub persiguecriminal(byval npcindex as integer)
             end select
             
             for i = 1 to modareas.conngroups(.pos.map).countentrys
-                ui = modareas.conngroups(.pos.map).userentrys(i)
+                userindex = modareas.conngroups(.pos.map).userentrys(i)
                 
                 'is it in it's range of vision??
-                if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x and sgn(userlist(ui).pos.x - .pos.x) = signoeo then
-                    if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y and sgn(userlist(ui).pos.y - .pos.y) = signons then
+                if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x and sgn(userlist(userindex).pos.x - .pos.x) = signoeo then
+                    if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y and sgn(userlist(userindex).pos.y - .pos.y) = signons then
                         
-                        if criminal(ui) then
-                           if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
-                                if .flags.lanzaspells > 0 then
-                                      call npclanzaunspell(npcindex, ui)
+                        if criminal(userindex) then
+                            with userlist(userindex)
+                                 
+                                 userprotected = not intervalopermiteseratacado(userindex) and .flags.nopuedeseratacado
+                                 userprotected = userprotected or userlist(userindex).flags.ignorado or userlist(userindex).flags.enconsulta
+                                 
+                                 if .flags.muerto = 0 and .flags.invisible = 0 and _
+                                    .flags.oculto = 0 and .flags.adminperseguible and not userprotected then
+                                     
+                                     if npclist(npcindex).flags.lanzaspells > 0 then
+                                           call npclanzaunspell(npcindex, userindex)
+                                     end if
+                                     exit sub
                                 end if
-                                exit sub
-                           end if
+                            end with
                         end if
                         
                    end if
                 end if
-                    
             next i
         else
             for i = 1 to modareas.conngroups(.pos.map).countentrys
-                ui = modareas.conngroups(.pos.map).userentrys(i)
+                userindex = modareas.conngroups(.pos.map).userentrys(i)
                 
                 'is it in it's range of vision??
-                if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x then
-                    if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y then
+                if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x then
+                    if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y then
                         
-                        if criminal(ui) then
-                           if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
+                        if criminal(userindex) then
+                            
+                            userprotected = not intervalopermiteseratacado(userindex) and userlist(userindex).flags.nopuedeseratacado
+                            userprotected = userprotected or userlist(userindex).flags.ignorado
+                            
+                            if userlist(userindex).flags.muerto = 0 and userlist(userindex).flags.invisible = 0 and _
+                               userlist(userindex).flags.oculto = 0 and userlist(userindex).flags.adminperseguible and not userprotected then
                                 if .flags.lanzaspells > 0 then
-                                    call npclanzaunspell(npcindex, ui)
+                                    call npclanzaunspell(npcindex, userindex)
                                 end if
                                 if .flags.inmovilizado = 1 then exit sub
-                                theading = finddirection(.pos, userlist(ui).pos)
+                                theading = finddirection(.pos, userlist(userindex).pos)
                                 call movenpcchar(npcindex, theading)
                                 exit sub
                            end if
@@ -525,6 +650,12 @@ private sub persiguecriminal(byval npcindex as integer)
 end sub
 
 private sub seguiramo(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim theading as byte
     dim ui as integer
     
@@ -532,16 +663,18 @@ private sub seguiramo(byval npcindex as integer)
         if .target = 0 and .targetnpc = 0 then
             ui = .maestrouser
             
-            'is it in it's range of vision??
-            if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x then
-                if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y then
-                    if userlist(ui).flags.muerto = 0 _
-                            and userlist(ui).flags.invisible = 0 _
-                            and userlist(ui).flags.oculto = 0 _
-                            and distancia(.pos, userlist(ui).pos) > 3 then
-                        theading = finddirection(.pos, userlist(ui).pos)
-                        call movenpcchar(npcindex, theading)
-                        exit sub
+            if ui > 0 then
+                'is it in it's range of vision??
+                if abs(userlist(ui).pos.x - .pos.x) <= rango_vision_x then
+                    if abs(userlist(ui).pos.y - .pos.y) <= rango_vision_y then
+                        if userlist(ui).flags.muerto = 0 _
+                                and userlist(ui).flags.invisible = 0 _
+                                and userlist(ui).flags.oculto = 0 _
+                                and distancia(.pos, userlist(ui).pos) > 3 then
+                            theading = finddirection(.pos, userlist(ui).pos)
+                            call movenpcchar(npcindex, theading)
+                            exit sub
+                        end if
                     end if
                 end if
             end if
@@ -552,6 +685,12 @@ private sub seguiramo(byval npcindex as integer)
 end sub
 
 private sub ainpcatacanpc(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim theading as byte
     dim x as long
     dim y as long
@@ -653,6 +792,7 @@ public sub ainpcobjeto(byval npcindex as integer)
 '***************************************************
 'autor: zama
 'last modification: 14/09/2009 (zama)
+'14/09/2009: zama - now npcs don't follow protected users.
 '***************************************************
     dim userindex as integer
     dim theading as byte
@@ -670,7 +810,7 @@ public sub ainpcobjeto(byval npcindex as integer)
                 if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y then
                     
                     with userlist(userindex)
-                        'userprotected = not intervalopermiteseratacado(userindex) and .flags.nopuedeseratacado
+                        userprotected = not intervalopermiteseratacado(userindex) and .flags.nopuedeseratacado
                         
                         if .flags.muerto = 0 and .flags.invisible = 0 and _
                             .flags.oculto = 0 and .flags.adminperseguible and not userprotected then
@@ -731,12 +871,16 @@ on error goto errorhandler
                     if randomnumber(1, 12) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(eheading.north, eheading.west)))
                     end if
+                    
                     call persiguecriminal(npcindex)
+                    
                 elseif .npctype = enpctype.guardiascaos then
                     if randomnumber(1, 12) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(eheading.north, eheading.west)))
                     end if
+                    
                     call persigueciudadano(npcindex)
+                    
                 else
                     if randomnumber(1, 12) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(eheading.north, eheading.west)))
@@ -764,7 +908,7 @@ on error goto errorhandler
             
             case tipoai.npcatacanpc
                 call ainpcatacanpc(npcindex)
-            
+                
             case tipoai.npcobjeto
                 call ainpcobjeto(npcindex)
                 
@@ -797,16 +941,25 @@ errorhandler:
 end sub
 
 function usernear(byval npcindex as integer) as boolean
-'#################################################################
+'***************************************************
+'author: unknown
+'last modification: -
 'returns true if there is an user adjacent to the npc position.
-'#################################################################
-    usernear = not int(distance(npclist(npcindex).pos.x, npclist(npcindex).pos.y, userlist(npclist(npcindex).pfinfo.targetuser).pos.x, userlist(npclist(npcindex).pfinfo.targetuser).pos.y)) > 1
+'***************************************************
+
+    with npclist(npcindex)
+        usernear = not int(distance(.pos.x, .pos.y, userlist(.pfinfo.targetuser).pos.x, _
+                    userlist(.pfinfo.targetuser).pos.y)) > 1
+    end with
 end function
 
 function recalculatepath(byval npcindex as integer) as boolean
-'#################################################################
+'***************************************************
+'author: unknown
+'last modification: -
 'returns true if we have to seek a new path
-'#################################################################
+'***************************************************
+
     if npclist(npcindex).pfinfo.pathlenght = 0 then
         recalculatepath = true
     elseif not usernear(npcindex) and npclist(npcindex).pfinfo.pathlenght = npclist(npcindex).pfinfo.curpos - 1 then
@@ -815,76 +968,88 @@ function recalculatepath(byval npcindex as integer) as boolean
 end function
 
 function pathend(byval npcindex as integer) as boolean
-'#################################################################
-'coded by gulfas morgolock
+'***************************************************
+'author: gulfas morgolock
+'last modification: -
 'returns if the npc has arrived to the end of its path
-'#################################################################
+'***************************************************
     pathend = npclist(npcindex).pfinfo.curpos = npclist(npcindex).pfinfo.pathlenght
 end function
 
 function followpath(byval npcindex as integer) as boolean
-'#################################################################
-'coded by gulfas morgolock
+'***************************************************
+'author: gulfas morgolock
+'last modification: -
 'moves the npc.
-'#################################################################
+'***************************************************
     dim tmppos as worldpos
     dim theading as byte
     
-    tmppos.map = npclist(npcindex).pos.map
-    tmppos.x = npclist(npcindex).pfinfo.path(npclist(npcindex).pfinfo.curpos).y ' invert� las coordenadas
-    tmppos.y = npclist(npcindex).pfinfo.path(npclist(npcindex).pfinfo.curpos).x
-    
-    'debug.print "(" & tmppos.x & "," & tmppos.y & ")"
-    
-    theading = finddirection(npclist(npcindex).pos, tmppos)
-    
-    movenpcchar npcindex, theading
-    
-    npclist(npcindex).pfinfo.curpos = npclist(npcindex).pfinfo.curpos + 1
+    with npclist(npcindex)
+        tmppos.map = .pos.map
+        tmppos.x = .pfinfo.path(.pfinfo.curpos).y ' invert� las coordenadas
+        tmppos.y = .pfinfo.path(.pfinfo.curpos).x
+        
+        'debug.print "(" & tmppos.x & "," & tmppos.y & ")"
+        
+        theading = finddirection(.pos, tmppos)
+        
+        movenpcchar npcindex, theading
+        
+        .pfinfo.curpos = .pfinfo.curpos + 1
+    end with
 end function
 
 function pathfindingai(byval npcindex as integer) as boolean
-'#################################################################
-'coded by gulfas morgolock / 11-07-02
-'www.geocities.com/gmorgolock
-'morgolock@speedy.com.ar
+'***************************************************
+'author: gulfas morgolock
+'last modification: -
 'this function seeks the shortest path from the npc
 'to the user's location.
-'#################################################################
+'***************************************************
     dim y as long
     dim x as long
     
-    for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10    'makes a loop that looks at
-         for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10   '5 tiles in every direction
-            
-             'make sure tile is legal
-             if x > minxborder and x < maxxborder and y > minyborder and y < maxyborder then
+    with npclist(npcindex)
+        for y = .pos.y - 10 to .pos.y + 10    'makes a loop that looks at
+             for x = .pos.x - 10 to .pos.x + 10   '5 tiles in every direction
                 
-                 'look for a user
-                 if mapdata(npclist(npcindex).pos.map, x, y).userindex > 0 then
-                     'move towards user
-                      dim tmpuserindex as integer
-                      tmpuserindex = mapdata(npclist(npcindex).pos.map, x, y).userindex
-                      with userlist(tmpuserindex)
-                        if .flags.muerto = 0 and .flags.invisible = 0 and .flags.oculto = 0 and .flags.adminperseguible then
-                            'we have to invert the coordinates, this is because
-                            'ore refers to maps in converse way of my pathfinding
-                            'routines.
-                            npclist(npcindex).pfinfo.target.x = userlist(tmpuserindex).pos.y
-                            npclist(npcindex).pfinfo.target.y = userlist(tmpuserindex).pos.x 'ops!
-                            npclist(npcindex).pfinfo.targetuser = tmpuserindex
-                            call seekpath(npcindex)
-                            exit function
-                        end if
-                    end with
+                 'make sure tile is legal
+                 if x > minxborder and x < maxxborder and y > minyborder and y < maxyborder then
+                    
+                     'look for a user
+                     if mapdata(.pos.map, x, y).userindex > 0 then
+                         'move towards user
+                          dim tmpuserindex as integer
+                          tmpuserindex = mapdata(.pos.map, x, y).userindex
+                          with userlist(tmpuserindex)
+                            if .flags.muerto = 0 and .flags.invisible = 0 and .flags.oculto = 0 and .flags.adminperseguible then
+                                'we have to invert the coordinates, this is because
+                                'ore refers to maps in converse way of my pathfinding
+                                'routines.
+                                npclist(npcindex).pfinfo.target.x = .pos.y
+                                npclist(npcindex).pfinfo.target.y = .pos.x 'ops!
+                                npclist(npcindex).pfinfo.targetuser = tmpuserindex
+                                call seekpath(npcindex)
+                                exit function
+                            end if
+                        end with
+                    end if
                 end if
-            end if
-        next x
-    next y
+            next x
+        next y
+    end with
 end function
 
 sub npclanzaunspell(byval npcindex as integer, byval userindex as integer)
-    if userlist(userindex).flags.invisible = 1 or userlist(userindex).flags.oculto = 1 then exit sub
+'**************************************************************
+'author: unknown
+'last modify by: -
+'last modify date: -
+'**************************************************************
+    with userlist(userindex)
+        if .flags.invisible = 1 or .flags.oculto = 1 then exit sub
+    end with
     
     dim k as integer
     k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
@@ -892,6 +1057,12 @@ sub npclanzaunspell(byval npcindex as integer, byval userindex as integer)
 end sub
 
 sub npclanzaunspellsobrenpc(byval npcindex as integer, byval targetnpc as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim k as integer
     k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
     call npclanzaspellsobrenpc(npcindex, targetnpc, npclist(npcindex).spells(k))

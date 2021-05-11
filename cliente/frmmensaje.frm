@@ -1,35 +1,25 @@
 version 5.00
 begin vb.form frmmensaje 
    backcolor       =   &h00c0c0c0&
-   caption         =   "mensaje"
-   clientheight    =   3195
-   clientleft      =   60
-   clienttop       =   345
+   borderstyle     =   0  'none
+   clientheight    =   3180
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   3990
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
-   scaleheight     =   3195
-   scalewidth      =   3990
+   scaleheight     =   212
+   scalemode       =   3  'pixel
+   scalewidth      =   266
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      caption         =   "cerrar"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
+   begin vb.image imgcerrar 
       height          =   375
-      left            =   120
-      mouseicon       =   "frmmensaje.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   1
-      top             =   2760
-      width           =   3735
+      left            =   720
+      tag             =   "1"
+      top             =   2685
+      width           =   2655
    end
    begin vb.label msg 
       backstyle       =   0  'transparent
@@ -42,12 +32,12 @@ begin vb.form frmmensaje
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   2535
-      left            =   60
+      forecolor       =   &h00ffffff&
+      height          =   2055
+      left            =   240
       tabindex        =   0
-      top             =   120
-      width           =   3855
+      top             =   480
+      width           =   3495
       wordwrap        =   -1  'true
    end
 end
@@ -90,11 +80,49 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-unload me
-end sub
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
 
 private sub form_deactivate()
-me.setfocus
+    me.setfocus
 end sub
 
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanamsj.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarmsj.jpg", _
+                                    grhpath & "botoncerrarrollovermsj.jpg", _
+                                    grhpath & "botoncerrarclickmsj.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub msg_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub

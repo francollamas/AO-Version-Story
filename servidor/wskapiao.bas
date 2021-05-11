@@ -479,7 +479,7 @@ public sub eventosockaccept(byval sockid as long)
         dim str as string
         dim data() as byte
         
-        str = protocol.preparemessageerrormsg("el server se encuentra lleno en este momento. disculpe las molestias ocasionadas.")
+        str = protocol.preparemessageerrormsg("el servidor se encuentra lleno en este momento. disculpe las molestias ocasionadas.")
         
         redim preserve data(len(str) - 1) as byte
         

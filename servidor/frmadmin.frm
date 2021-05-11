@@ -109,7 +109,7 @@ dim tindex as long
 
 tindex = nameindex(cbopjs.text)
 if tindex > 0 then
-    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & userlist(tindex).name & " ha sido hechado. ", fonttypenames.fonttype_server))
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & userlist(tindex).name & " ha sido echado.", fonttypenames.fonttype_server))
     call closesocket(tindex)
 end if
 

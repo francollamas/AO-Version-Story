@@ -1,11 +1,11 @@
 version 5.00
 begin vb.form frmguildurl 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "oficial web site"
-   clientheight    =   1035
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   6135
+   clientheight    =   1425
+   clientleft      =   0
+   clienttop       =   -75
+   clientwidth     =   6225
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
@@ -20,34 +20,36 @@ begin vb.form frmguildurl
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   1035
-   scalewidth      =   6135
+   scaleheight     =   95
+   scalemode       =   3  'pixel
+   scalewidth      =   415
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      caption         =   "aceptar"
-      default         =   -1  'true
-      height          =   255
-      left            =   120
-      mouseicon       =   "frmguildurl.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   720
-      width           =   5895
-   end
-   begin vb.textbox text1 
-      height          =   285
-      left            =   120
-      tabindex        =   1
-      top             =   360
-      width           =   5895
-   end
-   begin vb.label label1 
-      caption         =   "ingrese la direccion del site:"
-      height          =   255
-      left            =   120
+   begin vb.textbox txturl 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   225
+      left            =   210
       tabindex        =   0
-      top             =   120
-      width           =   4215
+      top             =   600
+      width           =   5805
+   end
+   begin vb.image imgaceptar 
+      height          =   255
+      left            =   165
+      tag             =   "1"
+      top             =   960
+      width           =   5880
    end
 end
 attribute vb_name = "frmguildurl"
@@ -89,10 +91,49 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-    if text1 <> "" then _
-        call writeguildnewwebsite(text1)
+private clsformulario as clsformmovementmanager
+
+private cbotonaceptar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaurlclan.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonaceptar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarurl.jpg", _
+                                    grhpath & "botonaceptarolloverrurl.jpg", _
+                                    grhpath & "botonaceptarclickurl.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgaceptar_click()
+    if txturl.text <> "" then _
+        call writeguildnewwebsite(txturl.text)
     
     unload me
 end sub
 
+private sub txturl_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub

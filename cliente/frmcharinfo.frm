@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmcharinfo 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "informaci�n del personaje"
-   clientheight    =   6195
-   clientleft      =   45
-   clienttop       =   330
+   clientheight    =   6585
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   6390
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,31 +20,14 @@ begin vb.form frmcharinfo
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6195
-   scalewidth      =   6390
+   scaleheight     =   439
+   scalemode       =   3  'pixel
+   scalewidth      =   426
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton desc 
-      caption         =   "peticion"
-      height          =   495
-      left            =   2655
-      mouseicon       =   "frmcharinfo.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   14
-      top             =   5625
-      width           =   1000
-   end
-   begin vb.commandbutton echar 
-      caption         =   "echar"
-      height          =   495
-      left            =   1395
-      mouseicon       =   "frmcharinfo.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   13
-      top             =   5625
-      width           =   1000
-   end
-   begin vb.commandbutton aceptar 
-      caption         =   "aceptar"
+   begin vb.textbox txtpeticiones 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -54,37 +37,19 @@ begin vb.form frmcharinfo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   495
-      left            =   5085
-      mouseicon       =   "frmcharinfo.frx":02a4
-      mousepointer    =   99  'custom
-      tabindex        =   12
-      top             =   5625
-      width           =   1000
+      forecolor       =   &h00ffffff&
+      height          =   1080
+      left            =   360
+      locked          =   -1  'true
+      multiline       =   -1  'true
+      scrollbars      =   2  'vertical
+      tabindex        =   1
+      top             =   3210
+      width           =   5730
    end
-   begin vb.commandbutton rechazar 
-      caption         =   "rechazar"
-      height          =   495
-      left            =   3870
-      mouseicon       =   "frmcharinfo.frx":03f6
-      mousepointer    =   99  'custom
-      tabindex        =   11
-      top             =   5625
-      width           =   1000
-   end
-   begin vb.commandbutton command1 
-      cancel          =   -1  'true
-      caption         =   "cerrar"
-      height          =   495
-      left            =   120
-      mouseicon       =   "frmcharinfo.frx":0548
-      mousepointer    =   99  'custom
-      tabindex        =   10
-      top             =   5625
-      width           =   1000
-   end
-   begin vb.frame frame1 
-      caption         =   "clanes"
+   begin vb.textbox txtmiembro 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -94,166 +59,284 @@ begin vb.form frmcharinfo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   3120
-      left            =   135
-      tabindex        =   9
-      top             =   2355
-      width           =   6075
-      begin vb.textbox txtmiembro 
-         height          =   1110
-         left            =   135
-         multiline       =   -1  'true
-         scrollbars      =   2  'vertical
-         tabindex        =   22
-         top             =   1800
-         width           =   5790
-      end
-      begin vb.textbox txtpeticiones 
-         height          =   1110
-         left            =   135
-         multiline       =   -1  'true
-         scrollbars      =   2  'vertical
-         tabindex        =   15
-         top             =   450
-         width           =   5790
-      end
-      begin vb.label lblmiembro 
-         caption         =   "ultimos clanes en los que particip�:"
-         height          =   255
-         left            =   135
-         tabindex        =   23
-         top             =   1620
-         width           =   2985
-      end
-      begin vb.label lblsolicitado 
-         caption         =   "ultimas membres�as solicitadas:"
-         height          =   255
-         left            =   135
-         tabindex        =   21
-         top             =   270
-         width           =   2985
-      end
-   end
-   begin vb.frame charinfo 
-      caption         =   "general"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   2100
-      left            =   120
+      forecolor       =   &h00ffffff&
+      height          =   1080
+      left            =   360
+      locked          =   -1  'true
+      multiline       =   -1  'true
+      scrollbars      =   2  'vertical
       tabindex        =   0
-      top             =   120
-      width           =   6075
-      begin vb.label reputacion 
-         caption         =   "reputacion:"
-         height          =   255
-         left            =   3060
-         tabindex        =   20
-         top             =   1560
-         width           =   2445
-      end
-      begin vb.label criminales 
-         caption         =   "criminales asesinados:"
-         height          =   255
-         left            =   3060
-         tabindex        =   19
-         top             =   1325
-         width           =   2900
-      end
-      begin vb.label ciudadanos 
-         caption         =   "ciudadanos asesinados:"
-         height          =   255
-         left            =   3060
-         tabindex        =   18
-         top             =   1080
-         width           =   2850
-      end
-      begin vb.label ejercito 
-         caption         =   "faccion:"
-         height          =   255
-         left            =   3060
-         tabindex        =   17
-         top             =   844
-         width           =   2880
-      end
-      begin vb.label guildactual 
-         caption         =   "clan actual:"
-         height          =   255
-         left            =   3030
-         tabindex        =   16
-         top             =   600
-         width           =   2880
-      end
-      begin vb.label status 
-         caption         =   "status:"
-         height          =   255
-         left            =   3060
-         tabindex        =   8
-         top             =   1800
-         width           =   2760
-      end
-      begin vb.label banco 
-         caption         =   "banco:"
-         height          =   255
-         left            =   120
-         tabindex        =   7
-         top             =   1800
-         width           =   2985
-      end
-      begin vb.label oro 
-         caption         =   "oro:"
-         height          =   255
-         left            =   120
-         tabindex        =   6
-         top             =   1560
-         width           =   2805
-      end
-      begin vb.label genero 
-         caption         =   "genero:"
-         height          =   255
-         left            =   120
-         tabindex        =   5
-         top             =   1080
-         width           =   2895
-      end
-      begin vb.label raza 
-         caption         =   "raza:"
-         height          =   255
-         left            =   120
-         tabindex        =   4
-         top             =   600
-         width           =   2880
-      end
-      begin vb.label clase 
-         caption         =   "clase:"
-         height          =   255
-         left            =   120
-         tabindex        =   3
-         top             =   840
-         width           =   3270
-      end
-      begin vb.label nivel 
-         caption         =   "nivel:"
-         height          =   255
-         left            =   120
-         tabindex        =   2
-         top             =   1320
-         width           =   3105
-      end
-      begin vb.label nombre 
-         caption         =   "nombre:"
-         height          =   255
-         left            =   135
-         tabindex        =   1
-         top             =   360
-         width           =   5640
-      end
+      top             =   4695
+      width           =   5730
+   end
+   begin vb.image imgaceptar 
+      height          =   510
+      left            =   5160
+      tag             =   "1"
+      top             =   5955
+      width           =   1020
+   end
+   begin vb.image imgrechazar 
+      height          =   510
+      left            =   3840
+      tag             =   "1"
+      top             =   5955
+      width           =   1020
+   end
+   begin vb.image imgpeticion 
+      height          =   510
+      left            =   2640
+      tag             =   "1"
+      top             =   5955
+      width           =   1020
+   end
+   begin vb.image imgechar 
+      height          =   510
+      left            =   1440
+      tag             =   "1"
+      top             =   5955
+      width           =   1020
+   end
+   begin vb.image imgcerrar 
+      height          =   510
+      left            =   120
+      tag             =   "1"
+      top             =   5955
+      width           =   1020
+   end
+   begin vb.label status 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   3120
+      tabindex        =   14
+      top             =   2280
+      width           =   1080
+   end
+   begin vb.label nombre 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   13
+      top             =   700
+      width           =   1440
+   end
+   begin vb.label nivel 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   12
+      top             =   1750
+      width           =   1185
+   end
+   begin vb.label clase 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   11
+      top             =   1225
+      width           =   1575
+   end
+   begin vb.label raza 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   10
+      top             =   960
+      width           =   1560
+   end
+   begin vb.label genero 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   9
+      top             =   1500
+      width           =   1335
+   end
+   begin vb.label oro 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   8
+      top             =   2010
+      width           =   1365
+   end
+   begin vb.label banco 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   1320
+      tabindex        =   7
+      top             =   2250
+      width           =   1425
+   end
+   begin vb.label guildactual 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   3960
+      tabindex        =   6
+      top             =   960
+      width           =   2265
+   end
+   begin vb.label ejercito 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   3960
+      tabindex        =   5
+      top             =   1230
+      width           =   1785
+   end
+   begin vb.label ciudadanos 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   4905
+      tabindex        =   4
+      top             =   1500
+      width           =   1185
+   end
+   begin vb.label criminales 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   4920
+      tabindex        =   3
+      top             =   1770
+      width           =   1185
+   end
+   begin vb.label reputacion 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   255
+      left            =   4905
+      tabindex        =   2
+      top             =   2040
+      width           =   1185
    end
 end
 attribute vb_name = "frmcharinfo"
@@ -295,6 +378,16 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+private cbotonpeticion as clsgraphicalbutton
+private cbotonrechazar as clsgraphicalbutton
+private cbotonechar as clsgraphicalbutton
+private cbotonaceptar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
 public enum charinfofrmtype
     frmmembers
     frmmembershiprequests
@@ -302,32 +395,85 @@ end enum
 
 public frmtype as charinfofrmtype
 
-private sub aceptar_click()
-    call writeguildacceptnewmember(trim$(right$(nombre, len(nombre) - 8)))
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanainfopj.jpg")
+    
+    call loadbuttons
+    
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    set cbotonpeticion = new clsgraphicalbutton
+    set cbotonrechazar = new clsgraphicalbutton
+    set cbotonechar = new clsgraphicalbutton
+    set cbotonaceptar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarinfochar.jpg", _
+                                    grhpath & "botoncerrarrolloverinfochar.jpg", _
+                                    grhpath & "botoncerrarclickinfochar.jpg", me)
+
+    call cbotonpeticion.initialize(imgpeticion, grhpath & "botonpeticion.jpg", _
+                                    grhpath & "botonpeticionrollover.jpg", _
+                                    grhpath & "botonpeticionclick.jpg", me)
+
+    call cbotonrechazar.initialize(imgrechazar, grhpath & "botonrechazar.jpg", _
+                                    grhpath & "botonrechazarrollover.jpg", _
+                                    grhpath & "botonrechazarclick.jpg", me)
+
+    call cbotonechar.initialize(imgechar, grhpath & "botonechar.jpg", _
+                                    grhpath & "botonecharrollover.jpg", _
+                                    grhpath & "botonecharclick.jpg", me)
+                                    
+    call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarinfochar.jpg", _
+                                    grhpath & "botonaceptarrolloverinfochar.jpg", _
+                                    grhpath & "botonaceptarclickinfochar.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgaceptar_click()
+    call writeguildacceptnewmember(nombre)
     unload frmguildleader
     call writerequestguildleaderinfo
     unload me
 end sub
 
-private sub command1_click()
+private sub imgcerrar_click()
     unload me
 end sub
 
-private sub desc_click()
-    call writeguildrequestjoinerinfo(right$(nombre, len(nombre) - 8))
-end sub
-
-private sub echar_click()
-    call writeguildkickmember(right$(nombre, len(nombre) - 8))
+private sub imgechar_click()
+    call writeguildkickmember(nombre)
     unload frmguildleader
     call writerequestguildleaderinfo
     unload me
 end sub
 
-private sub rechazar_click()
-    load frmcommet
+private sub imgpeticion_click()
+    call writeguildrequestjoinerinfo(nombre)
+end sub
+
+private sub imgrechazar_click()
     frmcommet.t = rechazopj
-    frmcommet.nombre = right$(nombre, len(nombre) - 8)
-    frmcommet.caption = "ingrese motivo para rechazo"
+    frmcommet.nombre = nombre.caption
     frmcommet.show vbmodeless, frmcharinfo
+end sub
+
+private sub txtmiembro_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

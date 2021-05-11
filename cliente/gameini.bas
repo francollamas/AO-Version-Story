@@ -65,6 +65,13 @@ public type tsetupmods
     bnores      as boolean ' 24/06/2006 - ^[gs]^
     bnosoundeffects as boolean
     sgraficos   as string * 13
+    bguildnews  as boolean ' 11/19/09
+    bdie        as boolean ' 11/23/09 - fragshooter
+    bkill       as boolean ' 11/23/09 - fragshooter
+    bymurderedlevel as byte ' 11/23/09 - fragshooter
+    bactive     as boolean
+    bgldmsgconsole as boolean
+    bcantmsgs   as byte
 end type
 
 public clientsetup as tsetupmods

@@ -1,7 +1,7 @@
 version 5.00
 begin vb.form frmkeypad 
    borderstyle     =   1  'fixed single
-   clientheight    =   3945
+   clientheight    =   3930
    clientleft      =   15
    clienttop       =   15
    clientwidth     =   7350
@@ -10,11 +10,14 @@ begin vb.form frmkeypad
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3945
-   scalewidth      =   7350
+   scaleheight     =   262
+   scalemode       =   3  'pixel
+   scalewidth      =   490
    startupposition =   1  'centerowner
    begin vb.textbox txtpassword 
-      backcolor       =   &h00c0e0ff&
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
          name            =   "courier"
          size            =   15
@@ -24,51 +27,38 @@ begin vb.form frmkeypad
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000040&
-      height          =   465
+      forecolor       =   &h00ffffff&
+      height          =   390
       imemode         =   3  'disable
-      left            =   960
+      left            =   1020
       passwordchar    =   "*"
       tabindex        =   0
-      top             =   270
-      width           =   5160
+      top             =   405
+      width           =   5025
    end
-   begin vb.label label1 
-      backstyle       =   0  'transparent
-      caption         =   "ingrese el password de su personaje y presione <enter>"
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   9.75
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000040&
-      height          =   255
-      left            =   615
-      tabindex        =   1
-      top             =   15
-      width           =   6120
+   begin vb.image imgcerrar 
+      height          =   135
+      left            =   7080
+      top             =   120
+      width           =   135
    end
    begin vb.image imgespacio 
-      height          =   525
+      height          =   405
       left            =   2160
       top             =   3435
       width           =   3000
    end
    begin vb.image imgmin 
-      height          =   570
-      left            =   5835
-      top             =   3390
-      width           =   1440
+      height          =   480
+      left            =   6270
+      top             =   3345
+      width           =   960
    end
    begin vb.image imgmay 
-      height          =   570
-      left            =   90
-      top             =   3390
-      width           =   1305
+      height          =   480
+      left            =   120
+      top             =   3345
+      width           =   960
    end
    begin vb.image imgkeypad 
       height          =   555
@@ -419,10 +409,18 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
 private enum e_modo_keypad
-    mayuscula = 1
-    minuscula = 2
+    minuscula
+    mayuscula
 end enum
+
+private minmayback(1) as picture
+private cbotonmin as clsgraphicalbutton
+private cbotonmay as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
 
 private const minindex = "1234567890-=\qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 private const mayindex = "!@#$%^&*()_+|qwertyuiop{}asdfghjkl:""zxcvbnm<>?"
@@ -439,12 +437,49 @@ dim j as integer
 end sub
 
 private sub form_load()
-    me.picture = loadpicture(app.path & "\graficos\keypadmin.bmp")
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    dim grhpath as string
+    grhpath = dirgraficos
+    set minmayback(0) = loadpicture(grhpath & "tecladominuscula.jpg")
+    set minmayback(1) = loadpicture(grhpath & "tecladomayuscula.jpg")
+    
+    call loadbuttons
+    
+    me.picture = minmayback(e_modo_keypad.minuscula)
+    
     modo = minuscula
 end sub
 
-private sub form_unload(cancel as integer)
-    frmoldpersonaje.passwordtxt.text = me.txtpassword.text
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonmin = new clsgraphicalbutton
+    set cbotonmay = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonmin.initialize(imgmay, grhpath & "botonmay.jpg", _
+                                    grhpath & "botonmayrollover.jpg", _
+                                    grhpath & "botonmayclick.jpg", me)
+
+    call cbotonmay.initialize(imgmin, grhpath & "botonmin.jpg", _
+                                    grhpath & "botonminrollover.jpg", _
+                                    grhpath & "botonminclick.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
 end sub
 
 private sub imgespacio_click()
@@ -455,31 +490,41 @@ end sub
 
 private sub imgkeypad_click(index as integer)
     call audio.playwave(snd_click)
+    
     if modo = mayuscula then
         me.txtpassword.text = me.txtpassword.text & mid$(mayindex, index + 1, 1)
     else
         me.txtpassword.text = me.txtpassword.text & mid$(minindex, index + 1, 1)
     end if
+    
     me.txtpassword.setfocus
 end sub
 
+private sub imgkeypad_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
 private sub imgmay_click()
-    call audio.playwave(snd_click)
-    me.picture = loadpicture(app.path & "\graficos\keypadmay.bmp")
+    if modo = mayuscula then exit sub
+    
+    'call audio.playwave(snd_click)
+    me.picture = minmayback(e_modo_keypad.mayuscula)  'loadpicture(app.path & "\graficos\keypadmay.bmp")
     modo = mayuscula
     me.txtpassword.setfocus
 end sub
 
 private sub imgmin_click()
-    call audio.playwave(snd_click)
-    me.picture = loadpicture(app.path & "\graficos\keypadmin.bmp")
+    if modo = minuscula then exit sub
+    
+    'call audio.playwave(snd_click)
+    me.picture = minmayback(e_modo_keypad.minuscula) 'loadpicture(app.path & "\graficos\keypadmin.bmp")
     modo = minuscula
     me.txtpassword.setfocus
 end sub
 
 private sub txtpassword_keypress(keyascii as integer)
     if keyascii = 13 then
-        frmoldpersonaje.passwordtxt.text = me.txtpassword.text
+        frmconnect.txtpasswd.text = me.txtpassword.text
         unload me
     else
         me.txtpassword.text = vbnullstring

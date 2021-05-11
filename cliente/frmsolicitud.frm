@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmguildsol 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "ingreso"
    clientheight    =   3495
-   clientleft      =   45
-   clienttop       =   330
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   4680
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,47 +20,45 @@ begin vb.form frmguildsol
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3495
-   scalewidth      =   4680
+   scaleheight     =   233
+   scalemode       =   3  'pixel
+   scalewidth      =   312
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command2 
-      cancel          =   -1  'true
-      caption         =   "cancelar"
-      height          =   495
-      left            =   240
-      mouseicon       =   "frmsolicitud.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   3
-      top             =   2880
-      width           =   855
-   end
-   begin vb.commandbutton command1 
-      caption         =   "enviar"
-      height          =   495
-      left            =   3360
-      mouseicon       =   "frmsolicitud.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2880
-      width           =   975
-   end
    begin vb.textbox text1 
-      height          =   1215
-      left            =   240
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   1035
+      left            =   300
       maxlength       =   400
       multiline       =   -1  'true
-      tabindex        =   1
-      top             =   1440
-      width           =   4095
-   end
-   begin vb.label label1 
-      alignment       =   2  'center
-      caption         =   $"frmsolicitud.frx":02a4
-      height          =   1215
-      left            =   240
       tabindex        =   0
-      top             =   120
+      top             =   1560
       width           =   3975
+   end
+   begin vb.image imgenviar 
+      height          =   525
+      left            =   3360
+      tag             =   "1"
+      top             =   2760
+      width           =   945
+   end
+   begin vb.image imgcerrar 
+      height          =   525
+      left            =   240
+      tag             =   "1"
+      top             =   2760
+      width           =   945
    end
 end
 attribute vb_name = "frmguildsol"
@@ -102,17 +100,14 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+private cbotonenviar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
 dim cname as string
-
-private sub command1_click()
-    call writeguildrequestmembership(cname, replace(replace(text1.text, ",", ";"), vbcrlf, "�"))
-
-    unload me
-end sub
-
-private sub command2_click()
-    unload me
-end sub
 
 public sub recievesolicitud(byval guildname as string)
 
@@ -120,3 +115,50 @@ public sub recievesolicitud(byval guildname as string)
 
 end sub
 
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaingreso.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    set cbotonenviar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerraringreso.jpg", _
+                                    grhpath & "botoncerrarrolloveringreso.jpg", _
+                                    grhpath & "botoncerrarclickingreso.jpg", me)
+
+    call cbotonenviar.initialize(imgenviar, grhpath & "botonenviaringreso.jpg", _
+                                    grhpath & "botonenviarrolloveringreso.jpg", _
+                                    grhpath & "botonenviarclickingreso.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub imgenviar_click()
+    call writeguildrequestmembership(cname, replace(replace(text1.text, ",", ";"), vbcrlf, "�"))
+
+    unload me
+end sub
+
+private sub text1_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub

@@ -1,199 +1,202 @@
 version 5.00
 begin vb.form frmcomerciar 
-   backcolor       =   &h00000000&
-   borderstyle     =   3  'fixed dialog
+   backcolor       =   &h80000013&
+   borderstyle     =   0  'none
    clientheight    =   7290
-   clientleft      =   45
-   clienttop       =   45
+   clientleft      =   0
+   clienttop       =   0
    clientwidth     =   6930
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
+   mousepointer    =   99  'custom
    scaleheight     =   486
    scalemode       =   3  'pixel
    scalewidth      =   462
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
    begin vb.textbox cantidad 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
-         name            =   "tahoma"
+         name            =   "ms sans serif"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
+      forecolor       =   &h00ffffff&
       height          =   285
-      left            =   3105
-      tabindex        =   9
+      left            =   3150
+      tabindex        =   6
       text            =   "1"
-      top             =   6690
-      width           =   1080
+      top             =   6570
+      width           =   630
    end
-   begin vb.picturebox picture1 
+   begin vb.picturebox picinvuser 
+      appearance      =   0  'flat
       autoredraw      =   -1  'true
       backcolor       =   &h00000000&
-      fillstyle       =   0  'solid
-      height          =   600
-      left            =   435
-      scaleheight     =   540
-      scalewidth      =   495
-      tabindex        =   3
-      top             =   750
-      width           =   555
-   end
-   begin vb.commandbutton command2 
-      caption         =   "ok"
+      borderstyle     =   0  'none
+      causesvalidation=   0   'false
+      clipcontrols    =   0   'false
       beginproperty font 
-         name            =   "tahoma"
+         name            =   "ms sans serif"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   240
-      left            =   6195
+      forecolor       =   &h80000008&
+      height          =   3840
+      left            =   3945
+      scaleheight     =   256
+      scalemode       =   3  'pixel
+      scalewidth      =   160
+      tabindex        =   5
+      top             =   1965
+      width           =   2400
+   end
+   begin vb.picturebox picinvnpc 
+      appearance      =   0  'flat
+      autoredraw      =   -1  'true
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      causesvalidation=   0   'false
+      clipcontrols    =   0   'false
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000008&
+      height          =   3840
+      left            =   600
+      scaleheight     =   256
+      scalemode       =   3  'pixel
+      scalewidth      =   160
+      tabindex        =   4
+      top             =   1965
+      width           =   2400
+   end
+   begin vb.image imgcross 
+      height          =   450
+      left            =   6075
       mouseicon       =   "frmcomerciar.frx":0000
       mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   6780
-      width           =   465
+      tag             =   "1"
+      top             =   360
+      width           =   450
    end
-   begin vb.listbox list1 
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   3960
-      index           =   1
-      left            =   3855
-      tabindex        =   1
-      top             =   1800
-      width           =   2490
-   end
-   begin vb.listbox list1 
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   3960
-      index           =   0
-      left            =   615
-      tabindex        =   0
-      top             =   1800
-      width           =   2490
-   end
-   begin vb.label label2 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "cantidad"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h8000000e&
-      height          =   195
-      left            =   2265
-      tabindex        =   10
-      top             =   6750
-      width           =   645
-   end
-   begin vb.image image1 
-      height          =   330
-      index           =   1
-      left            =   3855
-      mouseicon       =   "frmcomerciar.frx":0152
+   begin vb.image imgvender 
+      height          =   465
+      left            =   3840
+      mouseicon       =   "frmcomerciar.frx":030a
       mousepointer    =   99  'custom
       tag             =   "1"
-      top             =   6165
-      width           =   2460
+      top             =   6000
+      width           =   2580
    end
-   begin vb.image image1 
-      height          =   330
-      index           =   0
-      left            =   615
-      mouseicon       =   "frmcomerciar.frx":02a4
+   begin vb.image imgcomprar 
+      height          =   465
+      left            =   510
+      mouseicon       =   "frmcomerciar.frx":045c
       mousepointer    =   99  'custom
       tag             =   "1"
-      top             =   6150
-      width           =   2460
+      top             =   6030
+      width           =   2580
    end
    begin vb.label label1 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      forecolor       =   &h000000ff&
-      height          =   195
-      index           =   3
-      left            =   3990
-      tabindex        =   8
-      top             =   975
-      visible         =   0   'false
-      width           =   45
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      forecolor       =   &h000000ff&
-      height          =   195
-      index           =   4
-      left            =   3990
-      tabindex        =   7
-      top             =   630
-      visible         =   0   'false
-      width           =   45
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      forecolor       =   &h000000ff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   2
-      left            =   2730
-      tabindex        =   6
-      top             =   1170
-      width           =   45
+      left            =   3510
+      tabindex        =   3
+      top             =   1335
+      visible         =   0   'false
+      width           =   75
    end
    begin vb.label label1 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      forecolor       =   &h000000ff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   3
+      left            =   3510
+      tabindex        =   2
+      top             =   1050
+      visible         =   0   'false
+      width           =   75
+   end
+   begin vb.label label1 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   1
-      left            =   1800
-      tabindex        =   5
-      top             =   750
-      width           =   45
+      left            =   2160
+      tabindex        =   1
+      top             =   1050
+      width           =   75
    end
    begin vb.label label1 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      forecolor       =   &h000000ff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   0
-      left            =   1125
-      tabindex        =   4
-      top             =   450
-      width           =   45
+      left            =   2160
+      tabindex        =   0
+      top             =   720
+      width           =   75
    end
 end
 attribute vb_name = "frmcomerciar"
@@ -237,10 +240,19 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
 public lastindex1 as integer
 public lastindex2 as integer
 public lasactionbuy as boolean
+private clicknpcinv as boolean
 private lindex as byte
+
+private cbotonvender as clsgraphicalbutton
+private cbotoncomprar as clsgraphicalbutton
+private cbotoncruz as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
 
 private sub cantidad_change()
     if val(cantidad.text) < 1 then
@@ -248,50 +260,71 @@ private sub cantidad_change()
     end if
     
     if val(cantidad.text) > max_inventory_objs then
-        cantidad.text = 1
+        cantidad.text = max_inventory_objs
     end if
     
-    if lindex = 0 then
-        if list1(0).listindex <> -1 then
+    if clicknpcinv then
+        if invcomnpc.selecteditem <> 0 then
             'el precio, cuando nos venden algo, lo tenemos que redondear para arriba.
-            label1(1).caption = calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) 'no mostramos numeros reales
+            label1(1).caption = "precio: " & calculatesellprice(npcinventory(invcomnpc.selecteditem).valor, val(cantidad.text))  'no mostramos numeros reales
         end if
     else
-        if list1(1).listindex <> -1 then
-            label1(1).caption = calculatebuyprice(inventario.valor(list1(1).listindex + 1), val(cantidad.text)) 'no mostramos numeros reales
+        if invcomusu.selecteditem <> 0 then
+            label1(1).caption = "precio: " & calculatebuyprice(inventario.valor(invcomusu.selecteditem), val(cantidad.text))  'no mostramos numeros reales
         end if
     end if
 end sub
 
 private sub cantidad_keypress(keyascii as integer)
-if (keyascii <> 8) then
-    if (keyascii <> 6) and (keyascii < 48 or keyascii > 57) then
-        keyascii = 0
+    if (keyascii <> 8) then
+        if (keyascii <> 6) and (keyascii < 48 or keyascii > 57) then
+            keyascii = 0
+        end if
     end if
-end if
-end sub
-
-private sub command2_click()
-    call writecommerceend
 end sub
 
 private sub form_load()
-'cargamos la interfase
-me.picture = loadpicture(app.path & "\graficos\comerciar.jpg")
-image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
-image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+
+    
+    'cargamos la interfase
+    me.picture = loadpicture(dirgraficos & "ventanacomercio.jpg")
+    
+    call loadbuttons
+    
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonvender = new clsgraphicalbutton
+    set cbotoncomprar = new clsgraphicalbutton
+    set cbotoncruz = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonvender.initialize(imgvender, grhpath & "botonvender.jpg", _
+                                    grhpath & "botonvenderrollover.jpg", _
+                                    grhpath & "botonvenderclick.jpg", me)
+
+    call cbotoncomprar.initialize(imgcomprar, grhpath & "botoncomprar.jpg", _
+                                    grhpath & "botoncomprarrollover.jpg", _
+                                    grhpath & "botoncomprarclick.jpg", me)
+
+    call cbotoncruz.initialize(imgcross, "", _
+                                    grhpath & "botoncruzapretadacomercio.jpg", _
+                                    grhpath & "botoncruzapretadacomercio.jpg", me)
+
 
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-if image1(0).tag = 0 then
-    image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
-    image1(0).tag = 1
-end if
-if image1(1).tag = 0 then
-    image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
-    image1(1).tag = 1
-end if
+    lastpressed.toggletonormal
 end sub
 
 ''
@@ -336,149 +369,117 @@ error:
     msgbox err.description, vbexclamation, "error: " & err.number
 end function
 
-private sub image1_click(index as integer)
-
-call audio.playwave(snd_click)
-
-if list1(index).list(list1(index).listindex) = "" or _
-   list1(index).listindex < 0 then exit sub
-
-if not isnumeric(cantidad.text) or cantidad.text = 0 then exit sub
-
-select case index
-    case 0
-        frmcomerciar.list1(0).setfocus
-        lastindex1 = list1(0).listindex
-        lasactionbuy = true
-        if usergld >= calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) then
-            call writecommercebuy(list1(0).listindex + 1, cantidad.text)
-        else
-            addtorichtextbox frmmain.rectxt, "no ten�s suficiente oro.", 2, 51, 223, 1, 1
-            exit sub
-        end if
-   
-   case 1
-        lastindex2 = list1(1).listindex
-        lasactionbuy = false
-        
-        call writecommercesell(list1(1).listindex + 1, cantidad.text)
-end select
-
-end sub
-
-private sub image1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-select case index
-    case 0
-        if image1(0).tag = 1 then
-                image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprarapretado.jpg")
-                image1(0).tag = 0
-                image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
-                image1(1).tag = 1
-        end if
-        
-    case 1
-        if image1(1).tag = 1 then
-                image1(1).picture = loadpicture(app.path & "\graficos\bot�nvenderapretado.jpg")
-                image1(1).tag = 0
-                image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
-                image1(0).tag = 1
-        end if
-        
-end select
-end sub
-
-private sub list1_click(index as integer)
-dim sr as rect, dr as rect
-
-sr.left = 0
-sr.top = 0
-sr.right = 32
-sr.bottom = 32
-
-dr.left = 0
-dr.top = 0
-dr.right = 32
-dr.bottom = 32
-
-lindex = index
-
-select case index
-    case 0
-        
-        label1(0).caption = npcinventory(list1(0).listindex + 1).name
-        label1(1).caption = calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) 'no mostramos numeros reales
-        label1(2).caption = npcinventory(list1(0).listindex + 1).amount
-        
-        if label1(2).caption <> 0 then
-        
-        select case npcinventory(list1(0).listindex + 1).objtype
-            case eobjtype.otweapon
-                label1(3).caption = "max golpe:" & npcinventory(list1(0).listindex + 1).maxhit
-                label1(4).caption = "min golpe:" & npcinventory(list1(0).listindex + 1).minhit
-                label1(3).visible = true
-                label1(4).visible = true
-            case eobjtype.otarmadura
-                label1(3).visible = false
-                label1(4).caption = "defensa:" & npcinventory(list1(0).listindex + 1).def
-                label1(4).visible = true
-            case else
-                label1(3).visible = false
-                label1(4).visible = false
-        end select
-        
-        call drawgrhtohdc(picture1.hdc, npcinventory(list1(0).listindex + 1).grhindex, sr, dr)
-        
-        end if
+private sub imgcomprar_click()
+    ' debe tener seleccionado un item para comprarlo.
+    if invcomnpc.selecteditem = 0 then exit sub
     
-    case 1
-        label1(0).caption = inventario.itemname(list1(1).listindex + 1)
-        label1(1).caption = calculatebuyprice(inventario.valor(list1(1).listindex + 1), val(cantidad.text)) 'no mostramos numeros reales
-        label1(2).caption = inventario.amount(list1(1).listindex + 1)
-        
-        if label1(2).caption <> 0 then
-        
-        select case inventario.objtype(list1(1).listindex + 1)
-            case eobjtype.otweapon
-                label1(3).caption = "max golpe:" & inventario.maxhit(list1(1).listindex + 1)
-                label1(4).caption = "min golpe:" & inventario.minhit(list1(1).listindex + 1)
-                label1(3).visible = true
-                label1(4).visible = true
-            case eobjtype.otarmadura
-                label1(3).visible = false
-                label1(4).caption = "defensa:" & inventario.def(list1(1).listindex + 1)
-                label1(4).visible = true
-            case else
-                label1(3).visible = false
-                label1(4).visible = false
-        end select
-        
-        call drawgrhtohdc(picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
-        
-        end if
-        
-end select
-
-if label1(2).caption = 0 then ' 27/08/2006 - gs > no mostrar imagen ni nada, cuando no ahi nada que mostrar.
-    label1(3).visible = false
-    label1(4).visible = false
-    picture1.visible = false
-else
-    picture1.visible = true
-    picture1.refresh
-end if
-
+    if not isnumeric(cantidad.text) or cantidad.text = 0 then exit sub
+    
+    call audio.playwave(snd_click)
+    
+    lasactionbuy = true
+    if usergld >= calculatesellprice(npcinventory(invcomnpc.selecteditem).valor, val(cantidad.text)) then
+        call writecommercebuy(invcomnpc.selecteditem, val(cantidad.text))
+    else
+        call addtorichtextbox(frmmain.rectxt, "no tienes suficiente oro.", 2, 51, 223, 1, 1)
+        exit sub
+    end if
+    
 end sub
 
-'<-------------------------nuevo-------------------------->
-'<-------------------------nuevo-------------------------->
-'<-------------------------nuevo-------------------------->
-private sub list1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-if image1(0).tag = 0 then
-    image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
-    image1(0).tag = 1
-end if
-if image1(1).tag = 0 then
-    image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
-    image1(1).tag = 1
-end if
+private sub imgcross_click()
+    call writecommerceend
+end sub
+
+private sub imgvender_click()
+    ' debe tener seleccionado un item para comprarlo.
+    if invcomusu.selecteditem = 0 then exit sub
+
+    if not isnumeric(cantidad.text) or cantidad.text = 0 then exit sub
+    
+    call audio.playwave(snd_click)
+    
+    lasactionbuy = false
+
+    call writecommercesell(invcomusu.selecteditem, val(cantidad.text))
+end sub
+
+private sub picinvnpc_click()
+    dim itemslot as byte
+    
+    itemslot = invcomnpc.selecteditem
+    if itemslot = 0 then exit sub
+    
+    clicknpcinv = true
+    invcomusu.deselectitem
+    
+    label1(0).caption = npcinventory(itemslot).name
+    label1(1).caption = "precio: " & calculatesellprice(npcinventory(itemslot).valor, val(cantidad.text)) 'no mostramos numeros reales
+    
+    if npcinventory(itemslot).amount <> 0 then
+    
+        select case npcinventory(itemslot).objtype
+            case eobjtype.otweapon
+                label1(2).caption = "m�x golpe:" & npcinventory(itemslot).maxhit
+                label1(3).caption = "m�n golpe:" & npcinventory(itemslot).minhit
+                label1(2).visible = true
+                label1(3).visible = true
+            case eobjtype.otarmadura, eobjtype.otcasco, eobjtype.otescudo
+                label1(2).caption = "m�x defensa:" & npcinventory(itemslot).maxdef
+                label1(3).caption = "m�n defensa:" & npcinventory(itemslot).mindef
+                label1(2).visible = true
+                label1(3).visible = true
+            case else
+                label1(2).visible = false
+                label1(3).visible = false
+        end select
+    else
+        label1(2).visible = false
+        label1(3).visible = false
+    end if
+end sub
+
+private sub picinvnpc_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+
+private sub picinvuser_click()
+    dim itemslot as byte
+    
+    itemslot = invcomusu.selecteditem
+    
+    if itemslot = 0 then exit sub
+    
+    clicknpcinv = false
+    invcomnpc.deselectitem
+    
+    label1(0).caption = inventario.itemname(itemslot)
+    label1(1).caption = "precio: " & calculatebuyprice(inventario.valor(itemslot), val(cantidad.text)) 'no mostramos numeros reales
+    
+    if inventario.amount(itemslot) <> 0 then
+    
+        select case inventario.objtype(itemslot)
+            case eobjtype.otweapon
+                label1(2).caption = "m�x golpe:" & inventario.maxhit(itemslot)
+                label1(3).caption = "m�n golpe:" & inventario.minhit(itemslot)
+                label1(2).visible = true
+                label1(3).visible = true
+            case eobjtype.otarmadura, eobjtype.otcasco, eobjtype.otescudo
+                label1(2).caption = "m�x defensa:" & inventario.maxdef(itemslot)
+                label1(3).caption = "m�n defensa:" & inventario.mindef(itemslot)
+                label1(2).visible = true
+                label1(3).visible = true
+            case else
+                label1(2).visible = false
+                label1(3).visible = false
+        end select
+    else
+        label1(2).visible = false
+        label1(3).visible = false
+    end if
+end sub
+
+private sub picinvuser_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub

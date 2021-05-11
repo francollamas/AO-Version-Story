@@ -1,11 +1,11 @@
 version 5.00
 begin vb.form frmpeaceprop 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "ofertas de paz"
-   clientheight    =   2895
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   4980
+   clientheight    =   3285
+   clientleft      =   0
+   clienttop       =   -105
+   clientwidth     =   5070
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
@@ -20,44 +20,16 @@ begin vb.form frmpeaceprop
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   2895
-   scalewidth      =   4980
+   scaleheight     =   219
+   scalemode       =   3  'pixel
+   scalewidth      =   338
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command4 
-      caption         =   "rechazar"
-      height          =   495
-      left            =   3720
-      mouseicon       =   "frmpeaceprop.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   4
-      top             =   2280
-      width           =   975
-   end
-   begin vb.commandbutton command3 
-      caption         =   "aceptar"
-      height          =   495
-      left            =   2520
-      mouseicon       =   "frmpeaceprop.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   3
-      top             =   2280
-      width           =   975
-   end
-   begin vb.commandbutton command2 
-      caption         =   "detalles"
-      height          =   495
-      left            =   1320
-      mouseicon       =   "frmpeaceprop.frx":02a4
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2280
-      width           =   975
-   end
-   begin vb.commandbutton command1 
-      cancel          =   -1  'true
-      caption         =   "cerrar"
+   begin vb.listbox lista 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
       beginproperty font 
-         name            =   "tahoma"
+         name            =   "ms sans serif"
          size            =   8.25
          charset         =   0
          weight          =   700
@@ -65,31 +37,38 @@ begin vb.form frmpeaceprop
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   495
-      left            =   120
-      mouseicon       =   "frmpeaceprop.frx":03f6
-      mousepointer    =   99  'custom
-      tabindex        =   1
-      top             =   2280
-      width           =   975
-   end
-   begin vb.listbox lista 
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   2010
-      itemdata        =   "frmpeaceprop.frx":0548
-      left            =   120
-      list            =   "frmpeaceprop.frx":054a
+      forecolor       =   &h00ffffff&
+      height          =   1785
+      itemdata        =   "frmpeaceprop.frx":0000
+      left            =   240
+      list            =   "frmpeaceprop.frx":0002
       tabindex        =   0
-      top             =   120
-      width           =   4695
+      top             =   600
+      width           =   4620
+   end
+   begin vb.image imgrechazar 
+      height          =   480
+      left            =   3840
+      top             =   2520
+      width           =   960
+   end
+   begin vb.image imgaceptar 
+      height          =   480
+      left            =   2640
+      top             =   2520
+      width           =   960
+   end
+   begin vb.image imgdetalle 
+      height          =   480
+      left            =   1440
+      top             =   2520
+      width           =   960
+   end
+   begin vb.image imgcerrar 
+      height          =   480
+      left            =   240
+      top             =   2520
+      width           =   960
    end
 end
 attribute vb_name = "frmpeaceprop"
@@ -131,6 +110,16 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
+private cbotonaceptar as clsgraphicalbutton
+private cbotoncerrar as clsgraphicalbutton
+private cbotondetalles as clsgraphicalbutton
+private cbotonrechazar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
+
 private tipoprop as tipo_propuesta
 
 public enum tipo_propuesta
@@ -138,40 +127,95 @@ public enum tipo_propuesta
     paz = 2
 end enum
 
+
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    call loadbackground
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotonaceptar = new clsgraphicalbutton
+    set cbotoncerrar = new clsgraphicalbutton
+    set cbotondetalles = new clsgraphicalbutton
+    set cbotonrechazar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptaroferta.jpg", _
+                                    grhpath & "botonaceptarrolloveroferta.jpg", _
+                                    grhpath & "botonaceptarclickoferta.jpg", me)
+
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerraroferta.jpg", _
+                                    grhpath & "botoncerrarrolloveroferta.jpg", _
+                                    grhpath & "botoncerrarclickoferta.jpg", me)
+
+    call cbotondetalles.initialize(imgdetalle, grhpath & "botondetallesoferta.jpg", _
+                                    grhpath & "botondetallesrolloveroferta.jpg", _
+                                    grhpath & "botondetallesclickoferta.jpg", me)
+
+    call cbotonrechazar.initialize(imgrechazar, grhpath & "botonrechazaroferta.jpg", _
+                                    grhpath & "botonrechazarrolloveroferta.jpg", _
+                                    grhpath & "botonrechazarclickoferta.jpg", me)
+
+
+end sub
+
+private sub loadbackground()
+    if tipoprop = tipo_propuesta.alianza then
+        me.picture = loadpicture(dirgraficos & "ventanaofertaalianza.jpg")
+    else
+        me.picture = loadpicture(dirgraficos & "ventanaofertapaz.jpg")
+    end if
+end sub
+
 public property let proposaltype(byval nvalue as tipo_propuesta)
     tipoprop = nvalue
 end property
 
-private sub command1_click()
-    unload me
-end sub
+private sub imgaceptar_click()
 
-private sub command2_click()
-'me.visible = false
-if tipoprop = paz then
-    call writeguildpeacedetails(lista.list(lista.listindex))
-else
-    call writeguildalliancedetails(lista.list(lista.listindex))
-end if
-end sub
-
-private sub command3_click()
-    'me.visible = false
     if tipoprop = paz then
         call writeguildacceptpeace(lista.list(lista.listindex))
     else
         call writeguildacceptalliance(lista.list(lista.listindex))
     end if
+    
     me.hide
+    
+    unload me
+
+end sub
+
+private sub imgcerrar_click()
     unload me
 end sub
 
-private sub command4_click()
+private sub imgdetalle_click()
+    if tipoprop = paz then
+        call writeguildpeacedetails(lista.list(lista.listindex))
+    else
+        call writeguildalliancedetails(lista.list(lista.listindex))
+    end if
+end sub
+
+private sub imgrechazar_click()
+
     if tipoprop = paz then
         call writeguildrejectpeace(lista.list(lista.listindex))
     else
         call writeguildrejectalliance(lista.list(lista.listindex))
     end if
+    
     me.hide
+    
     unload me
 end sub

@@ -3,7 +3,7 @@ begin vb.form frmmain
    backcolor       =   &h00c0c0c0&
    borderstyle     =   3  'fixed dialog
    caption         =   "argentum online"
-   clientheight    =   1785
+   clientheight    =   4845
    clientleft      =   1950
    clienttop       =   1815
    clientwidth     =   5190
@@ -24,10 +24,18 @@ begin vb.form frmmain
    maxbutton       =   0   'false
    minbutton       =   0   'false
    palettemode     =   1  'usezorder
-   scaleheight     =   1785
+   scaleheight     =   4845
    scalewidth      =   5190
    startupposition =   2  'centerscreen
    windowstate     =   1  'minimized
+   begin vb.textbox txtchat 
+      height          =   2775
+      left            =   120
+      multiline       =   -1  'true
+      tabindex        =   10
+      top             =   1920
+      width           =   4935
+   end
    begin vb.timer tpiquetec 
       enabled         =   0   'false
       interval        =   6000
@@ -95,7 +103,7 @@ begin vb.form frmmain
       enabled         =   0   'false
       interval        =   60000
       left            =   480
-      top             =   1020
+      top             =   1080
    end
    begin vb.timer npcataca 
       enabled         =   0   'false
@@ -314,26 +322,31 @@ sub checkidleuser()
     dim iuserindex as long
     
     for iuserindex = 1 to maxusers
-       'conexion activa? y es un usuario loggeado?
-       if userlist(iuserindex).connid <> -1 and userlist(iuserindex).flags.userlogged then
-            'actualiza el contador de inactividad
-            userlist(iuserindex).counters.idlecount = userlist(iuserindex).counters.idlecount + 1
-            if userlist(iuserindex).counters.idlecount >= idlelimit then
-                call writeshowmessagebox(iuserindex, "demasiado tiempo inactivo. has sido desconectado..")
-                'mato los comercios seguros
-                if userlist(iuserindex).comusu.destusu > 0 then
-                    if userlist(userlist(iuserindex).comusu.destusu).flags.userlogged then
-                        if userlist(userlist(iuserindex).comusu.destusu).comusu.destusu = iuserindex then
-                            call writeconsolemsg(userlist(iuserindex).comusu.destusu, "comercio cancelado por el otro usuario.", fonttypenames.fonttype_talk)
-                            call fincomerciarusu(userlist(iuserindex).comusu.destusu)
-                            call flushbuffer(userlist(iuserindex).comusu.destusu) 'flush the buffer to send the message right away
-                        end if
-                    end if
-                    call fincomerciarusu(iuserindex)
+        with userlist(iuserindex)
+            'conexion activa? y es un usuario loggeado?
+            if .connid <> -1 and .flags.userlogged then
+                'actualiza el contador de inactividad
+                if .flags.traveling = 0 then
+                    .counters.idlecount = .counters.idlecount + 1
                 end if
-                call cerrar_usuario(iuserindex)
+                
+                if .counters.idlecount >= idlelimit then
+                    call writeshowmessagebox(iuserindex, "demasiado tiempo inactivo. has sido desconectado.")
+                    'mato los comercios seguros
+                    if .comusu.destusu > 0 then
+                        if userlist(.comusu.destusu).flags.userlogged then
+                            if userlist(.comusu.destusu).comusu.destusu = iuserindex then
+                                call writeconsolemsg(.comusu.destusu, "comercio cancelado por el otro usuario.", fonttypenames.fonttype_talk)
+                                call fincomerciarusu(.comusu.destusu)
+                                call flushbuffer(.comusu.destusu) 'flush the buffer to send the message right away
+                            end if
+                        end if
+                        call fincomerciarusu(iuserindex)
+                    end if
+                    call cerrar_usuario(iuserindex)
+                end if
             end if
-        end if
+        end with
     next iuserindex
 end sub
 
@@ -388,7 +401,7 @@ if minutos = minutosws - 1 then
 end if
 
 if minutos >= minutosws then
-    call dobackup
+    call es.dobackup
     call aclon.vaciarcoleccion
     minutos = 0
 end if
@@ -432,6 +445,9 @@ end sub
 
 private sub command1_click()
 call senddata(sendtarget.toall, 0, preparemessageshowmessagebox(broadmsg.text))
+''''''''''''''''solo para el testeo'''''''
+''''''''''se usa para comunicarse con el server'''''''''''
+txtchat.text = txtchat.text & vbnewline & "servidor> " & broadmsg.text
 end sub
 
 public sub initmain(byval f as byte)
@@ -446,6 +462,9 @@ end sub
 
 private sub command2_click()
 call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & broadmsg.text, fonttypenames.fonttype_server))
+''''''''''''''''solo para el testeo'''''''
+''''''''''se usa para comunicarse con el server'''''''''''
+txtchat.text = txtchat.text & vbnewline & "servidor> " & broadmsg.text
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
@@ -529,6 +548,10 @@ hayerror:
 end sub
 
 private sub gametimer_timer()
+'********************************************************
+'author: unknown
+'last modify date: -
+'********************************************************
     dim iuserindex as long
     dim benviarstats as boolean
     dim benviarays as boolean
@@ -559,14 +582,21 @@ on error goto hayerror
                         
                         '[consejeros]
                         if (.flags.privilegios and playertype.user) then call efectolava(iuserindex)
+                        
                         if .flags.desnudo <> 0 and (.flags.privilegios and playertype.user) <> 0 then call efectofrio(iuserindex)
+                        
                         if .flags.meditando then call domeditar(iuserindex)
+                        
                         if .flags.envenenado <> 0 and (.flags.privilegios and playertype.user) <> 0 then call efectoveneno(iuserindex)
+                        
                         if .flags.admininvisible <> 1 then
                             if .flags.invisible = 1 then call efectoinvisibilidad(iuserindex)
                             if .flags.oculto = 1 then call dopermaneceroculto(iuserindex)
                         end if
+                        
                         if .flags.mimetizado = 1 then call efectomimetismo(iuserindex)
+                        
+                        if .flags.atacablepor > 0 then call efectoestadoatacable(iuserindex)
                         
                         call duracionpociones(iuserindex)
                         
@@ -783,42 +813,48 @@ if not haciendobk and not enpausa then
     'update npcs
     for npcindex = 1 to lastnpc
         
-        if npclist(npcindex).flags.npcactive then 'nos aseguramos que sea inteligente!
-            if npclist(npcindex).flags.paralizado = 1 then
-                call efectoparalisisnpc(npcindex)
-            else
-                e_p = espretoriano(npcindex)
-                if e_p > 0 then
-                    select case e_p
-                        case 1  ''clerigo
-                            call prcler_ai(npcindex)
-                        case 2  ''mago
-                            call prmago_ai(npcindex)
-                        case 3  ''cazador
-                            call prcaza_ai(npcindex)
-                        case 4  ''rey
-                            call prrey_ai(npcindex)
-                        case 5  ''guerre
-                            call prguer_ai(npcindex)
-                    end select
+        with npclist(npcindex)
+            if .flags.npcactive then 'nos aseguramos que sea inteligente!
+            
+                ' chequea si contiua teniendo due�o
+                if .owner > 0 then call validarpermanencianpc(npcindex)
+            
+                if .flags.paralizado = 1 then
+                    call efectoparalisisnpc(npcindex)
                 else
-                    'usamos ai si hay algun user en el mapa
-                    if npclist(npcindex).flags.inmovilizado = 1 then
-                       call efectoparalisisnpc(npcindex)
-                    end if
-                    
-                    mapa = npclist(npcindex).pos.map
-                    
-                    if mapa > 0 then
-                        if mapinfo(mapa).numusers > 0 then
-                            if npclist(npcindex).movement <> tipoai.estatico then
-                                call npcai(npcindex)
+                    e_p = espretoriano(npcindex)
+                    if e_p > 0 then
+                        select case e_p
+                            case 1  ''clerigo
+                                call prcler_ai(npcindex)
+                            case 2  ''mago
+                                call prmago_ai(npcindex)
+                            case 3  ''cazador
+                                call prcaza_ai(npcindex)
+                            case 4  ''rey
+                                call prrey_ai(npcindex)
+                            case 5  ''guerre
+                                call prguer_ai(npcindex)
+                        end select
+                    else
+                        'usamos ai si hay algun user en el mapa
+                        if .flags.inmovilizado = 1 then
+                           call efectoparalisisnpc(npcindex)
+                        end if
+                        
+                        mapa = .pos.map
+                        
+                        if mapa > 0 then
+                            if mapinfo(mapa).numusers > 0 then
+                                if .movement <> tipoai.estatico then
+                                    call npcai(npcindex)
+                                end if
                             end if
                         end if
                     end if
                 end if
             end if
-        end if
+        end with
     next npcindex
 end if
 
@@ -853,28 +889,28 @@ static minutossinlluvia as long
 if not lloviendo then
     minutossinlluvia = minutossinlluvia + 1
     if minutossinlluvia >= 15 and minutossinlluvia < 1440 then
-            if randomnumber(1, 100) <= 2 then
-                lloviendo = true
-                minutossinlluvia = 0
-                call senddata(sendtarget.toall, 0, preparemessageraintoggle())
-            end if
+        if randomnumber(1, 100) <= 2 then
+            lloviendo = true
+            minutossinlluvia = 0
+            call senddata(sendtarget.toall, 0, preparemessageraintoggle())
+        end if
     elseif minutossinlluvia >= 1440 then
-                lloviendo = true
-                minutossinlluvia = 0
-                call senddata(sendtarget.toall, 0, preparemessageraintoggle())
+        lloviendo = true
+        minutossinlluvia = 0
+        call senddata(sendtarget.toall, 0, preparemessageraintoggle())
     end if
 else
     minutoslloviendo = minutoslloviendo + 1
     if minutoslloviendo >= 5 then
-            lloviendo = false
-            call senddata(sendtarget.toall, 0, preparemessageraintoggle())
-            minutoslloviendo = 0
+        lloviendo = false
+        call senddata(sendtarget.toall, 0, preparemessageraintoggle())
+        minutoslloviendo = 0
     else
-            if randomnumber(1, 100) <= 2 then
-                lloviendo = false
-                minutoslloviendo = 0
-                call senddata(sendtarget.toall, 0, preparemessageraintoggle())
-            end if
+        if randomnumber(1, 100) <= 2 then
+            lloviendo = false
+            minutoslloviendo = 0
+            call senddata(sendtarget.toall, 0, preparemessageraintoggle())
+        end if
     end if
 end if
 
@@ -886,7 +922,7 @@ end sub
 
 private sub tpiquetec_timer()
     dim nuevaa as boolean
-    dim nuevol as boolean
+   ' dim nuevol as boolean
     dim gi as integer
     
     dim i as long
@@ -907,6 +943,19 @@ on error goto errhandler
                     .counters.piquetec = 0
                 end if
                 
+                if .flags.muerto = 1 then
+                    if .flags.traveling = 1 then
+                        if .counters.gohome <= 0 then
+                            call findlegalpos(i, ciudades(.hogar).map, ciudades(.hogar).x, ciudades(.hogar).y)
+                            call warpuserchar(i, ciudades(.hogar).map, ciudades(.hogar).x, ciudades(.hogar).y, true)
+                            call writemultimessage(i, emessages.finishhome)
+                            .flags.traveling = 0
+                        else
+                            .counters.gohome = .counters.gohome - 1
+                        end if
+                    end if
+                end if
+                
                 'ustedes se preguntaran que hace esto aca?
                 'bueno la respuesta es simple: el codigo de ao es una mierda y encontrar
                 'todos los puntos en los cuales la alineacion puede cambiar es un dolor de
@@ -915,18 +964,18 @@ on error goto errhandler
                 gi = .guildindex
                 if gi > 0 then
                     nuevaa = false
-                    nuevol = false
-                    if not modguilds.m_validarpermanencia(i, true, nuevaa, nuevol) then
+                   ' nuevol = false
+                    if not modguilds.m_validarpermanencia(i, true, nuevaa) then
                         call writeconsolemsg(i, "has sido expulsado del clan. �el clan ha sumado un punto de antifacci�n!", fonttypenames.fonttype_guild)
                     end if
                     if nuevaa then
-                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg("�el clan ha pasado a tener alineaci�n neutral!", fonttypenames.fonttype_guild))
-                        call logclanes("el clan cambio de alineacion!")
+                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg("�el clan ha pasado a tener alineaci�n " & guildalignment(gi) & "!", fonttypenames.fonttype_guild))
+                        call logclanes("�el clan cambio de alineaci�n!")
                     end if
-                    if nuevol then
-                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg("�el clan tiene un nuevo l�der!", fonttypenames.fonttype_guild))
-                        call logclanes("el clan tiene nuevo lider!")
-                    end if
+'                    if nuevol then
+'                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg("�el clan tiene un nuevo l�der!", fonttypenames.fonttype_guild))
+'                        call logclanes("�el clan tiene nuevo lider!")
+'                    end if
                 end if
                 
                 call flushbuffer(i)

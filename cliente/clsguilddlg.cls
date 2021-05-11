@@ -30,8 +30,8 @@ private usedfont as stdfont
 public property let cantidaddialogos(byval v as byte)
     if v > 0 then
         redim preserve p_dialogos(1 to v) as t_guilddlg
+        p_cantidaddialogos = v
     end if
-    p_cantidaddialogos = v
 end property
 
 ''

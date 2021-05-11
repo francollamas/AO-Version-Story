@@ -94,10 +94,22 @@ dim tmparray(1 to rows, 1 to colums) as tintermidiatework
 dim tileposy as integer
 
 private function limites(byval vfila as integer, byval vcolu as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 limites = vcolu >= 1 and vcolu <= colums and vfila >= 1 and vfila <= rows
 end function
 
 private function iswalkable(byval map as integer, byval row as integer, byval col as integer, byval npcindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 iswalkable = mapdata(map, row, col).blocked = 0 and mapdata(map, row, col).npcindex = 0
 
 if mapdata(map, row, col).userindex <> 0 then
@@ -107,6 +119,12 @@ end if
 end function
 
 private sub processadjacents(byval mapindex as integer, byref t() as tintermidiatework, byref vfila as integer, byref vcolu as integer, byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim v as tvertice
     dim j as integer
     'look to north
@@ -181,85 +199,92 @@ end sub
 
 
 public sub seekpath(byval npcindex as integer, optional byval maxsteps as integer = 30)
-'############################################################
+'***************************************************
+'author: unknown
+'last modification: -
 'this sub seeks a path from the npclist(npcindex).pos
 'to the location npclist(npcindex).pfinfo.target.
 'the optional parameter maxsteps is the maximum of steps
 'allowed for the path.
-'############################################################
+'***************************************************
 
-dim cur_npc_pos as tvertice
-dim tar_npc_pos as tvertice
-dim v as tvertice
-dim npcmap as integer
-dim steps as integer
-
-npcmap = npclist(npcindex).pos.map
-
-steps = 0
-
-cur_npc_pos.x = npclist(npcindex).pos.y
-cur_npc_pos.y = npclist(npcindex).pos.x
-
-tar_npc_pos.x = npclist(npcindex).pfinfo.target.x '  userlist(npclist(npcindex).pfinfo.targetuser).pos.x
-tar_npc_pos.y = npclist(npcindex).pfinfo.target.y '  userlist(npclist(npcindex).pfinfo.targetuser).pos.y
-
-call initializetable(tmparray, cur_npc_pos)
-call initqueue
-
-'we add the first vertex to the queue
-call push(cur_npc_pos)
-
-do while (not isempty)
-    if steps > maxsteps then exit do
-    v = pop
-    if v.x = tar_npc_pos.x and v.y = tar_npc_pos.y then exit do
-    call processadjacents(npcmap, tmparray, v.y, v.x, npcindex)
-loop
-
-call makepath(npcindex)
+    dim cur_npc_pos as tvertice
+    dim tar_npc_pos as tvertice
+    dim v as tvertice
+    dim npcmap as integer
+    dim steps as integer
+    
+    npcmap = npclist(npcindex).pos.map
+    
+    steps = 0
+    
+    cur_npc_pos.x = npclist(npcindex).pos.y
+    cur_npc_pos.y = npclist(npcindex).pos.x
+    
+    tar_npc_pos.x = npclist(npcindex).pfinfo.target.x '  userlist(npclist(npcindex).pfinfo.targetuser).pos.x
+    tar_npc_pos.y = npclist(npcindex).pfinfo.target.y '  userlist(npclist(npcindex).pfinfo.targetuser).pos.y
+    
+    call initializetable(tmparray, cur_npc_pos)
+    call initqueue
+    
+    'we add the first vertex to the queue
+    call push(cur_npc_pos)
+    
+    do while (not isempty)
+        if steps > maxsteps then exit do
+        v = pop
+        if v.x = tar_npc_pos.x and v.y = tar_npc_pos.y then exit do
+        call processadjacents(npcmap, tmparray, v.y, v.x, npcindex)
+    loop
+    
+    call makepath(npcindex)
 
 end sub
 
 private sub makepath(byval npcindex as integer)
-'#######################################################
+'***************************************************
+'author: unknown
+'last modification: -
 'builds the path previously calculated
-'#######################################################
+'***************************************************
 
-dim pasos as integer
-dim miv as tvertice
-dim i as integer
-
-pasos = tmparray(npclist(npcindex).pfinfo.target.y, npclist(npcindex).pfinfo.target.x).distv
-npclist(npcindex).pfinfo.pathlenght = pasos
-
-
-if pasos = maxint then
-    'msgbox "there is no path."
-    npclist(npcindex).pfinfo.nopath = true
-    npclist(npcindex).pfinfo.pathlenght = 0
-    exit sub
-end if
-
-redim npclist(npcindex).pfinfo.path(0 to pasos) as tvertice
-
-miv.x = npclist(npcindex).pfinfo.target.x
-miv.y = npclist(npcindex).pfinfo.target.y
-
-for i = pasos to 1 step -1
-    npclist(npcindex).pfinfo.path(i) = miv
-    miv = tmparray(miv.y, miv.x).prevv
-next i
-
-npclist(npcindex).pfinfo.curpos = 1
-npclist(npcindex).pfinfo.nopath = false
+    dim pasos as integer
+    dim miv as tvertice
+    dim i as integer
+    
+    pasos = tmparray(npclist(npcindex).pfinfo.target.y, npclist(npcindex).pfinfo.target.x).distv
+    npclist(npcindex).pfinfo.pathlenght = pasos
+    
+    
+    if pasos = maxint then
+        'msgbox "there is no path."
+        npclist(npcindex).pfinfo.nopath = true
+        npclist(npcindex).pfinfo.pathlenght = 0
+        exit sub
+    end if
+    
+    redim npclist(npcindex).pfinfo.path(0 to pasos) as tvertice
+    
+    miv.x = npclist(npcindex).pfinfo.target.x
+    miv.y = npclist(npcindex).pfinfo.target.y
+    
+    for i = pasos to 1 step -1
+        npclist(npcindex).pfinfo.path(i) = miv
+        miv = tmparray(miv.y, miv.x).prevv
+    next i
+    
+    npclist(npcindex).pfinfo.curpos = 1
+    npclist(npcindex).pfinfo.nopath = false
    
 end sub
 
 private sub initializetable(byref t() as tintermidiatework, byref s as tvertice, optional byval maxsteps as integer = 30)
-'#########################################################
+'***************************************************
+'author: unknown
+'last modification: -
 'initialize the array where we calculate the path
-'#########################################################
+'***************************************************
+
 
 dim j as integer, k as integer
 const anymap = 1

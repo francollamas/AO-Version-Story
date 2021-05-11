@@ -67,9 +67,10 @@ end sub
 public sub parseusercommand(byval rawcommand as string)
 '***************************************************
 'author: alejandro santos (alejolp)
-'last modification: 26/03/2009
+'last modification: 16/11/2009
 'interpreta, valida y ejecuta el comando ingresado
 '26/03/2009: zama - flexibilizo la cantidad de parametros de /nene,  /onlinemap y /telep
+'16/11/2009: zama - ahora el /ct admite radio
 '***************************************************
     dim tmpargos() as string
     
@@ -126,9 +127,6 @@ public sub parseusercommand(byval rawcommand as string)
         ' comando normal
         
         select case comando
-            case "/seg"
-                call writesafetoggle
-                
             case "/online"
                 call writeonline
                 
@@ -139,7 +137,7 @@ public sub parseusercommand(byval rawcommand as string)
                     end with
                     exit sub
                 end if
-                if frmmain.macrotrabajo.enabled then frmmain.desactivarmacrotrabajo
+                if frmmain.macrotrabajo.enabled then call frmmain.desactivarmacrotrabajo
                 call writequit
                 
             case "/salirclan"
@@ -172,6 +170,15 @@ public sub parseusercommand(byval rawcommand as string)
                 end if
                 call writepetfollow
                 
+            case "/liberar"
+                if userestado = 1 then 'muerto
+                    with fonttypes(fonttypenames.fonttype_info)
+                        call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                    end with
+                    exit sub
+                end if
+                call writereleasepet
+                
             case "/entrenar"
                 if userestado = 1 then 'muerto
                     with fonttypes(fonttypenames.fonttype_info)
@@ -201,6 +208,9 @@ public sub parseusercommand(byval rawcommand as string)
                 end if
                 call writemeditate
         
+            case "/consulta"
+                call writeconsulta
+            
             case "/resucitar"
                 call writeresucitate
                 
@@ -272,6 +282,26 @@ public sub parseusercommand(byval rawcommand as string)
                     exit sub
                 end if
                 call writepartyjoin
+            
+            case "/compartirnpc"
+                if userestado = 1 then 'muerto
+                    with fonttypes(fonttypenames.fonttype_info)
+                        call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                    end with
+                    exit sub
+                end if
+                
+                call writesharenpc
+                
+            case "/nocompartirnpc"
+                if userestado = 1 then 'muerto
+                    with fonttypes(fonttypenames.fonttype_info)
+                        call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                    end with
+                    exit sub
+                end if
+                
+                call writestopsharingnpc
                 
             case "/encuesta"
                 if cantidadargumentos = 0 then
@@ -399,6 +429,16 @@ public sub parseusercommand(byval rawcommand as string)
                     call showconsolemsg("faltan par�metros. utilice /apostar cantidad.")
                 end if
                 
+            case "/retirarfaccion"
+                if userestado = 1 then 'muerto
+                    with fonttypes(fonttypenames.fonttype_info)
+                        call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                    end with
+                    exit sub
+                end if
+                
+                call writeleavefaction
+                
             case "/retirar"
                 if userestado = 1 then 'muerto
                     with fonttypes(fonttypenames.fonttype_info)
@@ -406,10 +446,8 @@ public sub parseusercommand(byval rawcommand as string)
                     end with
                     exit sub
                 end if
-                if cantidadargumentos = 0 then
-                    ' version sin argumentos: leavefaction
-                    call writeleavefaction
-                else
+                
+                if notnullarguments then
                     ' version con argumentos: bankextractgold
                     if validnumber(argumentosraw, enumber_types.ent_long) then
                         call writebankextractgold(argumentosraw)
@@ -418,7 +456,7 @@ public sub parseusercommand(byval rawcommand as string)
                         call showconsolemsg("cantidad incorrecta. utilice /retirar cantidad.")
                     end if
                 end if
-    
+
             case "/depositar"
                 if userestado = 1 then 'muerto
                     with fonttypes(fonttypenames.fonttype_info)
@@ -426,7 +464,7 @@ public sub parseusercommand(byval rawcommand as string)
                     end with
                     exit sub
                 end if
-                
+
                 if notnullarguments then
                     if validnumber(argumentosraw, enumber_types.ent_long) then
                         call writebankdepositgold(argumentosraw)
@@ -449,13 +487,13 @@ public sub parseusercommand(byval rawcommand as string)
                 
             case "/fundarclan"
                 if userlvl >= 25 then
-                    frmeligealineacion.show vbmodeless, frmmain
+                    call writeguildfundate
                 else
                     call showconsolemsg("para fundar un clan ten�s que ser nivel 25 y tener 90 skills en liderazgo.")
                 end if
             
             case "/fundarclangm"
-                call writeguildfundate(eclantype.ct_gm)
+                call writeguildfundation(eclantype.ct_gm)
             
             case "/echarparty"
                 if notnullarguments then
@@ -894,16 +932,27 @@ public sub parseusercommand(byval rawcommand as string)
                 end if
                 
             case "/ct"
-                if notnullarguments and cantidadargumentos = 3 then
-                    if validnumber(argumentosall(0), enumber_types.ent_integer) and validnumber(argumentosall(1), enumber_types.ent_byte) and validnumber(argumentosall(2), enumber_types.ent_byte) then
-                        call writeteleportcreate(argumentosall(0), argumentosall(1), argumentosall(2))
+                if notnullarguments and cantidadargumentos >= 3 then
+                    if validnumber(argumentosall(0), enumber_types.ent_integer) and validnumber(argumentosall(1), enumber_types.ent_byte) and _
+                        validnumber(argumentosall(2), enumber_types.ent_byte) then
+                        
+                        if cantidadargumentos = 3 then
+                            call writeteleportcreate(argumentosall(0), argumentosall(1), argumentosall(2))
+                        else
+                            if validnumber(argumentosall(3), enumber_types.ent_byte) then
+                                call writeteleportcreate(argumentosall(0), argumentosall(1), argumentosall(2), argumentosall(3))
+                            else
+                                'no es numerico
+                                call showconsolemsg("valor incorrecto. utilice /ct mapa x y radio(opcional).")
+                            end if
+                        end if
                     else
                         'no es numerico
-                        call showconsolemsg("valor incorrecto. utilice /ct mapa x y.")
+                        call showconsolemsg("valor incorrecto. utilice /ct mapa x y radio(opcional).")
                     end if
                 else
                     'avisar que falta el parametro
-                    call showconsolemsg("faltan par�metros. utilice /ct mapa x y.")
+                    call showconsolemsg("faltan par�metros. utilice /ct mapa x y radio(opcional).")
                 end if
                 
             case "/dt"
@@ -1484,6 +1533,9 @@ public sub parseusercommand(byval rawcommand as string)
                     call showconsolemsg("pr�metros incorrectos. utilice /setinivar llave clave valor")
                 end if
             
+            case "/hogar"
+                call writehome
+                
 #if seguridadalkon then
             case else
                 call parseusercommandex(comando, cantidadargumentos, argumentosall, argumentosraw)

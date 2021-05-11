@@ -1,10 +1,9 @@
 version 5.00
 begin vb.form frmmsg 
-   borderstyle     =   1  'fixed single
-   caption         =   "mensajes de gms"
+   borderstyle     =   0  'none
    clientheight    =   3270
-   clientleft      =   150
-   clienttop       =   435
+   clientleft      =   120
+   clienttop       =   45
    clientwidth     =   2445
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,61 +19,36 @@ begin vb.form frmmsg
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3270
-   scalewidth      =   2445
+   scaleheight     =   218
+   scalemode       =   3  'pixel
+   scalewidth      =   163
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      caption         =   "cerrar"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   405
-      left            =   180
-      mouseicon       =   "frmmsg.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   2
-      top             =   2685
-      width           =   1935
-   end
    begin vb.listbox list1 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
       beginproperty font 
          name            =   "ms sans serif"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   2010
-      left            =   180
-      tabindex        =   1
-      top             =   450
-      width           =   1980
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      caption         =   "usuarios"
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   195
-      left            =   840
+      forecolor       =   &h00ffffff&
+      height          =   1785
+      left            =   300
       tabindex        =   0
-      top             =   120
-      width           =   615
+      top             =   615
+      width           =   1845
+   end
+   begin vb.image imgcerrar 
+      height          =   420
+      left            =   375
+      tag             =   "1"
+      top             =   2640
+      width           =   1710
    end
    begin vb.menu menu_usuario 
       caption         =   "usuario"
@@ -129,6 +103,12 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
 private const max_gm_msg = 300
 
 private mismsg(0 to max_gm_msg) as string
@@ -142,31 +122,61 @@ if list1.listcount < max_gm_msg then
 end if
 end sub
 
-private sub command1_click()
-me.visible = false
-list1.clear
-end sub
-
 private sub form_deactivate()
-me.visible = false
-list1.clear
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.visible = false
+    list1.clear
 end sub
 
 private sub form_load()
-list1.clear
+    list1.clear
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanashowsos.jpg")
+    
+    call loadbuttons
+end sub
 
+private sub loadbuttons()
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+
+    set cbotoncerrar = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarshowsos.jpg", _
+                                    grhpath & "botoncerrarrollovershowsos.jpg", _
+                                    grhpath & "botoncerrarclickshowsos.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgcerrar_click()
+    me.visible = false
+    list1.clear
 end sub
 
 private sub list1_click()
-dim ind as integer
-ind = val(readfield(2, list1.list(list1.listindex), asc("-")))
+    dim ind as integer
+    ind = val(readfield(2, list1.list(list1.listindex), asc("-")))
 end sub
 
 private sub list1_mousedown(button as integer, shift as integer, x as single, y as single)
-if button = vbrightbutton then
-    popupmenu menu_usuario
-end if
+    if button = vbrightbutton then
+        popupmenu menu_usuario
+    end if
 
+end sub
+
+private sub list1_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub
 
 private sub mnuborrar_click()

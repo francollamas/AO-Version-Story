@@ -201,61 +201,87 @@ public function salemiembro(byval userindex as integer) as boolean
 ' - 09/29/07 experience is round to the biggest number less than that number
 ' - 09/29/07 now experience is a real-number (tavo)
 ' - 07/04/08 added const exponentenivelparty. (markoxx)
+'11/03/2010: zama - ahora no le dice al lider que salio de su propia party, y optimice con with.
 '***************************************************
 'el valor de retorno representa si se disuelve la party
-dim i as integer
-dim j as integer
-i = 1
-salemiembro = false
-while i <= party_maxmembers and p_members(i).userindex <> userindex
-    i = i + 1
-wend
-
-if i = 1 then
-    'sale el founder, la party se disuelve
-    salemiembro = true
-    call mandarmensajeaconsola("el lider disuelve la party.", "servidor")
-    for j = party_maxmembers to 1 step -1
-        if p_members(j).userindex > 0 then
+    dim i as integer
+    dim j as integer
+    dim memberindex as integer
+    
+    i = 1
+    salemiembro = false
+    while i <= party_maxmembers and p_members(i).userindex <> userindex
+        i = i + 1
+    wend
+    
+    if i = 1 then
+        'sale el founder, la party se disuelve
+        salemiembro = true
+        call mandarmensajeaconsola("el l�der disuelve la party.", "servidor")
+        
+        for j = party_maxmembers to 1 step -1
             
-            call writeconsolemsg(p_members(j).userindex, " abandonas la party liderada por " & userlist(p_members(1).userindex).name, fonttypenames.fonttype_party)
-    
-            call writeconsolemsg(p_members(j).userindex, " durante la misma has conseguido " & cstr(fix(p_members(j).experiencia)) & " puntos de experiencia!", fonttypenames.fonttype_party)
-    
-            if not party_experienciaporgolpe then
-                userlist(p_members(j).userindex).stats.exp = userlist(p_members(j).userindex).stats.exp + fix(p_members(j).experiencia)
-                if userlist(p_members(j).userindex).stats.exp > maxexp then _
-                    userlist(p_members(j).userindex).stats.exp = maxexp
-                call checkuserlevel(p_members(j).userindex)
-                call writeupdateuserstats(p_members(j).userindex)
-            end if
-            call mandarmensajeaconsola(userlist(p_members(j).userindex).name & " abandona la party.", "servidor")
-            userlist(p_members(j).userindex).partyindex = 0
-            p_cantmiembros = p_cantmiembros - 1
-            p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
-            p_members(j).userindex = 0
-            p_members(j).experiencia = 0
+            with p_members(j)
+            
+                if .userindex > 0 then
+                    
+                    ' no envia el mensaje al lider
+                    if j <> 1 then
+                        call writeconsolemsg(.userindex, "abandonas la party liderada por " & _
+                            userlist(p_members(1).userindex).name & ".", fonttypenames.fonttype_party)
+                    end if
+                    
+                    call writeconsolemsg(.userindex, "durante la misma has conseguido " & cstr(fix(.experiencia)) & " puntos de experiencia.", fonttypenames.fonttype_party)
+            
+                    if not party_experienciaporgolpe then
+                        userlist(.userindex).stats.exp = userlist(.userindex).stats.exp + fix(.experiencia)
+                        if userlist(.userindex).stats.exp > maxexp then _
+                            userlist(.userindex).stats.exp = maxexp
+                        call checkuserlevel(.userindex)
+                        call writeupdateuserstats(.userindex)
+                    end if
+                    
+                    call mandarmensajeaconsola(userlist(.userindex).name & " abandona la party.", "servidor")
+                    
+                    userlist(.userindex).partyindex = 0
+                    p_cantmiembros = p_cantmiembros - 1
+                    p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
+                    .userindex = 0
+                    .experiencia = 0
+                    
+                end if
+                
+            end with
+            
+        next j
+    else
+        if i <= party_maxmembers then
+            
+            memberindex = p_members(i).userindex
+            
+            with userlist(memberindex)
+                if not party_experienciaporgolpe then
+                    .stats.exp = .stats.exp + fix(p_members(i).experiencia)
+                    if .stats.exp > maxexp then .stats.exp = maxexp
+                    
+                    call checkuserlevel(memberindex)
+                    call writeupdateuserstats(memberindex)
+                end if
+                
+                call mandarmensajeaconsola(.name & " abandona la party.", "servidor")
+                'todo: revisar que esto este bien, y no este faltando/sobrando un mensaje, ahora solo los estoy corrigiendo
+                call writeconsolemsg(memberindex, "durante la misma has conseguido " & _
+                    cstr(fix(p_members(i).experiencia)) & " puntos de experiencia.", fonttypenames.fonttype_party)
+                
+                p_cantmiembros = p_cantmiembros - 1
+                p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
+                memberindex = 0
+                p_members(i).experiencia = 0
+                p_members(i).userindex = 0
+                compactmemberlist
+            end with
         end if
-    next j
-else
-    if i <= party_maxmembers then
-        if not party_experienciaporgolpe then
-            userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + fix(p_members(i).experiencia)
-            if userlist(p_members(i).userindex).stats.exp > maxexp then _
-                userlist(p_members(i).userindex).stats.exp = maxexp
-            call checkuserlevel(p_members(i).userindex)
-            call writeupdateuserstats(p_members(i).userindex)
-        end if
-        call mandarmensajeaconsola(userlist(p_members(i).userindex).name & " abandona la party.", "servidor")
-        'todo: revisar que esto este bien, y no este faltando/sobrando un mensaje, ahora solo los estoy corrigiendo
-        call writeconsolemsg(p_members(i).userindex, " durante la misma has conseguido " & cstr(fix(p_members(i).experiencia)) & " puntos de experiencia!", fonttypenames.fonttype_party)
-        p_cantmiembros = p_cantmiembros - 1
-        p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
-        p_members(i).userindex = 0
-        p_members(i).experiencia = 0
-        compactmemberlist
     end if
-end if
 
 end function
 
@@ -287,7 +313,7 @@ if not hacerleader then exit function
 if userindexindex = 0 then
     'catastrofe! esto no deberia pasar nunca! pero como es ao.... :p
     call logerror("inconsistencia de parties")
-    call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(" inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!", fonttypenames.fonttype_guild))
+    call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("���inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!", fonttypenames.fonttype_guild))
     hacerleader = false
     exit function
 end if
@@ -369,7 +395,7 @@ if rv then
             'aspirante armada en party crimi
             if ui > 0 then
                 if esarmada and criminal(ui) then
-                    razon = "los miembros de la armada no entran a una party con criminales."
+                    razon = "los miembros del ej�rcito real no entran a una party con criminales."
                     rv = false
                 end if
                 'aspirante caos en party ciuda
@@ -379,12 +405,12 @@ if rv then
                 end if
                 'aspirante crimi en party armada
                 if userlist(ui).faccion.armadareal = 1 and criminal(userindex) then
-                    razon = "los criminales no entran a partys con miembros de la armada real."
+                    razon = "los criminales no entran a parties con miembros del ej�rcito real."
                     rv = false
                 end if
                 'aspirante ciuda en party caos
                 if userlist(ui).faccion.fuerzascaos = 1 and not criminal(userindex) then
-                    razon = "los miembros de la legi�n oscura no entran a una party con ciudadanos."
+                    razon = "los ciudadanos no entran a parties con miembros de la legi�n oscura."
                     rv = false
                 end if
             
@@ -395,7 +421,8 @@ if rv then
         razon = "la mayor cantidad de miembros es " & party_maxmembers
     end if
 else
-    razon = "te encuentras muy lejos del fundador."
+    '�con o sin nombre?
+    razon = "el usuario " & userlist(userindex).name & " se encuentra muy lejos."
 end if
 
 puedeentrar = rv

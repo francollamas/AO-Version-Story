@@ -58,12 +58,36 @@ public function dirmapas() as string
     dirmapas = app.path & "\" & config_inicio.dirmapas & "\"
 end function
 
+public function dirextras() as string
+    dirextras = app.path & "\extras\"
+end function
+
 public function randomnumber(byval lowerbound as long, byval upperbound as long) as long
     'initialize randomizer
     randomize timer
     
     'generate random number
     randomnumber = (upperbound - lowerbound) * rnd + lowerbound
+end function
+
+public function getrawname(byref sname as string) as string
+'***************************************************
+'author: zama
+'last modify date: 13/01/2010
+'last modified by: -
+'returns the char name without the clan name (if it has it).
+'***************************************************
+
+    dim pos as integer
+    
+    pos = instr(1, sname, "<")
+    
+    if pos > 0 then
+        getrawname = trim(left(sname, pos - 1))
+    else
+        getrawname = sname
+    end if
+
 end function
 
 sub cargaranimarmas()
@@ -86,22 +110,6 @@ on error resume next
     next loopc
 end sub
 
-sub cargarversiones()
-on error goto errorh:
-
-    versiones(1) = val(getvar(app.path & "\init\" & "versiones.ini", "graficos", "val"))
-    versiones(2) = val(getvar(app.path & "\init\" & "versiones.ini", "wavs", "val"))
-    versiones(3) = val(getvar(app.path & "\init\" & "versiones.ini", "midis", "val"))
-    versiones(4) = val(getvar(app.path & "\init\" & "versiones.ini", "init", "val"))
-    versiones(5) = val(getvar(app.path & "\init\" & "versiones.ini", "mapas", "val"))
-    versiones(6) = val(getvar(app.path & "\init\" & "versiones.ini", "e", "val"))
-    versiones(7) = val(getvar(app.path & "\init\" & "versiones.ini", "o", "val"))
-exit sub
-
-errorh:
-    call msgbox("error cargando versiones")
-end sub
-
 sub cargarcolores()
 on error resume next
     dim archivoc as string
@@ -122,12 +130,20 @@ on error resume next
         colorespj(i).b = cbyte(getvar(archivoc, cstr(i), "b"))
     next i
     
+    ' crimi
     colorespj(50).r = cbyte(getvar(archivoc, "cr", "r"))
     colorespj(50).g = cbyte(getvar(archivoc, "cr", "g"))
     colorespj(50).b = cbyte(getvar(archivoc, "cr", "b"))
+    
+    ' ciuda
     colorespj(49).r = cbyte(getvar(archivoc, "ci", "r"))
     colorespj(49).g = cbyte(getvar(archivoc, "ci", "g"))
     colorespj(49).b = cbyte(getvar(archivoc, "ci", "b"))
+    
+    ' atacable
+    colorespj(48).r = cbyte(getvar(archivoc, "at", "r"))
+    colorespj(48).g = cbyte(getvar(archivoc, "at", "g"))
+    colorespj(48).b = cbyte(getvar(archivoc, "at", "b"))
 end sub
 
 #if seguridadalkon then
@@ -170,7 +186,7 @@ on error resume next
     next loopc
 end sub
 
-sub addtorichtextbox(byref richtextbox as richtextbox, byval text as string, optional byval red as integer = -1, optional byval green as integer, optional byval blue as integer, optional byval bold as boolean = false, optional byval italic as boolean = false, optional byval bcrlf as boolean = false)
+sub addtorichtextbox(byref richtextbox as richtextbox, byval text as string, optional byval red as integer = -1, optional byval green as integer, optional byval blue as integer, optional byval bold as boolean = false, optional byval italic as boolean = false, optional byval bcrlf as boolean = true)
 '******************************************
 'adds text to a richtext box at the bottom.
 'automatically scrolls to new text.
@@ -187,14 +203,15 @@ sub addtorichtextbox(byref richtextbox as richtextbox, byval text as string, opt
             .textrtf = .selrtf
         end if
         
-        .selstart = len(richtextbox.text)
+        .selstart = len(.text)
         .sellength = 0
         .selbold = bold
         .selitalic = italic
         
         if not red = -1 then .selcolor = rgb(red, green, blue)
         
-        .seltext = iif(bcrlf, text, text & vbcrlf)
+        if bcrlf and len(.text) > 0 then text = vbcrlf & text
+        .seltext = text
         
         richtextbox.refresh
     end with
@@ -343,16 +360,17 @@ sub setconnected()
 #end if
     
     'unload the connect form
-    unload frmpasswd
     unload frmcrearpersonaje
     unload frmconnect
     
-    
-    
-    frmmain.label8.caption = username
+    frmmain.lblname.caption = username
     'load main form
     frmmain.visible = true
     
+    call frmmain.controlsm(esmtype.mspells, false)
+    call frmmain.controlsm(esmtype.mwork, false)
+    
+    fpsflag = true
 #if seguridadalkon then
     'protect the main form
     call protectform(frmmain)
@@ -403,7 +421,7 @@ sub moveto(byval direccion as e_heading)
         end if
     end if
     
-    if frmmain.macrotrabajo.enabled then frmmain.desactivarmacrotrabajo
+    if frmmain.macrotrabajo.enabled then call frmmain.desactivarmacrotrabajo
     
     ' update 3d sounds!
     call audio.movelistener(userpos.x, userpos.y)
@@ -431,11 +449,14 @@ private sub checkkeys()
     if comerciando then exit sub
     
     'no walking while writting in the forum.
-    if frmforo.visible then exit sub
+    if mirandoforo then exit sub
     
     'if game is paused, abort movement.
     if pausa then exit sub
     
+    'todo: deber�a informarle por consola?
+    if traveling then exit sub
+
     'control movement interval (this enforces the 1 step loss when meditating / resting client-side)
     if gettickcount - lastmovement > 56 then
         lastmovement = gettickcount
@@ -450,7 +471,7 @@ private sub checkkeys()
             if getkeystate(customkeys.bindedkey(ekeytype.mkeyup)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(north)
-                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
                 exit sub
             end if
             
@@ -458,7 +479,8 @@ private sub checkkeys()
             if getkeystate(customkeys.bindedkey(ekeytype.mkeyright)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(east)
-                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                'frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
                 exit sub
             end if
         
@@ -466,7 +488,7 @@ private sub checkkeys()
             if getkeystate(customkeys.bindedkey(ekeytype.mkeydown)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(south)
-                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
                 exit sub
             end if
         
@@ -474,7 +496,7 @@ private sub checkkeys()
             if getkeystate(customkeys.bindedkey(ekeytype.mkeyleft)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(west)
-                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                frmmain.coord.caption = usermap & " x: " & userpos.x & " y: " & userpos.y
                 exit sub
             end if
             
@@ -495,7 +517,8 @@ private sub checkkeys()
             end if
             
             if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
-            frmmain.coord.caption = "(" & userpos.x & "," & userpos.y & ")"
+            'frmmain.coord.caption = "(" & userpos.x & "," & userpos.y & ")"
+            frmmain.coord.caption = "x: " & userpos.x & " y: " & userpos.y
         end if
     end if
 end sub
@@ -755,17 +778,12 @@ sub main()
     end if
     
     'load ao.dat config file
-    if fileexist(app.path & "\init\ao.dat", vbarchive) then
-        call loadclientsetup
-        
-        if clientsetup.bdinamic then
-            set surfacedb = new clssurfacemandyn
-        else
-            set surfacedb = new clssurfacemanstatic
-        end if
-    else
-        'use dynamic by default
+    call loadclientsetup
+    
+    if clientsetup.bdinamic then
         set surfacedb = new clssurfacemandyn
+    else
+        set surfacedb = new clssurfacemanstatic
     end if
     
     if findpreviousinstance then
@@ -776,9 +794,6 @@ sub main()
     'read command line. do it after config file is loaded to prevent this from
     'canceling the effects of "/nores" option.
     call leerlineacomandos
-    
-
-    
     
     'usaremos esto para ayudar en los parches
     call savesetting("argentumonlinecliente", "init", "path", app.path & "\")
@@ -804,38 +819,45 @@ sub main()
     'set resolution before the loading form is displayed, therefore it will be centered.
     call resolution.setresolution
     
+    ' mouse pointer (loaded before opening any form with buttons in it)
+    if fileexist(dirextras & "hand.ico", vbarchive) then _
+        set picmouseicon = loadpicture(dirextras & "hand.ico")
+    
     frmcargando.show
     frmcargando.refresh
     
     frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
-    addtorichtextbox frmcargando.status, "buscando servidores... ", 0, 0, 0, 0, 0, 1
+    call addtorichtextbox(frmcargando.status, "buscando servidores... ", 255, 255, 255, true, false, true)
 
     call cargarservidores
 'todo : esto de serverrecibidos no se podr�a sacar???
     serversrecibidos = true
     
-    addtorichtextbox frmcargando.status, "hecho", , , , 1
-    addtorichtextbox frmcargando.status, "iniciando constantes... ", 0, 0, 0, 0, 0, 1
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    call addtorichtextbox(frmcargando.status, "iniciando constantes... ", 255, 255, 255, true, false, true)
     
     call inicializarnombres
     
     ' initialize fonttypes
     call protocol.initfonts
     
-    frmoldpersonaje.nametxt.text = config_inicio.name
-    frmoldpersonaje.passwordtxt.text = ""
+    with frmconnect
+        .txtnombre = config_inicio.name
+        .txtnombre.selstart = 0
+        .txtnombre.sellength = len(.txtnombre)
+    end with
     
-    addtorichtextbox frmcargando.status, "hecho", , , , 1
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
     
-    addtorichtextbox frmcargando.status, "iniciando motor gr�fico... ", 0, 0, 0, 0, 0, 1
+    call addtorichtextbox(frmcargando.status, "iniciando motor gr�fico... ", 255, 255, 255, true, false, true)
     
-    if not inittileengine(frmmain.hwnd, 160, 7, 32, 32, 13, 17, 9, 8, 8, 0.018) then
+    if not inittileengine(frmmain.hwnd, 149, 13, 32, 32, 13, 17, 9, 8, 8, 0.018) then
         call closeclient
     end if
     
-    addtorichtextbox frmcargando.status, "hecho", , , , 1
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
     
-    call addtorichtextbox(frmcargando.status, "creando animaciones extra... ", , , , , , 1)
+    call addtorichtextbox(frmcargando.status, "creando animaciones extra... ", 255, 255, 255, true, false, true)
     
     call cargartips
     
@@ -844,12 +866,11 @@ usermap = 1
     call cargararraylluvia
     call cargaranimarmas
     call cargaranimescudos
-    call cargarversiones
     call cargarcolores
     
-    addtorichtextbox frmcargando.status, "hecho", , , , 1
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
     
-    addtorichtextbox frmcargando.status, "iniciando directsound... ", 0, 0, 0, 0, 0, true
+    call addtorichtextbox(frmcargando.status, "iniciando directsound... ", 255, 255, 255, true, false, true)
     
     'inicializamos el sonido
     call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
@@ -858,26 +879,28 @@ usermap = 1
     audio.soundactivated = not clientsetup.bnosound
     audio.soundeffectsactivated = not clientsetup.bnosoundeffects
     'inicializamos el inventario gr�fico
-    call inventario.initialize(directdraw, frmmain.picinv)
+    call inventario.initialize(directdraw, frmmain.picinv, max_inventory_slots)
     
-    call audio.playmidi(midi_inicio & ".mid")
+    call audio.musicmp3play(app.path & "\mp3\" & mp3_inicio & ".mp3")
     
-    addtorichtextbox frmcargando.status, "hecho", , , , 1, , false
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
     
 #if seguridadalkon then
     cualmi = 0
     call initmi
 #end if
     
-    addtorichtextbox frmcargando.status, "                    �bienvenido a argentum online!", , , , 1
+    call addtorichtextbox(frmcargando.status, "                    �bienvenido a argentum online!", 255, 255, 255, true, false, true)
     
     'give the user enough time to read the welcome text
-    call sleep(1750)
+    call sleep(500)
     
     unload frmcargando
     
-
-    frmpres.picture = loadpicture(app.path & "\graficos\gs-zone.jpg")
+    dim prespath as string
+    prespath = dirgraficos & "presentacion" & randomnumber(1, 4) & ".jpg"
+    
+    frmpres.picture = loadpicture(prespath)
     frmpres.show vbmodal    'es modal, as� que se detiene la ejecuci�n de main hasta que se desaparece
     
 #if usarwrench = 1 then
@@ -918,10 +941,11 @@ usermap = 1
     dialogos.font = frmmain.font
     dialogosclanes.font = frmmain.font
     
+    lframetimer = gettickcount
     
     ' load the form for screenshots
     call load(frmscreenshots)
-    
+        
     do while prgrun
         's�lo dibujamos si la ventana no est� minimizada
         if frmmain.windowstate <> 1 and frmmain.visible then
@@ -934,7 +958,7 @@ usermap = 1
         end if
         'fps counter - mostramos las fps
         if gettickcount - lframetimer >= 1000 then
-            if fpsflag then frmmain.caption = mod_tileengine.fps
+            if fpsflag then frmmain.lblfps.caption = mod_tileengine.fps
             
             lframetimer = gettickcount
         end if
@@ -965,7 +989,7 @@ function getvar(byval file as string, byval main as string, byval var as string)
 '*****************************************************************
     dim sspaces as string ' this will hold the input that the program will retrieve
     
-    sspaces = space$(100) ' this tells the computer how long the longest string can be. if you want, you can change the number 100 to any number you wish
+    sspaces = space$(500) ' this tells the computer how long the longest string can be. if you want, you can change the number 100 to any number you wish
     
     getprivateprofilestring main, var, vbnullstring, sspaces, len(sspaces), file
     
@@ -1065,7 +1089,7 @@ public sub leerlineacomandos()
         end select
     next i
     
-    'call aoupdate(uptodate, nores) ' gs - desactivo el aoupdate
+    'call aoupdate(uptodate, nores) ' www.gs-zone.org
 end sub
 
 ''
@@ -1117,22 +1141,55 @@ end sub
 private sub loadclientsetup()
 '**************************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 24/06/2006
+'last modify date: 11/19/09
+'11/19/09: pato - is optional show the frmguildnews form
+'**************************************************************
+    dim fhandle as integer
+    
+    if fileexist(app.path & "\init\ao.dat", vbarchive) then
+        fhandle = freefile
+        
+        open app.path & "\init\ao.dat" for binary access read lock write as fhandle
+            get fhandle, , clientsetup
+        close fhandle
+    else
+        'use dynamic by default
+        clientsetup.bdinamic = true
+    end if
+    
+    nores = clientsetup.bnores
+    
+    if instr(1, clientsetup.sgraficos, "graficos") then
+        graphicsfile = clientsetup.sgraficos
+    else
+        graphicsfile = "graficos3.ind"
+    end if
+    
+    clientsetup.bguildnews = not clientsetup.bguildnews
+    dialogosclanes.activo = not clientsetup.bgldmsgconsole
+    dialogosclanes.cantidaddialogos = clientsetup.bcantmsgs
+end sub
+
+private sub saveclientsetup()
+'**************************************************************
+'author: torres patricio (pato)
+'last modify date: 03/11/10
 '
 '**************************************************************
     dim fhandle as integer
     
     fhandle = freefile
-    open app.path & "\init\ao.dat" for binary access read lock write as fhandle
-        get fhandle, , clientsetup
-    close fhandle
     
-    nores = clientsetup.bnores
-    if clientsetup.sgraficos <> "" then
-        graphicsfile = clientsetup.sgraficos
-    else
-        graphicsfile = "graficos3.ind"
-    end if
+    clientsetup.bnomusic = not audio.musicactivated
+    clientsetup.bnosound = not audio.soundactivated
+    clientsetup.bnosoundeffects = not audio.soundeffectsactivated
+    clientsetup.bguildnews = not clientsetup.bguildnews
+    clientsetup.bgldmsgconsole = not dialogosclanes.activo
+    clientsetup.bcantmsgs = dialogosclanes.cantidaddialogos
+    
+    open app.path & "\init\ao.dat" for binary as fhandle
+        put fhandle, , clientsetup
+    close fhandle
 end sub
 
 private sub inicializarnombres()
@@ -1163,18 +1220,13 @@ private sub inicializarnombres()
     listaclases(eclass.bandit) = "bandido"
     listaclases(eclass.paladin) = "paladin"
     listaclases(eclass.hunter) = "cazador"
-    listaclases(eclass.fisher) = "pescador"
-    listaclases(eclass.blacksmith) = "herrero"
-    listaclases(eclass.lumberjack) = "le�ador"
-    listaclases(eclass.miner) = "minero"
-    listaclases(eclass.carpenter) = "carpintero"
+    listaclases(eclass.worker) = "trabajador"
     listaclases(eclass.pirat) = "pirata"
     
-    skillsnames(eskill.suerte) = "suerte"
     skillsnames(eskill.magia) = "magia"
     skillsnames(eskill.robar) = "robar"
-    skillsnames(eskill.tacticas) = "tacticas de combate"
-    skillsnames(eskill.armas) = "combate con armas"
+    skillsnames(eskill.tacticas) = "evasi�n en combate"
+    skillsnames(eskill.armas) = "combate cuerpo a cuerpo"
     skillsnames(eskill.meditar) = "meditar"
     skillsnames(eskill.apu�alar) = "apu�alar"
     skillsnames(eskill.ocultarse) = "ocultarse"
@@ -1188,8 +1240,8 @@ private sub inicializarnombres()
     skillsnames(eskill.herreria) = "herreria"
     skillsnames(eskill.liderazgo) = "liderazgo"
     skillsnames(eskill.domar) = "domar animales"
-    skillsnames(eskill.proyectiles) = "armas de proyectiles"
-    skillsnames(eskill.wrestling) = "wrestling"
+    skillsnames(eskill.proyectiles) = "combate a distancia"
+    skillsnames(eskill.wrestling) = "combate sin armas"
     skillsnames(eskill.navegacion) = "navegacion"
 
     atributosnames(eatributos.fuerza) = "fuerza"
@@ -1227,12 +1279,14 @@ public sub closeclient()
     
     enginerun = false
     frmcargando.show
-    addtorichtextbox frmcargando.status, "liberando recursos...", 0, 0, 0, 0, 0, 1
+    call addtorichtextbox(frmcargando.status, "liberando recursos...", 0, 0, 0, 0, 0, 0)
     
     call resolution.resetresolution
     
     'stop tile engine
     call deinittileengine
+    
+    call saveclientsetup
     
     'destruimos los objetos p�blicos creados
     set custommessages = nothing
@@ -1255,7 +1309,6 @@ public sub closeclient()
     'actualizar tip
     config_inicio.tip = tipf
     call escribirgameini(config_inicio)
-    
     end
 end sub
 
@@ -1280,3 +1333,85 @@ if buf > 0 then
 end if
 gettagposition = len(nick) + 2
 end function
+
+public sub checktext(byval text as string)
+dim nivel as integer
+if right(text, len(mensaje_fragshooter_te_ha_matado)) = mensaje_fragshooter_te_ha_matado then
+    call screencapture(true)
+    exit sub
+end if
+if left(text, len(mensaje_fragshooter_has_matado)) = mensaje_fragshooter_has_matado then
+    esperandolevel = true
+    exit sub
+end if
+if esperandolevel then
+    if right(text, len(mensaje_fragshooter_puntos_de_experiencia)) = mensaje_fragshooter_puntos_de_experiencia then
+        if cint(mid(text, len(mensaje_fragshooter_has_ganado), (len(text) - (len(mensaje_fragshooter_puntos_de_experiencia) + len(mensaje_fragshooter_has_ganado))))) / 2 > clientsetup.bymurderedlevel then
+            call screencapture(true)
+        end if
+    end if
+end if
+esperandolevel = false
+end sub
+
+public function getstrenghtcolor() as long
+dim m as long
+m = 255 / maxatributos
+getstrenghtcolor = rgb(255 - (m * userfuerza), (m * userfuerza), 0)
+end function
+public function getdexteritycolor() as long
+dim m as long
+m = 255 / maxatributos
+getdexteritycolor = rgb(255, m * useragilidad, 0)
+end function
+
+public function getcharindexbyname(byval name as string) as integer
+dim i as long
+for i = 1 to lastchar
+    if charlist(i).nombre = name then
+        getcharindexbyname = i
+        exit function
+    end if
+next i
+end function
+
+public function esanuncio(byval forumtype as byte) as boolean
+'***************************************************
+'author: zama
+'last modification: 22/02/2010
+'returns true if the post is sticky.
+'***************************************************
+    select case forumtype
+        case eforummsgtype.iecaos_sticky
+            esanuncio = true
+            
+        case eforummsgtype.iegeneral_sticky
+            esanuncio = true
+            
+        case eforummsgtype.iereal_sticky
+            esanuncio = true
+            
+    end select
+    
+end function
+
+public function forumalignment(byval yforumtype as byte) as byte
+'***************************************************
+'author: zama
+'last modification: 01/03/2010
+'returns the forum alignment.
+'***************************************************
+    select case yforumtype
+        case eforummsgtype.iecaos, eforummsgtype.iecaos_sticky
+            forumalignment = eforumtype.iecaos
+            
+        case eforummsgtype.iegeneral, eforummsgtype.iegeneral_sticky
+            forumalignment = eforumtype.iegeneral
+            
+        case eforummsgtype.iereal, eforummsgtype.iereal_sticky
+            forumalignment = eforumtype.iereal
+            
+    end select
+    
+end function
+

@@ -86,10 +86,12 @@ public property let puntosantifaccion(byval p as integer)
     call writevar(guildinfofile, "guild" & p_guildnumber, "antifaccion", cstr(p))
 end property
 
-public sub cambiaralineacion(byval nuevaalineacion as alineacion_guild)
+public function cambiaralineacion(byval nuevaalineacion as alineacion_guild) as boolean
     p_alineacion = nuevaalineacion
     call writevar(guildinfofile, "guild" & p_guildnumber, "alineacion", alineacion2string(p_alineacion))
-end sub
+    
+    if p_alineacion = alineacion_neutro then cambiaralineacion = true
+end function
 
 '
 'inicializadores
@@ -230,6 +232,10 @@ end function
 
 public sub conectarmiembro(byval userindex as integer)
     p_onlinemembers.add userindex
+
+    with userlist(userindex)
+        call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha conectado."))
+    end with
 end sub
 
 public sub desconectarmiembro(byval userindex as integer)
@@ -237,9 +243,16 @@ dim i   as integer
     for i = 1 to p_onlinemembers.count
         if p_onlinemembers.item(i) = userindex then
             p_onlinemembers.remove i
+            
+            with userlist(userindex)
+                call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha desconectado."))
+            end with
+
             exit sub
         end if
     next i
+    
+
 end sub
 
 public sub aceptarnuevomiembro(byref nombre as string)
@@ -475,8 +488,6 @@ public function getdesc() as string
     getdesc = getvar(guildinfofile, "guild" & p_guildnumber, "desc")
 end function
 
-
-
 '
 '
 'elecciones
@@ -581,7 +592,7 @@ dim i               as long
 
             if cantganadores > 1 then
                 'empate en la votacion
-                call setguildnews("*empate en la votaci�n. " & ganador & " con " & cantganadores & " votos ganaron las elecciones del clan")
+                call setguildnews("*empate en la votaci�n. " & ganador & " con " & cantganadores & " votos ganaron las elecciones del clan.")
             elseif cantganadores = 1 then
                 list = me.getmemberlist()
                 
@@ -822,6 +833,3 @@ private sub replaceinvalidchars(byref s as string)
         s = replace(s, "�", vbnullstring)   'morgo usaba esto como "separador"
     end if
 end sub
-
-
-

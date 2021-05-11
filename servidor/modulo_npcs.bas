@@ -45,6 +45,12 @@ attribute vb_name = "npcs"
 option explicit
 
 sub quitarmascota(byval userindex as integer, byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim i as integer
     
     for i = 1 to maxmascotas
@@ -59,6 +65,12 @@ sub quitarmascota(byval userindex as integer, byval npcindex as integer)
 end sub
 
 sub quitarmascotanpc(byval maestro as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     npclist(maestro).mascotas = npclist(maestro).mascotas - 1
 end sub
 
@@ -74,9 +86,11 @@ on error goto errhandler
     dim minpc as npc
     minpc = npclist(npcindex)
     dim eracriminal as boolean
+    dim ispretoriano as boolean
    
     if (espretoriano(npcindex) = 4) then
         'solo nos importa si fue matado en el mapa pretoriano.
+        ispretoriano = true
         if npclist(npcindex).pos.map = mapa_pretoriano then
             'seteamos todos estos 'flags' acorde para que cambien solos de alcoba
             dim i as integer
@@ -101,6 +115,7 @@ on error goto errhandler
             call crearclanpretoriano(npclist(npcindex).pos.x)
         end if
     elseif espretoriano(npcindex) > 0 then
+        ispretoriano = true
         if npclist(npcindex).pos.map = mapa_pretoriano then
             npclist(npcindex).invent.armoureqpslot = 0
             pretorianosvivos = pretorianosvivos - 1
@@ -110,88 +125,99 @@ on error goto errhandler
     'quitamos el npc
     call quitarnpc(npcindex)
     
+    
     if userindex > 0 then ' lo mato un usuario?
-        if minpc.flags.snd3 > 0 then
-            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(minpc.flags.snd3, minpc.pos.x, minpc.pos.y))
-        end if
-        userlist(userindex).flags.targetnpc = 0
-        userlist(userindex).flags.targetnpctipo = enpctype.comun
+        with userlist(userindex)
         
-        'el user que lo mato tiene mascotas?
-        if userlist(userindex).nromascotas > 0 then
-            dim t as integer
-            for t = 1 to maxmascotas
-                  if userlist(userindex).mascotasindex(t) > 0 then
-                      if npclist(userlist(userindex).mascotasindex(t)).targetnpc = npcindex then
-                              call followamo(userlist(userindex).mascotasindex(t))
+            if minpc.flags.snd3 > 0 then
+                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(minpc.flags.snd3, minpc.pos.x, minpc.pos.y))
+            end if
+            .flags.targetnpc = 0
+            .flags.targetnpctipo = enpctype.comun
+            
+            'el user que lo mato tiene mascotas?
+            if .nromascotas > 0 then
+                dim t as integer
+                for t = 1 to maxmascotas
+                      if .mascotasindex(t) > 0 then
+                          if npclist(.mascotasindex(t)).targetnpc = npcindex then
+                                  call followamo(.mascotasindex(t))
+                          end if
                       end if
-                  end if
-            next t
-        end if
-        
-        '[kevin]
-        if minpc.flags.expcount > 0 then
-            if userlist(userindex).partyindex > 0 then
-                call mdparty.obtenerexito(userindex, minpc.flags.expcount, minpc.pos.map, minpc.pos.x, minpc.pos.y)
-            else
-                userlist(userindex).stats.exp = userlist(userindex).stats.exp + minpc.flags.expcount
-                if userlist(userindex).stats.exp > maxexp then _
-                    userlist(userindex).stats.exp = maxexp
-                call writeconsolemsg(userindex, "has ganado " & minpc.flags.expcount & " puntos de experiencia.", fonttypenames.fonttype_fight)
+                next t
             end if
-            minpc.flags.expcount = 0
-        end if
-        
-        '[/kevin]
-        call writeconsolemsg(userindex, "�has matado a la criatura!", fonttypenames.fonttype_fight)
-        if userlist(userindex).stats.npcsmuertos < 32000 then _
-            userlist(userindex).stats.npcsmuertos = userlist(userindex).stats.npcsmuertos + 1
-        
-        eracriminal = criminal(userindex)
-        
-        if minpc.stats.alineacion = 0 then
-            if minpc.numero = guardias then
-                userlist(userindex).reputacion.noblerep = 0
-                userlist(userindex).reputacion.pleberep = 0
-                userlist(userindex).reputacion.asesinorep = userlist(userindex).reputacion.asesinorep + 500
-                if userlist(userindex).reputacion.asesinorep > maxrep then _
-                    userlist(userindex).reputacion.asesinorep = maxrep
+            
+            '[kevin]
+            if minpc.flags.expcount > 0 then
+                if .partyindex > 0 then
+                    call mdparty.obtenerexito(userindex, minpc.flags.expcount, minpc.pos.map, minpc.pos.x, minpc.pos.y)
+                else
+                    .stats.exp = .stats.exp + minpc.flags.expcount
+                    if .stats.exp > maxexp then _
+                        .stats.exp = maxexp
+                    call writeconsolemsg(userindex, "has ganado " & minpc.flags.expcount & " puntos de experiencia.", fonttypenames.fonttype_fight)
+                end if
+                minpc.flags.expcount = 0
             end if
-            if minpc.maestrouser = 0 then
-                userlist(userindex).reputacion.asesinorep = userlist(userindex).reputacion.asesinorep + vlasesino
-                if userlist(userindex).reputacion.asesinorep > maxrep then _
-                    userlist(userindex).reputacion.asesinorep = maxrep
+            
+            '[/kevin]
+            call writeconsolemsg(userindex, "�has matado a la criatura!", fonttypenames.fonttype_fight)
+            if .stats.npcsmuertos < 32000 then _
+                .stats.npcsmuertos = .stats.npcsmuertos + 1
+            
+            eracriminal = criminal(userindex)
+            
+            if minpc.stats.alineacion = 0 then
+            
+                if minpc.numero = guardias then
+                    .reputacion.noblerep = 0
+                    .reputacion.pleberep = 0
+                    .reputacion.asesinorep = .reputacion.asesinorep + 500
+                    if .reputacion.asesinorep > maxrep then _
+                        .reputacion.asesinorep = maxrep
+                end if
+                
+                if minpc.maestrouser = 0 then
+                    .reputacion.asesinorep = .reputacion.asesinorep + vlasesino
+                    if .reputacion.asesinorep > maxrep then _
+                        .reputacion.asesinorep = maxrep
+                end if
+            elseif minpc.stats.alineacion = 1 then
+                .reputacion.pleberep = .reputacion.pleberep + vlcazador
+                if .reputacion.pleberep > maxrep then _
+                    .reputacion.pleberep = maxrep
+                    
+            elseif minpc.stats.alineacion = 2 then
+                .reputacion.noblerep = .reputacion.noblerep + vlasesino / 2
+                if .reputacion.noblerep > maxrep then _
+                    .reputacion.noblerep = maxrep
+                    
+            elseif minpc.stats.alineacion = 4 then
+                .reputacion.pleberep = .reputacion.pleberep + vlcazador
+                if .reputacion.pleberep > maxrep then _
+                    .reputacion.pleberep = maxrep
+                    
             end if
-        elseif minpc.stats.alineacion = 1 then
-            userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlcazador
-            if userlist(userindex).reputacion.pleberep > maxrep then _
-                userlist(userindex).reputacion.pleberep = maxrep
-        elseif minpc.stats.alineacion = 2 then
-            userlist(userindex).reputacion.noblerep = userlist(userindex).reputacion.noblerep + vlasesino / 2
-            if userlist(userindex).reputacion.noblerep > maxrep then _
-                userlist(userindex).reputacion.noblerep = maxrep
-        elseif minpc.stats.alineacion = 4 then
-            userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlcazador
-            if userlist(userindex).reputacion.pleberep > maxrep then _
-                userlist(userindex).reputacion.pleberep = maxrep
-        end if
-        if criminal(userindex) and esarmada(userindex) then call expulsarfaccionreal(userindex)
-        if not criminal(userindex) and escaos(userindex) then call expulsarfaccioncaos(userindex)
-        
-        if eracriminal and not criminal(userindex) then
-            call refreshcharstatus(userindex)
-        elseif not eracriminal and criminal(userindex) then
-            call refreshcharstatus(userindex)
-        end if
-        
-        call checkuserlevel(userindex)
+            
+            if criminal(userindex) and esarmada(userindex) then call expulsarfaccionreal(userindex)
+            if not criminal(userindex) and escaos(userindex) then call expulsarfaccioncaos(userindex)
+            
+            if eracriminal and not criminal(userindex) then
+                call refreshcharstatus(userindex)
+            elseif not eracriminal and criminal(userindex) then
+                call refreshcharstatus(userindex)
+            end if
+            
+            call checkuserlevel(userindex)
+            
+        end with
     end if ' userindex > 0
    
     if minpc.maestrouser = 0 then
         'tiramos el oro
-        call npctiraroro(minpc)
+       ' call npctiraroro(minpc)
         'tiramos el inventario
-        call npc_tirar_items(minpc)
+        call npc_tirar_items(minpc, ispretoriano)
         'respawn o no
         call respawnnpc(minpc)
     end if
@@ -205,6 +231,12 @@ errhandler:
 end sub
 
 private sub resetnpcflags(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'clear the npc's flags
     
     with npclist(npcindex).flags
@@ -236,6 +268,12 @@ private sub resetnpcflags(byval npcindex as integer)
 end sub
 
 private sub resetnpccounters(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with npclist(npcindex).contadores
         .paralisis = 0
         .tiempoexistencia = 0
@@ -243,6 +281,12 @@ private sub resetnpccounters(byval npcindex as integer)
 end sub
 
 private sub resetnpccharinfo(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with npclist(npcindex).char
         .body = 0
         .cascoanim = 0
@@ -257,6 +301,12 @@ private sub resetnpccharinfo(byval npcindex as integer)
 end sub
 
 private sub resetnpccriatures(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim j as long
     
     with npclist(npcindex)
@@ -270,6 +320,12 @@ private sub resetnpccriatures(byval npcindex as integer)
 end sub
 
 sub resetexpresiones(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim j as long
     
     with npclist(npcindex)
@@ -282,6 +338,12 @@ sub resetexpresiones(byval npcindex as integer)
 end sub
 
 private sub resetnpcmaininfo(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with npclist(npcindex)
         .attackable = 0
         .canattack = 0
@@ -330,11 +392,17 @@ private sub resetnpcmaininfo(byval npcindex as integer)
 end sub
 
 public sub quitarnpc(byval npcindex as integer)
-
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 16/11/2009
+'16/11/2009: zama - now npcs lose their owner
+'***************************************************
 on error goto errhandler
 
     with npclist(npcindex)
         .flags.npcactive = false
+        
+        .owner = 0 ' murio, no necesita mas due�os :p.
         
         if inmapbounds(.pos.map, .pos.x, .pos.y) then
             call erasenpcchar(npcindex)
@@ -366,7 +434,48 @@ errhandler:
     call logerror("error en quitarnpc")
 end sub
 
+public sub quitarpet(byval userindex as integer, byval npcindex as integer)
+'***************************************************
+'autor: zama
+'last modification: 18/11/2009
+'kills a pet
+'***************************************************
+on error goto errhandler
+
+    dim i as integer
+    dim petindex as integer
+
+    with userlist(userindex)
+        
+        ' busco el indice de la mascota
+        for i = 1 to maxmascotas
+            if .mascotasindex(i) = npcindex then petindex = i
+        next i
+        
+        ' poco probable que pase, pero por las dudas..
+        if petindex = 0 then exit sub
+        
+        ' limpio el slot de la mascota
+        .nromascotas = .nromascotas - 1
+        .mascotasindex(petindex) = 0
+        .mascotastype(petindex) = 0
+        
+        ' elimino la mascota
+        call quitarnpc(npcindex)
+    end with
+    
+    exit sub
+
+errhandler:
+    call logerror("error en quitarpet. error: " & err.number & " desc: " & err.description & " npcindex: " & npcindex & " userindex: " & userindex & " petindex: " & petindex)
+end sub
+
 private function testspawntrigger(pos as worldpos, optional puedeagua as boolean = false) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
     
     if legalpos(pos.map, pos.x, pos.y, puedeagua) then
         testspawntrigger = _
@@ -374,11 +483,16 @@ private function testspawntrigger(pos as worldpos, optional puedeagua as boolean
         mapdata(pos.map, pos.x, pos.y).trigger <> 2 and _
         mapdata(pos.map, pos.x, pos.y).trigger <> 1
     end if
-
+    
 end function
 
 sub crearnpc(nronpc as integer, mapa as integer, origpos as worldpos)
-'call logtarea("sub crearnpc")
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'crea un npc del tipo nronpc
 
 dim pos as worldpos
@@ -444,6 +558,8 @@ dim y as integer
             
             end if
                 
+                
+                
             'for debug
             iteraciones = iteraciones + 1
             if iteraciones > maxspawnattemps then
@@ -474,20 +590,26 @@ dim y as integer
                 end if
             end if
         loop
-        
+            
         'asignamos las nuevas coordenas
         map = newpos.map
         x = npclist(nindex).pos.x
         y = npclist(nindex).pos.y
     end if
-    
+            
     'crea el npc
     call makenpcchar(true, map, nindex, map, x, y)
-
+            
 end sub
 
 public sub makenpcchar(byval tomap as boolean, sndindex as integer, npcindex as integer, byval map as integer, byval x as integer, byval y as integer)
-dim charindex as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+    
+    dim charindex as integer
 
     if npclist(npcindex).char.charindex = 0 then
         charindex = nextopencharindex
@@ -506,6 +628,12 @@ dim charindex as integer
 end sub
 
 public sub changenpcchar(byval npcindex as integer, byval body as integer, byval head as integer, byval heading as eheading)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if npcindex > 0 then
         with npclist(npcindex).char
             .body = body
@@ -518,6 +646,11 @@ public sub changenpcchar(byval npcindex as integer, byval body as integer, byval
 end sub
 
 private sub erasenpcchar(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 if npclist(npcindex).char.charindex <> 0 then charlist(npclist(npcindex).char.charindex) = 0
 
@@ -611,7 +744,11 @@ errh:
 end sub
 
 function nextopennpc() as integer
-'call logtarea("sub nextopennpc")
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 on error goto errhandler
     dim loopc as long
@@ -629,6 +766,11 @@ errhandler:
 end function
 
 sub npcenvenenaruser(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 dim n as integer
 n = randomnumber(1, 100)
@@ -713,12 +855,23 @@ spawnnpc = nindex
 end function
 
 sub respawnnpc(minpc as npc)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-if (minpc.flags.respawn = 0) then call crearnpc(minpc.numero, minpc.pos.map, minpc.orig)
+    if (minpc.flags.respawn = 0) then call crearnpc(minpc.numero, minpc.pos.map, minpc.orig)
 
 end sub
 
 private sub npctiraroro(byref minpc as npc)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'si el npc tiene oro lo tiramos
     if minpc.givegld > 0 then
         dim miobj as obj
@@ -739,6 +892,11 @@ private sub npctiraroro(byref minpc as npc)
 end sub
 
 public function opennpc(byval npcnumber as integer, optional byval respawn = true) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 '###################################################
 '#               atencion peligro                  #
@@ -830,6 +988,13 @@ public function opennpc(byval npcnumber as integer, optional byval respawn = tru
             .invent.object(loopc).amount = val(readfield(2, ln, 45))
         next loopc
         
+        for loopc = 1 to max_npc_drops
+            ln = leer.getvalue("npc" & npcnumber, "drop" & loopc)
+            .drop(loopc).objindex = val(readfield(1, ln, 45))
+            .drop(loopc).amount = val(readfield(2, ln, 45))
+        next loopc
+
+        
         .flags.lanzaspells = val(leer.getvalue("npc" & npcnumber, "lanzaspells"))
         if .flags.lanzaspells > 0 then redim .spells(1 to .flags.lanzaspells)
         for loopc = 1 to .flags.lanzaspells
@@ -873,6 +1038,8 @@ public function opennpc(byval npcnumber as integer, optional byval respawn = tru
         
         'tipo de items con los que comercia
         .tipoitems = val(leer.getvalue("npc" & npcnumber, "tipoitems"))
+        
+        .ciudad = val(leer.getvalue("npc" & npcnumber, "ciudad"))
     end with
     
     'update contadores de npcs
@@ -884,6 +1051,12 @@ public function opennpc(byval npcnumber as integer, optional byval respawn = tru
 end function
 
 public sub dofollow(byval npcindex as integer, byval username as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with npclist(npcindex)
         if .flags.follow then
             .flags.attackedby = vbnullstring
@@ -900,11 +1073,29 @@ public sub dofollow(byval npcindex as integer, byval username as string)
 end sub
 
 public sub followamo(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     with npclist(npcindex)
         .flags.follow = true
         .movement = tipoai.sigueamo
         .hostile = 0
         .target = 0
         .targetnpc = 0
+    end with
+end sub
+
+public sub validarpermanencianpc(byval npcindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'chequea si el npc continua perteneciendo a alg�n usuario
+'***************************************************
+
+    with npclist(npcindex)
+        if intervaloperdionpc(.owner) then call perdionpc(.owner)
     end with
 end sub

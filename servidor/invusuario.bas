@@ -30,6 +30,11 @@ attribute vb_name = "invusuario"
 option explicit
 
 public function tieneobjetosrobables(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 '17/09/02
 'agregue que la funci�n se asegure que el objeto no es un barco
@@ -39,7 +44,7 @@ on error resume next
 dim i as integer
 dim objindex as integer
 
-for i = 1 to max_inventory_slots
+for i = 1 to userlist(userindex).currentinventoryslots
     objindex = userlist(userindex).invent.object(i).objindex
     if objindex > 0 then
             if (objdata(objindex).objtype <> eobjtype.otllaves and _
@@ -50,31 +55,34 @@ for i = 1 to max_inventory_slots
     
     end if
 next i
-
-
 end function
 
-function clasepuedeusaritem(byval userindex as integer, byval objindex as integer) as boolean
+function clasepuedeusaritem(byval userindex as integer, byval objindex as integer, optional byref smotivo as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - agrego el motivo por el que no puede equipar/usar el item.
+'***************************************************
+
 on error goto manejador
 
-'call logtarea("clasepuedeusaritem")
-
-dim flag as boolean
-
-'admins can use anything!
-if userlist(userindex).flags.privilegios and playertype.user then
-    if objdata(objindex).claseprohibida(1) <> 0 then
-        dim i as integer
-        for i = 1 to numclases
-            if objdata(objindex).claseprohibida(i) = userlist(userindex).clase then
-                clasepuedeusaritem = false
-                exit function
-            end if
-        next i
+    dim flag as boolean
+    
+    'admins can use anything!
+    if userlist(userindex).flags.privilegios and playertype.user then
+        if objdata(objindex).claseprohibida(1) <> 0 then
+            dim i as integer
+            for i = 1 to numclases
+                if objdata(objindex).claseprohibida(i) = userlist(userindex).clase then
+                    clasepuedeusaritem = false
+                    smotivo = "tu clase no puede usar este objeto."
+                    exit function
+                end if
+            next i
+        end if
     end if
-end if
-
-clasepuedeusaritem = true
+    
+    clasepuedeusaritem = true
 
 exit function
 
@@ -83,74 +91,92 @@ manejador:
 end function
 
 sub quitarnewbieobj(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim j as integer
-for j = 1 to max_inventory_slots
-        if userlist(userindex).invent.object(j).objindex > 0 then
+
+with userlist(userindex)
+    for j = 1 to userlist(userindex).currentinventoryslots
+        if .invent.object(j).objindex > 0 then
              
-             if objdata(userlist(userindex).invent.object(j).objindex).newbie = 1 then _
+             if objdata(.invent.object(j).objindex).newbie = 1 then _
                     call quitaruserinvitem(userindex, j, max_inventory_objs)
                     call updateuserinv(false, userindex, j)
         
         end if
-next j
-
-'[barrin 17-12-03] si el usuario dej� de ser newbie, y estaba en el newbie dungeon
-'es transportado a su hogar de origen ;)
-if ucase$(mapinfo(userlist(userindex).pos.map).restringir) = "newbie" then
+    next j
     
-    dim dedonde as worldpos
+    '[barrin 17-12-03] si el usuario dej� de ser newbie, y estaba en el newbie dungeon
+    'es transportado a su hogar de origen ;)
+    if ucase$(mapinfo(.pos.map).restringir) = "newbie" then
+        
+        dim dedonde as worldpos
+        
+        select case .hogar
+            case eciudad.clindos 'vamos a tener que ir por todo el desierto... uff!
+                dedonde = lindos
+            case eciudad.cullathorpe
+                dedonde = ullathorpe
+            case eciudad.cbanderbill
+                dedonde = banderbill
+            case else
+                dedonde = nix
+        end select
+        
+        call warpuserchar(userindex, dedonde.map, dedonde.x, dedonde.y, true)
     
-    select case userlist(userindex).hogar
-        case eciudad.clindos 'vamos a tener que ir por todo el desierto... uff!
-            dedonde = lindos
-        case eciudad.cullathorpe
-            dedonde = ullathorpe
-        case eciudad.cbanderbill
-            dedonde = banderbill
-        case else
-            dedonde = nix
-    end select
-    
-    call warpuserchar(userindex, dedonde.map, dedonde.x, dedonde.y, true)
-
-end if
-'[/barrin]
+    end if
+    '[/barrin]
+end with
 
 end sub
 
 sub limpiarinventario(byval userindex as integer)
-
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 dim j as integer
-for j = 1 to max_inventory_slots
-        userlist(userindex).invent.object(j).objindex = 0
-        userlist(userindex).invent.object(j).amount = 0
-        userlist(userindex).invent.object(j).equipped = 0
-        
-next
 
-userlist(userindex).invent.nroitems = 0
-
-userlist(userindex).invent.armoureqpobjindex = 0
-userlist(userindex).invent.armoureqpslot = 0
-
-userlist(userindex).invent.weaponeqpobjindex = 0
-userlist(userindex).invent.weaponeqpslot = 0
-
-userlist(userindex).invent.cascoeqpobjindex = 0
-userlist(userindex).invent.cascoeqpslot = 0
-
-userlist(userindex).invent.escudoeqpobjindex = 0
-userlist(userindex).invent.escudoeqpslot = 0
-
-userlist(userindex).invent.anilloeqpobjindex = 0
-userlist(userindex).invent.anilloeqpslot = 0
-
-userlist(userindex).invent.municioneqpobjindex = 0
-userlist(userindex).invent.municioneqpslot = 0
-
-userlist(userindex).invent.barcoobjindex = 0
-userlist(userindex).invent.barcoslot = 0
+with userlist(userindex)
+    for j = 1 to .currentinventoryslots
+        .invent.object(j).objindex = 0
+        .invent.object(j).amount = 0
+        .invent.object(j).equipped = 0
+    next j
+    
+    .invent.nroitems = 0
+    
+    .invent.armoureqpobjindex = 0
+    .invent.armoureqpslot = 0
+    
+    .invent.weaponeqpobjindex = 0
+    .invent.weaponeqpslot = 0
+    
+    .invent.cascoeqpobjindex = 0
+    .invent.cascoeqpslot = 0
+    
+    .invent.escudoeqpobjindex = 0
+    .invent.escudoeqpslot = 0
+    
+    .invent.anilloeqpobjindex = 0
+    .invent.anilloeqpslot = 0
+    
+    .invent.municioneqpobjindex = 0
+    .invent.municioneqpslot = 0
+    
+    .invent.barcoobjindex = 0
+    .invent.barcoslot = 0
+    
+    .invent.mochilaeqpobjindex = 0
+    .invent.mochilaeqpslot = 0
+end with
 
 end sub
 
@@ -164,93 +190,100 @@ on error goto errhandler
 
 'if cantidad > 100000 then exit sub
 
-'si el pjta tiene oro lo tiramos
-if (cantidad > 0) and (cantidad <= userlist(userindex).stats.gld) then
-        dim i as byte
-        dim miobj as obj
-        'info debug
-        dim loops as integer
-        
-        'seguridad alkon (guardo el oro tirado si supera los 50k)
-        if cantidad > 50000 then
-            dim j as integer
-            dim k as integer
-            dim m as integer
-            dim cercanos as string
-            m = userlist(userindex).pos.map
-            for j = userlist(userindex).pos.x - 10 to userlist(userindex).pos.x + 10
-                for k = userlist(userindex).pos.y - 10 to userlist(userindex).pos.y + 10
-                    if inmapbounds(m, j, k) then
-                        if mapdata(m, j, k).userindex > 0 then
-                            cercanos = cercanos & userlist(mapdata(m, j, k).userindex).name & ","
-                        end if
-                    end if
-                next k
-            next j
-            call logdesarrollo(userlist(userindex).name & " tira oro. cercanos: " & cercanos)
-        end if
-        '/seguridad
-        dim extra as long
-        dim teniaoro as long
-        teniaoro = userlist(userindex).stats.gld
-        if cantidad > 500000 then 'para evitar explotar demasiado
-            extra = cantidad - 500000
-            cantidad = 500000
-        end if
-        
-        do while (cantidad > 0)
-            
-            if cantidad > max_inventory_objs and userlist(userindex).stats.gld > max_inventory_objs then
-                miobj.amount = max_inventory_objs
-                cantidad = cantidad - miobj.amount
-            else
-                miobj.amount = cantidad
-                cantidad = cantidad - miobj.amount
-            end if
-
-            miobj.objindex = ioro
-            
-            if esgm(userindex) then call loggm(userlist(userindex).name, "tiro cantidad:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name)
-            dim auxpos as worldpos
-            
-            if userlist(userindex).clase = eclass.pirat and userlist(userindex).invent.barcoobjindex = 476 then
-                auxpos = tiraritemalpiso(userlist(userindex).pos, miobj, false)
-                if auxpos.x <> 0 and auxpos.y <> 0 then
-                    userlist(userindex).stats.gld = userlist(userindex).stats.gld - miobj.amount
-                end if
-            else
-                auxpos = tiraritemalpiso(userlist(userindex).pos, miobj, true)
-                if auxpos.x <> 0 and auxpos.y <> 0 then
-                    userlist(userindex).stats.gld = userlist(userindex).stats.gld - miobj.amount
-                end if
-            end if
-            
+with userlist(userindex)
+    'si el pjta tiene oro lo tiramos
+    if (cantidad > 0) and (cantidad <= .stats.gld) then
+            dim i as byte
+            dim miobj as obj
             'info debug
-            loops = loops + 1
-            if loops > 100 then
-                logerror ("error en tiraroro")
-                exit sub
+            dim loops as integer
+            
+            'seguridad alkon (guardo el oro tirado si supera los 50k)
+            if cantidad > 50000 then
+                dim j as integer
+                dim k as integer
+                dim m as integer
+                dim cercanos as string
+                m = .pos.map
+                for j = .pos.x - 10 to .pos.x + 10
+                    for k = .pos.y - 10 to .pos.y + 10
+                        if inmapbounds(m, j, k) then
+                            if mapdata(m, j, k).userindex > 0 then
+                                cercanos = cercanos & userlist(mapdata(m, j, k).userindex).name & ","
+                            end if
+                        end if
+                    next k
+                next j
+                call logdesarrollo(.name & " tira oro. cercanos: " & cercanos)
+            end if
+            '/seguridad
+            dim extra as long
+            dim teniaoro as long
+            teniaoro = .stats.gld
+            if cantidad > 500000 then 'para evitar explotar demasiado
+                extra = cantidad - 500000
+                cantidad = 500000
             end if
             
-        loop
-        if teniaoro = userlist(userindex).stats.gld then extra = 0
-        if extra > 0 then
-            userlist(userindex).stats.gld = userlist(userindex).stats.gld - extra
-        end if
+            do while (cantidad > 0)
+                
+                if cantidad > max_inventory_objs and .stats.gld > max_inventory_objs then
+                    miobj.amount = max_inventory_objs
+                    cantidad = cantidad - miobj.amount
+                else
+                    miobj.amount = cantidad
+                    cantidad = cantidad - miobj.amount
+                end if
     
-end if
+                miobj.objindex = ioro
+                
+                if esgm(userindex) then call loggm(.name, "tir� cantidad:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name)
+                dim auxpos as worldpos
+                
+                if .clase = eclass.pirat and .invent.barcoobjindex = 476 then
+                    auxpos = tiraritemalpiso(.pos, miobj, false)
+                    if auxpos.x <> 0 and auxpos.y <> 0 then
+                        .stats.gld = .stats.gld - miobj.amount
+                    end if
+                else
+                    auxpos = tiraritemalpiso(.pos, miobj, true)
+                    if auxpos.x <> 0 and auxpos.y <> 0 then
+                        .stats.gld = .stats.gld - miobj.amount
+                    end if
+                end if
+                
+                'info debug
+                loops = loops + 1
+                if loops > 100 then
+                    logerror ("error en tiraroro")
+                    exit sub
+                end if
+                
+            loop
+            if teniaoro = .stats.gld then extra = 0
+            if extra > 0 then
+                .stats.gld = .stats.gld - extra
+            end if
+        
+    end if
+end with
 
 exit sub
 
 errhandler:
-
+    call logerror("error en tiraroro. error " & err.number & " : " & err.description)
 end sub
 
 sub quitaruserinvitem(byval userindex as integer, byval slot as byte, byval cantidad as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 on error goto errhandler
 
-    if slot < 1 or slot > max_inventory_slots then exit sub
+    if slot < 1 or slot > userlist(userindex).currentinventoryslots then exit sub
     
     with userlist(userindex).invent.object(slot)
         if .amount <= cantidad and .equipped = 1 then
@@ -275,36 +308,43 @@ errhandler:
 end sub
 
 sub updateuserinv(byval updateall as boolean, byval userindex as integer, byval slot as byte)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 on error goto errhandler
 
 dim nullobj as userobj
 dim loopc as long
 
-'actualiza un solo slot
-if not updateall then
-
-    'actualiza el inventario
-    if userlist(userindex).invent.object(slot).objindex > 0 then
-        call changeuserinv(userindex, slot, userlist(userindex).invent.object(slot))
-    else
-        call changeuserinv(userindex, slot, nullobj)
-    end if
-
-else
-
-'actualiza todos los slots
-    for loopc = 1 to max_inventory_slots
+with userlist(userindex)
+    'actualiza un solo slot
+    if not updateall then
+    
         'actualiza el inventario
-        if userlist(userindex).invent.object(loopc).objindex > 0 then
-            call changeuserinv(userindex, loopc, userlist(userindex).invent.object(loopc))
+        if .invent.object(slot).objindex > 0 then
+            call changeuserinv(userindex, slot, .invent.object(slot))
         else
-            call changeuserinv(userindex, loopc, nullobj)
+            call changeuserinv(userindex, slot, nullobj)
         end if
-    next loopc
-end if
-
-exit sub
+    
+    else
+    
+    'actualiza todos los slots
+        for loopc = 1 to .currentinventoryslots
+            'actualiza el inventario
+            if .invent.object(loopc).objindex > 0 then
+                call changeuserinv(userindex, loopc, .invent.object(loopc))
+            else
+                call changeuserinv(userindex, loopc, nullobj)
+            end if
+        next loopc
+    end if
+    
+    exit sub
+end with
 
 errhandler:
     call logerror("error en updateuserinv. error " & err.number & " : " & err.description)
@@ -312,538 +352,682 @@ errhandler:
 end sub
 
 sub dropobj(byval userindex as integer, byval slot as byte, byval num as integer, byval map as integer, byval x as integer, byval y as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 dim obj as obj
 
-if num > 0 then
-  
-  if num > userlist(userindex).invent.object(slot).amount then num = userlist(userindex).invent.object(slot).amount
-  
-  'check objeto en el suelo
-  if mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex = 0 or mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex = userlist(userindex).invent.object(slot).objindex then
-        obj.objindex = userlist(userindex).invent.object(slot).objindex
+with userlist(userindex)
+    if num > 0 then
+    
+        if num > .invent.object(slot).amount then num = .invent.object(slot).amount
         
-        if num + mapdata(userlist(userindex).pos.map, x, y).objinfo.amount > max_inventory_objs then
-            num = max_inventory_objs - mapdata(userlist(userindex).pos.map, x, y).objinfo.amount
-        end if
-        
+        obj.objindex = .invent.object(slot).objindex
         obj.amount = num
         
-        call makeobj(obj, map, x, y)
-        call quitaruserinvitem(userindex, slot, num)
-        call updateuserinv(false, userindex, slot)
-        
-        if objdata(obj.objindex).objtype = eobjtype.otbarcos then
-            call writeconsolemsg(userindex, "��atencion!! �acabas de tirar tu barca!", fonttypenames.fonttype_talk)
+        if (itemnewbie(obj.objindex) and (.flags.privilegios and playertype.user)) then
+            call writeconsolemsg(userindex, "no puedes tirar objetos newbie.", fonttypenames.fonttype_info)
+            exit sub
         end if
         
-        if not userlist(userindex).flags.privilegios and playertype.user then call loggm(userlist(userindex).name, "tiro cantidad:" & num & " objeto:" & objdata(obj.objindex).name)
-        
-        'log de objetos que se tiran al piso. pablo (toxicwaste) 07/09/07
-        'es un objeto que tenemos que loguear?
-        if objdata(obj.objindex).log = 1 then
-            call logdesarrollo(userlist(userindex).name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
-        elseif obj.amount > 5000 then 'es mucha cantidad? > sub� a 5000 el minimo porque si no se llenaba el log de cosas al pedo. (niconz)
-        'si no es de los prohibidos de loguear, lo logueamos.
-            if objdata(obj.objindex).nolog <> 1 then
-                call logdesarrollo(userlist(userindex).name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
+        'check objeto en el suelo
+        if mapdata(.pos.map, x, y).objinfo.objindex = 0 or mapdata(.pos.map, x, y).objinfo.objindex = obj.objindex then
+            if num + mapdata(.pos.map, x, y).objinfo.amount > max_inventory_objs then
+                num = max_inventory_objs - mapdata(.pos.map, x, y).objinfo.amount
             end if
+            
+            call makeobj(obj, map, x, y)
+            call quitaruserinvitem(userindex, slot, num)
+            call updateuserinv(false, userindex, slot)
+            
+            if objdata(obj.objindex).objtype = eobjtype.otbarcos then
+                call writeconsolemsg(userindex, "��atenci�n!! �acabas de tirar tu barca!", fonttypenames.fonttype_talk)
+            end if
+            
+            if not .flags.privilegios and playertype.user then call loggm(.name, "tir� cantidad:" & num & " objeto:" & objdata(obj.objindex).name)
+            
+            'log de objetos que se tiran al piso. pablo (toxicwaste) 07/09/07
+            'es un objeto que tenemos que loguear?
+            if objdata(obj.objindex).log = 1 then
+                call logdesarrollo(.name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
+            elseif obj.amount > 5000 then 'es mucha cantidad? > sub� a 5000 el minimo porque si no se llenaba el log de cosas al pedo. (niconz)
+                'si no es de los prohibidos de loguear, lo logueamos.
+                if objdata(obj.objindex).nolog <> 1 then
+                    call logdesarrollo(.name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
+                end if
+            end if
+        else
+            call writeconsolemsg(userindex, "no hay espacio en el piso.", fonttypenames.fonttype_info)
         end if
-  else
-    call writeconsolemsg(userindex, "no hay espacio en el piso.", fonttypenames.fonttype_info)
-  end if
-    
-end if
+    end if
+end with
 
 end sub
 
 sub eraseobj(byval num as integer, byval map as integer, byval x as integer, byval y as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-mapdata(map, x, y).objinfo.amount = mapdata(map, x, y).objinfo.amount - num
-
-if mapdata(map, x, y).objinfo.amount <= 0 then
-    mapdata(map, x, y).objinfo.objindex = 0
-    mapdata(map, x, y).objinfo.amount = 0
+with mapdata(map, x, y)
+    .objinfo.amount = .objinfo.amount - num
     
-    call modsenddata.sendtoareabypos(map, x, y, preparemessageobjectdelete(x, y))
-end if
+    if .objinfo.amount <= 0 then
+        .objinfo.objindex = 0
+        .objinfo.amount = 0
+        
+        call modsenddata.sendtoareabypos(map, x, y, preparemessageobjectdelete(x, y))
+    end if
+end with
 
 end sub
 
 sub makeobj(byref obj as obj, byval map as integer, byval x as integer, byval y as integer)
-
-if obj.objindex > 0 and obj.objindex <= ubound(objdata) then
-
-    if mapdata(map, x, y).objinfo.objindex = obj.objindex then
-        mapdata(map, x, y).objinfo.amount = mapdata(map, x, y).objinfo.amount + obj.amount
-    else
-        mapdata(map, x, y).objinfo = obj
-        
-        call modsenddata.sendtoareabypos(map, x, y, preparemessageobjectcreate(objdata(obj.objindex).grhindex, x, y))
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+    
+    if obj.objindex > 0 and obj.objindex <= ubound(objdata) then
+    
+        with mapdata(map, x, y)
+            if .objinfo.objindex = obj.objindex then
+                .objinfo.amount = .objinfo.amount + obj.amount
+            else
+                .objinfo = obj
+                
+                call modsenddata.sendtoareabypos(map, x, y, preparemessageobjectcreate(objdata(obj.objindex).grhindex, x, y))
+            end if
+        end with
     end if
-end if
 
 end sub
 
 function meteritemeninventario(byval userindex as integer, byref miobj as obj) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error goto errhandler
 
-'call logtarea("meteritemeninventario")
- 
-dim x as integer
-dim y as integer
-dim slot as byte
-
-'�el user ya tiene un objeto del mismo tipo?
-slot = 1
-do until userlist(userindex).invent.object(slot).objindex = miobj.objindex and _
-         userlist(userindex).invent.object(slot).amount + miobj.amount <= max_inventory_objs
-   slot = slot + 1
-   if slot > max_inventory_slots then
-         exit do
-   end if
-loop
+    dim x as integer
+    dim y as integer
+    dim slot as byte
     
-'sino busca un slot vacio
-if slot > max_inventory_slots then
-   slot = 1
-   do until userlist(userindex).invent.object(slot).objindex = 0
-       slot = slot + 1
-       if slot > max_inventory_slots then
-           call writeconsolemsg(userindex, "no podes cargar mas objetos.", fonttypenames.fonttype_fight)
-           meteritemeninventario = false
-           exit function
-       end if
-   loop
-   userlist(userindex).invent.nroitems = userlist(userindex).invent.nroitems + 1
-end if
-    
-'mete el objeto
-if userlist(userindex).invent.object(slot).amount + miobj.amount <= max_inventory_objs then
-   'menor que max_inv_objs
-   userlist(userindex).invent.object(slot).objindex = miobj.objindex
-   userlist(userindex).invent.object(slot).amount = userlist(userindex).invent.object(slot).amount + miobj.amount
-else
-   userlist(userindex).invent.object(slot).amount = max_inventory_objs
-end if
-    
-meteritemeninventario = true
-       
-call updateuserinv(false, userindex, slot)
-
-
-exit function
-errhandler:
-
-end function
-
-
-sub getobj(byval userindex as integer)
-
-dim obj as objdata
-dim miobj as obj
-dim objpos as string
-
-'�hay algun obj?
-if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).objinfo.objindex > 0 then
-    '�esta permitido agarrar este obj?
-    if objdata(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).objinfo.objindex).agarrable <> 1 then
-        dim x as integer
-        dim y as integer
-        dim slot as byte
-        
-        x = userlist(userindex).pos.x
-        y = userlist(userindex).pos.y
-        obj = objdata(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).objinfo.objindex)
-        miobj.amount = mapdata(userlist(userindex).pos.map, x, y).objinfo.amount
-        miobj.objindex = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
-        
-        if meteritemeninventario(userindex, miobj) then
-            'quitamos el objeto
-            call eraseobj(mapdata(userlist(userindex).pos.map, x, y).objinfo.amount, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
-            if not userlist(userindex).flags.privilegios and playertype.user then call loggm(userlist(userindex).name, "agarro:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name)
+    with userlist(userindex)
+        '�el user ya tiene un objeto del mismo tipo?
+        slot = 1
+        do until .invent.object(slot).objindex = miobj.objindex and _
+                 .invent.object(slot).amount + miobj.amount <= max_inventory_objs
+           slot = slot + 1
+           if slot > .currentinventoryslots then
+                 exit do
+           end if
+        loop
             
-            'log de objetos que se agarran del piso. pablo (toxicwaste) 07/09/07
-            'es un objeto que tenemos que loguear?
-            if objdata(miobj.objindex).log = 1 then
-                objpos = " mapa: " & userlist(userindex).pos.map & " x: " & userlist(userindex).pos.x & " y: " & userlist(userindex).pos.y
-                call logdesarrollo(userlist(userindex).name & " junt� del piso " & miobj.amount & " " & objdata(miobj.objindex).name & objpos)
-            elseif miobj.amount > max_inventory_objs - 1000 then 'es mucha cantidad?
-                'si no es de los prohibidos de loguear, lo logueamos.
-                if objdata(miobj.objindex).nolog <> 1 then
-                    objpos = " mapa: " & userlist(userindex).pos.map & " x: " & userlist(userindex).pos.x & " y: " & userlist(userindex).pos.y
-                    call logdesarrollo(userlist(userindex).name & " junt� del piso " & miobj.amount & " " & objdata(miobj.objindex).name & objpos)
-                end if
+        'sino busca un slot vacio
+        if slot > .currentinventoryslots then
+           slot = 1
+           do until .invent.object(slot).objindex = 0
+               slot = slot + 1
+               if slot > .currentinventoryslots then
+                   call writeconsolemsg(userindex, "no puedes cargar m�s objetos.", fonttypenames.fonttype_fight)
+                   meteritemeninventario = false
+                   exit function
+               end if
+           loop
+           .invent.nroitems = .invent.nroitems + 1
+        end if
+    
+        if slot > max_normal_inventory_slots and slot < max_inventory_slots then
+            if not itemsecae(miobj.objindex) then
+                call writeconsolemsg(userindex, "no puedes contener objetos especiales en tu " & objdata(.invent.mochilaeqpobjindex).name & ".", fonttypenames.fonttype_fight)
+                meteritemeninventario = false
+                exit function
             end if
         end if
+        'mete el objeto
+        if .invent.object(slot).amount + miobj.amount <= max_inventory_objs then
+           'menor que max_inv_objs
+           .invent.object(slot).objindex = miobj.objindex
+           .invent.object(slot).amount = .invent.object(slot).amount + miobj.amount
+        else
+           .invent.object(slot).amount = max_inventory_objs
+        end if
+    end with
+    
+    meteritemeninventario = true
+           
+    call updateuserinv(false, userindex, slot)
+    
+    
+    exit function
+errhandler:
+    call logerror("error en meteritemeninventario. error " & err.number & " : " & err.description)
+end function
+
+sub getobj(byval userindex as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 18/12/2009
+'18/12/2009: zama - oro directo a la billetera.
+'***************************************************
+
+    dim obj as objdata
+    dim miobj as obj
+    dim objpos as string
+    
+    with userlist(userindex)
+        '�hay algun obj?
+        if mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex > 0 then
+            '�esta permitido agarrar este obj?
+            if objdata(mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex).agarrable <> 1 then
+                dim x as integer
+                dim y as integer
+                dim slot as byte
+                
+                x = .pos.x
+                y = .pos.y
+                
+                obj = objdata(mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex)
+                miobj.amount = mapdata(.pos.map, x, y).objinfo.amount
+                miobj.objindex = mapdata(.pos.map, x, y).objinfo.objindex
+                
+                ' oro directo a la billetera!
+                if obj.objtype = otguita then
+                    .stats.gld = .stats.gld + miobj.amount
+                    'quitamos el objeto
+                    call eraseobj(mapdata(.pos.map, x, y).objinfo.amount, .pos.map, .pos.x, .pos.y)
+                        
+                    call writeupdategold(userindex)
+                else
+                    if meteritemeninventario(userindex, miobj) then
+                    
+                        'quitamos el objeto
+                        call eraseobj(mapdata(.pos.map, x, y).objinfo.amount, .pos.map, .pos.x, .pos.y)
+                        if not .flags.privilegios and playertype.user then call loggm(.name, "agarro:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name)
         
-    end if
-else
-    call writeconsolemsg(userindex, "no hay nada aqu�.", fonttypenames.fonttype_info)
-end if
+                        'log de objetos que se agarran del piso. pablo (toxicwaste) 07/09/07
+                        'es un objeto que tenemos que loguear?
+                        if objdata(miobj.objindex).log = 1 then
+                            objpos = " mapa: " & .pos.map & " x: " & .pos.x & " y: " & .pos.y
+                            call logdesarrollo(.name & " junt� del piso " & miobj.amount & " " & objdata(miobj.objindex).name & objpos)
+                        elseif miobj.amount > max_inventory_objs - 1000 then 'es mucha cantidad?
+                            'si no es de los prohibidos de loguear, lo logueamos.
+                            if objdata(miobj.objindex).nolog <> 1 then
+                                objpos = " mapa: " & .pos.map & " x: " & .pos.x & " y: " & .pos.y
+                                call logdesarrollo(.name & " junt� del piso " & miobj.amount & " " & objdata(miobj.objindex).name & objpos)
+                            end if
+                        end if
+                    end if
+                end if
+            end if
+        else
+            call writeconsolemsg(userindex, "no hay nada aqu�.", fonttypenames.fonttype_info)
+        end if
+    end with
 
 end sub
 
 sub desequipar(byval userindex as integer, byval slot as byte)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 on error goto errhandler
 
-'desequipa el item slot del inventario
-dim obj as objdata
-
-
-if (slot < lbound(userlist(userindex).invent.object)) or (slot > ubound(userlist(userindex).invent.object)) then
-    exit sub
-elseif userlist(userindex).invent.object(slot).objindex = 0 then
-    exit sub
-end if
-
-obj = objdata(userlist(userindex).invent.object(slot).objindex)
-
-select case obj.objtype
-    case eobjtype.otweapon
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.weaponeqpobjindex = 0
-        userlist(userindex).invent.weaponeqpslot = 0
-        if not userlist(userindex).flags.mimetizado = 1 then
-            userlist(userindex).char.weaponanim = ningunarma
-            call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-        end if
+    'desequipa el item slot del inventario
+    dim obj as objdata
     
-    case eobjtype.otflechas
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.municioneqpobjindex = 0
-        userlist(userindex).invent.municioneqpslot = 0
-    
-    case eobjtype.otanillo
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.anilloeqpobjindex = 0
-        userlist(userindex).invent.anilloeqpslot = 0
-    
-    case eobjtype.otarmadura
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.armoureqpobjindex = 0
-        userlist(userindex).invent.armoureqpslot = 0
-        call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
-        call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+    with userlist(userindex)
+        with .invent
+            if (slot < lbound(.object)) or (slot > ubound(.object)) then
+                exit sub
+            elseif .object(slot).objindex = 0 then
+                exit sub
+            end if
             
-    case eobjtype.otcasco
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.cascoeqpobjindex = 0
-        userlist(userindex).invent.cascoeqpslot = 0
-        if not userlist(userindex).flags.mimetizado = 1 then
-            userlist(userindex).char.cascoanim = ninguncasco
-            call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-        end if
+            obj = objdata(.object(slot).objindex)
+        end with
+        
+        select case obj.objtype
+            case eobjtype.otweapon
+                with .invent
+                    .object(slot).equipped = 0
+                    .weaponeqpobjindex = 0
+                    .weaponeqpslot = 0
+                end with
+                
+                if not .flags.mimetizado = 1 then
+                    with .char
+                        .weaponanim = ningunarma
+                        call changeuserchar(userindex, .body, .head, .heading, .weaponanim, .shieldanim, .cascoanim)
+                    end with
+                end if
+            
+            case eobjtype.otflechas
+                with .invent
+                    .object(slot).equipped = 0
+                    .municioneqpobjindex = 0
+                    .municioneqpslot = 0
+                end with
+            
+            case eobjtype.otanillo
+                with .invent
+                    .object(slot).equipped = 0
+                    .anilloeqpobjindex = 0
+                    .anilloeqpslot = 0
+                end with
+            
+            case eobjtype.otarmadura
+                with .invent
+                    .object(slot).equipped = 0
+                    .armoureqpobjindex = 0
+                    .armoureqpslot = 0
+                end with
+                
+                call darcuerpodesnudo(userindex, .flags.mimetizado = 1)
+                with .char
+                    call changeuserchar(userindex, .body, .head, .heading, .weaponanim, .shieldanim, .cascoanim)
+                end with
+                 
+            case eobjtype.otcasco
+                with .invent
+                    .object(slot).equipped = 0
+                    .cascoeqpobjindex = 0
+                    .cascoeqpslot = 0
+                end with
+                
+                if not .flags.mimetizado = 1 then
+                    with .char
+                        .cascoanim = ninguncasco
+                        call changeuserchar(userindex, .body, .head, .heading, .weaponanim, .shieldanim, .cascoanim)
+                    end with
+                end if
+            
+            case eobjtype.otescudo
+                with .invent
+                    .object(slot).equipped = 0
+                    .escudoeqpobjindex = 0
+                    .escudoeqpslot = 0
+                end with
+                
+                if not .flags.mimetizado = 1 then
+                    with .char
+                        .shieldanim = ningunescudo
+                        call changeuserchar(userindex, .body, .head, .heading, .weaponanim, .shieldanim, .cascoanim)
+                    end with
+                end if
+            
+            case eobjtype.otmochilas
+                with .invent
+                    .object(slot).equipped = 0
+                    .mochilaeqpobjindex = 0
+                    .mochilaeqpslot = 0
+                end with
+                
+                call invusuario.tirartodoslositemsenmochila(userindex)
+                .currentinventoryslots = max_normal_inventory_slots
+        end select
+    end with
     
-    case eobjtype.otescudo
-        userlist(userindex).invent.object(slot).equipped = 0
-        userlist(userindex).invent.escudoeqpobjindex = 0
-        userlist(userindex).invent.escudoeqpslot = 0
-        if not userlist(userindex).flags.mimetizado = 1 then
-            userlist(userindex).char.shieldanim = ningunescudo
-            call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-        end if
-end select
-
-call writeupdateuserstats(userindex)
-call updateuserinv(false, userindex, slot)
-
-exit sub
+    call writeupdateuserstats(userindex)
+    call updateuserinv(false, userindex, slot)
+    
+    exit sub
 
 errhandler:
     call logerror("error en desquipar. error " & err.number & " : " & err.description)
 
 end sub
 
-function sexopuedeusaritem(byval userindex as integer, byval objindex as integer) as boolean
+function sexopuedeusaritem(byval userindex as integer, byval objindex as integer, optional byref smotivo as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - agrego el motivo por el que no puede equipar/usar el item.
+'***************************************************
+
 on error goto errhandler
-
-if objdata(objindex).mujer = 1 then
-    sexopuedeusaritem = userlist(userindex).genero <> egenero.hombre
-elseif objdata(objindex).hombre = 1 then
-    sexopuedeusaritem = userlist(userindex).genero <> egenero.mujer
-else
-    sexopuedeusaritem = true
-end if
-
-exit function
+    
+    if objdata(objindex).mujer = 1 then
+        sexopuedeusaritem = userlist(userindex).genero <> egenero.hombre
+    elseif objdata(objindex).hombre = 1 then
+        sexopuedeusaritem = userlist(userindex).genero <> egenero.mujer
+    else
+        sexopuedeusaritem = true
+    end if
+    
+    if not sexopuedeusaritem then smotivo = "tu g�nero no puede usar este objeto."
+    
+    exit function
 errhandler:
     call logerror("sexopuedeusaritem")
 end function
 
 
-function faccionpuedeusaritem(byval userindex as integer, byval objindex as integer) as boolean
+function faccionpuedeusaritem(byval userindex as integer, byval objindex as integer, optional byref smotivo as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - agrego el motivo por el que no puede equipar/usar el item.
+'***************************************************
 
-if objdata(objindex).real = 1 then
-    if not criminal(userindex) then
-        faccionpuedeusaritem = esarmada(userindex)
+    if objdata(objindex).real = 1 then
+        if not criminal(userindex) then
+            faccionpuedeusaritem = esarmada(userindex)
+        else
+            faccionpuedeusaritem = false
+        end if
+    elseif objdata(objindex).caos = 1 then
+        if criminal(userindex) then
+            faccionpuedeusaritem = escaos(userindex)
+        else
+            faccionpuedeusaritem = false
+        end if
     else
-        faccionpuedeusaritem = false
+        faccionpuedeusaritem = true
     end if
-elseif objdata(objindex).caos = 1 then
-    if criminal(userindex) then
-        faccionpuedeusaritem = escaos(userindex)
-    else
-        faccionpuedeusaritem = false
-    end if
-else
-    faccionpuedeusaritem = true
-end if
+    
+    if not faccionpuedeusaritem then smotivo = "tu alineaci�n no puede usar este objeto."
 
 end function
 
 sub equiparinvitem(byval userindex as integer, byval slot as byte)
 '*************************************************
 'author: unknown
-'last modified: 01/08/2009
+'last modified: 14/01/2010 (zama)
 '01/08/2009: zama - now it's not sent any sound made by an invisible admin
+'14/01/2010: zama - agrego el motivo especifico por el que no puede equipar/usar el item.
 '*************************************************
 
 on error goto errhandler
 
-'equipa un item del inventario
-dim obj as objdata
-dim objindex as integer
-
-objindex = userlist(userindex).invent.object(slot).objindex
-obj = objdata(objindex)
-
-if obj.newbie = 1 and not esnewbie(userindex) then
-     call writeconsolemsg(userindex, "solo los newbies pueden usar este objeto.", fonttypenames.fonttype_info)
-     exit sub
-end if
+    'equipa un item del inventario
+    dim obj as objdata
+    dim objindex as integer
+    dim smotivo as string
+    
+    with userlist(userindex)
+        objindex = .invent.object(slot).objindex
+        obj = objdata(objindex)
         
-select case obj.objtype
-    case eobjtype.otweapon
-       if clasepuedeusaritem(userindex, objindex) and _
-          faccionpuedeusaritem(userindex, objindex) then
-            'si esta equipado lo quita
-            if userlist(userindex).invent.object(slot).equipped then
-                'quitamos del inv el item
-                call desequipar(userindex, slot)
-                'animacion por defecto
-                if userlist(userindex).flags.mimetizado = 1 then
-                    userlist(userindex).charmimetizado.weaponanim = ningunarma
-                else
-                    userlist(userindex).char.weaponanim = ningunarma
-                    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                end if
-                exit sub
-            end if
-            
-            'quitamos el elemento anterior
-            if userlist(userindex).invent.weaponeqpobjindex > 0 then
-                call desequipar(userindex, userlist(userindex).invent.weaponeqpslot)
-            end if
-            
-            userlist(userindex).invent.object(slot).equipped = 1
-            userlist(userindex).invent.weaponeqpobjindex = userlist(userindex).invent.object(slot).objindex
-            userlist(userindex).invent.weaponeqpslot = slot
-            
-            'el sonido solo se envia si no lo produce un admin invisible
-            if not (userlist(userindex).flags.admininvisible = 1) then _
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_sacararma, userlist(userindex).pos.x, userlist(userindex).pos.y))
-            
-            if userlist(userindex).flags.mimetizado = 1 then
-                userlist(userindex).charmimetizado.weaponanim = obj.weaponanim
-            else
-                userlist(userindex).char.weaponanim = obj.weaponanim
-                call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-            end if
-       else
-            call writeconsolemsg(userindex, "tu clase no puede usar este objeto.", fonttypenames.fonttype_info)
-       end if
-    
-    case eobjtype.otanillo
-       if clasepuedeusaritem(userindex, objindex) and _
-          faccionpuedeusaritem(userindex, objindex) then
-                'si esta equipado lo quita
-                if userlist(userindex).invent.object(slot).equipped then
-                    'quitamos del inv el item
-                    call desequipar(userindex, slot)
-                    exit sub
-                end if
-                
-                'quitamos el elemento anterior
-                if userlist(userindex).invent.anilloeqpobjindex > 0 then
-                    call desequipar(userindex, userlist(userindex).invent.anilloeqpslot)
-                end if
-        
-                userlist(userindex).invent.object(slot).equipped = 1
-                userlist(userindex).invent.anilloeqpobjindex = objindex
-                userlist(userindex).invent.anilloeqpslot = slot
-                
-       else
-            call writeconsolemsg(userindex, "tu clase no puede usar este objeto.", fonttypenames.fonttype_info)
-       end if
-    
-    case eobjtype.otflechas
-       if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-          faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-                
-                'si esta equipado lo quita
-                if userlist(userindex).invent.object(slot).equipped then
-                    'quitamos del inv el item
-                    call desequipar(userindex, slot)
-                    exit sub
-                end if
-                
-                'quitamos el elemento anterior
-                if userlist(userindex).invent.municioneqpobjindex > 0 then
-                    call desequipar(userindex, userlist(userindex).invent.municioneqpslot)
-                end if
-        
-                userlist(userindex).invent.object(slot).equipped = 1
-                userlist(userindex).invent.municioneqpobjindex = userlist(userindex).invent.object(slot).objindex
-                userlist(userindex).invent.municioneqpslot = slot
-                
-       else
-            call writeconsolemsg(userindex, "tu clase no puede usar este objeto.", fonttypenames.fonttype_info)
-       end if
-    
-    case eobjtype.otarmadura
-        if userlist(userindex).flags.navegando = 1 then exit sub
-        'nos aseguramos que puede usarla
-        if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-           sexopuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-           checkrazausaropa(userindex, userlist(userindex).invent.object(slot).objindex) and _
-           faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-           
-           'si esta equipado lo quita
-            if userlist(userindex).invent.object(slot).equipped then
-                call desequipar(userindex, slot)
-                call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
-                if not userlist(userindex).flags.mimetizado = 1 then
-                    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                end if
-                exit sub
-            end if
-    
-            'quita el anterior
-            if userlist(userindex).invent.armoureqpobjindex > 0 then
-                call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
-            end if
-    
-            'lo equipa
-            userlist(userindex).invent.object(slot).equipped = 1
-            userlist(userindex).invent.armoureqpobjindex = userlist(userindex).invent.object(slot).objindex
-            userlist(userindex).invent.armoureqpslot = slot
-                
-            if userlist(userindex).flags.mimetizado = 1 then
-                userlist(userindex).charmimetizado.body = obj.ropaje
-            else
-                userlist(userindex).char.body = obj.ropaje
-                call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-            end if
-            userlist(userindex).flags.desnudo = 0
-            
-
-        else
-            call writeconsolemsg(userindex, "tu clase,genero o raza no puede usar este objeto.", fonttypenames.fonttype_info)
+        if obj.newbie = 1 and not esnewbie(userindex) then
+             call writeconsolemsg(userindex, "s�lo los newbies pueden usar este objeto.", fonttypenames.fonttype_info)
+             exit sub
         end if
-    
-    case eobjtype.otcasco
-        if userlist(userindex).flags.navegando = 1 then exit sub
-        if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-            'si esta equipado lo quita
-            if userlist(userindex).invent.object(slot).equipped then
-                call desequipar(userindex, slot)
-                if userlist(userindex).flags.mimetizado = 1 then
-                    userlist(userindex).charmimetizado.cascoanim = ninguncasco
-                else
-                    userlist(userindex).char.cascoanim = ninguncasco
-                    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                end if
-                exit sub
-            end if
-    
-            'quita el anterior
-            if userlist(userindex).invent.cascoeqpobjindex > 0 then
-                call desequipar(userindex, userlist(userindex).invent.cascoeqpslot)
-            end if
-    
-            'lo equipa
+                
+        select case obj.objtype
+            case eobjtype.otweapon
+               if clasepuedeusaritem(userindex, objindex, smotivo) and _
+                  faccionpuedeusaritem(userindex, objindex, smotivo) then
+                    'si esta equipado lo quita
+                    if .invent.object(slot).equipped then
+                        'quitamos del inv el item
+                        call desequipar(userindex, slot)
+                        'animacion por defecto
+                        if .flags.mimetizado = 1 then
+                            .charmimetizado.weaponanim = ningunarma
+                        else
+                            .char.weaponanim = ningunarma
+                            call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                        end if
+                        exit sub
+                    end if
+                    
+                    'quitamos el elemento anterior
+                    if .invent.weaponeqpobjindex > 0 then
+                        call desequipar(userindex, .invent.weaponeqpslot)
+                    end if
+                    
+                    .invent.object(slot).equipped = 1
+                    .invent.weaponeqpobjindex = objindex
+                    .invent.weaponeqpslot = slot
+                    
+                    'el sonido solo se envia si no lo produce un admin invisible
+                    if not (.flags.admininvisible = 1) then _
+                        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_sacararma, .pos.x, .pos.y))
+                    
+                    if .flags.mimetizado = 1 then
+                        .charmimetizado.weaponanim = getweaponanim(userindex, objindex)
+                    else
+                        .char.weaponanim = getweaponanim(userindex, objindex)
+                        call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                    end if
+               else
+                    call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
+               end if
             
-            userlist(userindex).invent.object(slot).equipped = 1
-            userlist(userindex).invent.cascoeqpobjindex = userlist(userindex).invent.object(slot).objindex
-            userlist(userindex).invent.cascoeqpslot = slot
-            if userlist(userindex).flags.mimetizado = 1 then
-                userlist(userindex).charmimetizado.cascoanim = obj.cascoanim
-            else
-                userlist(userindex).char.cascoanim = obj.cascoanim
-                call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-            end if
-        else
-            call writeconsolemsg(userindex, "tu clase no puede usar este objeto.", fonttypenames.fonttype_info)
-        end if
-    
-    case eobjtype.otescudo
-        if userlist(userindex).flags.navegando = 1 then exit sub
-         if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-             faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-
-             'si esta equipado lo quita
-             if userlist(userindex).invent.object(slot).equipped then
-                 call desequipar(userindex, slot)
-                 if userlist(userindex).flags.mimetizado = 1 then
-                     userlist(userindex).charmimetizado.shieldanim = ningunescudo
+            case eobjtype.otanillo
+               if clasepuedeusaritem(userindex, objindex, smotivo) and _
+                  faccionpuedeusaritem(userindex, objindex, smotivo) then
+                        'si esta equipado lo quita
+                        if .invent.object(slot).equipped then
+                            'quitamos del inv el item
+                            call desequipar(userindex, slot)
+                            exit sub
+                        end if
+                        
+                        'quitamos el elemento anterior
+                        if .invent.anilloeqpobjindex > 0 then
+                            call desequipar(userindex, .invent.anilloeqpslot)
+                        end if
+                
+                        .invent.object(slot).equipped = 1
+                        .invent.anilloeqpobjindex = objindex
+                        .invent.anilloeqpslot = slot
+                        
+               else
+                    call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
+               end if
+            
+            case eobjtype.otflechas
+               if clasepuedeusaritem(userindex, objindex, smotivo) and _
+                  faccionpuedeusaritem(userindex, objindex, smotivo) then
+                        
+                        'si esta equipado lo quita
+                        if .invent.object(slot).equipped then
+                            'quitamos del inv el item
+                            call desequipar(userindex, slot)
+                            exit sub
+                        end if
+                        
+                        'quitamos el elemento anterior
+                        if .invent.municioneqpobjindex > 0 then
+                            call desequipar(userindex, .invent.municioneqpslot)
+                        end if
+                
+                        .invent.object(slot).equipped = 1
+                        .invent.municioneqpobjindex = objindex
+                        .invent.municioneqpslot = slot
+                        
+               else
+                    call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
+               end if
+            
+            case eobjtype.otarmadura
+                if .flags.navegando = 1 then exit sub
+                
+                'nos aseguramos que puede usarla
+                if clasepuedeusaritem(userindex, objindex, smotivo) and _
+                   sexopuedeusaritem(userindex, objindex, smotivo) and _
+                   checkrazausaropa(userindex, objindex, smotivo) and _
+                   faccionpuedeusaritem(userindex, objindex, smotivo) then
+                   
+                   'si esta equipado lo quita
+                    if .invent.object(slot).equipped then
+                        call desequipar(userindex, slot)
+                        call darcuerpodesnudo(userindex, .flags.mimetizado = 1)
+                        if not .flags.mimetizado = 1 then
+                            call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                        end if
+                        exit sub
+                    end if
+            
+                    'quita el anterior
+                    if .invent.armoureqpobjindex > 0 then
+                        call desequipar(userindex, .invent.armoureqpslot)
+                    end if
+            
+                    'lo equipa
+                    .invent.object(slot).equipped = 1
+                    .invent.armoureqpobjindex = objindex
+                    .invent.armoureqpslot = slot
+                        
+                    if .flags.mimetizado = 1 then
+                        .charmimetizado.body = obj.ropaje
+                    else
+                        .char.body = obj.ropaje
+                        call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                    end if
+                    .flags.desnudo = 0
+                else
+                    call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
+                end if
+            
+            case eobjtype.otcasco
+                if .flags.navegando = 1 then exit sub
+                if clasepuedeusaritem(userindex, objindex, smotivo) then
+                    'si esta equipado lo quita
+                    if .invent.object(slot).equipped then
+                        call desequipar(userindex, slot)
+                        if .flags.mimetizado = 1 then
+                            .charmimetizado.cascoanim = ninguncasco
+                        else
+                            .char.cascoanim = ninguncasco
+                            call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                        end if
+                        exit sub
+                    end if
+            
+                    'quita el anterior
+                    if .invent.cascoeqpobjindex > 0 then
+                        call desequipar(userindex, .invent.cascoeqpslot)
+                    end if
+            
+                    'lo equipa
+                    
+                    .invent.object(slot).equipped = 1
+                    .invent.cascoeqpobjindex = objindex
+                    .invent.cascoeqpslot = slot
+                    if .flags.mimetizado = 1 then
+                        .charmimetizado.cascoanim = obj.cascoanim
+                    else
+                        .char.cascoanim = obj.cascoanim
+                        call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                    end if
+                else
+                    call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
+                end if
+            
+            case eobjtype.otescudo
+                if .flags.navegando = 1 then exit sub
+                
+                 if clasepuedeusaritem(userindex, objindex, smotivo) and _
+                     faccionpuedeusaritem(userindex, objindex, smotivo) then
+        
+                     'si esta equipado lo quita
+                     if .invent.object(slot).equipped then
+                         call desequipar(userindex, slot)
+                         if .flags.mimetizado = 1 then
+                             .charmimetizado.shieldanim = ningunescudo
+                         else
+                             .char.shieldanim = ningunescudo
+                             call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                         end if
+                         exit sub
+                     end if
+             
+                     'quita el anterior
+                     if .invent.escudoeqpobjindex > 0 then
+                         call desequipar(userindex, .invent.escudoeqpslot)
+                     end if
+             
+                     'lo equipa
+                     
+                     .invent.object(slot).equipped = 1
+                     .invent.escudoeqpobjindex = objindex
+                     .invent.escudoeqpslot = slot
+                     
+                     if .flags.mimetizado = 1 then
+                         .charmimetizado.shieldanim = obj.shieldanim
+                     else
+                         .char.shieldanim = obj.shieldanim
+                         
+                         call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                     end if
                  else
-                     userlist(userindex).char.shieldanim = ningunescudo
-                     call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                     call writeconsolemsg(userindex, smotivo, fonttypenames.fonttype_info)
                  end if
-                 exit sub
-             end if
-     
-             'quita el anterior
-             if userlist(userindex).invent.escudoeqpobjindex > 0 then
-                 call desequipar(userindex, userlist(userindex).invent.escudoeqpslot)
-             end if
-     
-             'lo equipa
-             
-             userlist(userindex).invent.object(slot).equipped = 1
-             userlist(userindex).invent.escudoeqpobjindex = userlist(userindex).invent.object(slot).objindex
-             userlist(userindex).invent.escudoeqpslot = slot
-             
-             if userlist(userindex).flags.mimetizado = 1 then
-                 userlist(userindex).charmimetizado.shieldanim = obj.shieldanim
-             else
-                 userlist(userindex).char.shieldanim = obj.shieldanim
                  
-                 call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-             end if
-         else
-             call writeconsolemsg(userindex, "tu clase no puede usar este objeto.", fonttypenames.fonttype_info)
-         end if
-end select
-
-'actualiza
-call updateuserinv(false, userindex, slot)
-
-exit sub
+            case eobjtype.otmochilas
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                if .invent.object(slot).equipped then
+                    call desequipar(userindex, slot)
+                    exit sub
+                end if
+                if .invent.mochilaeqpobjindex > 0 then
+                    call desequipar(userindex, .invent.mochilaeqpslot)
+                end if
+                .invent.object(slot).equipped = 1
+                .invent.mochilaeqpobjindex = objindex
+                .invent.mochilaeqpslot = slot
+                .currentinventoryslots = max_normal_inventory_slots + obj.mochilatype * 5
+                call writeaddslots(userindex, obj.mochilatype)
+        end select
+    end with
+    
+    'actualiza
+    call updateuserinv(false, userindex, slot)
+    
+    exit sub
+    
 errhandler:
-call logerror("equiparinvitem slot:" & slot & " - error: " & err.number & " - error description : " & err.description)
+    call logerror("equiparinvitem slot:" & slot & " - error: " & err.number & " - error description : " & err.description)
 end sub
 
-private function checkrazausaropa(byval userindex as integer, itemindex as integer) as boolean
+private function checkrazausaropa(byval userindex as integer, itemindex as integer, optional byref smotivo as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - agrego el motivo por el que no puede equipar/usar el item.
+'***************************************************
+
 on error goto errhandler
 
-'verifica si la raza puede usar la ropa
-if userlist(userindex).raza = eraza.humano or _
-   userlist(userindex).raza = eraza.elfo or _
-   userlist(userindex).raza = eraza.drow then
-        checkrazausaropa = (objdata(itemindex).razaenana = 0)
-else
-        checkrazausaropa = (objdata(itemindex).razaenana = 1)
-end if
-
-'solo se habilita la ropa exclusiva para drows por ahora. pablo (toxicwaste)
-if (userlist(userindex).raza <> eraza.drow) and objdata(itemindex).razadrow then
-    checkrazausaropa = false
-end if
-
-exit function
+    with userlist(userindex)
+        'verifica si la raza puede usar la ropa
+        if .raza = eraza.humano or _
+           .raza = eraza.elfo or _
+           .raza = eraza.drow then
+                checkrazausaropa = (objdata(itemindex).razaenana = 0)
+        else
+                checkrazausaropa = (objdata(itemindex).razaenana = 1)
+        end if
+        
+        'solo se habilita la ropa exclusiva para drows por ahora. pablo (toxicwaste)
+        if (.raza <> eraza.drow) and objdata(itemindex).razadrow then
+            checkrazausaropa = false
+        end if
+    end with
+    
+    if not checkrazausaropa then smotivo = "tu raza no puede usar este objeto."
+    
+    exit function
+    
 errhandler:
     call logerror("error checkrazausaropa itemindex:" & itemindex)
 
@@ -852,224 +1036,290 @@ end function
 sub useinvitem(byval userindex as integer, byval slot as byte)
 '*************************************************
 'author: unknown
-'last modified: 01/08/2009
+'last modified: 10/12/2009
 'handels the usage of items from inventory box.
 '24/01/2007 pablo (toxicwaste) - agrego el cuerno de la armada y la legi�n.
 '24/01/2007 pablo (toxicwaste) - utilizaci�n nueva de barco en lvl 20 por clase pirata y pescador.
 '01/08/2009: zama - now it's not sent any sound made by an invisible admin, except to its own client
+'17/11/2009: zama - ahora se envia una orientacion de la posicion hacia donde esta el que uso el cuerno.
+'27/11/2009: budi - se envia indivualmente cuando se modifica a la agilidad o la fuerza del personaje.
+'08/12/2009: zama - agrego el uso de hacha de madera elfica.
+'10/12/2009: zama - arreglos y validaciones en todos las herramientas de trabajo.
 '*************************************************
 
-dim obj as objdata
-dim objindex as integer
-dim targobj as objdata
-dim miobj as obj
-
-with userlist(userindex)
-
-if .invent.object(slot).amount = 0 then exit sub
-
-obj = objdata(.invent.object(slot).objindex)
-
-if obj.newbie = 1 and not esnewbie(userindex) then
-    call writeconsolemsg(userindex, "solo los newbies pueden usar estos objetos.", fonttypenames.fonttype_info)
-    exit sub
-end if
-
-if obj.objtype = eobjtype.otweapon then
-    if obj.proyectil = 1 then
-        if not .flags.modocombate then
-            call writeconsolemsg(userindex, "no est�s en modo de combate, presiona la tecla ""c"" para pasar al modo combate.", fonttypenames.fonttype_info)
+    dim obj as objdata
+    dim objindex as integer
+    dim targobj as objdata
+    dim miobj as obj
+    
+    with userlist(userindex)
+    
+        if .invent.object(slot).amount = 0 then exit sub
+        
+        obj = objdata(.invent.object(slot).objindex)
+        
+        if obj.newbie = 1 and not esnewbie(userindex) then
+            call writeconsolemsg(userindex, "s�lo los newbies pueden usar estos objetos.", fonttypenames.fonttype_info)
             exit sub
         end if
         
-        'valido para evitar el flood pero no bloqueo. el bloqueo se hace en wlc con proyectiles.
-        if not intervalopermiteusar(userindex, false) then exit sub
-    else
-        'dagas
-        if not intervalopermiteusar(userindex) then exit sub
-    end if
-else
-    if not intervalopermiteusar(userindex) then exit sub
-end if
-
-objindex = .invent.object(slot).objindex
-.flags.targetobjinvindex = objindex
-.flags.targetobjinvslot = slot
-
-select case obj.objtype
-    case eobjtype.otuseonce
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-
-        'usa el item
-        .stats.minham = .stats.minham + obj.minham
-        if .stats.minham > .stats.maxham then _
-            .stats.minham = .stats.maxham
-        .flags.hambre = 0
-        call writeupdatehungerandthirst(userindex)
-        'sonido
-        
-        if objindex = e_objetoscriticos.manzana or objindex = e_objetoscriticos.manzana2 or objindex = e_objetoscriticos.manzananewbie then
-            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.morfar_manzana)
-        else
-            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.sound_comida)
-        end if
-        
-        'quitamos del inv el item
-        call quitaruserinvitem(userindex, slot, 1)
-        
-        call updateuserinv(false, userindex, slot)
-
-    case eobjtype.otguita
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        .stats.gld = .stats.gld + .invent.object(slot).amount
-        .invent.object(slot).amount = 0
-        .invent.object(slot).objindex = 0
-        .invent.nroitems = .invent.nroitems - 1
-        
-        call updateuserinv(false, userindex, slot)
-        call writeupdategold(userindex)
-        
-    case eobjtype.otweapon
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        if not .stats.minsta > 0 then
-            if .genero = egenero.hombre then
-                call writeconsolemsg(userindex, "estas muy cansado", fonttypenames.fonttype_info)
+        if obj.objtype = eobjtype.otweapon then
+            if obj.proyectil = 1 then
+                
+                'valido para evitar el flood pero no bloqueo. el bloqueo se hace en wlc con proyectiles.
+                if not intervalopermiteusar(userindex, false) then exit sub
             else
-                call writeconsolemsg(userindex, "estas muy cansada", fonttypenames.fonttype_info)
+                'dagas
+                if not intervalopermiteusar(userindex) then exit sub
             end if
-            exit sub
+        else
+            if not intervalopermiteusar(userindex) then exit sub
         end if
         
+        objindex = .invent.object(slot).objindex
+        .flags.targetobjinvindex = objindex
+        .flags.targetobjinvslot = slot
         
-        if objdata(objindex).proyectil = 1 then
-            if .invent.object(slot).equipped = 0 then
-                call writeconsolemsg(userindex, "antes de usar la herramienta deberias equipartela.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            'liquid: muevo esto aca adentro, para que solo pida modo combate si estamos por usar el arco
-            if not .flags.modocombate then
-                call writeconsolemsg(userindex, "no est�s en modo de combate, presiona la tecla ""c"" para pasar al modo combate.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            call writeworkrequesttarget(userindex, proyectiles)
-        else
-            if .flags.targetobj = le�a then
-                if .invent.object(slot).objindex = daga then
+        select case obj.objtype
+            case eobjtype.otuseonce
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+        
+                'usa el item
+                .stats.minham = .stats.minham + obj.minham
+                if .stats.minham > .stats.maxham then _
+                    .stats.minham = .stats.maxham
+                .flags.hambre = 0
+                call writeupdatehungerandthirst(userindex)
+                'sonido
+                
+                if objindex = e_objetoscriticos.manzana or objindex = e_objetoscriticos.manzana2 or objindex = e_objetoscriticos.manzananewbie then
+                    call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.morfar_manzana)
+                else
+                    call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.sound_comida)
+                end if
+                
+                'quitamos del inv el item
+                call quitaruserinvitem(userindex, slot, 1)
+                
+                call updateuserinv(false, userindex, slot)
+        
+            case eobjtype.otguita
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                .stats.gld = .stats.gld + .invent.object(slot).amount
+                .invent.object(slot).amount = 0
+                .invent.object(slot).objindex = 0
+                .invent.nroitems = .invent.nroitems - 1
+                
+                call updateuserinv(false, userindex, slot)
+                call writeupdategold(userindex)
+                
+            case eobjtype.otweapon
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                if not .stats.minsta > 0 then
+                    call writeconsolemsg(userindex, "est�s muy cansad" & _
+                                iif(.genero = egenero.hombre, "o", "a") & ".", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                if objdata(objindex).proyectil = 1 then
                     if .invent.object(slot).equipped = 0 then
-                        call writeconsolemsg(userindex, "antes de usar la herramienta deberias equipartela.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "antes de usar la herramienta deber�as equipartela.", fonttypenames.fonttype_info)
                         exit sub
                     end if
-                    
-                    call tratardehacerfogata(.flags.targetobjmap, _
-                         .flags.targetobjx, .flags.targetobjy, userindex)
-                end if
-            end if
-        end if
-
-        
-        select case objindex
-            case ca�a_pesca, red_pesca
-                call writeworkrequesttarget(userindex, eskill.pesca)
-            case hacha_le�ador
-                call writeworkrequesttarget(userindex, eskill.talar)
-            case piquete_minero
-                call writeworkrequesttarget(userindex, eskill.mineria)
-            case martillo_herrero
-                call writeworkrequesttarget(userindex, eskill.herreria)
-            case serrucho_carpintero
-                call enivarobjconstruibles(userindex)
-                call writeshowcarpenterform(userindex)
-        end select
-        
-    
-    case eobjtype.otpociones
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        if not intervalopermitegolpeusar(userindex, false) then
-            call writeconsolemsg(userindex, "��debes esperar unos momentos para tomar otra poci�n!!", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        .flags.tomopocion = true
-        .flags.tipopocion = obj.tipopocion
-                
-        select case .flags.tipopocion
-        
-            case 1 'modif la agilidad
-                .flags.duracionefecto = obj.duracionefecto
-        
-                'usa el item
-                .stats.useratributos(eatributos.agilidad) = .stats.useratributos(eatributos.agilidad) + randomnumber(obj.minmodificador, obj.maxmodificador)
-                if .stats.useratributos(eatributos.agilidad) > maxatributos then _
-                    .stats.useratributos(eatributos.agilidad) = maxatributos
-                if .stats.useratributos(eatributos.agilidad) > 2 * .stats.useratributosbackup(agilidad) then .stats.useratributos(eatributos.agilidad) = 2 * .stats.useratributosbackup(agilidad)
-                
-                'quitamos del inv el item
-                call quitaruserinvitem(userindex, slot, 1)
-                
-                ' los admin invisibles solo producen sonidos a si mismos
-                if .flags.admininvisible = 1 then
-                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                    call writemultimessage(userindex, emessages.workrequesttarget, eskill.proyectiles)  'call writeworkrequesttarget(userindex, proyectiles)
+                elseif .flags.targetobj = le�a then
+                    if .invent.object(slot).objindex = daga then
+                        if .invent.object(slot).equipped = 0 then
+                            call writeconsolemsg(userindex, "antes de usar la herramienta deber�as equipartela.", fonttypenames.fonttype_info)
+                            exit sub
+                        end if
+                            
+                        call tratardehacerfogata(.flags.targetobjmap, _
+                            .flags.targetobjx, .flags.targetobjy, userindex)
+                    end if
                 else
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                end if
-        
-            case 2 'modif la fuerza
-                .flags.duracionefecto = obj.duracionefecto
-        
-                'usa el item
-                .stats.useratributos(eatributos.fuerza) = .stats.useratributos(eatributos.fuerza) + randomnumber(obj.minmodificador, obj.maxmodificador)
-                if .stats.useratributos(eatributos.fuerza) > maxatributos then _
-                    .stats.useratributos(eatributos.fuerza) = maxatributos
-                if .stats.useratributos(eatributos.fuerza) > 2 * .stats.useratributosbackup(fuerza) then .stats.useratributos(eatributos.fuerza) = 2 * .stats.useratributosbackup(fuerza)
                 
-                
-                'quitamos del inv el item
-                call quitaruserinvitem(userindex, slot, 1)
-                
-                ' los admin invisibles solo producen sonidos a si mismos
-                if .flags.admininvisible = 1 then
-                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                else
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                end if
-                
-            case 3 'pocion roja, restaura hp
-                'usa el item
-                .stats.minhp = .stats.minhp + randomnumber(obj.minmodificador, obj.maxmodificador)
-                if .stats.minhp > .stats.maxhp then _
-                    .stats.minhp = .stats.maxhp
-                
-                'quitamos del inv el item
-                call quitaruserinvitem(userindex, slot, 1)
-                
-                ' los admin invisibles solo producen sonidos a si mismos
-                if .flags.admininvisible = 1 then
-                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                else
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                    select case objindex
+                        case ca�a_pesca, red_pesca
+                            if .invent.weaponeqpobjindex = ca�a_pesca or .invent.weaponeqpobjindex = red_pesca then
+                                call writemultimessage(userindex, emessages.workrequesttarget, eskill.pesca)  'call writeworkrequesttarget(userindex, eskill.pesca)
+                            else
+                                 call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
+                            end if
+                            
+                        case hacha_le�ador, hacha_le�a_elfica
+                            if .invent.weaponeqpobjindex = hacha_le�ador or .invent.weaponeqpobjindex = hacha_le�a_elfica then
+                                call writemultimessage(userindex, emessages.workrequesttarget, eskill.talar)
+                            else
+                                call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
+                            end if
+                            
+                        case piquete_minero
+                            if .invent.weaponeqpobjindex = piquete_minero then
+                                call writemultimessage(userindex, emessages.workrequesttarget, eskill.mineria)
+                            else
+                                call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
+                            end if
+                            
+                        case martillo_herrero
+                            if .invent.weaponeqpobjindex = martillo_herrero then
+                                call writemultimessage(userindex, emessages.workrequesttarget, eskill.herreria)
+                            else
+                                call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
+                            end if
+                            
+                        case serrucho_carpintero
+                            if .invent.weaponeqpobjindex = serrucho_carpintero then
+                                call enivarobjconstruibles(userindex)
+                                call writeshowcarpenterform(userindex)
+                            else
+                                call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
+                            end if
+                            
+                        case else ' las herramientas no se pueden fundir
+                            if objdata(objindex).skherreria > 0 then
+                                ' solo objetos que pueda hacer el herrero
+                                call writemultimessage(userindex, emessages.workrequesttarget, fundirmetal) 'call writeworkrequesttarget(userindex, fundirmetal)
+                            end if
+                    end select
                 end if
             
-            case 4 'pocion azul, restaura mana
-                'usa el item
-                'nuevo calculo para recargar mana
-                .stats.minman = .stats.minman + porcentaje(.stats.maxman, 4) + .stats.elv \ 2 + 40 / .stats.elv
-                if .stats.minman > .stats.maxman then _
-                    .stats.minman = .stats.maxman
+            case eobjtype.otpociones
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo. ", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                if not intervalopermitegolpeusar(userindex, false) then
+                    call writeconsolemsg(userindex, "��debes esperar unos momentos para tomar otra poci�n!!", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                .flags.tomopocion = true
+                .flags.tipopocion = obj.tipopocion
+                        
+                select case .flags.tipopocion
+                
+                    case 1 'modif la agilidad
+                        .flags.duracionefecto = obj.duracionefecto
+                
+                        'usa el item
+                        .stats.useratributos(eatributos.agilidad) = .stats.useratributos(eatributos.agilidad) + randomnumber(obj.minmodificador, obj.maxmodificador)
+                        if .stats.useratributos(eatributos.agilidad) > maxatributos then _
+                            .stats.useratributos(eatributos.agilidad) = maxatributos
+                        if .stats.useratributos(eatributos.agilidad) > 2 * .stats.useratributosbackup(agilidad) then .stats.useratributos(eatributos.agilidad) = 2 * .stats.useratributosbackup(agilidad)
+                        
+                        'quitamos del inv el item
+                        call quitaruserinvitem(userindex, slot, 1)
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        else
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        end if
+                        call writeupdatedexterity(userindex)
+                        
+                    case 2 'modif la fuerza
+                        .flags.duracionefecto = obj.duracionefecto
+                
+                        'usa el item
+                        .stats.useratributos(eatributos.fuerza) = .stats.useratributos(eatributos.fuerza) + randomnumber(obj.minmodificador, obj.maxmodificador)
+                        if .stats.useratributos(eatributos.fuerza) > maxatributos then _
+                            .stats.useratributos(eatributos.fuerza) = maxatributos
+                        if .stats.useratributos(eatributos.fuerza) > 2 * .stats.useratributosbackup(fuerza) then .stats.useratributos(eatributos.fuerza) = 2 * .stats.useratributosbackup(fuerza)
+                        
+                        
+                        'quitamos del inv el item
+                        call quitaruserinvitem(userindex, slot, 1)
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        else
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        end if
+                        call writeupdatestrenght(userindex)
+                        
+                    case 3 'pocion roja, restaura hp
+                        'usa el item
+                        .stats.minhp = .stats.minhp + randomnumber(obj.minmodificador, obj.maxmodificador)
+                        if .stats.minhp > .stats.maxhp then _
+                            .stats.minhp = .stats.maxhp
+                        
+                        'quitamos del inv el item
+                        call quitaruserinvitem(userindex, slot, 1)
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        else
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        end if
+                    
+                    case 4 'pocion azul, restaura mana
+                        'usa el item
+                        'nuevo calculo para recargar mana
+                        .stats.minman = .stats.minman + porcentaje(.stats.maxman, 4) + .stats.elv \ 2 + 40 / .stats.elv
+                        if .stats.minman > .stats.maxman then _
+                            .stats.minman = .stats.maxman
+                        
+                        'quitamos del inv el item
+                        call quitaruserinvitem(userindex, slot, 1)
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        else
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        end if
+                        
+                    case 5 ' pocion violeta
+                        if .flags.envenenado = 1 then
+                            .flags.envenenado = 0
+                            call writeconsolemsg(userindex, "te has curado del envenenamiento.", fonttypenames.fonttype_info)
+                        end if
+                        'quitamos del inv el item
+                        call quitaruserinvitem(userindex, slot, 1)
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        else
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                        end if
+                        
+                    case 6  ' pocion negra
+                        if .flags.privilegios and playertype.user then
+                            call quitaruserinvitem(userindex, slot, 1)
+                            call userdie(userindex)
+                            call writeconsolemsg(userindex, "sientes un gran mareo y pierdes el conocimiento.", fonttypenames.fonttype_fight)
+                        end if
+               end select
+               call writeupdateuserstats(userindex)
+               call updateuserinv(false, userindex, slot)
+        
+             case eobjtype.otbebidas
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                .stats.minagu = .stats.minagu + obj.minsed
+                if .stats.minagu > .stats.maxagu then _
+                    .stats.minagu = .stats.maxagu
+                .flags.sed = 0
+                call writeupdatehungerandthirst(userindex)
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
@@ -1081,354 +1331,410 @@ select case obj.objtype
                     call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
                 end if
                 
-            case 5 ' pocion violeta
-                if .flags.envenenado = 1 then
-                    .flags.envenenado = 0
-                    call writeconsolemsg(userindex, "te has curado del envenenamiento.", fonttypenames.fonttype_info)
-                end if
-                'quitamos del inv el item
-                call quitaruserinvitem(userindex, slot, 1)
-                
-                ' los admin invisibles solo producen sonidos a si mismos
-                if .flags.admininvisible = 1 then
-                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                else
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-                end if
-                
-            case 6  ' pocion negra
-                if .flags.privilegios and playertype.user then
-                    call quitaruserinvitem(userindex, slot, 1)
-                    call userdie(userindex)
-                    call writeconsolemsg(userindex, "sientes un gran mareo y pierdes el conocimiento.", fonttypenames.fonttype_fight)
-                end if
-       end select
-       call writeupdateuserstats(userindex)
-       call updateuserinv(false, userindex, slot)
-
-     case eobjtype.otbebidas
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        .stats.minagu = .stats.minagu + obj.minsed
-        if .stats.minagu > .stats.maxagu then _
-            .stats.minagu = .stats.maxagu
-        .flags.sed = 0
-        call writeupdatehungerandthirst(userindex)
-        
-        'quitamos del inv el item
-        call quitaruserinvitem(userindex, slot, 1)
-        
-        ' los admin invisibles solo producen sonidos a si mismos
-        if .flags.admininvisible = 1 then
-            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-        else
-            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
-        end if
-        
-        call updateuserinv(false, userindex, slot)
-    
-    case eobjtype.otllaves
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        if .flags.targetobj = 0 then exit sub
-        targobj = objdata(.flags.targetobj)
-        '�el objeto clickeado es una puerta?
-        if targobj.objtype = eobjtype.otpuertas then
-            '�esta cerrada?
-            if targobj.cerrada = 1 then
-                  '�cerrada con llave?
-                  if targobj.llave > 0 then
-                     if targobj.clave = obj.clave then
-         
-                        mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex _
-                        = objdata(mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex).indexcerrada
-                        .flags.targetobj = mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex
-                        call writeconsolemsg(userindex, "has abierto la puerta.", fonttypenames.fonttype_info)
-                        exit sub
-                     else
-                        call writeconsolemsg(userindex, "la llave no sirve.", fonttypenames.fonttype_info)
-                        exit sub
-                     end if
-                  else
-                     if targobj.clave = obj.clave then
-                        mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex _
-                        = objdata(mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex).indexcerradallave
-                        call writeconsolemsg(userindex, "has cerrado con llave la puerta.", fonttypenames.fonttype_info)
-                        .flags.targetobj = mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex
-                        exit sub
-                     else
-                        call writeconsolemsg(userindex, "la llave no sirve.", fonttypenames.fonttype_info)
-                        exit sub
-                     end if
-                  end if
-            else
-                  call writeconsolemsg(userindex, "no esta cerrada.", fonttypenames.fonttype_info)
-                  exit sub
-            end if
-        end if
-    
-    case eobjtype.otbotellavacia
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        if not hayagua(.pos.map, .flags.targetx, .flags.targety) then
-            call writeconsolemsg(userindex, "no hay agua all�.", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        miobj.amount = 1
-        miobj.objindex = objdata(.invent.object(slot).objindex).indexabierta
-        call quitaruserinvitem(userindex, slot, 1)
-        if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(.pos, miobj)
-        end if
-        
-        call updateuserinv(false, userindex, slot)
-    
-    case eobjtype.otbotellallena
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        .stats.minagu = .stats.minagu + obj.minsed
-        if .stats.minagu > .stats.maxagu then _
-            .stats.minagu = .stats.maxagu
-        .flags.sed = 0
-        call writeupdatehungerandthirst(userindex)
-        miobj.amount = 1
-        miobj.objindex = objdata(.invent.object(slot).objindex).indexcerrada
-        call quitaruserinvitem(userindex, slot, 1)
-        if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(.pos, miobj)
-        end if
-        
-        call updateuserinv(false, userindex, slot)
-    
-    case eobjtype.otpergaminos
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        if .stats.maxman > 0 then
-            if .flags.hambre = 0 and _
-                .flags.sed = 0 then
-                call agregarhechizo(userindex, slot)
                 call updateuserinv(false, userindex, slot)
-            else
-                call writeconsolemsg(userindex, "estas demasiado hambriento y sediento.", fonttypenames.fonttype_info)
-            end if
-        else
-            call writeconsolemsg(userindex, "no tienes conocimientos de las artes arcanas.", fonttypenames.fonttype_info)
-        end if
-    case eobjtype.otminerales
-        if .flags.muerto = 1 then
-             call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-             exit sub
-        end if
-        call writeworkrequesttarget(userindex, fundirmetal)
-       
-    case eobjtype.otinstrumentos
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! solo podes usar items cuando estas vivo. ", fonttypenames.fonttype_info)
-            exit sub
-        end if
-        
-        if obj.real then '�es el cuerno real?
-            if faccionpuedeusaritem(userindex, objindex) then
-                if mapinfo(.pos.map).pk = false then
-                    call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura ", fonttypenames.fonttype_info)
+            
+            case eobjtype.otllaves
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
                     exit sub
                 end if
                 
+                if .flags.targetobj = 0 then exit sub
+                targobj = objdata(.flags.targetobj)
+                '�el objeto clickeado es una puerta?
+                if targobj.objtype = eobjtype.otpuertas then
+                    '�esta cerrada?
+                    if targobj.cerrada = 1 then
+                          '�cerrada con llave?
+                          if targobj.llave > 0 then
+                             if targobj.clave = obj.clave then
+                 
+                                mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex _
+                                = objdata(mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex).indexcerrada
+                                .flags.targetobj = mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex
+                                call writeconsolemsg(userindex, "has abierto la puerta.", fonttypenames.fonttype_info)
+                                exit sub
+                             else
+                                call writeconsolemsg(userindex, "la llave no sirve.", fonttypenames.fonttype_info)
+                                exit sub
+                             end if
+                          else
+                             if targobj.clave = obj.clave then
+                                mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex _
+                                = objdata(mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex).indexcerradallave
+                                call writeconsolemsg(userindex, "has cerrado con llave la puerta.", fonttypenames.fonttype_info)
+                                .flags.targetobj = mapdata(.flags.targetobjmap, .flags.targetobjx, .flags.targetobjy).objinfo.objindex
+                                exit sub
+                             else
+                                call writeconsolemsg(userindex, "la llave no sirve.", fonttypenames.fonttype_info)
+                                exit sub
+                             end if
+                          end if
+                    else
+                          call writeconsolemsg(userindex, "no est� cerrada.", fonttypenames.fonttype_info)
+                          exit sub
+                    end if
+                end if
+            
+            case eobjtype.otbotellavacia
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                if not hayagua(.pos.map, .flags.targetx, .flags.targety) then
+                    call writeconsolemsg(userindex, "no hay agua all�.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                miobj.amount = 1
+                miobj.objindex = objdata(.invent.object(slot).objindex).indexabierta
+                call quitaruserinvitem(userindex, slot, 1)
+                if not meteritemeninventario(userindex, miobj) then
+                    call tiraritemalpiso(.pos, miobj)
+                end if
+                
+                call updateuserinv(false, userindex, slot)
+            
+            case eobjtype.otbotellallena
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                .stats.minagu = .stats.minagu + obj.minsed
+                if .stats.minagu > .stats.maxagu then _
+                    .stats.minagu = .stats.maxagu
+                .flags.sed = 0
+                call writeupdatehungerandthirst(userindex)
+                miobj.amount = 1
+                miobj.objindex = objdata(.invent.object(slot).objindex).indexcerrada
+                call quitaruserinvitem(userindex, slot, 1)
+                if not meteritemeninventario(userindex, miobj) then
+                    call tiraritemalpiso(.pos, miobj)
+                end if
+                
+                call updateuserinv(false, userindex, slot)
+            
+            case eobjtype.otpergaminos
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                if .stats.maxman > 0 then
+                    if .flags.hambre = 0 and _
+                        .flags.sed = 0 then
+                        call agregarhechizo(userindex, slot)
+                        call updateuserinv(false, userindex, slot)
+                    else
+                        call writeconsolemsg(userindex, "est�s demasiado hambriento y sediento.", fonttypenames.fonttype_info)
+                    end if
+                else
+                    call writeconsolemsg(userindex, "no tienes conocimientos de las artes arcanas.", fonttypenames.fonttype_info)
+                end if
+            case eobjtype.otminerales
+                if .flags.muerto = 1 then
+                     call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                     exit sub
+                end if
+                call writemultimessage(userindex, emessages.workrequesttarget, fundirmetal) 'call writeworkrequesttarget(userindex, fundirmetal)
+               
+            case eobjtype.otinstrumentos
+                if .flags.muerto = 1 then
+                    call writeconsolemsg(userindex, "��est�s muerto!! s�lo puedes usar �tems cuando est�s vivo.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
+                if obj.real then '�es el cuerno real?
+                    if faccionpuedeusaritem(userindex, objindex) then
+                        if mapinfo(.pos.map).pk = false then
+                            call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura.", fonttypenames.fonttype_info)
+                            exit sub
+                        end if
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                        else
+                            call alertarfaccionarios(userindex)
+                            call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                        end if
+                        
+                        exit sub
+                    else
+                        call writeconsolemsg(userindex, "s�lo miembros del ej�rcito real pueden usar este cuerno.", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                elseif obj.caos then '�es el cuerno legi�n?
+                    if faccionpuedeusaritem(userindex, objindex) then
+                        if mapinfo(.pos.map).pk = false then
+                            call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura.", fonttypenames.fonttype_info)
+                            exit sub
+                        end if
+                        
+                        ' los admin invisibles solo producen sonidos a si mismos
+                        if .flags.admininvisible = 1 then
+                            call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                        else
+                            call alertarfaccionarios(userindex)
+                            call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                        end if
+                        
+                        exit sub
+                    else
+                        call writeconsolemsg(userindex, "s�lo miembros de la legi�n oscura pueden usar este cuerno.", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                end if
+                'si llega aca es porque es o laud o tambor o flauta
                 ' los admin invisibles solo producen sonidos a si mismos
                 if .flags.admininvisible = 1 then
                     call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
                 else
-                    call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                end if
+               
+            case eobjtype.otbarcos
+                'verifica si esta aproximado al agua antes de permitirle navegar
+                if .stats.elv < 25 then
+                    if .clase <> eclass.worker and .clase <> eclass.pirat then
+                        call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 25 o superior.", fonttypenames.fonttype_info)
+                        exit sub
+                    else
+                        if .stats.elv < 20 then
+                            call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 o superior.", fonttypenames.fonttype_info)
+                            exit sub
+                        end if
+                    end if
                 end if
                 
-                exit sub
-            else
-                call writeconsolemsg(userindex, "solo miembros de la armada real pueden usar este cuerno.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-        elseif obj.caos then '�es el cuerno legi�n?
-            if faccionpuedeusaritem(userindex, objindex) then
-                if mapinfo(.pos.map).pk = false then
-                    call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura ", fonttypenames.fonttype_info)
-                    exit sub
-                end if
-                
-                ' los admin invisibles solo producen sonidos a si mismos
-                if .flags.admininvisible = 1 then
-                    call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                if ((legalpos(.pos.map, .pos.x - 1, .pos.y, true, false) _
+                        or legalpos(.pos.map, .pos.x, .pos.y - 1, true, false) _
+                        or legalpos(.pos.map, .pos.x + 1, .pos.y, true, false) _
+                        or legalpos(.pos.map, .pos.x, .pos.y + 1, true, false)) _
+                        and .flags.navegando = 0) _
+                        or .flags.navegando = 1 then
+                    call donavega(userindex, obj, slot)
                 else
-                    call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                    call writeconsolemsg(userindex, "�debes aproximarte al agua para usar el barco!", fonttypenames.fonttype_info)
                 end if
                 
-                exit sub
-            else
-                call writeconsolemsg(userindex, "solo miembros de la legi�n oscura pueden usar este cuerno.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-        end if
-        'si llega aca es porque es o laud o tambor o flauta
-        ' los admin invisibles solo producen sonidos a si mismos
-        if .flags.admininvisible = 1 then
-            call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
-        else
-            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
-        end if
-       
-    case eobjtype.otbarcos
-        'verifica si esta aproximado al agua antes de permitirle navegar
-        if .stats.elv < 25 then
-            if .clase <> eclass.fisher and .clase <> eclass.pirat then
-                call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 25 o superior.", fonttypenames.fonttype_info)
-                exit sub
-            else
-                if .stats.elv < 20 then
-                    call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 o superior.", fonttypenames.fonttype_info)
-                    exit sub
-                end if
-            end if
-        end if
-        
-        if ((legalpos(.pos.map, .pos.x - 1, .pos.y, true, false) _
-                or legalpos(.pos.map, .pos.x, .pos.y - 1, true, false) _
-                or legalpos(.pos.map, .pos.x + 1, .pos.y, true, false) _
-                or legalpos(.pos.map, .pos.x, .pos.y + 1, true, false)) _
-                and .flags.navegando = 0) _
-                or .flags.navegando = 1 then
-            call donavega(userindex, obj, slot)
-        else
-            call writeconsolemsg(userindex, "�debes aproximarte al agua para usar el barco!", fonttypenames.fonttype_info)
-        end if
-end select
-
-end with
+        end select
+    
+    end with
 
 end sub
 
 sub enivararmasconstruibles(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-call writeblacksmithweapons(userindex)
-
+    call writeblacksmithweapons(userindex)
 end sub
  
 sub enivarobjconstruibles(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-call writecarpenterobjects(userindex)
-
+    call writecarpenterobjects(userindex)
 end sub
 
 sub enivararmadurasconstruibles(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-call writeblacksmitharmors(userindex)
-
+    call writeblacksmitharmors(userindex)
 end sub
 
 sub tirartodo(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 on error resume next
 
-if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
-
-call tirartodoslositems(userindex)
-
-dim cantidad as long
-cantidad = userlist(userindex).stats.gld - clng(userlist(userindex).stats.elv) * 10000
-
-if cantidad > 0 then _
-    call tiraroro(cantidad, userindex)
+    with userlist(userindex)
+        if mapdata(.pos.map, .pos.x, .pos.y).trigger = 6 then exit sub
+        
+        call tirartodoslositems(userindex)
+        
+        dim cantidad as long
+        cantidad = .stats.gld - clng(.stats.elv) * 10000
+        
+        if cantidad > 0 then _
+            call tiraroro(cantidad, userindex)
+    end with
 
 end sub
 
 public function itemsecae(byval index as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-itemsecae = (objdata(index).real <> 1 or objdata(index).nosecae = 0) and _
-            (objdata(index).caos <> 1 or objdata(index).nosecae = 0) and _
-            objdata(index).objtype <> eobjtype.otllaves and _
-            objdata(index).objtype <> eobjtype.otbarcos and _
-            objdata(index).nosecae = 0
-
+    with objdata(index)
+        itemsecae = (.real <> 1 or .nosecae = 0) and _
+                    (.caos <> 1 or .nosecae = 0) and _
+                    .objtype <> eobjtype.otllaves and _
+                    .objtype <> eobjtype.otbarcos and _
+                    .nosecae = 0
+    end with
 
 end function
 
 sub tirartodoslositems(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 12/01/2010 (zama)
+'12/01/2010: zama - ahora los piratas no explotan items solo si estan entre 20 y 25
+'***************************************************
+
     dim i as byte
     dim nuevapos as worldpos
     dim miobj as obj
     dim itemindex as integer
+    dim dropagua as boolean
     
-    for i = 1 to max_inventory_slots
-        itemindex = userlist(userindex).invent.object(i).objindex
-        if itemindex > 0 then
-             if itemsecae(itemindex) then
-                nuevapos.x = 0
-                nuevapos.y = 0
-                
-                'creo el obj
-                miobj.amount = userlist(userindex).invent.object(i).amount
-                miobj.objindex = itemindex
-                'pablo (toxicwaste) 24/01/2007
-                'si es pirata y usa un gale�n entonces no explota los items. (en el agua)
-                if userlist(userindex).clase = eclass.pirat and userlist(userindex).invent.barcoobjindex = 476 then
-                    tilelibre userlist(userindex).pos, nuevapos, miobj, false, true
-                else
-                    tilelibre userlist(userindex).pos, nuevapos, miobj, true, true
-                end if
-                
-                if nuevapos.x <> 0 and nuevapos.y <> 0 then
-                    call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
-                end if
-             end if
-        end if
-    next i
+    with userlist(userindex)
+        for i = 1 to .currentinventoryslots
+            itemindex = .invent.object(i).objindex
+            if itemindex > 0 then
+                 if itemsecae(itemindex) then
+                    nuevapos.x = 0
+                    nuevapos.y = 0
+                    
+                    'creo el obj
+                    miobj.amount = .invent.object(i).amount
+                    miobj.objindex = itemindex
+
+                    dropagua = true
+                    ' es pirata?
+                    if .clase = eclass.pirat then
+                        ' si tiene galeon equipado
+                        if .invent.barcoobjindex = 476 then
+                            ' limitaci�n por nivel, despu�s dropea normalmente
+                            if .stats.elv >= 20 and .stats.elv <= 25 then
+                                ' no dropea en agua
+                                dropagua = false
+                            end if
+                        end if
+                    end if
+                    
+                    call tilelibre(.pos, nuevapos, miobj, dropagua, true)
+                    
+                    if nuevapos.x <> 0 and nuevapos.y <> 0 then
+                        call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+                    end if
+                 end if
+            end if
+        next i
+    end with
 end sub
 
 function itemnewbie(byval itemindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
-itemnewbie = objdata(itemindex).newbie = 1
-
+    if itemindex < 1 or itemindex > ubound(objdata) then exit function
+    
+    itemnewbie = objdata(itemindex).newbie = 1
 end function
 
 sub tirartodoslositemsnonewbies(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: 07/11/09
+'last modification: 23/11/2009
 '07/11/09: pato - fix bug #2819911
+'23/11/2009: zama - optimizacion de codigo.
 '***************************************************
-dim i as byte
-dim nuevapos as worldpos
-dim miobj as obj
-dim itemindex as integer
-
-if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
-
-for i = 1 to max_inventory_slots
-    itemindex = userlist(userindex).invent.object(i).objindex
-    if itemindex > 0 then
-        if itemsecae(itemindex) and not itemnewbie(itemindex) then
-            nuevapos.x = 0
-            nuevapos.y = 0
-            
-            'creo miobj
-            miobj.amount = userlist(userindex).invent.object(i).amount
-            miobj.objindex = itemindex
-            'pablo (toxicwaste) 24/01/2007
-            'tira los items no newbies en todos lados.
-            tilelibre userlist(userindex).pos, nuevapos, miobj, true, true
-            if nuevapos.x <> 0 and nuevapos.y <> 0 then
-                call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+    dim i as byte
+    dim nuevapos as worldpos
+    dim miobj as obj
+    dim itemindex as integer
+    
+    with userlist(userindex)
+        if mapdata(.pos.map, .pos.x, .pos.y).trigger = 6 then exit sub
+        
+        for i = 1 to userlist(userindex).currentinventoryslots
+            itemindex = .invent.object(i).objindex
+            if itemindex > 0 then
+                if itemsecae(itemindex) and not itemnewbie(itemindex) then
+                    nuevapos.x = 0
+                    nuevapos.y = 0
+                    
+                    'creo miobj
+                    miobj.amount = .invent.object(i).amount
+                    miobj.objindex = itemindex
+                    'pablo (toxicwaste) 24/01/2007
+                    'tira los items no newbies en todos lados.
+                    tilelibre .pos, nuevapos, miobj, true, true
+                    if nuevapos.x <> 0 and nuevapos.y <> 0 then
+                        call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+                    end if
+                end if
             end if
-        end if
-    end if
-next i
+        next i
+    end with
 
 end sub
+
+sub tirartodoslositemsenmochila(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 12/01/09 (budi)
+'***************************************************
+    dim i as byte
+    dim nuevapos as worldpos
+    dim miobj as obj
+    dim itemindex as integer
+    
+    with userlist(userindex)
+        if mapdata(.pos.map, .pos.x, .pos.y).trigger = 6 then exit sub
+        
+        for i = max_normal_inventory_slots + 1 to .currentinventoryslots
+            itemindex = .invent.object(i).objindex
+            if itemindex > 0 then
+                if itemsecae(itemindex) then
+                    nuevapos.x = 0
+                    nuevapos.y = 0
+                    
+                    'creo miobj
+                    miobj.amount = .invent.object(i).amount
+                    miobj.objindex = itemindex
+                    tilelibre .pos, nuevapos, miobj, true, true
+                    if nuevapos.x <> 0 and nuevapos.y <> 0 then
+                        call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+                    end if
+                end if
+            end if
+        next i
+    end with
+
+end sub
+
+public function getobjtype(byval objindex as integer) as eobjtype
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+    if objindex > 0 then
+        getobjtype = objdata(objindex).objtype
+    end if
+    
+end function

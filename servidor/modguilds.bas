@@ -80,6 +80,11 @@ end enum
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 public sub loadguildsdb()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 dim cantclanes  as string
 dim i           as integer
@@ -106,7 +111,13 @@ dim alin        as alineacion_guild
 end sub
 
 public function m_conectarmiembroaclan(byval userindex as integer, byval guildindex as integer) as boolean
-dim nuevol  as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+
 dim nuevaa  as boolean
 dim news    as string
 
@@ -116,126 +127,186 @@ dim news    as string
         userlist(userindex).guildindex = guildindex
         m_conectarmiembroaclan = true
     else
-        m_conectarmiembroaclan = m_validarpermanencia(userindex, true, nuevaa, nuevol)
-        if nuevol then news = "el clan tiene nuevo l�der."
+        m_conectarmiembroaclan = m_validarpermanencia(userindex, true, nuevaa)
         if nuevaa then news = news & "el clan tiene nueva alineaci�n."
-        if nuevol or nuevaa then call guilds(guildindex).setguildnews(news)
+        'if nuevol or nuevaa then call guilds(guildindex).setguildnews(news)
     end if
 
 end function
 
 
-public function m_validarpermanencia(byval userindex as integer, byval sumaantifaccion as boolean, byref cambioalineacion as boolean, byref cambiolider as boolean) as boolean
+public function m_validarpermanencia(byval userindex as integer, byval sumaantifaccion as boolean, _
+                            byref cambioalineacion as boolean) as boolean
 '***************************************************
 'autor: unknown (orginal version)
-'last modification: 25/03/2009
+'last modification: 14/12/2009
 '25/03/2009: zama - desequipo los items faccionarios que tenga el funda al abandonar la faccion
+'14/12/2009: zama - la alineacion del clan depende del lider
+'14/02/2010: zama - ya no es necesario saber si el lider cambia, ya que no puede cambiar.
 '***************************************************
 
 dim guildindex  as integer
-dim ml()        as string
-dim m           as string
-dim ui          as integer
-dim sale        as boolean
-dim i           as long
-dim totalmembers as integer
 
     m_validarpermanencia = true
+    
     guildindex = userlist(userindex).guildindex
     if guildindex > cantidaddeclanes and guildindex <= 0 then exit function
     
     if not m_estadopermiteentrar(userindex, guildindex) then
-    
-        call logclanes(userlist(userindex).name & " de " & guilds(guildindex).guildname & " es expulsado en validar permanencia")
-    
-        m_validarpermanencia = false
-        if sumaantifaccion then guilds(guildindex).puntosantifaccion = guilds(guildindex).puntosantifaccion + 1
         
-        cambioalineacion = (m_esguildfounder(userlist(userindex).name, guildindex) or guilds(guildindex).puntosantifaccion = maxantifaccion)
+        ' es el lider, bajamos 1 rango de alineacion
+        if guildleader(guildindex) = userlist(userindex).name then
+            call logclanes(userlist(userindex).name & ", l�der de " & guilds(guildindex).guildname & " hizo bajar la alienaci�n de su clan.")
         
-        call logclanes(userlist(userindex).name & " de " & guilds(guildindex).guildname & iif(cambioalineacion, " si ", " no ") & "provoca cambio de alinaecion. maxant:" & (guilds(guildindex).puntosantifaccion = maxantifaccion) & ", guildfou:" & m_esguildfounder(userlist(userindex).name, guildindex))
-        
-        if cambioalineacion then
-            'aca tenemos un problema, el fundador acaba de cambiar el rumbo del clan o nos zarpamos de antifacciones
-            'tenemos que resetear el lider, revisar si el lider permanece y si no asignarle liderazgo al fundador
-
-            call guilds(guildindex).cambiaralineacion(alineacion_neutro)
-            guilds(guildindex).puntosantifaccion = maxantifaccion
-            'para la nueva alineacion, hay que revisar a todos los pjs!
-
-            'uso getmemberlist y no los iteradores pq voy a rajar gente y puedo alterar
-            'internamente al iterador en el proceso
-            cambiolider = false
-            ml = guilds(guildindex).getmemberlist()
-            totalmembers = ubound(ml)
+            cambioalineacion = true
             
-            'el user en ml(0) es el funda, no tiene setnido verificar su permanencia!
-            for i = 1 to totalmembers
-                m = ml(i)
-                
-                'vamos a violar un poco de capas..
-                ui = nameindex(m)
-                if ui > 0 then
-                    sale = not m_estadopermiteentrar(ui, guildindex)
-                else
-                    sale = not m_estadopermiteentrarchar(m, guildindex)
-                end if
-
-                if sale then
-                    if m_esguildfounder(m, guildindex) then 'hay que sacarlo de las armadas
-                     
-                        if ui > 0 then
-                            if userlist(ui).faccion.armadareal <> 0 then
-                                call expulsarfaccionreal(ui)
-                            elseif userlist(ui).faccion.fuerzascaos <> 0 then
-                                call expulsarfaccioncaos(ui)
-                            end if
-                           userlist(ui).faccion.reenlistadas = 200
-                        else
-                            if fileexist(charpath & m & ".chr") then
-                                call writevar(charpath & m & ".chr", "facciones", "ejercitocaos", 0)
-                                call writevar(charpath & m & ".chr", "facciones", "ejercitoreal", 0)
-                                call writevar(charpath & m & ".chr", "facciones", "reenlistadas", 200)
-                            end if
-                        end if
-                        m_validarpermanencia = true
-                    else    'sale si no es guildfounder
-                        if m_esguildleader(m, guildindex) then
-                            'pierde el liderazgo
-                            cambiolider = true
-                            call guilds(guildindex).setleader(guilds(guildindex).fundador)
-                        end if
-
-                        call m_echarmiembrodeclan(-1, m)
-                    end if
-                end if
-            next i
+            ' por si paso de ser armada/legion a pk/ciuda, chequeo de nuevo
+            do
+                call updateguildmembers(guildindex)
+            loop until m_estadopermiteentrar(userindex, guildindex)
         else
-            'no se va el fundador, el peor caso es que se vaya el lider
+            call logclanes(userlist(userindex).name & " de " & guilds(guildindex).guildname & " es expulsado en validar permanencia.")
+        
+            m_validarpermanencia = false
+            if sumaantifaccion then guilds(guildindex).puntosantifaccion = guilds(guildindex).puntosantifaccion + 1
             
-            'if m_esguildleader(userlist(userindex).name, guildindex) then
-            '    call logclanes("se transfiere el liderazgo de: " & guilds(guildindex).guildname & " a " & guilds(guildindex).fundador)
-            '    call guilds(guildindex).setleader(guilds(guildindex).fundador)  'transferimos el lideraztgo
-            'end if
-            call m_echarmiembrodeclan(-1, userlist(userindex).name)   'y lo echamos
+            cambioalineacion = guilds(guildindex).puntosantifaccion = maxantifaccion
+            
+            call logclanes(userlist(userindex).name & " de " & guilds(guildindex).guildname & _
+                iif(cambioalineacion, " si ", " no ") & "provoca cambio de alineaci�n. maxant:" & cambioalineacion)
+            
+            call m_echarmiembrodeclan(-1, userlist(userindex).name)
+            
+            ' llegamos a la maxima cantidad de antifacciones permitidas, bajamos un grado de alineaci�n
+            if cambioalineacion then
+                call updateguildmembers(guildindex)
+            end if
         end if
     end if
 end function
 
+private sub updateguildmembers(byval guildindex as integer)
+'***************************************************
+'autor: zama
+'last modification: 14/01/2010 (zama)
+'14/01/2010: zama - pulo detalles en el funcionamiento general.
+'***************************************************
+    dim guildmembers() as string
+    dim totalmembers as integer
+    dim memberindex as long
+    dim sale as boolean
+    dim membername as string
+    dim userindex as integer
+    dim reenlistadas as integer
+    
+    ' si devuelve true, cambio a neutro y echamos a todos los que est�n de mas, sino no echamos a nadie
+    if guilds(guildindex).cambiaralineacion(bajargrado(guildindex)) then 'alineacion_neutro)
+        
+        'uso getmemberlist y no los iteradores pq voy a rajar gente y puedo alterar
+        'internamente al iterador en el proceso
+        guildmembers = guilds(guildindex).getmemberlist()
+        totalmembers = ubound(guildmembers)
+        
+        for memberindex = 0 to totalmembers
+            membername = guildmembers(memberindex)
+            
+            'vamos a violar un poco de capas..
+            userindex = nameindex(membername)
+            if userindex > 0 then
+                sale = not m_estadopermiteentrar(userindex, guildindex)
+            else
+                sale = not m_estadopermiteentrarchar(membername, guildindex)
+            end if
+
+            if sale then
+                if m_esguildleader(membername, guildindex) then  'hay que sacarlo de las facciones
+                 
+                    if userindex > 0 then
+                        if userlist(userindex).faccion.armadareal <> 0 then
+                            call expulsarfaccionreal(userindex)
+                            ' no cuenta como reenlistada :p.
+                            userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas - 1
+                        elseif userlist(userindex).faccion.fuerzascaos <> 0 then
+                            call expulsarfaccioncaos(userindex)
+                            ' no cuenta como reenlistada :p.
+                            userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas - 1
+                        end if
+                    else
+                        if fileexist(charpath & membername & ".chr") then
+                            call writevar(charpath & membername & ".chr", "facciones", "ejercitocaos", 0)
+                            call writevar(charpath & membername & ".chr", "facciones", "ejercitoreal", 0)
+                            reenlistadas = getvar(charpath & membername & ".chr", "facciones", "reenlistadas")
+                            call writevar(charpath & membername & ".chr", "facciones", "reenlistadas", _
+                                    iif(reenlistadas > 1, reenlistadas - 1, reenlistadas))
+                        end if
+                    end if
+                else    'sale si no es guildleader
+                    call m_echarmiembrodeclan(-1, membername)
+                end if
+            end if
+        next memberindex
+    else
+        ' resetea los puntos de antifacci�n
+        guilds(guildindex).puntosantifaccion = 0
+    end if
+end sub
+
+private function bajargrado(byval guildindex as integer) as alineacion_guild
+'***************************************************
+'autor: zama
+'last modification: 27/11/2009
+'reduce el grado de la alineacion a partir de la alineacion dada
+'***************************************************
+
+select case guilds(guildindex).alineacion
+    case alineacion_armada
+        bajargrado = alineacion_ciuda
+    case alineacion_legion
+        bajargrado = alineacion_criminal
+    case else
+        bajargrado = alineacion_neutro
+end select
+
+end function
+
 public sub m_desconectarmiembrodelclan(byval userindex as integer, byval guildindex as integer)
-    if userlist(userindex).guildindex > cantidaddeclanes then exit sub
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+if userlist(userindex).guildindex > cantidaddeclanes then exit sub
     call guilds(guildindex).desconectarmiembro(userindex)
 end sub
 
 private function m_esguildleader(byref pj as string, byval guildindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     m_esguildleader = (ucase$(pj) = ucase$(trim$(guilds(guildindex).getleader)))
 end function
 
 private function m_esguildfounder(byref pj as string, byval guildindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     m_esguildfounder = (ucase$(pj) = ucase$(trim$(guilds(guildindex).fundador)))
 end function
 
 public function m_echarmiembrodeclan(byval expulsador as integer, byval expulsado as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'ui echa a expulsado del clan de expulsado
 dim userindex   as integer
 dim gi          as integer
@@ -248,7 +319,6 @@ dim gi          as integer
         gi = userlist(userindex).guildindex
         if gi > 0 then
             if m_puedesalirdeclan(expulsado, gi, expulsador) then
-                if m_esguildleader(expulsado, gi) then guilds(gi).setleader (guilds(gi).fundador)
                 call guilds(gi).desconectarmiembro(userindex)
                 call guilds(gi).expulsarmiembro(expulsado)
                 call logclanes(expulsado & " ha sido expulsado de " & guilds(gi).guildname & " expulsador = " & expulsador)
@@ -266,7 +336,6 @@ dim gi          as integer
         gi = getguildindexfromchar(expulsado)
         if gi > 0 then
             if m_puedesalirdeclan(expulsado, gi, expulsador) then
-                if m_esguildleader(expulsado, gi) then guilds(gi).setleader (guilds(gi).fundador)
                 call guilds(gi).expulsarmiembro(expulsado)
                 call logclanes(expulsado & " ha sido expulsado de " & guilds(gi).guildname & " expulsador = " & expulsador)
                 m_echarmiembrodeclan = gi
@@ -281,6 +350,12 @@ dim gi          as integer
 end function
 
 public sub actualizarwebsite(byval userindex as integer, byref web as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim gi as integer
 
     gi = userlist(userindex).guildindex
@@ -294,6 +369,12 @@ end sub
 
 
 public sub changecodexanddesc(byref desc as string, byref codex() as string, byval guildindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim i as long
     
     if guildindex < 1 or guildindex > cantidaddeclanes then exit sub
@@ -312,19 +393,34 @@ public sub changecodexanddesc(byref desc as string, byref codex() as string, byv
 end sub
 
 public sub actualizarnoticias(byval userindex as integer, byref datos as string)
-dim gi              as integer
+'***************************************************
+'author: unknown
+'last modification: 21/02/2010
+'21/02/2010: zama - ahora le avisa a los miembros que cambio el guildnews.
+'***************************************************
 
-    gi = userlist(userindex).guildindex
-    
-    if gi <= 0 or gi > cantidaddeclanes then exit sub
-    
-    if not m_esguildleader(userlist(userindex).name, gi) then exit sub
-    
-    call guilds(gi).setguildnews(datos)
+    dim gi as integer
+
+    with userlist(userindex)
+        gi = .guildindex
         
+        if gi <= 0 or gi > cantidaddeclanes then exit sub
+        
+        if not m_esguildleader(.name, gi) then exit sub
+        
+        call guilds(gi).setguildnews(datos)
+        
+        call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " ha actualizado las noticias del clan!"))
+    end with
 end sub
 
 public function crearnuevoclan(byval fundadorindex as integer, byref desc as string, byref guildname as string, byref url as string, byref codex() as string, byval alineacion as alineacion_guild, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim cantcodex       as integer
 dim i               as integer
 dim dummystring     as string
@@ -354,23 +450,27 @@ dim dummystring     as string
 
         'constructor custom de la clase clan
         set guilds(cantidaddeclanes) = new clsclan
-        call guilds(cantidaddeclanes).inicializar(guildname, cantidaddeclanes, alineacion)
         
-        'damos de alta al clan como nuevo inicializando sus archivos
-        call guilds(cantidaddeclanes).inicializarnuevoclan(userlist(fundadorindex).name)
+        with guilds(cantidaddeclanes)
+            call .inicializar(guildname, cantidaddeclanes, alineacion)
+            
+            'damos de alta al clan como nuevo inicializando sus archivos
+            call .inicializarnuevoclan(userlist(fundadorindex).name)
+            
+            'seteamos codex y descripcion
+            for i = 1 to cantcodex
+                call .setcodex(i, codex(i - 1))
+            next i
+            call .setdesc(desc)
+            call .setguildnews("clan creado con alineaci�n: " & alineacion2string(alineacion))
+            call .setleader(userlist(fundadorindex).name)
+            call .seturl(url)
+            
+            '"conectamos" al nuevo miembro a la lista de la clase
+            call .aceptarnuevomiembro(userlist(fundadorindex).name)
+            call .conectarmiembro(fundadorindex)
+        end with
         
-        'seteamos codex y descripcion
-        for i = 1 to cantcodex
-            call guilds(cantidaddeclanes).setcodex(i, codex(i - 1))
-        next i
-        call guilds(cantidaddeclanes).setdesc(desc)
-        call guilds(cantidaddeclanes).setguildnews("clan creado con alineaci�n : " & alineacion2string(alineacion))
-        call guilds(cantidaddeclanes).setleader(userlist(fundadorindex).name)
-        call guilds(cantidaddeclanes).seturl(url)
-        
-        '"conectamos" al nuevo miembro a la lista de la clase
-        call guilds(cantidaddeclanes).aceptarnuevomiembro(userlist(fundadorindex).name)
-        call guilds(cantidaddeclanes).conectarmiembro(fundadorindex)
         userlist(fundadorindex).guildindex = cantidaddeclanes
         call refreshcharstatus(fundadorindex)
         
@@ -378,7 +478,7 @@ dim dummystring     as string
             call guilds(i).procesarfundaciondeotroclan
         next i
     else
-        referror = "no hay mas slots para fundar clanes. consulte a un administrador."
+        referror = "no hay m�s slots para fundar clanes. consulte a un administrador."
         exit function
     end if
     
@@ -386,6 +486,12 @@ dim dummystring     as string
 end function
 
 public sub sendguildnews(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim guildindex  as integer
 dim i               as integer
 dim go as integer
@@ -395,49 +501,57 @@ dim go as integer
 
     dim enemies() as string
     
-    if guilds(guildindex).cantidadenemys then
-        redim enemies(0 to guilds(guildindex).cantidadenemys - 1) as string
-    else
-        redim enemies(0)
-    end if
+    with guilds(guildindex)
+        if .cantidadenemys then
+            redim enemies(0 to .cantidadenemys - 1) as string
+        else
+            redim enemies(0)
+        end if
+        
+        dim allies() as string
+        
+        if .cantidadallies then
+            redim allies(0 to .cantidadallies - 1) as string
+        else
+            redim allies(0)
+        end if
+        
+        i = .iterador_proximarelacion(relaciones_guild.guerra)
+        go = 0
+        
+        while i > 0
+            enemies(go) = guilds(i).guildname
+            i = .iterador_proximarelacion(relaciones_guild.guerra)
+            go = go + 1
+        wend
+        
+        i = .iterador_proximarelacion(relaciones_guild.aliados)
+        go = 0
+        
+        while i > 0
+            allies(go) = guilds(i).guildname
+            i = .iterador_proximarelacion(relaciones_guild.aliados)
+        wend
     
-    dim allies() as string
+        call writeguildnews(userindex, .getguildnews, enemies, allies)
     
-    if guilds(guildindex).cantidadallies then
-        redim allies(0 to guilds(guildindex).cantidadallies - 1) as string
-    else
-        redim allies(0)
-    end if
-    
-    i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.guerra)
-    go = 0
-    
-    while i > 0
-        enemies(go) = guilds(i).guildname
-        i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.guerra)
-        go = go + 1
-    wend
-    
-    i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.aliados)
-    go = 0
-    
-    while i > 0
-        allies(go) = guilds(i).guildname
-        i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.aliados)
-    wend
-
-    call writeguildnews(userindex, guilds(guildindex).getguildnews, enemies, allies)
-
-    if guilds(guildindex).eleccionesabiertas then
-        call writeconsolemsg(userindex, "hoy es la votacion para elegir un nuevo l�der para el clan!!.", fonttypenames.fonttype_guild)
-        call writeconsolemsg(userindex, "la eleccion durara 24 horas, se puede votar a cualquier miembro del clan.", fonttypenames.fonttype_guild)
-        call writeconsolemsg(userindex, "para votar escribe /voto nickname.", fonttypenames.fonttype_guild)
-        call writeconsolemsg(userindex, "solo se computara un voto por miembro. tu voto no puede ser cambiado.", fonttypenames.fonttype_guild)
-    end if
+        if .eleccionesabiertas then
+            call writeconsolemsg(userindex, "hoy es la votaci�n para elegir un nuevo l�der para el clan.", fonttypenames.fonttype_guild)
+            call writeconsolemsg(userindex, "la elecci�n durar� 24 horas, se puede votar a cualquier miembro del clan.", fonttypenames.fonttype_guild)
+            call writeconsolemsg(userindex, "para votar escribe /voto nickname.", fonttypenames.fonttype_guild)
+            call writeconsolemsg(userindex, "s�lo se computar� un voto por miembro. tu voto no puede ser cambiado.", fonttypenames.fonttype_guild)
+        end if
+    end with
 
 end sub
 
 public function m_puedesalirdeclan(byref nombre as string, byval guildindex as integer, byval quienloechaui as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'sale solo si no es fundador del clan.
 
     m_puedesalirdeclan = false
@@ -459,27 +573,33 @@ public function m_puedesalirdeclan(byref nombre as string, byval guildindex as i
         end if
     end if
 
-    m_puedesalirdeclan = ucase$(guilds(guildindex).fundador) <> ucase$(nombre)
+    ' ahora el lider es el unico que no puede salir del clan
+    m_puedesalirdeclan = ucase$(guilds(guildindex).getleader) <> ucase$(nombre)
 
 end function
 
 public function puedefundarunclan(byval userindex as integer, byval alineacion as alineacion_guild, byref referror as string) as boolean
-
-    puedefundarunclan = false
+'***************************************************
+'autor: unknown
+'last modification: 27/11/2009
+'returns true if can found a guild
+'27/11/2009: zama - ahora valida si ya fundo clan o no.
+'***************************************************
+    
     if userlist(userindex).guildindex > 0 then
         referror = "ya perteneces a un clan, no puedes fundar otro"
         exit function
     end if
     
     if userlist(userindex).stats.elv < 25 or userlist(userindex).stats.userskills(eskill.liderazgo) < 90 then
-        referror = "para fundar un clan debes ser nivel 25 y tener 90 en liderazgo."
+        referror = "para fundar un clan debes ser nivel 25 y tener 90 skills en liderazgo."
         exit function
     end if
     
     select case alineacion
         case alineacion_guild.alineacion_armada
             if userlist(userindex).faccion.armadareal <> 1 then
-                referror = "para fundar un clan real debes ser miembro de la armada."
+                referror = "para fundar un clan real debes ser miembro del ej�rcito real."
                 exit function
             end if
         case alineacion_guild.alineacion_ciuda
@@ -494,7 +614,7 @@ public function puedefundarunclan(byval userindex as integer, byval alineacion a
             end if
         case alineacion_guild.alineacion_legion
             if userlist(userindex).faccion.fuerzascaos <> 1 then
-                referror = "para fundar un clan del mal debes pertenecer a la legi�n oscura"
+                referror = "para fundar un clan del mal debes pertenecer a la legi�n oscura."
                 exit function
             end if
         case alineacion_guild.alineacion_master
@@ -514,6 +634,12 @@ public function puedefundarunclan(byval userindex as integer, byval alineacion a
 end function
 
 private function m_estadopermiteentrarchar(byref personaje as string, byval guildindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim promedio    as long
 dim elv         as integer
 dim f           as byte
@@ -563,32 +689,48 @@ dim f           as byte
 end function
 
 private function m_estadopermiteentrar(byval userindex as integer, byval guildindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     select case guilds(guildindex).alineacion
         case alineacion_guild.alineacion_armada
             m_estadopermiteentrar = not criminal(userindex) and _
                     iif(userlist(userindex).stats.elv >= 25, userlist(userindex).faccion.armadareal <> 0, true)
+        
         case alineacion_guild.alineacion_legion
             m_estadopermiteentrar = criminal(userindex) and _
                     iif(userlist(userindex).stats.elv >= 25, userlist(userindex).faccion.fuerzascaos <> 0, true)
+        
         case alineacion_guild.alineacion_neutro
             m_estadopermiteentrar = userlist(userindex).faccion.armadareal = 0 and userlist(userindex).faccion.fuerzascaos = 0
+        
         case alineacion_guild.alineacion_ciuda
             m_estadopermiteentrar = not criminal(userindex)
+        
         case alineacion_guild.alineacion_criminal
             m_estadopermiteentrar = criminal(userindex)
+        
         case else   'game masters
             m_estadopermiteentrar = true
     end select
 end function
 
-
 public function string2alineacion(byref s as string) as alineacion_guild
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     select case s
-        case "neutro"
+        case "neutral"
             string2alineacion = alineacion_neutro
-        case "legi�n oscura"
+        case "del mal"
             string2alineacion = alineacion_legion
-        case "armada real"
+        case "real"
             string2alineacion = alineacion_armada
         case "game masters"
             string2alineacion = alineacion_master
@@ -600,13 +742,19 @@ public function string2alineacion(byref s as string) as alineacion_guild
 end function
 
 public function alineacion2string(byval alineacion as alineacion_guild) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     select case alineacion
         case alineacion_guild.alineacion_neutro
-            alineacion2string = "neutro"
+            alineacion2string = "neutral"
         case alineacion_guild.alineacion_legion
-            alineacion2string = "legi�n oscura"
+            alineacion2string = "del mal"
         case alineacion_guild.alineacion_armada
-            alineacion2string = "armada real"
+            alineacion2string = "real"
         case alineacion_guild.alineacion_master
             alineacion2string = "game masters"
         case alineacion_guild.alineacion_ciuda
@@ -617,6 +765,12 @@ public function alineacion2string(byval alineacion as alineacion_guild) as strin
 end function
 
 public function relacion2string(byval relacion as relaciones_guild) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     select case relacion
         case relaciones_guild.aliados
             relacion2string = "a"
@@ -630,6 +784,12 @@ public function relacion2string(byval relacion as relaciones_guild) as string
 end function
 
 public function string2relacion(byval s as string) as relaciones_guild
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     select case ucase$(trim$(s))
         case vbnullstring, "p"
             string2relacion = relaciones_guild.paz
@@ -643,6 +803,12 @@ public function string2relacion(byval s as string) as relaciones_guild
 end function
 
 private function guildnamevalido(byval cad as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim car     as byte
 dim i       as integer
 
@@ -665,6 +831,12 @@ guildnamevalido = true
 end function
 
 private function yaexiste(byval guildname as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim i   as integer
 
 yaexiste = false
@@ -675,18 +847,40 @@ for i = 1 to cantidaddeclanes
     if yaexiste then exit function
 next i
 
+end function
 
+public function hasfound(byref username as string) as boolean
+'***************************************************
+'autor: zama
+'last modification: 27/11/2009
+'returns true if it's already the founder of other guild
+'***************************************************
+dim i as long
+dim name as string
+
+name = ucase$(username)
+
+for i = 1 to cantidaddeclanes
+    hasfound = (ucase$(guilds(i).fundador) = name)
+    if hasfound then exit function
+next i
 
 end function
 
 public function v_abrirelecciones(byval userindex as integer, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim guildindex      as integer
 
     v_abrirelecciones = false
     guildindex = userlist(userindex).guildindex
     
     if guildindex = 0 or guildindex > cantidaddeclanes then
-        referror = "tu no perteneces a ning�n clan"
+        referror = "t� no perteneces a ning�n clan."
         exit function
     end if
     
@@ -696,7 +890,7 @@ dim guildindex      as integer
     end if
     
     if guilds(guildindex).eleccionesabiertas then
-        referror = "las elecciones ya est�n abiertas"
+        referror = "las elecciones ya est�n abiertas."
         exit function
     end if
     
@@ -706,6 +900,12 @@ dim guildindex      as integer
 end function
 
 public function v_usuariovota(byval userindex as integer, byref votado as string, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim guildindex      as integer
 dim list()          as string
 dim i as long
@@ -714,38 +914,46 @@ dim i as long
     guildindex = userlist(userindex).guildindex
     
     if guildindex = 0 or guildindex > cantidaddeclanes then
-        referror = "tu no perteneces a ning�n clan"
+        referror = "t� no perteneces a ning�n clan."
         exit function
     end if
 
-    if not guilds(guildindex).eleccionesabiertas then
-        referror = "no hay elecciones abiertas en tu clan."
-        exit function
-    end if
-    
-    
-    list = guilds(guildindex).getmemberlist()
-    for i = 0 to ubound(list())
-        if ucase$(votado) = list(i) then exit for
-    next i
-    
-    if i > ubound(list()) then
-        referror = votado & " no pertenece al clan"
-        exit function
-    end if
-    
-    
-    if guilds(guildindex).yavoto(userlist(userindex).name) then
-        referror = "ya has votado, no puedes cambiar tu voto"
-        exit function
-    end if
-    
-    call guilds(guildindex).contabilizarvoto(userlist(userindex).name, votado)
-    v_usuariovota = true
+    with guilds(guildindex)
+        if not .eleccionesabiertas then
+            referror = "no hay elecciones abiertas en tu clan."
+            exit function
+        end if
+        
+        
+        list = .getmemberlist()
+        for i = 0 to ubound(list())
+            if ucase$(votado) = list(i) then exit for
+        next i
+        
+        if i > ubound(list()) then
+            referror = votado & " no pertenece al clan."
+            exit function
+        end if
+        
+        
+        if .yavoto(userlist(userindex).name) then
+            referror = "ya has votado, no puedes cambiar tu voto."
+            exit function
+        end if
+        
+        call .contabilizarvoto(userlist(userindex).name, votado)
+        v_usuariovota = true
+    end with
 
 end function
 
 public sub v_rutinaelecciones()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim i       as integer
 
 on error goto errh
@@ -753,12 +961,12 @@ on error goto errh
     for i = 1 to cantidaddeclanes
         if not guilds(i) is nothing then
             if guilds(i).revisarelecciones then
-                call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & guilds(i).getleader & " es el nuevo lider de " & guilds(i).guildname & "!", fonttypenames.fonttype_server))
+                call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & guilds(i).getleader & " es el nuevo l�der de " & guilds(i).guildname & ".", fonttypenames.fonttype_server))
             end if
         end if
 proximo:
     next i
-    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> elecciones revisadas", fonttypenames.fonttype_server))
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> elecciones revisadas.", fonttypenames.fonttype_server))
 exit sub
 errh:
     call logerror("modguilds.v_rutinaelecciones():" & err.description)
@@ -766,6 +974,12 @@ errh:
 end sub
 
 private function getguildindexfromchar(byref playername as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'aca si que vamos a violar las capas deliveradamente ya que
 'visual basic no permite declarar metodos de clase
 dim temps   as string
@@ -787,6 +1001,12 @@ dim temps   as string
 end function
 
 public function guildindex(byref guildname as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'me da el indice del guildname
 dim i as integer
 
@@ -801,6 +1021,12 @@ dim i as integer
 end function
 
 public function m_listademiembrosonline(byval userindex as integer, byval guildindex as integer) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim i as integer
     
     if guildindex > 0 and guildindex <= cantidaddeclanes then
@@ -818,6 +1044,12 @@ dim i as integer
 end function
 
 public function prepareguildslist() as string()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim tstr() as string
     dim i as long
     
@@ -835,6 +1067,12 @@ public function prepareguildslist() as string()
 end function
 
 public sub sendguilddetails(byval userindex as integer, byref guildname as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim codex(cantidadmaximacodex - 1)  as string
     dim gi      as integer
     dim i       as long
@@ -872,17 +1110,18 @@ public sub sendguildleaderinfo(byval userindex as integer)
         
         if gi <= 0 or gi > cantidaddeclanes then
             'send the guild list instead
-            call protocol.writeguildlist(userindex, guildlist)
-            exit sub
-        end if
-        
-        if not m_esguildleader(.name, gi) then
-            'send the guild list instead
-            call protocol.writeguildlist(userindex, guildlist)
+            call writeguildlist(userindex, guildlist)
             exit sub
         end if
         
         memberlist = guilds(gi).getmemberlist()
+        
+        if not m_esguildleader(.name, gi) then
+            'send the guild list instead
+            call writeguildmemberinfo(userindex, guildlist, memberlist)
+            exit sub
+        end if
+        
         aspirantslist = guilds(gi).getaspirantes()
         
         call writeguildleaderinfo(userindex, guildlist, memberlist, guilds(gi).getguildnews(), aspirantslist)
@@ -891,6 +1130,12 @@ end sub
 
 
 public function m_iterador_proximouserindex(byval guildindex as integer) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'itera sobre los onlinemembers
     m_iterador_proximouserindex = 0
     if guildindex > 0 and guildindex <= cantidaddeclanes then
@@ -899,6 +1144,12 @@ public function m_iterador_proximouserindex(byval guildindex as integer) as inte
 end function
 
 public function iterador_proximogm(byval guildindex as integer) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'itera sobre los gms escuchando este clan
     iterador_proximogm = 0
     if guildindex > 0 and guildindex <= cantidaddeclanes then
@@ -907,6 +1158,12 @@ public function iterador_proximogm(byval guildindex as integer) as integer
 end function
 
 public function r_iterador_proximapropuesta(byval guildindex as integer, byval tipo as relaciones_guild) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'itera sobre las propuestas
     r_iterador_proximapropuesta = 0
     if guildindex > 0 and guildindex <= cantidaddeclanes then
@@ -915,6 +1172,12 @@ public function r_iterador_proximapropuesta(byval guildindex as integer, byval t
 end function
 
 public function gmescuchaclan(byval userindex as integer, byval guildname as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim gi as integer
 
     'listen to no guild at all
@@ -946,35 +1209,47 @@ dim gi as integer
         gmescuchaclan = gi
         userlist(userindex).escucheclan = gi
     else
-        call writeconsolemsg(userindex, "error, el clan no existe", fonttypenames.fonttype_guild)
+        call writeconsolemsg(userindex, "error, el clan no existe.", fonttypenames.fonttype_guild)
         gmescuchaclan = 0
     end if
     
 end function
 
 public sub gmdejadeescucharclan(byval userindex as integer, byval guildindex as integer)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'el index lo tengo que tener de cuando me puse a escuchar
     userlist(userindex).escucheclan = 0
     call guilds(guildindex).desconectargm(userindex)
 end sub
 public function r_declararguerra(byval userindex as integer, byref guildguerra as string, byref referror as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim gi  as integer
 dim gig as integer
 
     r_declararguerra = 0
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     if trim$(guildguerra) = vbnullstring then
-        referror = "no has seleccionado ning�n clan"
+        referror = "no has seleccionado ning�n clan."
         exit function
     end if
     
@@ -985,7 +1260,7 @@ dim gig as integer
     end if
         
     if gi = gig then
-        referror = "no puedes declarar la guerra a tu mismo clan"
+        referror = "no puedes declarar la guerra a tu mismo clan."
         exit function
     end if
 
@@ -1006,23 +1281,29 @@ end function
 
 
 public function r_aceptarpropuestadepaz(byval userindex as integer, byref guildpaz as string, byref referror as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'el clan de userindex acepta la propuesta de paz de guildpaz, con quien esta en guerra
 dim gi      as integer
 dim gig     as integer
 
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     if trim$(guildpaz) = vbnullstring then
-        referror = "no has seleccionado ning�n clan"
+        referror = "no has seleccionado ning�n clan."
         exit function
     end if
 
@@ -1030,17 +1311,17 @@ dim gig     as integer
     
     if gig < 1 or gig > cantidaddeclanes then
         call logerror("modguilds.r_aceptarpropuestadepaz: " & gi & " acepta de " & guildpaz)
-        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)"
+        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)."
         exit function
     end if
 
     if guilds(gi).getrelacion(gig) <> relaciones_guild.guerra then
-        referror = "no est�s en guerra con ese clan"
+        referror = "no est�s en guerra con ese clan."
         exit function
     end if
     
     if not guilds(gi).haypropuesta(gig, relaciones_guild.paz) then
-        referror = "no hay ninguna propuesta de paz para aceptar"
+        referror = "no hay ninguna propuesta de paz para aceptar."
         exit function
     end if
 
@@ -1053,6 +1334,12 @@ dim gig     as integer
 end function
 
 public function r_rechazarpropuestadealianza(byval userindex as integer, byref guildpro as string, byref referror as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'devuelve el index al clan guildpro
 dim gi      as integer
 dim gig     as integer
@@ -1061,17 +1348,17 @@ dim gig     as integer
     gi = userlist(userindex).guildindex
     
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     if trim$(guildpro) = vbnullstring then
-        referror = "no has seleccionado ning�n clan"
+        referror = "no has seleccionado ning�n clan."
         exit function
     end if
 
@@ -1079,7 +1366,7 @@ dim gig     as integer
     
     if gig < 1 or gig > cantidaddeclanes then
         call logerror("modguilds.r_rechazarpropuestadealianza: " & gi & " acepta de " & guildpro)
-        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)"
+        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)."
         exit function
     end if
     
@@ -1097,6 +1384,12 @@ end function
 
 
 public function r_rechazarpropuestadepaz(byval userindex as integer, byref guildpro as string, byref referror as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'devuelve el index al clan guildpro
 dim gi      as integer
 dim gig     as integer
@@ -1105,17 +1398,17 @@ dim gig     as integer
     gi = userlist(userindex).guildindex
     
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     if trim$(guildpro) = vbnullstring then
-        referror = "no has seleccionado ning�n clan"
+        referror = "no has seleccionado ning�n clan."
         exit function
     end if
 
@@ -1123,7 +1416,7 @@ dim gig     as integer
     
     if gig < 1 or gig > cantidaddeclanes then
         call logerror("modguilds.r_rechazarpropuestadepaz: " & gi & " acepta de " & guildpro)
-        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)"
+        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)."
         exit function
     end if
     
@@ -1139,8 +1432,13 @@ dim gig     as integer
 
 end function
 
-
 public function r_aceptarpropuestadealianza(byval userindex as integer, byref guildallie as string, byref referror as string) as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 'el clan de userindex acepta la propuesta de paz de guildpaz, con quien esta en guerra
 dim gi      as integer
 dim gig     as integer
@@ -1148,17 +1446,17 @@ dim gig     as integer
     r_aceptarpropuestadealianza = 0
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     if trim$(guildallie) = vbnullstring then
-        referror = "no has seleccionado ning�n clan"
+        referror = "no has seleccionado ning�n clan."
         exit function
     end if
 
@@ -1166,7 +1464,7 @@ dim gig     as integer
     
     if gig < 1 or gig > cantidaddeclanes then
         call logerror("modguilds.r_aceptarpropuestadealianza: " & gi & " acepta de " & guildallie)
-        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)"
+        referror = "inconsistencia en el sistema de clanes. avise a un administrador (gig fuera de rango)."
         exit function
     end if
 
@@ -1191,6 +1489,12 @@ end function
 
 
 public function r_clangenerapropuesta(byval userindex as integer, byref otroclan as string, byval tipo as relaciones_guild, byref detalle as string, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim otroclangi      as integer
 dim gi              as integer
 
@@ -1198,19 +1502,19 @@ dim gi              as integer
     
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     otroclangi = guildindex(otroclan)
     
     if otroclangi = gi then
-        referror = "no puedes declarar relaciones con tu propio clan"
+        referror = "no puedes declarar relaciones con tu propio clan."
         exit function
     end if
     
     if otroclangi <= 0 or otroclangi > cantidaddeclanes then
-        referror = "el sistema de clanes esta inconsistente, el otro clan no existe!"
+        referror = "el sistema de clanes esta inconsistente, el otro clan no existe."
         exit function
     end if
     
@@ -1220,7 +1524,7 @@ dim gi              as integer
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
@@ -1245,6 +1549,12 @@ dim gi              as integer
 end function
 
 public function r_verpropuesta(byval userindex as integer, byref otroguild as string, byval tipo as relaciones_guild, byref referror as string) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim otroclangi      as integer
 dim gi              as integer
     
@@ -1253,19 +1563,19 @@ dim gi              as integer
     
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no eres miembro de ning�n clan"
+        referror = "no eres miembro de ning�n clan."
         exit function
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
+        referror = "no eres el l�der de tu clan."
         exit function
     end if
     
     otroclangi = guildindex(otroguild)
     
     if not guilds(gi).haypropuesta(otroclangi, tipo) then
-        referror = "no existe la propuesta solicitada"
+        referror = "no existe la propuesta solicitada."
         exit function
     end if
     
@@ -1274,6 +1584,11 @@ dim gi              as integer
 end function
 
 public function r_listadepropuestas(byval userindex as integer, byval tipo as relaciones_guild) as string()
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
     dim gi  as integer
     dim i   as integer
@@ -1304,6 +1619,12 @@ public function r_listadepropuestas(byval userindex as integer, byval tipo as re
 end function
 
 public sub a_rechazaraspirantechar(byref aspirante as string, byval guild as integer, byref detalles as string)
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if instrb(aspirante, "\") <> 0 then
         aspirante = replace(aspirante, "\", "")
     end if
@@ -1317,6 +1638,12 @@ public sub a_rechazaraspirantechar(byref aspirante as string, byval guild as int
 end sub
 
 public function a_obtenerrechazodechar(byref aspirante as string) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if instrb(aspirante, "\") <> 0 then
         aspirante = replace(aspirante, "\", "")
     end if
@@ -1331,6 +1658,12 @@ public function a_obtenerrechazodechar(byref aspirante as string) as string
 end function
 
 public function a_rechazaraspirante(byval userindex as integer, byref nombre as string, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim gi              as integer
 dim nroaspirante    as integer
 
@@ -1344,7 +1677,7 @@ dim nroaspirante    as integer
     nroaspirante = guilds(gi).numerodeaspirante(nombre)
 
     if nroaspirante = 0 then
-        referror = nombre & " no es aspirante a tu clan"
+        referror = nombre & " no es aspirante a tu clan."
         exit function
     end if
 
@@ -1355,8 +1688,14 @@ dim nroaspirante    as integer
 end function
 
 public function a_detallesaspirante(byval userindex as integer, byref nombre as string) as string
-dim gi              as integer
-dim nroaspirante    as integer
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
+    dim gi              as integer
+    dim nroaspirante    as integer
 
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
@@ -1375,6 +1714,12 @@ dim nroaspirante    as integer
 end function
 
 public sub senddetallespersonaje(byval userindex as integer, byval personaje as string)
+ '***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim gi          as integer
     dim nroasp      as integer
     dim guildname   as string
@@ -1384,17 +1729,18 @@ public sub senddetallespersonaje(byval userindex as integer, byval personaje as 
     dim list()      as string
     dim i           as long
     
+    on error goto error
     gi = userlist(userindex).guildindex
     
     personaje = ucase$(personaje)
     
     if gi <= 0 or gi > cantidaddeclanes then
-        call protocol.writeconsolemsg(userindex, "no perteneces a ning�n clan", fonttypenames.fonttype_info)
+        call protocol.writeconsolemsg(userindex, "no perteneces a ning�n clan.", fonttypenames.fonttype_info)
         exit sub
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        call protocol.writeconsolemsg(userindex, "no eres el l�der de tu clan", fonttypenames.fonttype_info)
+        call protocol.writeconsolemsg(userindex, "no eres el l�der de tu clan.", fonttypenames.fonttype_info)
         exit sub
     end if
     
@@ -1418,7 +1764,7 @@ public sub senddetallespersonaje(byval userindex as integer, byval personaje as 
         next i
         
         if i > ubound(list()) then
-            call protocol.writeconsolemsg(userindex, "el personaje no es ni aspirante ni miembro del clan", fonttypenames.fonttype_info)
+            call protocol.writeconsolemsg(userindex, "el personaje no es ni aspirante ni miembro del clan.", fonttypenames.fonttype_info)
             exit sub
         end if
     end if
@@ -1452,9 +1798,26 @@ public sub senddetallespersonaje(byval userindex as integer, byval personaje as 
     end with
     
     set userfile = nothing
+    
+    exit sub
+error:
+    set userfile = nothing
+    if not (fileexist(charpath & personaje & ".chr", vbarchive)) then
+        call logerror("el usuario " & userlist(userindex).name & " (" & userindex & _
+                    " ) ha pedido los detalles del personaje " & personaje & " que no se encuentra.")
+    else
+        call logerror("[" & err.number & "] " & err.description & " en la rutina senddetallespersonaje, por el usuario " & _
+                    userlist(userindex).name & " (" & userindex & " ), pidiendo informaci�n sobre el personaje " & personaje)
+    end if
 end sub
 
 public function a_nuevoaspirante(byval userindex as integer, byref clan as string, byref solicitud as string, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim viejosolicitado     as string
 dim viejoguildindex     as integer
 dim viejonroaspirante   as integer
@@ -1463,7 +1826,7 @@ dim nuevoguildindex     as integer
     a_nuevoaspirante = false
 
     if userlist(userindex).guildindex > 0 then
-        referror = "ya perteneces a un clan, debes salir del mismo antes de solicitar ingresar a otro"
+        referror = "ya perteneces a un clan, debes salir del mismo antes de solicitar ingresar a otro."
         exit function
     end if
     
@@ -1474,12 +1837,12 @@ dim nuevoguildindex     as integer
 
     nuevoguildindex = guildindex(clan)
     if nuevoguildindex = 0 then
-        referror = "ese clan no existe! avise a un administrador."
+        referror = "ese clan no existe, avise a un administrador."
         exit function
     end if
     
     if not m_estadopermiteentrar(userindex, nuevoguildindex) then
-        referror = "tu no puedes entrar a un clan de alineaci�n " & alineacion2string(guilds(nuevoguildindex).alineacion)
+        referror = "t� no puedes entrar a un clan de alineaci�n " & alineacion2string(guilds(nuevoguildindex).alineacion)
         exit function
     end if
 
@@ -1509,6 +1872,12 @@ dim nuevoguildindex     as integer
 end function
 
 public function a_aceptaraspirante(byval userindex as integer, byref aspirante as string, byref referror as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
 dim gi              as integer
 dim nroaspirante    as integer
 dim aspiranteui     as integer
@@ -1531,7 +1900,7 @@ dim aspiranteui     as integer
     nroaspirante = guilds(gi).numerodeaspirante(aspirante)
     
     if nroaspirante = 0 then
-        referror = "el pj no es aspirante al clan"
+        referror = "el pj no es aspirante al clan."
         exit function
     end if
     
@@ -1539,7 +1908,7 @@ dim aspiranteui     as integer
     if aspiranteui > 0 then
         'pj online
         if not m_estadopermiteentrar(aspiranteui, gi) then
-            referror = aspirante & " no puede entrar a un clan " & alineacion2string(guilds(gi).alineacion)
+            referror = aspirante & " no puede entrar a un clan de alineaci�n " & alineacion2string(guilds(gi).alineacion)
             call guilds(gi).retiraraspirante(aspirante, nroaspirante)
             exit function
         elseif not userlist(aspiranteui).guildindex = 0 then
@@ -1549,7 +1918,7 @@ dim aspiranteui     as integer
         end if
     else
         if not m_estadopermiteentrarchar(aspirante, gi) then
-            referror = aspirante & " no puede entrar a un clan " & alineacion2string(guilds(gi).alineacion)
+            referror = aspirante & " no puede entrar a un clan de alineaci�n " & alineacion2string(guilds(gi).alineacion)
             call guilds(gi).retiraraspirante(aspirante, nroaspirante)
             exit function
         elseif getguildindexfromchar(aspirante) then
@@ -1572,6 +1941,12 @@ dim aspiranteui     as integer
 end function
 
 public function guildname(byval guildindex as integer) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if guildindex <= 0 or guildindex > cantidaddeclanes then _
         exit function
     
@@ -1579,6 +1954,12 @@ public function guildname(byval guildindex as integer) as string
 end function
 
 public function guildleader(byval guildindex as integer) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if guildindex <= 0 or guildindex > cantidaddeclanes then _
         exit function
     
@@ -1586,6 +1967,12 @@ public function guildleader(byval guildindex as integer) as string
 end function
 
 public function guildalignment(byval guildindex as integer) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     if guildindex <= 0 or guildindex > cantidaddeclanes then _
         exit function
     

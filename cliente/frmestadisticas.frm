@@ -1,898 +1,980 @@
 version 5.00
 begin vb.form frmestadisticas 
    backcolor       =   &h00c0c0c0&
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "estadisticas"
-   clientheight    =   6315
-   clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   6900
+   clientheight    =   6675
+   clientleft      =   0
+   clienttop       =   -75
+   clientwidth     =   6975
    clipcontrols    =   0   'false
    icon            =   "frmestadisticas.frx":0000
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6315
-   scalewidth      =   6900
+   scaleheight     =   445
+   scalemode       =   3  'pixel
+   scalewidth      =   465
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      cancel          =   -1  'true
-      caption         =   "ok"
-      default         =   -1  'true
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   375
-      left            =   60
-      mouseicon       =   "frmestadisticas.frx":000c
-      mousepointer    =   99  'custom
-      tabindex        =   6
-      top             =   5880
+   begin vb.image imgcerrar 
+      height          =   360
+      left            =   105
+      tag             =   "1"
+      top             =   6240
       width           =   6810
    end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   20
+      left            =   5415
+      top             =   5805
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   19
+      left            =   5415
+      top             =   5535
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   18
+      left            =   5415
+      top             =   5265
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   17
+      left            =   5415
+      top             =   4995
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   16
+      left            =   5415
+      top             =   4725
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   15
+      left            =   5415
+      top             =   4470
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   14
+      left            =   5415
+      top             =   4230
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   13
+      left            =   5415
+      top             =   3975
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   12
+      left            =   5415
+      top             =   3720
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   11
+      left            =   5415
+      top             =   3450
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   10
+      left            =   5415
+      top             =   3195
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   9
+      left            =   5415
+      top             =   2940
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   8
+      left            =   5415
+      top             =   2670
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   7
+      left            =   5415
+      top             =   2400
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   6
+      left            =   5415
+      top             =   2145
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   5
+      left            =   5415
+      top             =   1890
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   4
+      left            =   5415
+      top             =   1635
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   3
+      left            =   5415
+      top             =   1380
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   2
+      left            =   5415
+      top             =   1125
+      width           =   1095
+   end
+   begin vb.shape shpskillsbar 
+      bordercolor     =   &h00000000&
+      borderstyle     =   0  'transparent
+      fillstyle       =   0  'solid
+      height          =   120
+      index           =   1
+      left            =   5415
+      top             =   885
+      width           =   1095
+   end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   5
-      left            =   240
-      tabindex        =   43
-      top             =   5580
-      width           =   2475
+      left            =   2325
+      tabindex        =   36
+      top             =   5880
+      width           =   555
    end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   4
-      left            =   240
-      tabindex        =   42
-      top             =   5340
-      width           =   2475
+      left            =   960
+      tabindex        =   35
+      top             =   5670
+      width           =   1785
    end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   3
-      left            =   240
-      tabindex        =   41
-      top             =   5100
-      width           =   2475
+      left            =   1920
+      tabindex        =   34
+      top             =   5460
+      width           =   825
    end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   2
-      left            =   240
-      tabindex        =   40
-      top             =   4860
-      width           =   2475
+      left            =   1920
+      tabindex        =   33
+      top             =   5220
+      width           =   825
    end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   1
-      left            =   240
-      tabindex        =   39
-      top             =   4620
-      width           =   2475
+      left            =   1920
+      tabindex        =   32
+      top             =   4980
+      width           =   825
    end
    begin vb.label label6 
       backstyle       =   0  'transparent
-      caption         =   "estadisticas1"
+      caption         =   "000"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   0
-      left            =   240
-      tabindex        =   38
-      top             =   4380
-      width           =   2475
+      left            =   1920
+      tabindex        =   31
+      top             =   4740
+      width           =   825
    end
-   begin vb.shape shape4 
-      height          =   1815
-      left            =   120
-      top             =   4020
-      width           =   2715
-   end
-   begin vb.shape shape3 
-      height          =   2055
-      left            =   120
-      top             =   1920
-      width           =   2715
-   end
-   begin vb.shape shape1 
-      height          =   1755
-      left            =   120
-      top             =   120
-      width           =   2715
-   end
-   begin vb.shape shape2 
-      height          =   5715
-      left            =   2880
-      top             =   120
-      width           =   3855
-   end
-   begin vb.label label5 
-      alignment       =   2  'center
+   begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "estadisticas"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
-         size            =   9
+         size            =   8.25
          charset         =   0
          weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   210
-      left            =   945
-      tabindex        =   37
-      top             =   4080
-      width           =   1080
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   21
-      left            =   3585
-      tabindex        =   36
-      top             =   5400
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   20
-      left            =   3585
-      tabindex        =   35
-      top             =   5175
-      width           =   480
+      left            =   4155
+      tabindex        =   30
+      top             =   5760
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   19
-      left            =   3585
-      tabindex        =   34
-      top             =   4935
-      width           =   480
+      left            =   4605
+      tabindex        =   29
+      top             =   5520
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   18
-      left            =   3585
-      tabindex        =   33
-      top             =   4695
-      width           =   480
+      left            =   4725
+      tabindex        =   28
+      top             =   5235
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   17
-      left            =   3585
-      tabindex        =   32
-      top             =   4470
-      width           =   480
+      left            =   4440
+      tabindex        =   27
+      top             =   4965
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   16
-      left            =   3585
-      tabindex        =   31
-      top             =   4230
-      width           =   480
+      left            =   3960
+      tabindex        =   26
+      top             =   4680
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   15
-      left            =   3585
-      tabindex        =   30
-      top             =   3990
-      width           =   480
+      left            =   3885
+      tabindex        =   25
+      top             =   4440
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   14
-      left            =   3585
-      tabindex        =   29
-      top             =   3765
-      width           =   480
+      left            =   4080
+      tabindex        =   24
+      top             =   4200
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   13
-      left            =   3585
-      tabindex        =   28
-      top             =   3525
-      width           =   480
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   7
-      left            =   285
-      tabindex        =   27
-      top             =   3660
-      width           =   900
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   6
-      left            =   285
-      tabindex        =   26
-      top             =   3420
-      width           =   900
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   5
-      left            =   285
-      tabindex        =   25
-      top             =   3180
-      width           =   900
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   4
-      left            =   285
-      tabindex        =   24
-      top             =   2940
-      width           =   900
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   3
-      left            =   285
+      left            =   3825
       tabindex        =   23
-      top             =   2700
-      width           =   900
+      top             =   3915
+      width           =   315
    end
-   begin vb.label label4 
+   begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "reputacion1"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   2
-      left            =   285
-      tabindex        =   22
-      top             =   2475
-      width           =   900
-   end
-   begin vb.label label4 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion1"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   1
-      left            =   285
-      tabindex        =   21
-      top             =   2235
-      width           =   900
-   end
-   begin vb.label label3 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "reputacion"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   9
          charset         =   0
          weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   210
-      left            =   945
-      tabindex        =   20
-      top             =   1965
-      width           =   1050
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   12
-      left            =   3585
-      tabindex        =   19
-      top             =   3285
-      width           =   480
+      left            =   3705
+      tabindex        =   22
+      top             =   3660
+      width           =   315
    end
-   begin vb.label skills 
+   begin vb.label label4 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   11
-      left            =   3585
-      tabindex        =   18
-      top             =   3060
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   10
-      left            =   3585
-      tabindex        =   17
-      top             =   2820
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   9
-      left            =   3585
-      tabindex        =   16
-      top             =   2580
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   8
-      left            =   3585
-      tabindex        =   15
-      top             =   2355
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   7
-      left            =   3585
-      tabindex        =   14
-      top             =   2115
-      width           =   480
+      left            =   1065
+      tabindex        =   21
+      top             =   3900
+      width           =   315
    end
-   begin vb.label skills 
+   begin vb.label label4 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   6
-      left            =   3585
+      left            =   1065
+      tabindex        =   20
+      top             =   3630
+      width           =   315
+   end
+   begin vb.label label4 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   5
+      left            =   1065
+      tabindex        =   19
+      top             =   3375
+      width           =   315
+   end
+   begin vb.label label4 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   4
+      left            =   1065
+      tabindex        =   18
+      top             =   3120
+      width           =   315
+   end
+   begin vb.label label4 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   2
+      left            =   1065
+      tabindex        =   17
+      top             =   2880
+      width           =   315
+   end
+   begin vb.label label4 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   1
+      left            =   1065
+      tabindex        =   16
+      top             =   2625
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   11
+      left            =   4740
+      tabindex        =   15
+      top             =   3420
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   10
+      left            =   3930
+      tabindex        =   14
+      top             =   3165
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   9
+      left            =   3690
       tabindex        =   13
-      top             =   1875
-      width           =   480
+      top             =   2910
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
       height          =   195
-      index           =   5
-      left            =   3585
+      index           =   8
+      left            =   4230
       tabindex        =   12
-      top             =   1650
-      width           =   480
+      top             =   2640
+      width           =   315
    end
    begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo2"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   4
-      left            =   3585
-      tabindex        =   11
-      top             =   1410
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   3
-      left            =   3585
-      tabindex        =   10
-      top             =   1170
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   2
-      left            =   3585
-      tabindex        =   9
-      top             =   945
-      width           =   480
-   end
-   begin vb.label skills 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo2"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   1
-      left            =   3585
-      tabindex        =   8
-      top             =   720
-      width           =   480
-   end
-   begin vb.label label2 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "skills"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   9.75
          charset         =   0
          weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   240
-      left            =   4650
-      tabindex        =   7
-      top             =   255
-      width           =   465
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   7
+      left            =   3945
+      tabindex        =   11
+      top             =   2370
+      width           =   315
    end
-   begin vb.label atri 
+   begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   6
+      left            =   3900
+      tabindex        =   10
+      top             =   2115
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
       height          =   195
       index           =   5
-      left            =   300
-      tabindex        =   5
-      top             =   1365
-      width           =   390
+      left            =   3825
+      tabindex        =   9
+      top             =   1875
+      width           =   315
    end
-   begin vb.label atri 
+   begin vb.label skills 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
-      caption         =   "pablo"
+      caption         =   "000"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   4
-      left            =   300
-      tabindex        =   4
-      top             =   1155
-      width           =   390
-   end
-   begin vb.label atri 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   3
-      left            =   300
-      tabindex        =   3
-      top             =   945
-      width           =   390
-   end
-   begin vb.label atri 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   2
-      left            =   300
-      tabindex        =   2
-      top             =   735
-      width           =   390
-   end
-   begin vb.label atri 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "pablo"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   400
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      forecolor       =   &h00000000&
-      height          =   195
-      index           =   1
-      left            =   300
-      tabindex        =   1
-      top             =   510
-      width           =   390
-   end
-   begin vb.label label1 
-      autosize        =   -1  'true
-      backstyle       =   0  'transparent
-      caption         =   "atributos"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   9
          charset         =   0
          weight          =   700
          underline       =   0   'false
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h00000000&
-      height          =   210
-      left            =   1005
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   4
+      left            =   4590
+      tabindex        =   8
+      top             =   1605
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   3
+      left            =   4635
+      tabindex        =   7
+      top             =   1350
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   2
+      left            =   3630
+      tabindex        =   6
+      top             =   1095
+      width           =   315
+   end
+   begin vb.label skills 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "000"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   1
+      left            =   3645
+      tabindex        =   5
+      top             =   855
+      width           =   315
+   end
+   begin vb.label atri 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   5
+      left            =   1500
+      tabindex        =   4
+      top             =   1890
+      width           =   210
+   end
+   begin vb.label atri 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   4
+      left            =   1500
+      tabindex        =   3
+      top             =   1635
+      width           =   210
+   end
+   begin vb.label atri 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   3
+      left            =   1500
+      tabindex        =   2
+      top             =   1380
+      width           =   210
+   end
+   begin vb.label atri 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   2
+      left            =   1500
+      tabindex        =   1
+      top             =   1095
+      width           =   210
+   end
+   begin vb.label atri 
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "00"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00ffffff&
+      height          =   195
+      index           =   1
+      left            =   1500
       tabindex        =   0
-      top             =   210
-      width           =   885
+      top             =   840
+      width           =   210
    end
 end
 attribute vb_name = "frmestadisticas"
@@ -934,47 +1016,98 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-unload me
-end sub
+private clsformulario as clsformmovementmanager
+
+private cbotoncerrar as clsgraphicalbutton
+public lastpressed as clsgraphicalbutton
+
+private const ancho_barra as byte = 73 'pixeles
+private const bar_left_pos as integer = 361 'pixeles
 
 public sub iniciar_labels()
 'iniciamos los labels con los valores de los atributos y los skills
 dim i as integer
+dim ancho as integer
+
 for i = 1 to numatributos
-    atri(i).caption = atributosnames(i) & ": " & useratributos(i)
+    atri(i).caption = useratributos(i)
 next
+
 for i = 1 to numskills
-    skills(i).caption = skillsnames(i) & ": " & userskills(i)
+    skills(i).caption = userskills(i)
+    ancho = iif(porcentajeskills(i) = 0, ancho_barra, (100 - porcentajeskills(i)) / 100 * ancho_barra)
+    shpskillsbar(i).width = ancho
+    shpskillsbar(i).left = bar_left_pos + ancho_barra - ancho
 next
 
 
-label4(1).caption = "asesino: " & userreputacion.asesinorep
-label4(2).caption = "bandido: " & userreputacion.bandidorep
-label4(3).caption = "burgues: " & userreputacion.burguesrep
-label4(4).caption = "ladr�n: " & userreputacion.ladronesrep
-label4(5).caption = "noble: " & userreputacion.noblerep
-label4(6).caption = "plebe: " & userreputacion.pleberep
+label4(1).caption = userreputacion.asesinorep
+label4(2).caption = userreputacion.bandidorep
+'label4(3).caption = "burgues: " & userreputacion.burguesrep
+label4(4).caption = userreputacion.ladronesrep
+label4(5).caption = userreputacion.noblerep
+label4(6).caption = userreputacion.pleberep
 
 if userreputacion.promedio < 0 then
     label4(7).forecolor = vbred
-    label4(7).caption = "status: criminal"
+    label4(7).caption = "criminal"
 else
     label4(7).forecolor = vbblue
-    label4(7).caption = "status: ciudadano"
+    label4(7).caption = "ciudadano"
 end if
 
 with userestadisticas
-    label6(0).caption = "criminales matados: " & .criminalesmatados
-    label6(1).caption = "ciudadanos matados: " & .ciudadanosmatados
-    label6(2).caption = "usuarios matados: " & .usuariosmatados
-    label6(3).caption = "npcs matados: " & .npcsmatados
-    label6(4).caption = "clase: " & .clase
-    label6(5).caption = "tiempo restante en carcel: " & .penacarcel
+    label6(0).caption = .criminalesmatados
+    label6(1).caption = .ciudadanosmatados
+    label6(2).caption = .usuariosmatados
+    label6(3).caption = .npcsmatados
+    label6(4).caption = .clase
+    label6(5).caption = .penacarcel
 end with
 
 end sub
 
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+    
+    me.picture = loadpicture(app.path & "\graficos\ventanaestadisticas.jpg")
+    
+    call loadbuttons
+end sub
+
+private sub loadbuttons()
+    
+    dim grhpath as string
+    
+    grhpath = dirgraficos
+    
+    set cbotoncerrar = new clsgraphicalbutton
+    set lastpressed = new clsgraphicalbutton
+    
+    call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarestadisticas.jpg", _
+                                    grhpath & "botoncerrarrolloverestadisticas.jpg", _
+                                    grhpath & "botoncerrarclickestadisticas.jpg", me)
+
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
 private sub form_queryunload(cancel as integer, unloadmode as integer)
 unload me
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub imgcerrar_mousemove(button as integer, shift as integer, x as single, y as single)
+    if imgcerrar.tag = 1 then
+        imgcerrar.picture = loadpicture(app.path & "\graficos\botoncerrarapretadoestadisticas.jpg")
+        imgcerrar.tag = 0
+    end if
+
 end sub

@@ -30,15 +30,32 @@ attribute vb_name = "matematicas"
 option explicit
 
 public function porcentaje(byval total as long, byval porc as long) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     porcentaje = (total * porc) / 100
 end function
 
 function distancia(byref wp1 as worldpos, byref wp2 as worldpos) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     'encuentra la distancia entre dos worldpos
     distancia = abs(wp1.x - wp2.x) + abs(wp1.y - wp2.y) + (abs(wp1.map - wp2.map) * 100)
 end function
 
 function distance(byval x1 as integer, byval y1 as integer, byval x2 as integer, byval y2 as integer) as double
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
 
 'encuentra la distancia entre dos puntos
 

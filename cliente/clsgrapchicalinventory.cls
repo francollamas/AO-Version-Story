@@ -35,14 +35,22 @@ attribute vb_exposed = false
 
 option explicit
 
-dim inventoryoffset as long             'number of lines we scrolled down from topmost
-dim invselecteditem as long             'currently selected item
+private inventoryoffset as long             'number of lines we scrolled down from topmost
+private invselecteditem as long             'currently selected item
 
-dim invsurface as directdrawsurface7            'dd surface used to render everything
+private owntilepixelwidth as integer
+private owntilepixelheight as integer
+private startdx as integer
+private startdy as integer
 
-dim userinventory(1 to max_inventory_slots) as inventory    'user's inventory
+private showvalue as boolean
+private imgcontainer as boolean
 
-dim withevents inventorywindow as picturebox    'placeholder where to render the inventory
+private invsurface as directdrawsurface7            'dd surface used to render everything
+
+private inventory() as inventory    'user's inventory
+
+private withevents inventorywindow as picturebox    'placeholder where to render the inventory
 attribute inventorywindow.vb_varhelpid = -1
 
 #if conmenuesconextuales = 1 then
@@ -68,21 +76,35 @@ end sub
 public sub scrollinventory(byval up as boolean)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 27/07/04
+'last modify date: 14/01/2010
 'scrolls the graphical inventory up / down
+'14/01/2010: zama - now redraws inventory only if needed
 '***************************************************
+
     'only move if there is something to show up /down
+    if canscroll(up) then
+        inventoryoffset = inventoryoffset + iif(up, 1, -1)
+        
+        'redraw the inventory if needed
+        drawinventory
+    end if
+
+end sub
+
+public function canscroll(byval up as boolean)
+'***************************************************
+'author: zama
+'last modify date: 14/01/2010
+'determines wether inventory can be scrolled up / down
+'***************************************************
     if up then
-        if (inventoryoffset + (inventorywindow.scaleheight \ tilepixelheight)) * (inventorywindow.scalewidth \ tilepixelwidth) < max_inventory_slots then _
-            inventoryoffset = inventoryoffset + 1
+        canscroll = (inventoryoffset + (inventorywindow.scaleheight \ owntilepixelheight)) * _
+                    (inventorywindow.scalewidth \ owntilepixelwidth) < ubound(inventory)
     else
-        if inventoryoffset > 0 then _
-            inventoryoffset = inventoryoffset - 1
+        canscroll = inventoryoffset > 0
     end if
     
-    'redraw the inventory
-    drawinventory
-end sub
+end function
 
 public sub selectgold()
 '***************************************************
@@ -104,6 +126,41 @@ public sub selectgold()
     end if
 end sub
 
+public sub deselectitem()
+'***************************************************
+'author: zama
+'last modify date: 30/11/2009
+'deselect the currently selected item
+'***************************************************
+    if invselecteditem = 0 then exit sub
+    
+    dim clearslot as byte
+    
+    clearslot = invselecteditem
+    
+    'select nothing
+    invselecteditem = 0
+    
+    'redraw old item to deselect it
+    call drawinventoryslot(clearslot)
+
+end sub
+
+public sub changeslotitemamount(byval slot as byte, byval amount as long)
+'***************************************************
+'author: zama
+'created date: 30/11/2009
+'last modify date: 09/12/2009 (budi)
+'change the amount of the required item, and update the slot.
+'***************************************************
+    
+    inventory(slot).amount = amount
+    
+    'update amount
+    call drawinventoryslot(slot)
+
+end sub
+
 public property get selecteditem() as long
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
@@ -119,7 +176,7 @@ public property get maxhit(byval slot as byte) as integer
 'last modify date: 27/07/04
 'retrieves the max hit of the selected item
 '***************************************************
-    maxhit = userinventory(slot).maxhit
+    maxhit = inventory(slot).maxhit
 end property
 
 public property get minhit(byval slot as byte) as integer
@@ -128,16 +185,25 @@ public property get minhit(byval slot as byte) as integer
 'last modify date: 27/07/04
 'retrieves the min hit of the selected item
 '***************************************************
-    minhit = userinventory(slot).minhit
+    minhit = inventory(slot).minhit
 end property
 
-public property get def(byval slot as byte) as integer
+public property get maxdef(byval slot as byte) as integer
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modify date: 27/07/04
 'retrieves the defense of the selected item
 '***************************************************
-    def = userinventory(slot).def
+    maxdef = inventory(slot).maxdef
+end property
+
+public property get mindef(byval slot as byte) as integer
+'***************************************************
+'author: budi
+'last modify date: 02/1209
+'retrieves the defense of the selected item
+'***************************************************
+    mindef = inventory(slot).mindef
 end property
 
 public property get grhindex(byval slot as byte) as integer
@@ -146,7 +212,7 @@ public property get grhindex(byval slot as byte) as integer
 'last modify date: 27/07/04
 'retrieves the grh index of the selected item
 '***************************************************
-    grhindex = userinventory(slot).grhindex
+    grhindex = inventory(slot).grhindex
 end property
 
 public property get valor(byval slot as byte) as single
@@ -155,7 +221,7 @@ public property get valor(byval slot as byte) as single
 'last modify date: 27/07/04
 'retrieves the value of the selected item
 '***************************************************
-    valor = userinventory(slot).valor
+    valor = inventory(slot).valor
 end property
 
 public property get amount(byval slot as byte) as long
@@ -166,8 +232,8 @@ public property get amount(byval slot as byte) as long
 '***************************************************
     if slot = flagoro then
         amount = usergld
-    elseif slot >= lbound(userinventory) and slot <= ubound(userinventory) then
-        amount = userinventory(slot).amount
+    elseif slot >= lbound(inventory) and slot <= ubound(inventory) then
+        amount = inventory(slot).amount
     end if
 end property
 
@@ -177,7 +243,7 @@ public property get objindex(byval slot as byte) as integer
 'last modify date: 27/07/04
 'retrieves the selected item's object index
 '***************************************************
-    objindex = userinventory(slot).objindex
+    objindex = inventory(slot).objindex
 end property
 
 public property get objtype(byval slot as byte) as integer
@@ -186,7 +252,7 @@ public property get objtype(byval slot as byte) as integer
 'last modify date: 27/07/04
 'retrieves the selected item's object type
 '***************************************************
-    objtype = userinventory(slot).objtype
+    objtype = inventory(slot).objtype
 end property
 
 public property get itemname(byval slot as byte) as string
@@ -195,7 +261,7 @@ public property get itemname(byval slot as byte) as string
 'last modify date: 27/07/04
 'retrieves the selected item's name
 '***************************************************
-    itemname = userinventory(slot).name
+    itemname = inventory(slot).name
 end property
 
 public property get equipped(byval slot as byte) as boolean
@@ -204,22 +270,58 @@ public property get equipped(byval slot as byte) as boolean
 'last modify date: 27/07/04
 'retrieves true if the item at the given pos is eqiupped
 '***************************************************
-    equipped = userinventory(slot).equipped
+    equipped = inventory(slot).equipped
 end property
 
-public sub setitem(byval slot as byte, byval eobjindex as integer, byval eamount as integer, byval eequipped as byte, _
+public property get maxobjs() as byte
+'***************************************************
+'author: torres patricio (pato)
+'last modify date: 09/16/09
+'retrieves the capacity of the inventory
+'***************************************************
+    maxobjs = ubound(inventory)
+end property
+
+public sub setmaxobjs(byval maxobjs as byte)
+'***************************************************
+'author: torres patricio (pato)
+'last modify date: 09/16/09
+'set the capacity of the inventary
+'***************************************************
+    if ubound(inventory) = maxobjs then exit sub
+    
+    redim preserve inventory(1 to maxobjs) as inventory
+end sub
+
+public sub toggleshowvalue(byval bshow as boolean)
+'***************************************************
+'author: zama
+'last modify date: 11/12
+'indicates if the amount of the items in the inventory is shown
+'***************************************************
+    showvalue = bshow
+    
+    dim slot as integer
+    ' update inventory
+    for slot = 1 to me.maxobjs
+        drawinventoryslot (slot)
+    next slot
+end sub
+
+public sub setitem(byval slot as byte, byval eobjindex as integer, byval eamount as long, byval eequipped as byte, _
                         byval egrhindex as integer, byval eobjtype as integer, byval emaxhit as integer, byval eminhit as integer, _
-                        byval edef as integer, byval evalor as single, byval ename as string)
+                        byval maxdef as integer, byval mindef as integer, byval evalor as single, byval ename as string)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modify date: 12/04/06
 'sets all data for a given inventory slot
 '***************************************************
-    if slot < 1 or slot > max_inventory_slots then exit sub
+    if slot < 1 or slot > ubound(inventory) then exit sub
     
-    with userinventory(slot)
+    with inventory(slot)
         .amount = eamount
-        .def = edef
+        .maxdef = maxdef
+        .mindef = mindef
         .equipped = eequipped
         .grhindex = egrhindex
         .maxhit = emaxhit
@@ -229,6 +331,8 @@ public sub setitem(byval slot as byte, byval eobjindex as integer, byval eamount
         .objtype = eobjtype
         .valor = evalor
     end with
+    
+    'if inventorywindow.visible = false then inventorywindow.visible = true
     
     'render inventory slot (we don't need to render the whole inventory)
     call drawinventoryslot(slot)
@@ -244,15 +348,15 @@ private function clickitem(byval x as long, byval y as long) as long
     dim temp_x as long
     dim temp_y as long
     
-    temp_x = x \ tilepixelwidth
-    temp_y = y \ tilepixelheight
+    temp_x = x \ owntilepixelwidth
+    temp_y = y \ owntilepixelheight
     
-    tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ tilepixelwidth) + 1
+    tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
     
     'make sure it's within limits
-    if tempitem <= max_inventory_slots then
+    if tempitem <= ubound(inventory) then
         'make sure slot isn't empty
-        if userinventory(tempitem).grhindex then
+        if inventory(tempitem).grhindex then
             clickitem = tempitem
         else
             clickitem = 0
@@ -272,8 +376,8 @@ private sub drawinventory()
     dim destrect as rect
     
     with temprect
-        .bottom = tilepixelheight
-        .right = tilepixelwidth
+        .bottom = owntilepixelheight
+        .right = owntilepixelwidth
     end with
     
     destrect = temprect
@@ -281,35 +385,37 @@ private sub drawinventory()
     'clear the inventory window
     inventorywindow.cls
     
-    for loopc = inventoryoffset * (inventorywindow.scalewidth \ tilepixelwidth) + 1 to ubound(userinventory)
+    for loopc = inventoryoffset * (inventorywindow.scalewidth \ owntilepixelwidth) + 1 to ubound(inventory)
         'clear the slot area
         call invsurface.bltcolorfill(temprect, inventorywindow.backcolor)
         
-        if userinventory(loopc).grhindex then
+        if inventory(loopc).grhindex then
             'get source rect
             with srcrect
-                .left = grhdata(userinventory(loopc).grhindex).sx
-                .top = grhdata(userinventory(loopc).grhindex).sy
-                .right = .left + tilepixelwidth
-                .bottom = .top + tilepixelheight
+                .left = grhdata(inventory(loopc).grhindex).sx
+                .top = grhdata(inventory(loopc).grhindex).sy
+                .right = .left + owntilepixelwidth
+                .bottom = .top + owntilepixelheight
             end with
             
             'render the item grh and the amount
             invsurface.setforecolor vbwhite
-            invsurface.bltfast 0, 0, surfacedb.surface(grhdata(userinventory(loopc).grhindex).filenum), srcrect, ddbltfast_wait or ddbltfast_nocolorkey
-            invsurface.drawtext 0, 0, userinventory(loopc).amount, false
+            invsurface.bltfast startdx, startdy, surfacedb.surface(grhdata(inventory(loopc).grhindex).filenum), srcrect, ddbltfast_wait or ddbltfast_nocolorkey
+            invsurface.drawtext startdx / 2, startdy / 2, inventory(loopc).amount, false
             
             'if equipped we render "e"
-            if userinventory(loopc).equipped then
+            if inventory(loopc).equipped then
                 invsurface.setforecolor vbyellow
                 invsurface.drawtext 20, 20, "e", false
             end if
             
             'render a box around the selected item
             if invselecteditem = loopc then
-                invsurface.setforecolor vbgreen
-                invsurface.setdrawstyle drawstyleconstants.vbdot
-                invsurface.drawbox 0, 0, tilepixelwidth, tilepixelheight
+                if imgcontainer then
+                    invsurface.setforecolor vbgreen
+                    invsurface.setdrawstyle drawstyleconstants.vbdot
+                    invsurface.drawbox 0, 0, owntilepixelwidth, owntilepixelheight
+                end if
             end if
         end if
         
@@ -320,14 +426,14 @@ private sub drawinventory()
         
         with destrect
             'check if we have reached the right end of the inventory picturebox
-            if .left = (inventorywindow.scalewidth - (inventorywindow.scalewidth mod tilepixelwidth) - tilepixelwidth) then
+            if .left = (inventorywindow.scalewidth - (inventorywindow.scalewidth mod owntilepixelwidth) - owntilepixelwidth) then
                 .left = 0
-                .right = tilepixelwidth
-                .bottom = .bottom + tilepixelheight
-                .top = .top + tilepixelheight
+                .right = owntilepixelwidth
+                .bottom = .bottom + owntilepixelheight
+                .top = .top + owntilepixelheight
             else
-                .left = .left + tilepixelwidth
-                .right = .right + tilepixelwidth
+                .left = .left + owntilepixelwidth
+                .right = .right + owntilepixelwidth
             end if
         end with
     next loopc
@@ -342,53 +448,63 @@ private sub drawinventoryslot(byval slot as integer)
     dim srcrect as rect
     dim temprect as rect
     dim destrect as rect
+    dim srcrectslot as rect
     
     with temprect
-        .bottom = tilepixelheight
-        .right = tilepixelwidth
+        .bottom = owntilepixelheight
+        .right = owntilepixelwidth
     end with
     
     dim upperleftslot as integer
-    upperleftslot = inventoryoffset * (inventorywindow.scalewidth \ tilepixelwidth) + 1
+    upperleftslot = inventoryoffset * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
     
     'if not in renderable area we exit
     if slot < upperleftslot then exit sub
     
     with destrect
-        .top = ((slot - upperleftslot) \ (inventorywindow.scalewidth \ tilepixelwidth)) * tilepixelheight
-        .left = ((slot - 1) mod (inventorywindow.scalewidth \ tilepixelwidth)) * tilepixelwidth
-        .bottom = .top + tilepixelheight
-        .right = .left + tilepixelwidth
+        .top = ((slot - upperleftslot) \ (inventorywindow.scalewidth \ owntilepixelwidth)) * owntilepixelheight
+        .left = ((slot - 1) mod (inventorywindow.scalewidth \ owntilepixelwidth)) * owntilepixelwidth
+        .bottom = .top + owntilepixelheight
+        .right = .left + owntilepixelwidth
     end with
     
     'clear the slot area
     call invsurface.bltcolorfill(temprect, inventorywindow.backcolor)
     
-    if userinventory(slot).grhindex then
+    if inventory(slot).grhindex then
         'get source rect
         with srcrect
-            .left = grhdata(userinventory(slot).grhindex).sx
-            .top = grhdata(userinventory(slot).grhindex).sy
+            .left = grhdata(inventory(slot).grhindex).sx
+            .top = grhdata(inventory(slot).grhindex).sy
+            .right = .left + owntilepixelwidth
+            .bottom = .top + owntilepixelheight
+        end with
+        with srcrectslot
+            .left = grhdata(inventory(slot).grhindex).sx
+            .top = grhdata(inventory(slot).grhindex).sy
             .right = .left + tilepixelwidth
             .bottom = .top + tilepixelheight
         end with
         
         'render the item grh and the amount
         invsurface.setforecolor vbwhite
-        invsurface.bltfast 0, 0, surfacedb.surface(clng(grhdata(userinventory(slot).grhindex).filenum)), srcrect, ddbltfast_wait or ddbltfast_nocolorkey
-        invsurface.drawtext 0, 0, userinventory(slot).amount, false
+        invsurface.bltfast startdx, startdy, surfacedb.surface(clng(grhdata(inventory(slot).grhindex).filenum)), srcrectslot, ddbltfast_wait or ddbltfast_nocolorkey
+        if showvalue then invsurface.drawtext startdx / 2, startdy / 2, inventory(slot).amount, false
+
         
         'if equipped we render "e"
-        if userinventory(slot).equipped then
+        if inventory(slot).equipped then
             invsurface.setforecolor vbyellow
             invsurface.drawtext 20, 20, "e", false
         end if
         
         'render a box around the selected item
         if invselecteditem = slot then
-            invsurface.setforecolor vbgreen
-            invsurface.setdrawstyle drawstyleconstants.vbdot
-            invsurface.drawbox 0, 0, tilepixelwidth, tilepixelheight
+            if imgcontainer then
+                invsurface.setforecolor vbgreen
+                invsurface.setdrawstyle drawstyleconstants.vbdot
+                invsurface.drawbox 0, 0, owntilepixelwidth, owntilepixelheight
+            end if
         end if
     end if
     
@@ -399,14 +515,21 @@ private sub drawinventoryslot(byval slot as integer)
 end sub
 
 #if conmenuesconextuales = 1 then   'argument list varies!!!
-    public sub initialize(byref directdraw as directdraw7, byref invpic as picturebox, byref popupmenu as menu)
+    public sub initialize(byref directdraw as directdraw7, byref invpic as picturebox, byval maxobjs as byte, _
+    byref popupmenu as menu)
+
 #else   'argument list varies!!!
-    public sub initialize(byref directdraw as directdraw7, byref invpic as picturebox)
+    public sub initialize(byref directdraw as directdraw7, byref invpic as picturebox, byval maxobjs as byte, _
+                            optional byval fontsize as integer = 7, optional byval tilewidth as integer = 32, _
+                            optional byval tileheight as integer = 32, optional byval startx as integer = 0, _
+                            optional byval starty as integer = 0, optional byval bimgcontainer as boolean = true, _
+                            optional byval bshowtext as boolean = true)
 #end if
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 27/07/04
+'last modify date: 03/12/09
 'sets the reference to the picture box on which to render the inventory
+'03/12/09: i added the optionals args fontsize, tilewidth, tileheight, startx and starty. (budi)
 '***************************************************
     set inventorywindow = invpic
     
@@ -416,20 +539,30 @@ end sub
     'set apropiate scale (pixel)
     inventorywindow.scalemode = 3
     
+    redim inventory(1 to maxobjs) as inventory
+    
     'initialize dx stuff
     dim surfacedesc as ddsurfacedesc2
     
     'make sure directdraw was correctly initialized
     if directdraw is nothing then exit sub
-    
+      
     'set surface's description
     with surfacedesc
         .lflags = ddsd_caps or ddsd_height or ddsd_width
         .ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_systemmemory
-        .lheight = tilepixelheight
-        .lwidth = tilepixelwidth
+        .lheight = tileheight
+        .lwidth = tilewidth
     end with
 
+    owntilepixelheight = tileheight
+    owntilepixelwidth = tilewidth
+    startdx = startx
+    startdy = starty
+    
+    imgcontainer = bimgcontainer
+    showvalue = bshowtext
+   
     'create inventory surface
     set invsurface = directdraw.createsurface(surfacedesc)
     
@@ -442,7 +575,7 @@ end sub
     font.name = "verdana"
     font.bold = true
     font.italic = false
-    font.size = 7
+    font.size = fontsize
     font.underline = false
     font.strikethrough = false
     
@@ -451,7 +584,8 @@ end sub
     invsurface.setfont ifnt
 '\todo
     
-    invselecteditem = clickitem(1, 1)   'if there is anything there we select the top left item
+    if imgcontainer then _
+        invselecteditem = clickitem(1, 1)   'if there is anything there we select the top left item
     
 #if conmenuesconextuales = 1 then
     set itemmenu = popupmenu
@@ -473,13 +607,13 @@ private sub inventorywindow_mousemove(button as integer, shift as integer, x as 
     if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
         exit sub
     
-    temp_x = x \ tilepixelwidth
-    temp_y = y \ tilepixelheight
+    temp_x = x \ owntilepixelwidth
+    temp_y = y \ owntilepixelheight
     
-    tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ tilepixelwidth) + 1
+    tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
     
-    if tempitem <= max_inventory_slots then
-        inventorywindow.tooltiptext = userinventory(tempitem).name
+    if tempitem <= ubound(inventory) then
+        inventorywindow.tooltiptext = inventory(tempitem).name
     end if
 end sub
 

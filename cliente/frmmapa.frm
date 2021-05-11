@@ -1,21 +1,44 @@
 version 5.00
 begin vb.form frmmapa 
-   backcolor       =   &h80000007&
+   backcolor       =   &h00000000&
    borderstyle     =   0  'none
    caption         =   "form1"
-   clientheight    =   6780
+   clientheight    =   8850
    clientleft      =   0
    clienttop       =   0
-   clientwidth     =   8775
+   clientwidth     =   8595
    clipcontrols    =   0   'false
    keypreview      =   -1  'true
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6780
-   scalewidth      =   8775
+   scaleheight     =   8850
+   scalewidth      =   8595
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
+   begin vb.image imgtooglemap 
+      height          =   255
+      index           =   1
+      left            =   3840
+      mousepointer    =   99  'custom
+      top             =   120
+      width           =   975
+   end
+   begin vb.image imgtooglemap 
+      height          =   255
+      index           =   0
+      left            =   3960
+      mousepointer    =   99  'custom
+      top             =   7560
+      width           =   735
+   end
+   begin vb.image imgcerrar 
+      height          =   255
+      left            =   8040
+      mousepointer    =   99  'custom
+      top             =   240
+      width           =   255
+   end
    begin vb.label lbltexto 
       alignment       =   2  'center
       backstyle       =   0  'transparent
@@ -29,24 +52,12 @@ begin vb.form frmmapa
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      forecolor       =   &h8000000e&
+      forecolor       =   &h00ffffff&
       height          =   975
-      left            =   240
+      left            =   0
       tabindex        =   0
-      top             =   5040
+      top             =   7920
       width           =   8175
-   end
-   begin vb.image imgmapdungeon 
-      height          =   4935
-      left            =   0
-      top             =   0
-      width           =   8775
-   end
-   begin vb.image imgmap 
-      height          =   4935
-      left            =   0
-      top             =   0
-      width           =   8775
    end
 end
 attribute vb_name = "frmmapa"
@@ -69,6 +80,17 @@ attribute vb_exposed = false
 '**************************************************************************
 
 option explicit
+
+private clsformulario as clsformmovementmanager
+
+private enum emaps
+    iegeneral
+    iedungeon
+end enum
+
+private picmaps(1) as picture
+
+private currentmap as emaps
 
 ''
 ' this form is used to show the world map.
@@ -111,8 +133,18 @@ private sub toggleimgmaps()
 '
 '*************************************************
 
-    imgmap.visible = not imgmap.visible
-    imgmapdungeon.visible = not imgmapdungeon.visible
+    imgtooglemap(currentmap).visible = false
+    
+    if currentmap = emaps.iegeneral then
+        imgcerrar.visible = false
+        currentmap = emaps.iedungeon
+    else
+        imgcerrar.visible = true
+        currentmap = emaps.iegeneral
+    end if
+    
+    imgtooglemap(currentmap).visible = true
+    me.picture = picmaps(currentmap)
 end sub
 
 ''
@@ -127,37 +159,32 @@ private sub form_load()
 
 on error goto error
     
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
+        
     'cargamos las imagenes de los mapas
-    imgmap.picture = loadpicture(dirgraficos & "mapa1.jpg")
-    imgmapdungeon.picture = loadpicture(dirgraficos & "mapa2.jpg")
+    set picmaps(emaps.iegeneral) = loadpicture(dirgraficos & "mapa1.jpg")
+    set picmaps(emaps.iedungeon) = loadpicture(dirgraficos & "mapa2.jpg")
     
+    ' imagen de fondo
+    currentmap = emaps.iegeneral
+    me.picture = picmaps(currentmap)
     
-    'ajustamos el tama�o del formulario a la imagen m�s grande
-    if imgmap.width > imgmapdungeon.width then
-        me.width = imgmap.width
-    else
-        me.width = imgmapdungeon.width
-    end if
+    imgcerrar.mouseicon = picmouseicon
+    imgtooglemap(0).mouseicon = picmouseicon
+    imgtooglemap(1).mouseicon = picmouseicon
     
-    if imgmap.height > imgmapdungeon.height then
-        me.height = imgmap.height + lbltexto.height
-    else
-        me.height = imgmapdungeon.height + lbltexto.height
-    end if
-    
-    'movemos ambas im�genes al centro del formulario
-    imgmap.left = me.width * 0.5 - imgmap.width * 0.5
-    imgmap.top = (me.height - lbltexto.height) * 0.5 - imgmap.height * 0.5
-    
-    imgmapdungeon.left = me.width * 0.5 - imgmapdungeon.width * 0.5
-    imgmapdungeon.top = (me.height - lbltexto.height) * 0.5 - imgmapdungeon.height * 0.5
-    
-    lbltexto.top = me.height - lbltexto.height
-    lbltexto.left = me.width * 0.5 - lbltexto.width * 0.5
-    
-    imgmapdungeon.visible = false
     exit sub
 error:
     msgbox err.description, vbinformation, "error: " & err.number
     unload me
+end sub
+
+private sub imgcerrar_click()
+    unload me
+end sub
+
+private sub imgtooglemap_click(index as integer)
+    toggleimgmaps
 end sub

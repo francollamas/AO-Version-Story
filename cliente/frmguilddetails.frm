@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmguilddetails 
-   borderstyle     =   1  'fixed single
+   borderstyle     =   0  'none
    caption         =   "detalles del clan"
-   clientheight    =   6825
-   clientleft      =   45
-   clienttop       =   330
+   clientheight    =   6810
+   clientleft      =   0
+   clienttop       =   -75
    clientwidth     =   6840
    clipcontrols    =   0   'false
    controlbox      =   0   'false
@@ -20,34 +20,14 @@ begin vb.form frmguilddetails
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6825
-   scalewidth      =   6840
+   scaleheight     =   454
+   scalemode       =   3  'pixel
+   scalewidth      =   456
+   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command1 
-      caption         =   "aceptar"
-      height          =   375
-      index           =   1
-      left            =   5160
-      mouseicon       =   "frmguilddetails.frx":0000
-      mousepointer    =   99  'custom
-      tabindex        =   13
-      top             =   6360
-      width           =   1455
-   end
-   begin vb.commandbutton command1 
-      cancel          =   -1  'true
-      caption         =   "cancelar"
-      height          =   375
-      index           =   0
-      left            =   120
-      mouseicon       =   "frmguilddetails.frx":0152
-      mousepointer    =   99  'custom
-      tabindex        =   12
-      top             =   6360
-      width           =   1455
-   end
-   begin vb.frame frame1 
-      caption         =   "codex"
+   begin vb.textbox txtdesc 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -57,118 +37,187 @@ begin vb.form frmguilddetails
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   4215
-      left            =   120
-      tabindex        =   2
-      top             =   2040
-      width           =   6495
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   7
-         left            =   360
-         tabindex        =   11
-         top             =   3720
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   6
-         left            =   360
-         tabindex        =   10
-         top             =   3360
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   5
-         left            =   360
-         tabindex        =   9
-         top             =   3000
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   4
-         left            =   360
-         tabindex        =   8
-         top             =   2640
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   3
-         left            =   360
-         tabindex        =   7
-         top             =   2280
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   2
-         left            =   360
-         tabindex        =   6
-         top             =   1920
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   1
-         left            =   360
-         tabindex        =   5
-         top             =   1560
-         width           =   5655
-      end
-      begin vb.textbox txtcodex1 
-         height          =   285
-         index           =   0
-         left            =   360
-         tabindex        =   4
-         top             =   1200
-         width           =   5655
-      end
-      begin vb.label label1 
-         alignment       =   2  'center
-         caption         =   $"frmguilddetails.frx":02a4
-         beginproperty font 
-            name            =   "tahoma"
-            size            =   8.25
-            charset         =   0
-            weight          =   400
-            underline       =   0   'false
-            italic          =   -1  'true
-            strikethrough   =   0   'false
-         endproperty
-         height          =   855
-         left            =   120
-         tabindex        =   3
-         top             =   240
-         width           =   6255
-      end
-   end
-   begin vb.frame frmdesc 
-      caption         =   "descripci�n"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   1935
-      left            =   120
+      forecolor       =   &h00ffffff&
+      height          =   1500
+      left            =   405
+      multiline       =   -1  'true
       tabindex        =   0
-      top             =   0
-      width           =   6495
-      begin vb.textbox txtdesc 
-         height          =   1455
-         left            =   120
-         multiline       =   -1  'true
-         tabindex        =   1
-         top             =   360
-         width           =   6135
-      end
+      top             =   420
+      width           =   6015
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   0
+      left            =   480
+      tabindex        =   1
+      top             =   3255
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   1
+      left            =   480
+      tabindex        =   2
+      top             =   3645
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   2
+      left            =   480
+      tabindex        =   3
+      top             =   4020
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   3
+      left            =   480
+      tabindex        =   4
+      top             =   4380
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   4
+      left            =   480
+      tabindex        =   5
+      top             =   4755
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   5
+      left            =   480
+      tabindex        =   6
+      top             =   5130
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   6
+      left            =   480
+      tabindex        =   7
+      top             =   5505
+      width           =   5835
+   end
+   begin vb.textbox txtcodex1 
+      backcolor       =   &h00000000&
+      borderstyle     =   0  'none
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h80000004&
+      height          =   255
+      index           =   7
+      left            =   480
+      tabindex        =   8
+      top             =   5865
+      width           =   5835
+   end
+   begin vb.image imgconfirmar 
+      height          =   360
+      left            =   4920
+      tag             =   "1"
+      top             =   6360
+      width           =   1455
+   end
+   begin vb.image imgsalir 
+      height          =   360
+      left            =   480
+      tag             =   "1"
+      top             =   6360
+      width           =   1455
    end
 end
 attribute vb_name = "frmguilddetails"
@@ -210,60 +259,95 @@ attribute vb_exposed = false
 
 option explicit
 
+private clsformulario as clsformmovementmanager
+
+private cbotonconfirmar as clsgraphicalbutton
+private cbotonsalir as clsgraphicalbutton
+
+public lastpressed as clsgraphicalbutton
+
 private const max_desc_length as integer = 520
 private const max_codex_length as integer = 100
 
-private sub command1_click(index as integer)
-    select case index
-        case 0
-            unload me
-        
-        case 1
-            dim fdesc as string
-            dim codex() as string
-            dim k as byte
-            dim cont as byte
+private sub form_load()
+    ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
+    clsformulario.initialize me
     
-            fdesc = replace(txtdesc, vbcrlf, "�", , , vbbinarycompare)
+    me.picture = loadpicture(app.path & "\graficos\ventanacodex.jpg")
     
-            '    if not asciivalidos(fdesc) then
-            '        msgbox "la descripcion contiene caracteres invalidos"
-            '        exit sub
-            '    end if
+    call loadbuttons
+end sub
 
-            cont = 0
-            for k = 0 to txtcodex1.ubound
-            '    if not asciivalidos(txtcodex1(k)) then
-            '        msgbox "el codex tiene invalidos"
-            '        exit sub
-            '    end if
-                if lenb(txtcodex1(k).text) <> 0 then cont = cont + 1
-            next k
-            if cont < 4 then
-                msgbox "debes definir al menos cuatro mandamientos."
-                exit sub
-            end if
-                        
-            redim codex(txtcodex1.ubound) as string
-            for k = 0 to txtcodex1.ubound
-                codex(k) = txtcodex1(k)
-            next k
+private sub loadbuttons()
+    dim grhpath as string
     
-            if creandoclan then
-                call writecreatenewguild(fdesc, clanname, site, codex)
-            else
-                call writeclancodexupdate(fdesc, codex)
-            end if
+    grhpath = dirgraficos
 
-            creandoclan = false
-            unload me
-            
-    end select
+    set cbotonconfirmar = new clsgraphicalbutton
+    set cbotonsalir = new clsgraphicalbutton
+    
+    set lastpressed = new clsgraphicalbutton
+    
+    
+    call cbotonconfirmar.initialize(imgconfirmar, grhpath & "botonconfirmarcodex.jpg", _
+                                    grhpath & "botonconfirmarrollovercodex.jpg", _
+                                    grhpath & "botonconfirmarclickcodex.jpg", me)
+
+    call cbotonsalir.initialize(imgsalir, grhpath & "botonsalircodex.jpg", _
+                                    grhpath & "botonsalirrollovercodex.jpg", _
+                                    grhpath & "botonsalirclickcodex.jpg", me)
+end sub
+
+private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
+end sub
+
+private sub imgconfirmar_click()
+    dim fdesc as string
+    dim codex() as string
+    dim k as byte
+    dim cont as byte
+
+    fdesc = replace(txtdesc, vbcrlf, "�", , , vbbinarycompare)
+
+
+    cont = 0
+    for k = 0 to txtcodex1.ubound
+        if lenb(txtcodex1(k).text) <> 0 then cont = cont + 1
+    next k
+    
+    if cont < 4 then
+        msgbox "debes definir al menos cuatro mandamientos."
+        exit sub
+    end if
+                
+    redim codex(txtcodex1.ubound) as string
+    for k = 0 to txtcodex1.ubound
+        codex(k) = txtcodex1(k)
+    next k
+
+    if creandoclan then
+        call writecreatenewguild(fdesc, clanname, site, codex)
+    else
+        call writeclancodexupdate(fdesc, codex)
+    end if
+
+    creandoclan = false
+    unload me
+end sub
+
+private sub imgsalir_click()
+    unload me
 end sub
 
 private sub txtcodex1_change(index as integer)
     if len(txtcodex1.item(index).text) > max_codex_length then _
         txtcodex1.item(index).text = left$(txtcodex1.item(index).text, max_codex_length)
+end sub
+
+private sub txtcodex1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    lastpressed.toggletonormal
 end sub
 
 private sub txtdesc_change()

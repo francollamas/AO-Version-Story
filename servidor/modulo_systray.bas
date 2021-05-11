@@ -58,6 +58,12 @@ public const wm_create = &h1
 public hhook as long
 
 public function apphook(byval idhook as long, byval wparam as long, byval lparam as long) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim cwp as cwpstruct
     copymemory cwp, byval lparam, len(cwp)
     select case cwp.message

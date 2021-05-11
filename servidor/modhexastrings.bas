@@ -37,6 +37,12 @@ attribute vb_name = "modhexastrings"
 option explicit
 
 public function hexmd52asc(byval md5 as string) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim i as long
     dim l as string
     
@@ -49,10 +55,22 @@ public function hexmd52asc(byval md5 as string) as string
 end function
 
 public function hexhex2dec(byval hex as string) as long
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     hexhex2dec = val("&h" & hex)
 end function
 
 public function txtoffset(byval text as string, byval off as integer) as string
+'***************************************************
+'author: unknown
+'last modification: -
+'
+'***************************************************
+
     dim i as long
     dim l as string
     

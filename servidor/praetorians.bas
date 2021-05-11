@@ -1183,7 +1183,7 @@ on error goto errorh
 
     'bardea si es el rey
     if npclist(npcind).name = "rey pretoriano" then
-        call writeconsolemsg(pjenind, "el rey pretoriano te ha vuelto est�pido ", fonttypenames.fonttype_fight)
+        call writeconsolemsg(pjenind, "el rey pretoriano te ha vuelto est�pido.", fonttypenames.fonttype_fight)
     end if
 exit sub
 
@@ -1503,7 +1503,7 @@ mapa = map
             else
                 ''si me muevo abajo entro en loop. aca el algoritmo falla
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", str(npclist(npcorig).char.charindex), vbyellow))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, �ven aqu�!", str(npclist(npcorig).char.charindex), vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1596,7 +1596,7 @@ mapa = map
             else
                 ''si me muevo loopeo. aca falla el algoritmo
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, �ven aqu�!", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1617,7 +1617,7 @@ mapa = map
             else
                 ''aca tambien falla el algoritmo
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, �ven aqu�!", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1634,7 +1634,7 @@ mapa = map
             else
                 ''posible loop
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, �ven aqu�!", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
