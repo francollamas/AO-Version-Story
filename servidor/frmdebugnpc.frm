@@ -63,7 +63,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -93,8 +93,7 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
-
+option explicit
 
 private sub command1_click()
 dim i as integer, k as integer

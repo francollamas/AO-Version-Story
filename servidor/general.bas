@@ -1,5 +1,5 @@
 attribute vb_name = "general"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,11 +29,13 @@ attribute vb_name = "general"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
-global leernpcs as new clsleerinis
-global leernpcshostiles as new clsleerinis
+'global anpc as long
+'global anpc_host as long
 
 option explicit
+
+global leernpcs as new clsinireader
+global leernpcshostiles as new clsinireader
 
 sub darcuerpodesnudo(byval userindex as integer, optional byval mimetizado as boolean = false)
 
@@ -155,13 +157,16 @@ on error resume next
 
 dim i as integer
 
+
 for i = 1 to trashcollector.count
     dim d as cgarbage
     set d = trashcollector(1)
-    call eraseobj(tomap, 0, d.map, 1, d.map, d.x, d.y)
+    call eraseobj(sendtarget.tomap, 0, d.map, 1, d.map, d.x, d.y)
     call trashcollector.remove(1)
     set d = nothing
 next i
+
+call securityip.ipsecuritymantenimientolista
 
 
 
@@ -175,7 +180,7 @@ for k = 1 to ubound(spawnlist)
     sd = sd & spawnlist(k).npcname & ","
 next k
 
-call senddata(toindex, userindex, 0, sd)
+call senddata(sendtarget.toindex, userindex, 0, sd)
 end sub
 
 sub configlisteningsocket(byref obj as object, byval port as integer)
@@ -199,6 +204,7 @@ end sub
 
 sub main()
 on error resume next
+dim f as date
 
 chdir app.path
 chdrive app.path
@@ -223,6 +229,7 @@ minutos = format(now, "short time")
 redim npclist(1 to maxnpcs) as npc 'npcs
 redim charlist(1 to maxchars) as integer
 redim parties(1 to max_parties) as clsparty
+redim guilds(1 to max_guilds) as clsclan
 
 
 
@@ -283,14 +290,11 @@ levelskill(49).levelvalue = 100
 levelskill(50).levelvalue = 100
 
 
-redim listarazas(1 to numrazas) as string
 listarazas(1) = "humano"
 listarazas(2) = "elfo"
 listarazas(3) = "elfo oscuro"
 listarazas(4) = "gnomo"
 listarazas(5) = "enano"
-
-redim listaclases(1 to numclases) as string
 
 listaclases(1) = "mago"
 listaclases(2) = "clerigo"
@@ -309,8 +313,6 @@ listaclases(14) = "minero"
 listaclases(15) = "carpintero"
 listaclases(16) = "sastre"
 listaclases(17) = "pirata"
-
-redim skillsnames(1 to numskills) as string
 
 skillsnames(1) = "suerte"
 skillsnames(2) = "magia"
@@ -335,26 +337,11 @@ skillsnames(20) = "wresterling"
 skillsnames(21) = "navegacion"
 
 
-redim userskills(1 to numskills) as integer
-
-redim useratributos(1 to numatributos) as integer
-redim atributosnames(1 to numatributos) as string
-atributosnames(1) = "fuerza"
-atributosnames(2) = "agilidad"
-atributosnames(3) = "inteligencia"
-atributosnames(4) = "carisma"
-atributosnames(5) = "constitucion"
-
-
 frmcargando.show
-
-
 
 'call playwaveapi(app.path & "\wav\harp3.wav")
 
 frmmain.caption = frmmain.caption & " v." & app.major & "." & app.minor & "." & app.revision
-endl = chr(13) & chr(10)
-endc = chr(1)
 inipath = app.path & "\"
 charpath = app.path & "\charfile\"
 
@@ -398,12 +385,14 @@ call loadobjcarpintero
 if bootdelbackup then
     
     frmcargando.label1(2).caption = "cargando backup"
-    call cargarbackup_nuevo2
+    call cargarbackup
 else
     frmcargando.label1(2).caption = "cargando mapas"
     call loadmapdata
-    'call loadmapdata_nuevo
 end if
+
+
+call sonidosmapas.loadsoundmapinfo
 
 
 'comentado porque hay worldsave en ese mapa!
@@ -441,6 +430,8 @@ end with
 
 '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 'configuracion de los sockets
+
+call securityip.initiptables(1000)
 
 #if usarquesocket = 1 then
 
@@ -499,31 +490,15 @@ end if
 tinicioserver = gettickcount() and &h7fffffff
 call inicializaestadisticas
 
-randomize timer
-
-'resetthread.createnewthread addressof threadresetactions, tpnormal
-
-'call mainthread
-
-
 end sub
 
-
-
-function fileexist(file as string, optional filetype as vbfileattribute = vbnormal) as boolean
-
-on error resume next
+function fileexist(byval file as string, optional filetype as vbfileattribute = vbnormal) as boolean
 '*****************************************************************
 'se fija si existe el archivo
 '*****************************************************************
-
-if dir(file, filetype) = "" then
-    fileexist = false
-else
-    fileexist = true
-end if
-
+    fileexist = dir$(file, filetype) <> ""
 end function
+
 function readfield(byval pos as integer, byval text as string, byval sepascii as integer) as string
 'all these functions are much faster using the "$" sign
 'after the function. this happens for a simple reason:
@@ -680,6 +655,26 @@ errhandler:
 
 end sub
 
+
+public sub logclanes(byval str as string)
+
+dim nfile as integer
+nfile = freefile ' obtenemos un canal
+open app.path & "\logs\clanes.log" for append shared as #nfile
+print #nfile, date & " " & time & " " & str
+close #nfile
+
+end sub
+
+public sub logip(byval str as string)
+
+dim nfile as integer
+nfile = freefile ' obtenemos un canal
+open app.path & "\logs\ip.log" for append shared as #nfile
+print #nfile, date & " " & time & " " & str
+close #nfile
+
+end sub
 
 
 public sub logdesarrollo(byval str as string)
@@ -977,7 +972,7 @@ if userlist(userindex).flags.userlogged then
                 dim modifi as long
                 modifi = porcentaje(userlist(userindex).stats.maxsta, 3)
                 call quitarsta(userindex, modifi)
-'                call senddata(toindex, userindex, 0, "||��has perdido stamina, busca pronto refugio de la lluvia!!." & fonttype_info)
+'                call senddata(sendtarget.toindex, userindex, 0, "||��has perdido stamina, busca pronto refugio de la lluvia!!." & fonttype_info)
                 call senduserstatsbox(userindex)
     end if
 end if
@@ -1009,22 +1004,25 @@ if userlist(userindex).counters.frio < intervalofrio then
   userlist(userindex).counters.frio = userlist(userindex).counters.frio + 1
 else
   if mapinfo(userlist(userindex).pos.map).terreno = nieve then
-    call senddata(toindex, userindex, 0, "||��estas muriendo de frio, abrigate o moriras!!." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "||��estas muriendo de frio, abrigate o moriras!!." & fonttype_info)
     modifi = porcentaje(userlist(userindex).stats.maxhp, 5)
     userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - modifi
     if userlist(userindex).stats.minhp < 1 then
-            call senddata(toindex, userindex, 0, "||��has muerto de frio!!." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��has muerto de frio!!." & fonttype_info)
             userlist(userindex).stats.minhp = 0
             call userdie(userindex)
     end if
+    call senddata(sendtarget.toindex, userindex, 0, "ash" & userlist(userindex).stats.minhp)
   else
     modifi = porcentaje(userlist(userindex).stats.maxsta, 5)
     call quitarsta(userindex, modifi)
-    'call senddata(toindex, userindex, 0, "||��has perdido stamina, si no te abrigas rapido perderas toda!!." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "ass" & userlist(userindex).stats.minsta)
+    'call senddata(sendtarget.toindex, userindex, 0, "||��has perdido stamina, si no te abrigas rapido perderas toda!!." & fonttype_info)
   end if
   
   userlist(userindex).counters.frio = 0
-  call senduserstatsbox(userindex)
+  
+  
 end if
 
 end sub
@@ -1035,7 +1033,7 @@ if userlist(userindex).counters.mimetismo < intervaloinvisible then
     userlist(userindex).counters.mimetismo = userlist(userindex).counters.mimetismo + 1
 else
     'restore old char
-    call senddata(toindex, userindex, 0, "||recuperas tu apariencia normal." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "||recuperas tu apariencia normal." & fonttype_info)
     
     userlist(userindex).char.body = userlist(userindex).charmimetizado.body
     userlist(userindex).char.head = userlist(userindex).charmimetizado.head
@@ -1046,7 +1044,7 @@ else
     
     userlist(userindex).counters.mimetismo = 0
     userlist(userindex).flags.mimetizado = 0
-    call changeuserchar(tomap, userindex, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+    call changeuserchar(sendtarget.tomap, userindex, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
 end if
             
 end sub
@@ -1056,31 +1054,16 @@ end sub
 public sub efectoinvisibilidad(byval userindex as integer)
 
 if userlist(userindex).counters.invisibilidad < intervaloinvisible then
-  
-  'cazador con armadura de cazador oculto no se hace visible
-  'mersada de inmediata direccion pero no me importa pq esta
-  'version ya fue :d
-  if ucase$(userlist(userindex).clase) = "cazador" and userlist(userindex).flags.oculto > 0 and userlist(userindex).stats.userskills(ocultarse) > 90 then
-    if userlist(userindex).invent.armoureqpobjindex = 648 or userlist(userindex).invent.armoureqpobjindex = 360 then
-        exit sub
-    end if
-  end if
-  
-  userlist(userindex).counters.invisibilidad = userlist(userindex).counters.invisibilidad + 1
+    userlist(userindex).counters.invisibilidad = userlist(userindex).counters.invisibilidad + 1
 else
-  call senddata(toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
-  userlist(userindex).counters.invisibilidad = 0
-  userlist(userindex).flags.invisible = 0
-  userlist(userindex).flags.oculto = 0
-'   no ecripto los noverx,0
-'  if encriptarprotocoloscriticos then
-'    call sendcrypteddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-'  else
-    call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-'  end if
-    
+    userlist(userindex).counters.invisibilidad = 0
+    userlist(userindex).flags.invisible = 0
+    if userlist(userindex).flags.oculto = 0 then
+        call senddata(sendtarget.toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
+        call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+    end if
 end if
-            
+
 end sub
 
 
@@ -1102,11 +1085,11 @@ if userlist(userindex).counters.ceguera > 0 then
 else
     if userlist(userindex).flags.ceguera = 1 then
         userlist(userindex).flags.ceguera = 0
-        call senddata(toindex, userindex, 0, "nsegue")
+        call senddata(sendtarget.toindex, userindex, 0, "nsegue")
     end if
     if userlist(userindex).flags.estupidez = 1 then
         userlist(userindex).flags.estupidez = 0
-        call senddata(toindex, userindex, 0, "nestup")
+        call senddata(sendtarget.toindex, userindex, 0, "nestup")
     end if
 
 end if
@@ -1122,29 +1105,31 @@ if userlist(userindex).counters.paralisis > 0 then
 else
     userlist(userindex).flags.paralizado = 0
     'userlist(userindex).flags.administrativeparalisis = 0
-    call senddata(toindex, userindex, 0, "paradok")
+    call senddata(sendtarget.toindex, userindex, 0, "paradok")
 end if
 
 end sub
+
 public sub recstamina(userindex as integer, enviarstats as boolean, intervalo as integer)
 
 if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 1 and _
    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 2 and _
    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 4 then exit sub
-       
-      
+
+
 dim massta as integer
 if userlist(userindex).stats.minsta < userlist(userindex).stats.maxsta then
    if userlist(userindex).counters.stacounter < intervalo then
        userlist(userindex).counters.stacounter = userlist(userindex).counters.stacounter + 1
    else
+       enviarstats = true
        userlist(userindex).counters.stacounter = 0
-       massta = cint(randomnumber(1, porcentaje(userlist(userindex).stats.maxsta, 5)))
+       massta = randomnumber(1, porcentaje(userlist(userindex).stats.maxsta, 5))
        userlist(userindex).stats.minsta = userlist(userindex).stats.minsta + massta
-       if userlist(userindex).stats.minsta > userlist(userindex).stats.maxsta then userlist(userindex).stats.minsta = userlist(userindex).stats.maxsta
-'           call senddata(toindex, userindex, 0, "||te sentis menos cansado." & fonttype_info)
-           enviarstats = true
-       end if
+       if userlist(userindex).stats.minsta > userlist(userindex).stats.maxsta then
+            userlist(userindex).stats.minsta = userlist(userindex).stats.maxsta
+        end if
+    end if
 end if
 
 end sub
@@ -1155,12 +1140,12 @@ dim n as integer
 if userlist(userindex).counters.veneno < intervaloveneno then
   userlist(userindex).counters.veneno = userlist(userindex).counters.veneno + 1
 else
-  call senddata(toindex, userindex, 0, "||estas envenenado, si no te curas moriras." & fonttype_veneno)
+  call senddata(sendtarget.toindex, userindex, 0, "||estas envenenado, si no te curas moriras." & fonttype_veneno)
   userlist(userindex).counters.veneno = 0
   n = randomnumber(1, 5)
   userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - n
   if userlist(userindex).stats.minhp < 1 then call userdie(userindex)
-  enviarstats = true
+  call senddata(sendtarget.toindex, userindex, 0, "ash" & userlist(userindex).stats.minhp)
 end if
 
 end sub
@@ -1209,7 +1194,7 @@ if userlist(userindex).stats.minham > 0 then
    else
         userlist(userindex).counters.comcounter = 0
         userlist(userindex).stats.minham = userlist(userindex).stats.minham - 10
-        if userlist(userindex).stats.minham < 0 then
+        if userlist(userindex).stats.minham <= 0 then
                userlist(userindex).stats.minham = 0
                userlist(userindex).flags.hambre = 1
         end if
@@ -1232,14 +1217,14 @@ if userlist(userindex).stats.minhp < userlist(userindex).stats.maxhp then
    if userlist(userindex).counters.hpcounter < intervalo then
       userlist(userindex).counters.hpcounter = userlist(userindex).counters.hpcounter + 1
    else
-      mashit = cint(randomnumber(2, porcentaje(userlist(userindex).stats.maxsta, 5)))
+      mashit = randomnumber(2, porcentaje(userlist(userindex).stats.maxsta, 5))
                            
       userlist(userindex).counters.hpcounter = 0
       userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + mashit
       if userlist(userindex).stats.minhp > userlist(userindex).stats.maxhp then userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
-         call senddata(toindex, userindex, 0, "||has sanado." & fonttype_info)
-         enviarstats = true
-      end if
+      call senddata(sendtarget.toindex, userindex, 0, "||has sanado." & fonttype_info)
+      enviarstats = true
+    end if
 end if
 
 end sub
@@ -1258,10 +1243,10 @@ public sub carganpcsdat()
 dim npcfile as string
 
 npcfile = datpath & "npcs.dat"
-leernpcs.abrir npcfile
+call leernpcs.initialize(npcfile)
 
 npcfile = datpath & "npcs-hostiles.dat"
-leernpcshostiles.abrir npcfile
+call leernpcshostiles.initialize(npcfile)
 
 end sub
 
@@ -1279,20 +1264,12 @@ sub pasarsegundo()
             userlist(i).counters.salir = userlist(i).counters.salir - 1
             if userlist(i).counters.salir <= 0 then
                 'if numusers <> 0 then numusers = numusers - 1
-                'call ados.restarconexion(frmmain.socket2(i).peeraddress)
-                call senddata(toindex, i, 0, "||gracias por jugar argentum online" & fonttype_info)
-                call senddata(toindex, i, 0, "finok")
+
+                call senddata(sendtarget.toindex, i, 0, "||gracias por jugar argentum online" & fonttype_info)
+                call senddata(sendtarget.toindex, i, 0, "finok")
                 
                 call closesocket(i)
                 exit sub
-'                call closeuser(i)
-'                userlist(i).connid = -1: userlist(i).numeropaquetespormilisec = 0
-'                frmmain.socket2(i).disconnect
-'                frmmain.socket2(i).cleanup
-'                'unload frmmain.socket2(i)
-'                call resetuserslot(i)
-'            else
-'                call senddata(toindex, i, 0, "||en " & userlist(i).counters.salir & " segundos se cerrar� el juego..." & fonttype_info)
             end if
         
         'antiempollos
@@ -1308,37 +1285,37 @@ sub pasarsegundo()
                  'call writevar(charpath & userlist(z).name & ".chr", "penas", "p" & tmpp + 1, lcase$(userlist(z).name) & ": carcel " & 30 & "m, motivo: empollando" & " " & date & " " & time)
 
                  'call encarcelar(z, 30, "el sistema anti empollo")
-                 call senddata(toindex, i, 0, "!! fuiste expulsado por permanecer muerto sobre un item")
-                 'call senddata(toadmins, z, 0, "|| " & userlist(z).name & " fue encarcelado por empollar" & fonttype_info)
+                 call senddata(sendtarget.toindex, i, 0, "!! fuiste expulsado por permanecer muerto sobre un item")
+                 'call senddata(sendtarget.toadmins, z, 0, "|| " & userlist(z).name & " fue encarcelado por empollar" & fonttype_info)
                  userlist(i).empocont = 0
                  call closesocket(i)
                  exit sub
              elseif userlist(i).empocont = 15 then
-                 call senddata(toindex, i, 0, "|| llevas 15 segundos bloqueando el item, mu�vete o ser�s desconectado." & fonttype_warning)
+                 call senddata(sendtarget.toindex, i, 0, "|| llevas 15 segundos bloqueando el item, mu�vete o ser�s desconectado." & fonttype_warning)
              end if
          end if
     next i
     
     'revisamos auto reiniciares
-    if intervaloautoreiniciar <> -1 then
-        intervaloautoreiniciar = intervaloautoreiniciar - 1
-                
-        if intervaloautoreiniciar <= 1200 then
-            select case intervaloautoreiniciar
-            
-                case 1200, 600, 240, 120, 180, 60, 30
-                    call senddata(toall, 0, 0, "|| servidor> el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones" & fonttype_server)
-                case 300
-                    call senddata(toall, 0, 0, "!! el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones")
-                case is < 30
-                    call senddata(toall, 0, 0, "|| servidor> el servidor se reiniciar� en " & intervaloautoreiniciar & " segundos." & fonttype_talk)
-            end select
-        
-            if intervaloautoreiniciar = 0 then
-                call reiniciarservidor(true)
-            end if
-        end if
-    end if
+'    if intervaloautoreiniciar <> -1 then
+'        intervaloautoreiniciar = intervaloautoreiniciar - 1
+'
+'        if intervaloautoreiniciar <= 1200 then
+'            select case intervaloautoreiniciar
+'
+'                case 1200, 600, 240, 120, 180, 60, 30
+'                    call senddata(sendtarget.toall, 0, 0, "|| servidor> el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones" & fonttype_server)
+'                case 300
+'                    call senddata(sendtarget.toall, 0, 0, "!! el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones")
+'                case is < 30
+'                    call senddata(sendtarget.toall, 0, 0, "|| servidor> el servidor se reiniciar� en " & intervaloautoreiniciar & " segundos." & fonttype_talk)
+'            end select
+'
+'            if intervaloautoreiniciar = 0 then
+'                call reiniciarservidor(true)
+'            end if
+'        end if
+'    end if
 end sub
  
 public function reiniciarautoupdate() as double
@@ -1357,9 +1334,6 @@ public sub reiniciarservidor(optional byval ejecutarlauncher as boolean = true)
     'guardar pjs
     call guardarusuarios
     
-    'guilds
-    call saveguildsdb
-
     if ejecutarlauncher then shell (app.path & "\launcher.exe")
 
     'chauuu
@@ -1371,8 +1345,8 @@ end sub
 sub guardarusuarios()
     haciendobk = true
     
-    call senddata(toall, 0, 0, "bkw")
-    call senddata(toall, 0, 0, "||servidor> grabando personajes" & fonttype_server)
+    call senddata(sendtarget.toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, 0, "||servidor> grabando personajes" & fonttype_server)
     
     dim i as integer
     for i = 1 to lastuser
@@ -1381,8 +1355,8 @@ sub guardarusuarios()
         end if
     next i
     
-    call senddata(toall, 0, 0, "||servidor> personajes grabados" & fonttype_server)
-    call senddata(toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, 0, "||servidor> personajes grabados" & fonttype_server)
+    call senddata(sendtarget.toall, 0, 0, "bkw")
 
     haciendobk = false
 end sub

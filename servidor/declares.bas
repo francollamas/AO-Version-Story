@@ -1,5 +1,5 @@
 attribute vb_name = "declaraciones"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,8 +29,11 @@ attribute vb_name = "declaraciones"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
+
+''
+' modulo de declaraciones. aca hay de todo.
+'
 
 public mixedkey as long
 public serverip as string
@@ -44,7 +47,10 @@ end type
     
 public daystats as testadisticasdiarias
 
+#if seguridadalkon then
 public ados as new clsantidos
+#end if
+
 public aclon as new clsantimassclon
 public trashcollector as new collection
 
@@ -72,7 +78,15 @@ public type tllamadagm
     desc as string * 255
 end type
 
-public const limitenewbie = 12
+public enum playertype
+    user = 0
+    consejero = 1
+    semidios = 2
+    dios = 3
+    admin = 4
+end enum
+
+public const limitenewbie as byte = 12
 
 public type tcabecera 'cabecera de los con
     desc as string * 255
@@ -83,169 +97,221 @@ end type
 public micabecera as tcabecera
 
 'barrin 3/10/03
-public const tiempo_iniciomeditar = 3
+public const tiempo_iniciomeditar as byte = 3
 
-public const ningunescudo = 2
-public const ninguncasco = 2
+public const ningunescudo as integer = 2
+public const ninguncasco as integer = 2
+public const ningunarma as integer = 2
 
-public const espadamatadragonesindex = 402
-public const laudmagico = 696
+public const espadamatadragonesindex as integer = 402
+public const laudmagico as integer = 696
 
-public const maxmascotasentrenador = 7
+public const maxmascotasentrenador as byte = 7
 
-public const fxwarp = 1
-public const fxcurar = 2
+public enum fxids
+    fxwarp = 1
+    fxmeditarchico = 4
+    fxmeditarmediano = 5
+    fxmeditargrande = 6
+    fxmeditarxgrande = 16
+end enum
 
-public const fxmeditarchico = 4
-public const fxmeditarmediano = 5
-public const fxmeditargrande = 6
-public const fxmeditarxgrande = 16
+public const tiempo_carcel_piquete as long = 10
 
-public const tiempo_carcel_piquete = 10
+''
+' triggers
+'
+' @param nada nada
+' @param bajotecho bajo techo
+' @param trigger_2 ???
+' @param posinvalida los npcs no pueden pisar tiles con este trigger
+' @param zonasegura no se puede robar o pelear desde este trigger
+' @param antipiquete
+' @param zonapelea al pelear en este trigger no se caen las cosas y no cambia el estado de ciuda o crimi
+'
+public enum etrigger
+    nada = 0
+    bajotecho = 1
+    trigger_2 = 2
+    posinvalida = 3
+    zonasegura = 4
+    antipiquete = 5
+    zonapelea = 6
+end enum
 
-'triggers
-public const trigger_nada = 0
-public const trigger_bajotecho = 1
-public const trigger_2 = 2
-public const trigger_posinvalida = 3 'los npcs no pueden pisar tiles con este trigger
-public const trigger_zonasegura = 4 'no se puede robar o pelear desde este trigger
-public const trigger_antipiquete = 5
-public const trigger_zonapelea = 6 'al pelear en este trigger no se caen las cosas y no cambia el estado de ciuda o crimi
-
+''
+' constantes para el trigger 6
+'
+' @see etrigger
+' @param trigger6_permite trigger6_permite
+' @param trigger6_prohibe trigger6_prohibe
+' @param trigger6_ausente el trigger no aparece
+'
 public enum etrigger6
     trigger6_permite = 1
     trigger6_prohibe = 2
     trigger6_ausente = 3
 end enum
 
+'todo : reemplazar por un enum
 public const bosque = "bosque"
 public const nieve = "nieve"
 public const desierto = "desierto"
-
 public const ciudad = "ciudad"
 public const campo = "campo"
 public const dungeon = "dungeon"
 
 ' <<<<<< targets >>>>>>
-public const uusuarios = 1
-public const unpc = 2
-public const uusuariosynpc = 3
-public const uterreno = 4
+public enum targettype
+    uusuarios = 1
+    unpc = 2
+    uusuariosynpc = 3
+    uterreno = 4
+end enum
 
 ' <<<<<< acciona sobre >>>>>>
-public const upropiedades = 1
-public const uestado = 2
-public const uinvocacion = 4
-public const umaterializa = 3
+public enum tipohechizo
+    upropiedades = 1
+    uestado = 2
+    umaterializa = 3    'nose usa
+    uinvocacion = 4
+end enum
 
-public const dragon = 6
-public const matadragones = 1
+public const dragon as integer = 6
 
-public const max_mensajes_foro = 35
+public const max_mensajes_foro as byte = 35
 
-public const maxuserhechizos = 35
-
-
-public const esfuerzotalargeneral = 4
-public const esfuerzotalarle�ador = 2
-
-public const esfuerzopescarpescador = 1
-public const esfuerzopescargeneral = 3
-
-public const esfuerzoexcavarminero = 2
-public const esfuerzoexcavargeneral = 5
+public const maxuserhechizos as byte = 35
 
 
-public const bcabeza = 1
-public const bpiernaizquierda = 2
-public const bpiernaderecha = 3
-public const bbrazoderecho = 4
-public const bbrazoizquierdo = 5
-public const btorso = 6
+' todo: y esto ? lo conoce gd ?
+public const esfuerzotalargeneral as byte = 4
+public const esfuerzotalarle�ador as byte = 2
 
-public const guardias = 6
+public const esfuerzopescarpescador as byte = 1
+public const esfuerzopescargeneral as byte = 3
 
-public const maxrep = 6000000
-public const maxoro = 90000000
-public const maxexp = 99999999
+public const esfuerzoexcavarminero as byte = 2
+public const esfuerzoexcavargeneral as byte = 5
 
-public const maxatributos = 38
-public const minatributos = 6
+public const fx_teleport_index as integer = 1
 
-public const lingotehierro = 386
-public const lingoteplata = 387
-public const lingoteoro = 388
-public const le�a = 58
+' la utilidad de esto es casi nula, s�lo se revisa si fue a la cabeza...
+public enum partescuerpo
+    bcabeza = 1
+    bpiernaizquierda = 2
+    bpiernaderecha = 3
+    bbrazoderecho = 4
+    bbrazoizquierdo = 5
+    btorso = 6
+end enum
 
+public const guardias as integer = 6
 
-public const maxnpcs = 10000
-public const maxchars = 10000
+public const maxrep as long = 6000000
+public const maxoro as long = 90000000
+public const maxexp as long = 99999999
 
-public const hacha_le�ador = 127
-public const piquete_minero = 187
+public const maxatributos as byte = 38
+public const minatributos as byte = 6
 
-public const daga = 15
-public const fogata_apag = 136
-public const fogata = 63
-public const oro_mina = 194
-public const plata_mina = 193
-public const hierro_mina = 192
-public const martillo_herrero = 389
-public const serrucho_carpintero = 198
-public const objarboles = 4
-public const red_pesca = 543
+public const lingotehierro as integer = 386
+public const lingoteplata as integer = 387
+public const lingoteoro as integer = 388
+public const le�a as integer = 58
 
 
-public const npctype_comun = 0
-public const npctype_revivir = 1
-public const npctype_guardias = 2
-public const npctype_entrenador = 3
-public const npctype_banquero = 4
-public const npctype_timbero = 7
-public const npctype_guardiascaos = 8
+public const maxnpcs as integer = 10000
+public const maxchars as integer = 10000
 
+public const hacha_le�ador as integer = 127
+public const piquete_minero as integer = 187
 
+public const daga as integer = 15
+public const fogata_apag as integer = 136
+public const fogata as integer = 63
+public const oro_mina as integer = 194
+public const plata_mina as integer = 193
+public const hierro_mina as integer = 192
+public const martillo_herrero as integer = 389
+public const serrucho_carpintero as integer = 198
+public const objarboles as integer = 4
+public const red_pesca as integer = 543
+public const ca�a_pesca as integer = 138
 
-public const fx_teleport_index = 1
+public enum enpctype
+    comun = 0
+    revividor = 1
+    guardiareal = 2
+    entrenador = 3
+    banquero = 4
+    timbero = 7
+    guardiascaos = 8
+end enum
 
-
-public const min_apu�alar = 10
+public const min_apu�alar as byte = 10
 
 '********** constantantes ***********
-public const numskills = 21
-public const numatributos = 5
-public const numclases = 17
-public const numrazas = 5
 
-public const maxskillpoints = 100
+''
+' cantidad de skills
+public const numskills as byte = 21
 
-public const flagoro = 777
+''
+' cantidad de atributos
+public const numatributos as byte = 5
 
-public const north = 1
-public const east = 2
-public const south = 3
-public const west = 4
+''
+' cantidad de clases
+public const numclases as byte = 17
+
+''
+' cantidad de razas
+public const numrazas as byte = 5
 
 
-public const maxmascotas = 3
+''
+' valor maximo de cada skill
+public const maxskillpoints as byte = 100
+
+''
+' constante para indicar que se esta usando oro
+public const flagoro as integer = 777
+
+''
+'direccion
+'
+' @param north norte
+' @param east este
+' @param south sur
+' @param west oeste
+'
+public enum eheading
+    north = 1
+    east = 2
+    south = 3
+    west = 4
+end enum
+
+''
+' cantidad maxima de mascotas
+public const maxmascotas as byte = 3
 
 '%%%%%%%%%% constantes de indices %%%%%%%%%%%%%%%
-public const vlasalto = 100
-public const vlasesino = 1000
-public const vlcazador = 5
-public const vlnoble = 5
-public const vlladron = 25
-public const vlproleta = 2
-
-
+public const vlasalto as integer = 100
+public const vlasesino as integer = 1000
+public const vlcazador as integer = 5
+public const vlnoble as integer = 5
+public const vlladron as integer = 25
+public const vlproleta as integer = 2
 
 '%%%%%%%%%% constantes de indices %%%%%%%%%%%%%%%
-public const icuerpomuerto = 8
-public const icabezamuerto = 500
+public const icuerpomuerto as integer = 8
+public const icabezamuerto as integer = 500
 
 
-public const ioro = 12
-public const pescado = 139
+public const ioro as byte = 12
+public const pescado as byte = 139
 
 public enum peces_posibles
     pescado1 = 139
@@ -255,185 +321,167 @@ public enum peces_posibles
 end enum
 
 '%%%%%%%%%% constantes de indices %%%%%%%%%%%%%%%
-public const suerte = 1
-public const magia = 2
-public const robar = 3
-public const tacticas = 4
-public const armas = 5
-public const meditar = 6
-public const apu�alar = 7
-public const ocultarse = 8
-public const supervivencia = 9
-public const talar = 10
-public const comerciar = 11
-public const defensa = 12
-public const pesca = 13
-public const mineria = 14
-public const carpinteria = 15
-public const herreria = 16
-public const liderazgo = 17
-public const domar = 18
-public const proyectiles = 19
-public const wresterling = 20
-public const navegacion = 21
+public enum eskill
+    suerte = 1
+    magia = 2
+    robar = 3
+    tacticas = 4
+    armas = 5
+    meditar = 6
+    apu�alar = 7
+    ocultarse = 8
+    supervivencia = 9
+    talar = 10
+    comerciar = 11
+    defensa = 12
+    pesca = 13
+    mineria = 14
+    carpinteria = 15
+    herreria = 16
+    liderazgo = 17
+    domar = 18
+    proyectiles = 19
+    wresterling = 20
+    navegacion = 21
+end enum
 
 public const fundirmetal = 88
 
-public const xa = 40
-public const xd = 10
-public const balance = 9
+public enum eatributos
+    fuerza = 1
+    agilidad = 2
+    inteligencia = 3
+    carisma = 4
+    constitucion = 5
+end enum
 
-public const fuerza = 1
-public const agilidad = 2
-public const inteligencia = 3
-public const carisma = 4
-public const constitucion = 5
+public const adicionalhpguerrero as byte = 2 'hp adicionales cuando sube de nivel
+public const adicionalhpcazador as byte = 1 'hp adicionales cuando sube de nivel
 
-
-public const adicionalhpguerrero = 2 'hp adicionales cuando sube de nivel
-public const adicionalhpcazador = 1 'hp adicionales cuando sube de nivel
-public const adicionalstladron = 3
-
-public const adicionalstle�ador = 23
-public const adicionalstpescador = 20
-public const adicionalstminero = 25
+public const aumentostdef as byte = 15
+public const aumentostladron as byte = aumentostdef + 3
+public const aumentostmago as byte = aumentostdef - 1
+public const aumentostle�ador as byte = aumentostdef + 23
+public const aumentostpescador as byte = aumentostdef + 20
+public const aumentostminero as byte = aumentostdef + 25
 
 'tama�o del mapa
-public const xmaxmapsize = 100
-public const xminmapsize = 1
-public const ymaxmapsize = 100
-public const yminmapsize = 1
+public const xmaxmapsize as byte = 100
+public const xminmapsize as byte = 1
+public const ymaxmapsize as byte = 100
+public const yminmapsize as byte = 1
 
 'tama�o del tileset
-public const tilesizex = 32
-public const tilesizey = 32
+public const tilesizex as byte = 32
+public const tilesizey as byte = 32
 
 'tama�o en tiles de la pantalla de visualizacion
-public const xwindow = 17
-public const ywindow = 13
+public const xwindow as byte = 17
+public const ywindow as byte = 13
 
 'sonidos
-public const sound_bump = 1
-public const sound_swing = 2
-public const sound_talar = 13
-public const sound_pescar = 14
-public const sound_minero = 15
-public const snd_warp = 3
-public const snd_puerta = 5
-public const sound_nivel = 6
-public const sound_comida = 7
-public const snd_usermuerte = 11
-public const snd_impacto = 10
-public const snd_impacto2 = 12
-public const snd_le�ador = 13
-public const snd_fogata = 14
-public const snd_ave = 21
-public const snd_ave2 = 22
-public const snd_ave3 = 34
-public const snd_grillo = 28
-public const snd_grillo2 = 29
-public const sound_sacararma = 25
-public const snd_escudo = 37
-public const martilloherrero = 41
-public const laburocarpintero = 42
-public const snd_creacionclan = 44
-public const snd_aceptadoclan = 43
-public const snd_declarewar = 45
-public const snd_beber = 46
+public const snd_swing as byte = 2
+public const snd_talar as byte = 13
+public const snd_pescar as byte = 14
+public const snd_minero as byte = 15
+public const snd_warp as byte = 3
+public const snd_puerta as byte = 5
+public const snd_nivel as byte = 6
 
-'objetos
-public const max_inventory_objs = 10000
-public const max_inventory_slots = 20
+public const snd_usermuerte as byte = 11
+public const snd_impacto as byte = 10
+public const snd_impacto2 as byte = 12
+public const snd_le�ador as byte = 13
+public const snd_fogata as byte = 14
+public const snd_ave as byte = 21
+public const snd_ave2 as byte = 22
+public const snd_ave3 as byte = 34
+public const snd_grillo as byte = 28
+public const snd_grillo2 as byte = 29
+public const snd_sacararma as byte = 25
+public const snd_escudo as byte = 37
+public const martilloherrero as byte = 41
+public const laburocarpintero as byte = 42
+public const snd_beber as byte = 46
 
-'<------------------categorias principales--------->
-public const objtype_useonce = 1
-public const objtype_weapon = 2
-public const objtype_armour = 3
-public const objtype_arboles = 4
-public const objtype_guita = 5
-public const objtype_puertas = 6
-public const objtype_contenedores = 7
-public const objtype_carteles = 8
-public const objtype_llaves = 9
-public const objtype_foros = 10
-public const objtype_pociones = 11
-public const objtype_bebida = 13
-public const objtype_le�a = 14
-public const objtype_fogata = 15
-public const objtype_herramientas = 18
-public const objtype_yacimiento = 22
-public const objtype_pergaminos = 24
-public const objtype_teleport = 19
-public const objtype_yunque = 27
-public const objtype_fragua = 28
-public const objtype_minerales = 23
-public const objtype_cualquiera = 1000
-public const objtype_instrumentos = 26
-public const objtype_barcos = 31
-public const objtype_flechas = 32
-public const objtype_botellavacia = 33
-public const objtype_botellallena = 34
-public const objtype_manchas = 35
+''
+' cantidad maxima de objetos por slot de inventario
+public const max_inventory_objs as integer = 10000
 
-'<------------------sub-categorias----------------->
-public const objtype_armadura = 0
-public const objtype_casco = 1
-public const objtype_escudo = 2
-public const objtype_ca�a = 138
+''
+' cantidad de "slots" en el inventario
+public const max_inventory_slots as byte = 20
 
-
-
-'tipo de posicones
-'1 modifica la agilidad
-'2 modifica la fuerza
-'3 repone hp
-'4 repone mana
+' categorias principales
+public enum eobjtype
+    otuseonce = 1
+    otweapon = 2
+    otarmadura = 3
+    otarboles = 4
+    otguita = 5
+    otpuertas = 6
+    otcontenedores = 7
+    otcarteles = 8
+    otllaves = 9
+    otforos = 10
+    otpociones = 11
+    otbebidas = 13
+    otle�a = 14
+    otfogata = 15
+    otescudo = 16
+    otcasco = 17
+    otherramientas = 18
+    otteleport = 19
+    otyacimiento = 22
+    otminerales = 23
+    otpergaminos = 24
+    otinstrumentos = 26
+    otyunque = 27
+    otfragua = 28
+    otbarcos = 31
+    otflechas = 32
+    otbotellavacia = 33
+    otbotellallena = 34
+    otmanchas = 35          'no se usa
+    otcualquiera = 1000
+end enum
 
 'texto
-public const fonttype_talk = "~255~255~255~0~0"
-public const fonttype_fight = "~255~0~0~1~0"
-public const fonttype_warning = "~32~51~223~1~1"
-public const fonttype_info = "~65~190~156~0~0"
-public const fonttype_infobold = "~65~190~156~1~0"
-public const fonttype_ejecucion = "~130~130~130~1~0"
-public const fonttype_party = "~255~180~255~0~0"
-public const fonttype_veneno = "~0~255~0~0~0"
-public const fonttype_guild = "~255~255~255~1~0"
+public const fonttype_talk as string = "~255~255~255~0~0"
+public const fonttype_fight as string = "~255~0~0~1~0"
+public const fonttype_warning as string = "~32~51~223~1~1"
+public const fonttype_info as string = "~65~190~156~0~0"
+public const fonttype_infobold as string = "~65~190~156~1~0"
+public const fonttype_ejecucion as string = "~130~130~130~1~0"
+public const fonttype_party as string = "~255~180~255~0~0"
+public const fonttype_veneno as string = "~0~255~0~0~0"
+public const fonttype_guild as string = "~255~255~255~1~0"
+public const fonttype_server as string = "~0~185~0~0~0"
+public const fonttype_guildmsg as string = "~228~199~27~0~0"
+public const fonttype_consejo as string = "~130~130~255~1~0"
+public const fonttype_consejocaos as string = "~255~60~00~1~0"
+public const fonttype_consejovesa as string = "~0~200~255~1~0"
+public const fonttype_consejocaosvesa as string = "~255~50~0~1~0"
+public const fonttype_centinela as string = "~0~255~0~1~0"
 
-
-'mejoramos los mensajes del servidor
-public const fonttype_server = "~0~185~0~0~0"
-public const fonttype_guildmsg = "~228~199~27~0~0"
-
-public const fonttype_consejo = "~130~130~255~1~0"
-public const fonttype_consejocaos = "~255~60~00~1~0"
-public const fonttype_consejovesa = "~0~200~255~1~0"
-public const fonttype_consejocaosvesa = "~255~50~0~1~0"
 'estadisticas
-public const stat_maxelv = 99
-public const stat_maxhp = 999
-public const stat_maxsta = 999
-public const stat_maxman = 2000
-public const stat_maxhit = 99
-public const stat_maxdef = 99
-
-public const snd_sync = &h0
-public const snd_async = &h1
-
-public const snd_nodefault = &h2
-
-public const snd_loop = &h8
-public const snd_nostop = &h10
+public const stat_maxelv as byte = 99
+public const stat_maxhp as integer = 999
+public const stat_maxsta as integer = 999
+public const stat_maxman as integer = 2000
+public const stat_maxhit_under36 as byte = 99
+public const stat_maxhit_over36 as integer = 999
+public const stat_maxdef as byte = 99
 
 
 
-'**************************************************************
-'**************************************************************
-'************************ tipos *******************************
-'**************************************************************
-'**************************************************************
+' **************************************************************
+' **************************************************************
+' ************************ tipos *******************************
+' **************************************************************
+' **************************************************************
 
-type thechizo
+public type thechizo
     nombre as string
     desc as string
     palabrasmagicas as string
@@ -444,7 +492,8 @@ type thechizo
     
     resis as byte
     
-    tipo as byte
+    tipo as tipohechizo
+    
     wav as integer
     fxgrh as integer
     loops as byte
@@ -498,7 +547,6 @@ type thechizo
     mimetiza as byte
     remueveinvisibilidadparcial as byte
     
-    
     invoca as byte
     numnpc as integer
     cant as integer
@@ -512,26 +560,23 @@ type thechizo
     'barrin 29/9/03
     starequerido as integer
 
-    target as byte
+    target as targettype
     
     needstaff as integer
     staffaffected as boolean
-    
 end type
 
-type levelskill
-
-levelvalue as integer
-
+public type levelskill
+    levelvalue as integer
 end type
 
-type userobj
+public type userobj
     objindex as integer
     amount as integer
     equipped as byte
 end type
 
-type inventario
+public type inventario
     object(1 to max_inventory_slots) as userobj
     weaponeqpobjindex as integer
     weaponeqpslot as byte
@@ -550,13 +595,13 @@ type inventario
     nroitems as integer
 end type
 
-type tpartydata
+public type tpartydata
     pindex as integer
     remxp as double 'la exp. en el server se cuenta con doubles
     targetuser as integer 'para las invitaciones
 end type
 
-type position
+public type position
     x as integer
     y as integer
 end type
@@ -567,14 +612,14 @@ public type worldpos
     y as integer
 end type
 
-type fxdata
+public type fxdata
     nombre as string
     grhindex as integer
     delay as integer
 end type
 
 'datos de user o npc
-type char
+public type char
     charindex as integer
     head as integer
     body as integer
@@ -586,21 +631,17 @@ type char
     fx as integer
     loops as integer
     
-    heading as byte
+    heading as eheading
 end type
 
 'tipos de objetos
 public type objdata
-    
     name as string 'nombre del obj
     
-    objtype as integer 'tipo enum que determina cuales son las caract del obj
-    subtipo as integer 'tipo enum que determina cuales son las caract del obj
+    objtype as eobjtype 'tipo enum que determina cuales son las caract del obj
     
     grhindex as integer ' indice del grafico que representa el obj
     grhsecundario as integer
-    
-    respawn as byte
     
     'solo contenedores
     maxitems as integer
@@ -669,9 +710,7 @@ public type objdata
     envenena as byte
     paraliza as byte
     
-    resistencia as long
     agarrable as byte
-    
     
     lingh as integer
     lingo as integer
@@ -689,7 +728,6 @@ public type objdata
     snd1 as integer
     snd2 as integer
     snd3 as integer
-    minint as integer
     
     real as integer
     caos as integer
@@ -701,8 +739,6 @@ public type objdata
     defensamagicamax as integer
     defensamagicamin as integer
     refuerzo as byte
-    
-    
 end type
 
 public type obj
@@ -712,11 +748,11 @@ end type
 
 '[kevin]
 'banco objs
-public const max_bancoinventory_slots = 40
+public const max_bancoinventory_slots as byte = 40
 '[/kevin]
 
 '[kevin]
-type bancoinventario
+public type bancoinventario
     object(1 to max_bancoinventory_slots) as userobj
     nroitems as integer
 end type
@@ -733,7 +769,7 @@ end type
 '*********************************************************
 '*********************************************************
 
-type treputacion 'fama del usuario
+public type treputacion 'fama del usuario
     noblerep as double
     burguesrep as double
     pleberep as double
@@ -743,10 +779,8 @@ type treputacion 'fama del usuario
     promedio as double
 end type
 
-
-
 'estadisticas de los usuarios
-type userstats
+public type userstats
     gld as long 'dinero
     banco as long
     met as integer
@@ -785,8 +819,8 @@ type userstats
 end type
 
 'flags
-type userflags
-    estaempo as byte    '<-empollando (by yb)
+public type userflags
+    estaempo as byte    'empollando (by yb)
     muerto as byte '�esta muerto?
     escondido as byte '�esta escondido?
     comerciando as boolean '�esta comerciando?
@@ -819,7 +853,7 @@ type userflags
     
     duracionefecto as long
     targetnpc as integer ' npc se�alado por el usuario
-    targetnpctipo as integer ' tipo del npc se�alado
+    targetnpctipo as enpctype ' tipo del npc se�alado
     npcinv as integer
     
     ban as byte
@@ -843,7 +877,7 @@ type userflags
     atacadoporuser as integer
     
     statschanged as byte
-    privilegios as byte
+    privilegios as playertype
     esrolesmaster as boolean
     
     valcode as integer
@@ -855,12 +889,14 @@ type userflags
     oldhead as integer
     admininvisible as byte
     
+    '[el oso]
+    md5reportado as string
+    '[/el oso]
     
     '[barrin 30-11-03]
     timeswalk as long
     startwalk as long
     countsh as long
-    trabajando as boolean
     '[/barrin 30-11-03]
     
     '[cdt 17-02-04]
@@ -875,12 +911,10 @@ type userflags
     
     mimetizado as byte
     
-    
-
-    
+    centinelaok as boolean 'centinela
 end type
 
-type usercounters
+public type usercounters
     idlecount as long
     attackcounter as integer
     hpcounter as integer
@@ -912,9 +946,12 @@ type usercounters
     timerpuedeatacar as long
     timerpuedetrabajar as long
     timerusar as long
+    
+    trabajando as long  ' para el centinela
+    ocultando as long   ' unico trabajo no revisado por el centinela
 end type
 
-type tfacciones
+public type tfacciones
     armadareal as byte
     fuerzascaos as byte
     criminalesmatados as double
@@ -928,25 +965,12 @@ type tfacciones
     reenlistadas as byte
 end type
 
-type tguild
-    guildname as string
-    solicitudes as long
-    solicitudesrechazadas as long
-    echadas as long
-    vecesfueguildleader as long
-    yavoto as byte
-    esguildleader as byte
-    fundoclan as byte
-    clanfundado as string
-    clanesparticipo as long
-    guildpoints as double
-end type
-
 'tipo de los usuarios
-type user
-    
+public type user
     name as string
     id as long
+    
+    showname as boolean 'permite que los gms oculten su nick con el comando /showname
     
     modname as string
     password as string
@@ -980,7 +1004,6 @@ type user
     bancoinvent as bancoinventario
     '[/kevin]
     
-    
     counters as usercounters
     
     mascotasindex(1 to maxmascotas) as integer
@@ -996,10 +1019,8 @@ type user
     reputacion as treputacion
     
     faccion as tfacciones
-    guildinfo as tguild
-    guildref  as cguild
     
-    prevcrc as long
+    prevchecksum as long
     packetnumber as long
     randkey as long
     
@@ -1009,17 +1030,18 @@ type user
     comusu as tcomerciousuario
     '[/alejo]
     
-    anticuelgue as long
-
-    'barrin 2/10/03
-    apadrinados as integer
-    '[ybarra]
-    
     empocont as byte
+    
+    guildindex as integer   'puntero al array global de guilds
+    fundandoguildalineacion as alineacion_guild     'esto esta aca hasta que se parchee el cliente y se pongan cadenas de datos distintas para cada alineacion
+    escucheclan as integer
     
     partyindex as integer   'index a la party q es miembro
     partysolicitud as integer   'index a la party q solicito
     
+    keycrypt as integer
+    
+    areasinfo as areainfo
 end type
 
 
@@ -1033,7 +1055,7 @@ end type
 '*********************************************************
 '*********************************************************
 
-type npcstats
+public type npcstats
     alineacion as integer
     maxhp as long
     minhp as long
@@ -1041,16 +1063,14 @@ type npcstats
     minhit as integer
     def as integer
     usuariosmatados as integer
-    impactrate as integer
 end type
 
-type npccounters
+public type npccounters
     paralisis as integer
     tiempoexistencia as long
-    
 end type
 
-type npcflags
+public type npcflags
     afectaparalisis as byte
     golpeexacto as byte
     domable as integer
@@ -1067,7 +1087,7 @@ type npcflags
     expcount as long '[alejo]
     '[/kevin]
     
-    oldmovement as byte
+    oldmovement as tipoai
     oldhostil as byte
     
     aguavalida as byte
@@ -1095,18 +1115,21 @@ type npcflags
     snd1 as integer
     snd2 as integer
     snd3 as integer
-    snd4 as integer
     
+    atacaapj as integer
+    atacaanpc as integer
+    aialineacion as e_alineacion
+    aipersonalidad as e_personalidad
 end type
 
-type tcriaturasentrenador
+public type tcriaturasentrenador
     npcindex as integer
     npcname as string
     tmpindex as integer
 end type
 
-'<--------- new type for holding the pathfinding info ------>
-type npcpathfindinginfo
+' new type for holding the pathfinding info
+public type npcpathfindinginfo
     path() as tvertice      ' this array holds the path
     target as position      ' the location where the npc has to go
     pathlenght as integer   ' number of steps *
@@ -1121,16 +1144,16 @@ type npcpathfindinginfo
     '  forcing the seek of a new path.
     
 end type
-'<--------- new type for holding the pathfinding info ------>
+' new type for holding the pathfinding info
 
 
-type npc
+public type npc
     name as string
     char as char 'define como se vera
     desc as string
     descextra as string
 
-    npctype as integer
+    npctype as enpctype
     numero as integer
 
     level as integer
@@ -1148,7 +1171,7 @@ type npc
     orig as worldpos
     skilldomar as integer
 
-    movement as integer
+    movement as tipoai
     attackable as byte
     hostile as byte
     poderataque as long
@@ -1179,10 +1202,9 @@ type npc
     maestronpc as integer
     mascotas as integer
     
-    '<---------new!! needed for pathfindig----------->
+    ' new!! needed for pathfindig
     pfinfo as npcpathfindinginfo
-
-    
+    areasinfo as areainfo
 end type
 
 '**********************************************************
@@ -1191,14 +1213,14 @@ end type
 '**********************************************************
 '**********************************************************
 'tile
-type mapblock
+public type mapblock
     blocked as byte
     graphic(1 to 4) as integer
     userindex as integer
     npcindex as integer
     objinfo as obj
     tileexit as worldpos
-    trigger as integer
+    trigger as etrigger
 end type
 
 'info del mapa
@@ -1218,41 +1240,57 @@ type mapinfo
     backup as byte
 end type
 
-
-
 '********** v a r i a b l e s     p u b l i c a s ***********
 
 public serveronline as boolean
 public ultimaversion as string
-public backup as boolean
+public backup as boolean ' todo: se usa esta variable ?
 
-public listarazas() as string
-public skillsnames() as string
-public listaclases() as string
+public listarazas(1 to numrazas) as string
+public skillsnames(1 to numskills) as string
+public listaclases(1 to numclases) as string
 
-
-public endl as string
-public endc as string
+public const endl as string * 2 = vbcrlf
+public const endc as string * 1 = vbnullchar
 
 public recordusuarios as long
 
+'
 'directorios
+'
+
+''
+'ruta base del server, en donde esta el "server.ini"
 public inipath as string
+
+''
+'ruta base para guardar los chars
 public charpath as string
+
+''
+'ruta base para los archivos de mapas
 public mappath as string
+
+''
+'ruta base para los dats
 public datpath as string
 
+''
 'bordes del mapa
 public minxborder as byte
 public maxxborder as byte
 public minyborder as byte
 public maxyborder as byte
 
-public respos as worldpos
-public startpos as worldpos 'posicion de comienzo
+public respos as worldpos ' todo: se usa esta variable ?
 
+''
+'posicion de comienzo
+public startpos as worldpos ' todo: se usa esta variable ?
 
-public numusers as integer 'numero de usuarios actual
+''
+'numero de usuarios actual
+public numusers as integer
 public lastuser as integer
 public lastchar as integer
 public numchars as integer
@@ -1274,16 +1312,10 @@ public nochedia as integer
 public puedecrearpersonajes as integer
 public camaralenta as integer
 public serversologms as integer
-public anticheatsonline as integer
-public anticheatsesperado as string
-public modoanticheats as integer
 
-
+''
+'esta activada la verificacion md5 ?
 public md5clientesactivado as byte
-
-
-public usandosistemapadrinos as byte
-public cantidadporpadrino as integer
 
 
 public enpausa as boolean
@@ -1319,25 +1351,17 @@ public lindos as worldpos
 public prision as worldpos
 public libertad as worldpos
 
-
 public ayuda as new ccola
 public consultapopular as new consultaspopulares
+public sonidosmapas as new soundmapinfo
 
 public declare function gettickcount lib "kernel32" () as long
 
-
 public declare function writeprivateprofilestring lib "kernel32" alias "writeprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpstring as string, byval lpfilename as string) as long
 public declare function getprivateprofilestring lib "kernel32" alias "getprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpdefault as string, byval lpreturnedstring as string, byval nsize as long, byval lpfilename as string) as long
-public declare function sndplaysound lib "winmm.dll" alias "sndplaysounda" (byval lpszsoundname as string, byval uflags as long) as long
 
-
-
-sub playwaveapi(file as string)
-
-on error resume next
-dim rc as integer
-
-rc = sndplaysound(file, snd_async)
-
-end sub
-
+public enum e_objetoscriticos
+    manzana = 1
+    manzana2 = 2
+    manzananewbie = 467
+end enum

@@ -1,5 +1,5 @@
 attribute vb_name = "sistemacombate"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,13 +28,15 @@ attribute vb_name = "sistemacombate"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
-
+'
+'dise�o y correcci�n del modulo de combate por
+'gerardo saiz, gerardosaiz@yahoo.com
+'
 
 option explicit
 
-public const maxdistanciaarco = 18
-public const maxdistanciamagia = 18
+public const maxdistanciaarco as byte = 18
+public const maxdistanciamagia as byte = 18
 
 function modificadorevasion(byval clase as string) as single
 
@@ -277,7 +279,7 @@ end function
 
 function poderevasionescudo(byval userindex as integer) as long
 
-poderevasionescudo = (userlist(userindex).stats.userskills(defensa) * _
+poderevasionescudo = (userlist(userindex).stats.userskills(eskill.defensa) * _
 modevasiondeescudoclase(userlist(userindex).clase)) / 2
 
 end function
@@ -285,8 +287,8 @@ end function
 function poderevasion(byval userindex as integer) as long
     dim ltemp as long
      with userlist(userindex)
-       ltemp = (.stats.userskills(tacticas) + _
-          .stats.userskills(tacticas) / 33 * .stats.useratributos(agilidad)) * _
+       ltemp = (.stats.userskills(eskill.tacticas) + _
+          .stats.userskills(eskill.tacticas) / 33 * .stats.useratributos(eatributos.agilidad)) * _
           modificadorevasion(.clase)
        
         poderevasion = (ltemp + (2.5 * maximo(.stats.elv - 12, 0)))
@@ -298,20 +300,20 @@ end function
 'function poderevasion(byval userindex as integer) as long
 'dim poderevasiontemp as long
 
-'if userlist(userindex).stats.userskills(tacticas) < 31 then
-'    poderevasiontemp = (userlist(userindex).stats.userskills(tacticas) * _
+'if userlist(userindex).stats.userskills(eskill.tacticas) < 31 then
+'    poderevasiontemp = (userlist(userindex).stats.userskills(eskill.tacticas) * _
 '    modificadorevasion(userlist(userindex).clase))
-'elseif userlist(userindex).stats.userskills(tacticas) < 61 then
-'        poderevasiontemp = ((userlist(userindex).stats.userskills(tacticas) + _
-'        userlist(userindex).stats.useratributos(agilidad)) * _
+'elseif userlist(userindex).stats.userskills(eskill.tacticas) < 61 then
+'        poderevasiontemp = ((userlist(userindex).stats.userskills(eskill.tacticas) + _
+'        userlist(userindex).stats.useratributos(eatributos.agilidad)) * _
 '        modificadorevasion(userlist(userindex).clase))
-'elseif userlist(userindex).stats.userskills(tacticas) < 91 then
-'        poderevasiontemp = ((userlist(userindex).stats.userskills(tacticas) + _
-'        (2 * userlist(userindex).stats.useratributos(agilidad))) * _
+'elseif userlist(userindex).stats.userskills(eskill.tacticas) < 91 then
+'        poderevasiontemp = ((userlist(userindex).stats.userskills(eskill.tacticas) + _
+'        (2 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
 '        modificadorevasion(userlist(userindex).clase))
 'else
-'        poderevasiontemp = ((userlist(userindex).stats.userskills(tacticas) + _
-'        (3 * userlist(userindex).stats.useratributos(agilidad))) * _
+'        poderevasiontemp = ((userlist(userindex).stats.userskills(eskill.tacticas) + _
+'        (3 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
 '        modificadorevasion(userlist(userindex).clase))
 'end if
 'poderevasion = (poderevasiontemp + (2.5 * maximo(userlist(userindex).stats.elv - 12, 0)))
@@ -326,20 +328,20 @@ end function
 function poderataquearma(byval userindex as integer) as long
 dim poderataquetemp as long
 
-if userlist(userindex).stats.userskills(armas) < 31 then
-    poderataquetemp = (userlist(userindex).stats.userskills(armas) * _
+if userlist(userindex).stats.userskills(eskill.armas) < 31 then
+    poderataquetemp = (userlist(userindex).stats.userskills(eskill.armas) * _
     modificadorpoderataquearmas(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(armas) < 61 then
-    poderataquetemp = ((userlist(userindex).stats.userskills(armas) + _
-    userlist(userindex).stats.useratributos(agilidad)) * _
+elseif userlist(userindex).stats.userskills(eskill.armas) < 61 then
+    poderataquetemp = ((userlist(userindex).stats.userskills(eskill.armas) + _
+    userlist(userindex).stats.useratributos(eatributos.agilidad)) * _
     modificadorpoderataquearmas(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(armas) < 91 then
-    poderataquetemp = ((userlist(userindex).stats.userskills(armas) + _
-    (2 * userlist(userindex).stats.useratributos(agilidad))) * _
+elseif userlist(userindex).stats.userskills(eskill.armas) < 91 then
+    poderataquetemp = ((userlist(userindex).stats.userskills(eskill.armas) + _
+    (2 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
     modificadorpoderataquearmas(userlist(userindex).clase))
 else
-   poderataquetemp = ((userlist(userindex).stats.userskills(armas) + _
-   (3 * userlist(userindex).stats.useratributos(agilidad))) * _
+   poderataquetemp = ((userlist(userindex).stats.userskills(eskill.armas) + _
+   (3 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
    modificadorpoderataquearmas(userlist(userindex).clase))
 end if
 
@@ -349,20 +351,20 @@ end function
 function poderataqueproyectil(byval userindex as integer) as long
 dim poderataquetemp as long
 
-if userlist(userindex).stats.userskills(proyectiles) < 31 then
-    poderataquetemp = (userlist(userindex).stats.userskills(proyectiles) * _
+if userlist(userindex).stats.userskills(eskill.proyectiles) < 31 then
+    poderataquetemp = (userlist(userindex).stats.userskills(eskill.proyectiles) * _
     modificadorpoderataqueproyectiles(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(proyectiles) < 61 then
-        poderataquetemp = ((userlist(userindex).stats.userskills(proyectiles) + _
-        userlist(userindex).stats.useratributos(agilidad)) * _
+elseif userlist(userindex).stats.userskills(eskill.proyectiles) < 61 then
+        poderataquetemp = ((userlist(userindex).stats.userskills(eskill.proyectiles) + _
+        userlist(userindex).stats.useratributos(eatributos.agilidad)) * _
         modificadorpoderataqueproyectiles(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(proyectiles) < 91 then
-        poderataquetemp = ((userlist(userindex).stats.userskills(proyectiles) + _
-        (2 * userlist(userindex).stats.useratributos(agilidad))) * _
+elseif userlist(userindex).stats.userskills(eskill.proyectiles) < 91 then
+        poderataquetemp = ((userlist(userindex).stats.userskills(eskill.proyectiles) + _
+        (2 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
         modificadorpoderataqueproyectiles(userlist(userindex).clase))
 else
-       poderataquetemp = ((userlist(userindex).stats.userskills(proyectiles) + _
-      (3 * userlist(userindex).stats.useratributos(agilidad))) * _
+       poderataquetemp = ((userlist(userindex).stats.userskills(eskill.proyectiles) + _
+      (3 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
       modificadorpoderataqueproyectiles(userlist(userindex).clase))
 end if
 
@@ -373,20 +375,20 @@ end function
 function poderataquewresterling(byval userindex as integer) as long
 dim poderataquetemp as long
 
-if userlist(userindex).stats.userskills(wresterling) < 31 then
-    poderataquetemp = (userlist(userindex).stats.userskills(wresterling) * _
+if userlist(userindex).stats.userskills(eskill.wresterling) < 31 then
+    poderataquetemp = (userlist(userindex).stats.userskills(eskill.wresterling) * _
     modificadorpoderataquearmas(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(wresterling) < 61 then
-        poderataquetemp = ((userlist(userindex).stats.userskills(wresterling) + _
-        userlist(userindex).stats.useratributos(agilidad)) * _
+elseif userlist(userindex).stats.userskills(eskill.wresterling) < 61 then
+        poderataquetemp = ((userlist(userindex).stats.userskills(eskill.wresterling) + _
+        userlist(userindex).stats.useratributos(eatributos.agilidad)) * _
         modificadorpoderataquearmas(userlist(userindex).clase))
-elseif userlist(userindex).stats.userskills(wresterling) < 91 then
-        poderataquetemp = ((userlist(userindex).stats.userskills(wresterling) + _
-        (2 * userlist(userindex).stats.useratributos(agilidad))) * _
+elseif userlist(userindex).stats.userskills(eskill.wresterling) < 91 then
+        poderataquetemp = ((userlist(userindex).stats.userskills(eskill.wresterling) + _
+        (2 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
         modificadorpoderataquearmas(userlist(userindex).clase))
 else
-       poderataquetemp = ((userlist(userindex).stats.userskills(wresterling) + _
-       (3 * userlist(userindex).stats.useratributos(agilidad))) * _
+       poderataquetemp = ((userlist(userindex).stats.userskills(eskill.wresterling) + _
+       (3 * userlist(userindex).stats.useratributos(eatributos.agilidad))) * _
        modificadorpoderataquearmas(userlist(userindex).clase))
 end if
 
@@ -435,6 +437,12 @@ end if
 end function
 
 public function npcimpacto(byval npcindex as integer, byval userindex as integer) as boolean
+'*************************************************
+'author: unknown
+'last modified: 03/15/2006
+'revisa si un npc logra impactar a un user o no
+'03/15/2006 maraxus - evit� una divisi�n por cero que eliminaba npcs
+'*************************************************
 dim rechazo as boolean
 dim probrechazo as long
 dim probexito as long
@@ -448,8 +456,8 @@ userevasion = poderevasion(userindex)
 npcpoderataque = npclist(npcindex).poderataque
 poderevasioescudo = poderevasionescudo(userindex)
 
-skilltacticas = userlist(userindex).stats.userskills(tacticas)
-skilldefensa = userlist(userindex).stats.userskills(defensa)
+skilltacticas = userlist(userindex).stats.userskills(eskill.tacticas)
+skilldefensa = userlist(userindex).stats.userskills(eskill.defensa)
 
 'esta usando un escudo ???
 if userlist(userindex).invent.escudoeqpobjindex > 0 then userevasion = userevasion + poderevasioescudo
@@ -460,18 +468,19 @@ npcimpacto = (randomnumber(1, 100) <= probexito)
 
 ' el usuario esta usando un escudo ???
 if userlist(userindex).invent.escudoeqpobjindex > 0 then
-   if npcimpacto = false then
-      probrechazo = maximo(10, minimo(90, 100 * (skilldefensa / (skilldefensa + skilltacticas))))
-      rechazo = (randomnumber(1, 100) <= probrechazo)
-      if rechazo = true then
-      'se rechazo el ataque con el escudo
-         call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_escudo)
-         call senddata(toindex, userindex, 0, "7")
-         call subirskill(userindex, defensa)
-      end if
-   end if
+    if not npcimpacto then
+        if skilldefensa + skilltacticas > 0 then  'evitamos divisi�n por cero
+            probrechazo = maximo(10, minimo(90, 100 * (skilldefensa / (skilldefensa + skilltacticas))))
+            rechazo = (randomnumber(1, 100) <= probrechazo)
+            if rechazo = true then
+                'se rechazo el ataque con el escudo
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_escudo)
+                call senddata(sendtarget.toindex, userindex, 0, "7")
+                call subirskill(userindex, defensa)
+            end if
+        end if
+    end if
 end if
-
 end function
 
 
@@ -493,7 +502,7 @@ if userlist(userindex).invent.weaponeqpobjindex > 0 then
     if npcindex > 0 then
         
         'usa la mata dragones?
-        if arma.subtipo = matadragones then ' usa la matadragones?
+        if userlist(userindex).invent.weaponeqpobjindex = espadamatadragonesindex then ' usa la matadragones?
             modifclase = modicadorda�oclasearmas(userlist(userindex).clase)
                 if npclist(npcindex).npctype = dragon then 'ataca dragon?
                 da�oarma = randomnumber(arma.minhit, arma.maxhit)
@@ -521,7 +530,7 @@ if userlist(userindex).invent.weaponeqpobjindex > 0 then
         end if
     
     else ' ataca usuario
-        if arma.subtipo = matadragones then
+        if userlist(userindex).invent.weaponeqpobjindex = espadamatadragonesindex then
             modifclase = modicadorda�oclasearmas(userlist(userindex).clase)
                 da�oarma = 1 ' si usa la espada matadragones da�o es 1
             da�omaxarma = 1
@@ -553,7 +562,7 @@ da�ousuario = randomnumber(userlist(userindex).stats.minhit, userlist(userinde
 if matodragon then
     calcularda�o = npclist(npcindex).stats.minhp + npclist(npcindex).stats.def
 else
-    calcularda�o = (((3 * da�oarma) + ((da�omaxarma / 5) * maximo(0, (userlist(userindex).stats.useratributos(fuerza) - 15))) + da�ousuario) * modifclase)
+    calcularda�o = (((3 * da�oarma) + ((da�omaxarma / 5) * maximo(0, (userlist(userindex).stats.useratributos(eatributos.fuerza) - 15))) + da�ousuario) * modifclase)
 end if
 
 end function
@@ -574,7 +583,7 @@ da�o = da�o - npclist(npcindex).stats.def
 if da�o < 0 then da�o = 0
 
 '[kevin]
-call senddata(toindex, userindex, 0, "u2" & da�o)
+call senddata(sendtarget.toindex, userindex, 0, "u2" & da�o)
 call calculardarexp(userindex, npcindex, da�o)
 npclist(npcindex).stats.minhp = npclist(npcindex).stats.minhp - da�o
 '[/kevin]
@@ -589,26 +598,29 @@ end if
 
  
 if npclist(npcindex).stats.minhp <= 0 then
-          
-          ' si era un dragon perdemos la espada matadragones
-          if npclist(npcindex).npctype = dragon then
-            call quitarobjetos(espadamatadragonesindex, 1, userindex)
+        
+        ' si era un dragon perdemos la espada matadragones
+        if npclist(npcindex).npctype = dragon then
+            'si tiene equipada la matadracos se la sacamos
+            if userlist(userindex).invent.weaponeqpobjindex = espadamatadragonesindex then
+                call quitarobjetos(espadamatadragonesindex, 1, userindex)
+            end if
             if npclist(npcindex).stats.maxhp > 100000 then call logdesarrollo(userlist(userindex).name & " mat� un drag�n")
-          end if
-          
-          
-          ' para que las mascotas no sigan intentando luchar y
-          ' comiencen a seguir al amo
-         
-          dim j as integer
-          for j = 1 to maxmascotas
-                if userlist(userindex).mascotasindex(j) > 0 then
-                    if npclist(userlist(userindex).mascotasindex(j)).targetnpc = npcindex then npclist(userlist(userindex).mascotasindex(j)).targetnpc = 0
-                    npclist(userlist(userindex).mascotasindex(j)).movement = sigue_amo
-                end if
-          next j
-  
-          call muerenpc(npcindex, userindex)
+        end if
+        
+        
+        ' para que las mascotas no sigan intentando luchar y
+        ' comiencen a seguir al amo
+        
+        dim j as integer
+        for j = 1 to maxmascotas
+            if userlist(userindex).mascotasindex(j) > 0 then
+                if npclist(userlist(userindex).mascotasindex(j)).targetnpc = npcindex then npclist(userlist(userindex).mascotasindex(j)).targetnpc = 0
+                npclist(userlist(userindex).mascotasindex(j)).movement = tipoai.sigueamo
+            end if
+        next j
+        
+        call muerenpc(npcindex, userindex)
 end if
 
 end sub
@@ -635,7 +647,7 @@ lugar = randomnumber(1, 6)
 
 
 select case lugar
-  case bcabeza
+  case partescuerpo.bcabeza
         'si tiene casco absorbe el golpe
         if userlist(userindex).invent.cascoeqpobjindex > 0 then
            obj = objdata(userlist(userindex).invent.cascoeqpobjindex)
@@ -655,17 +667,17 @@ select case lugar
         end if
 end select
 
-call senddata(toindex, userindex, 0, "n2" & lugar & "," & da�o)
+call senddata(sendtarget.toindex, userindex, 0, "n2" & lugar & "," & da�o)
 
-if userlist(userindex).flags.privilegios = 0 then userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - da�o
+if userlist(userindex).flags.privilegios = playertype.user then userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - da�o
 
 'muere el usuario
 if userlist(userindex).stats.minhp <= 0 then
 
-    call senddata(toindex, userindex, 0, "6") ' le informamos que ha muerto ;)
+    call senddata(sendtarget.toindex, userindex, 0, "6") ' le informamos que ha muerto ;)
     
     'si lo mato un guardia
-    if criminal(userindex) and npclist(npcindex).npctype = npctype_guardias then
+    if criminal(userindex) and npclist(npcindex).npctype = enpctype.guardiareal then
         call restarcriminalidad(userindex)
         if not criminal(userindex) and userlist(userindex).faccion.fuerzascaos = 1 then call expulsarfaccioncaos(userindex)
     end if
@@ -711,7 +723,7 @@ for j = 1 to maxmascotas
         if checkelementales or (npclist(userlist(userindex).mascotasindex(j)).numero <> elementalfuego and npclist(userlist(userindex).mascotasindex(j)).numero <> elementaltierra) then
             if npclist(userlist(userindex).mascotasindex(j)).targetnpc = 0 then npclist(userlist(userindex).mascotasindex(j)).targetnpc = npcindex
             'npclist(userlist(userindex).mascotasindex(j)).flags.oldmovement = npclist(userlist(userindex).mascotasindex(j)).movement
-            npclist(userlist(userindex).mascotasindex(j)).movement = npc_ataca_npc
+            npclist(userlist(userindex).mascotasindex(j)).movement = tipoai.npcatacanpc
         end if
        end if
     end if
@@ -727,9 +739,13 @@ for j = 1 to maxmascotas
 next j
 end sub
 
-public sub npcatacauser(byval npcindex as integer, byval userindex as integer)
+public function npcatacauser(byval npcindex as integer, byval userindex as integer) as boolean
+
+if userlist(userindex).flags.admininvisible = 1 then exit function
+
 ' el npc puede atacar ???
 if npclist(npcindex).canattack = 1 then
+    npcatacauser = true
     call checkpets(npcindex, userindex, false)
 
     if npclist(npcindex).target = 0 then npclist(npcindex).target = userindex
@@ -737,34 +753,39 @@ if npclist(npcindex).canattack = 1 then
     if userlist(userindex).flags.atacadopornpc = 0 and _
        userlist(userindex).flags.atacadoporuser = 0 then userlist(userindex).flags.atacadopornpc = npcindex
 else
-    exit sub
+    npcatacauser = false
+    exit function
 end if
 
 npclist(npcindex).canattack = 0
 
-if npclist(npcindex).flags.snd1 > 0 then call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & npclist(npcindex).flags.snd1)
+if npclist(npcindex).flags.snd1 > 0 then call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & npclist(npcindex).flags.snd1)
 
 if npcimpacto(npcindex, userindex) then
-    call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_impacto)
+    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_impacto)
     
     if userlist(userindex).flags.meditando = false then
-        if userlist(userindex).flags.navegando = 0 then call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxsangre & "," & 0)
+        if userlist(userindex).flags.navegando = 0 then call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxsangre & "," & 0)
     end if
+    
     call npcda�o(npcindex, userindex)
+    call senddata(sendtarget.toindex, userindex, 0, "ash" & userlist(userindex).stats.minhp)
     '�puede envenenar?
     if npclist(npcindex).veneno = 1 then call npcenvenenaruser(userindex)
 else
-    call senddata(toindex, userindex, 0, "n1")
+    call senddata(sendtarget.toindex, userindex, 0, "n1")
 end if
+
+
 
 '-----tal vez suba los skills------
 call subirskill(userindex, tacticas)
 
-call senduserstatsbox(userindex)
+'call senduserstatsbox(userindex)
 'controla el nivel del usuario
 call checkuserlevel(userindex)
 
-end sub
+end function
 
 function npcimpactonpc(byval atacante as integer, byval victima as integer) as boolean
 dim poderatt as long, podereva as long, dif as long
@@ -810,34 +831,34 @@ if npclist(atacante).canattack = 1 then
        npclist(atacante).canattack = 0
         if cambiarmovimiento then
             npclist(victima).targetnpc = atacante
-            npclist(victima).movement = npc_ataca_npc
+            npclist(victima).movement = tipoai.npcatacanpc
         end if
 else
     exit sub
 end if
 
-if npclist(atacante).flags.snd1 > 0 then call senddata(tonpcarea, atacante, npclist(atacante).pos.map, "tw" & npclist(atacante).flags.snd1)
+if npclist(atacante).flags.snd1 > 0 then call senddata(sendtarget.tonpcarea, atacante, npclist(atacante).pos.map, "tw" & npclist(atacante).flags.snd1)
 
 if npcimpactonpc(atacante, victima) then
     
     if npclist(victima).flags.snd2 > 0 then
-        call senddata(tonpcarea, victima, npclist(victima).pos.map, "tw" & npclist(victima).flags.snd2)
+        call senddata(sendtarget.tonpcarea, victima, npclist(victima).pos.map, "tw" & npclist(victima).flags.snd2)
     else
-        call senddata(tonpcarea, victima, npclist(victima).pos.map, "tw" & snd_impacto2)
+        call senddata(sendtarget.tonpcarea, victima, npclist(victima).pos.map, "tw" & snd_impacto2)
     end if
 
     if npclist(atacante).maestrouser > 0 then
-        call senddata(tonpcarea, atacante, npclist(atacante).pos.map, "tw" & snd_impacto)
+        call senddata(sendtarget.tonpcarea, atacante, npclist(atacante).pos.map, "tw" & snd_impacto)
     else
-        call senddata(tonpcarea, victima, npclist(victima).pos.map, "tw" & snd_impacto)
+        call senddata(sendtarget.tonpcarea, victima, npclist(victima).pos.map, "tw" & snd_impacto)
     end if
     call npcda�onpc(atacante, victima)
     
 else
     if npclist(atacante).maestrouser > 0 then
-        call senddata(tonpcarea, atacante, npclist(atacante).pos.map, "tw" & sound_swing)
+        call senddata(sendtarget.tonpcarea, atacante, npclist(atacante).pos.map, "tw" & snd_swing)
     else
-        call senddata(tonpcarea, victima, npclist(victima).pos.map, "tw" & sound_swing)
+        call senddata(sendtarget.tonpcarea, victima, npclist(victima).pos.map, "tw" & snd_swing)
     end if
 end if
 
@@ -845,27 +866,29 @@ end sub
 
 public sub usuarioatacanpc(byval userindex as integer, byval npcindex as integer)
 
+if userlist(userindex).flags.privilegios = playertype.consejero then exit sub
+
 if distancia(userlist(userindex).pos, npclist(npcindex).pos) > maxdistanciaarco then
-   call senddata(toindex, userindex, 0, "||est�s muy lejos para disparar." & fonttype_fight)
+   call senddata(sendtarget.toindex, userindex, 0, "||est�s muy lejos para disparar." & fonttype_fight)
    exit sub
 end if
 
 if userlist(userindex).flags.seguro and npclist(npcindex).maestrouser <> 0 then
     if not criminal(npclist(npcindex).maestrouser) then
-        call senddata(toindex, userindex, 0, "||debes sacar el seguro antes de poder atacar una mascota de un ciudadano." & fonttype_warning)
+        call senddata(sendtarget.toindex, userindex, 0, "||debes sacar el seguro antes de poder atacar una mascota de un ciudadano." & fonttype_warning)
         exit sub
     end if
 end if
 
 if userlist(userindex).faccion.armadareal = 1 and npclist(npcindex).maestrouser <> 0 then
     if not criminal(npclist(npcindex).maestrouser) then
-        call senddata(toindex, userindex, 0, "||los soldados del ejercito real tienen prohibido atacar ciudadanos y sus macotas." & fonttype_warning)
+        call senddata(sendtarget.toindex, userindex, 0, "||los soldados del ejercito real tienen prohibido atacar ciudadanos y sus macotas." & fonttype_warning)
         exit sub
     end if
 end if
 
-if npclist(npcindex).npctype = 2 and userlist(userindex).flags.seguro then
-    call senddata(toindex, userindex, 0, "||debes quitar el seguro para atacar guardias." & fonttype_fight)
+if npclist(npcindex).npctype = enpctype.guardiareal and userlist(userindex).flags.seguro then
+    call senddata(sendtarget.toindex, userindex, 0, "||debes quitar el seguro para atacar guardias." & fonttype_fight)
     exit sub
 end if
 
@@ -875,19 +898,16 @@ call npcatacado(npcindex, userindex)
 if userimpactonpc(userindex, npcindex) then
     
     if npclist(npcindex).flags.snd2 > 0 then
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & npclist(npcindex).flags.snd2)
+        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & npclist(npcindex).flags.snd2)
     else
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_impacto2)
+        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_impacto2)
     end if
-    
-    
-    
     
     call userda�onpc(userindex, npcindex)
    
 else
-    call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_swing)
-    call senddata(toindex, userindex, 0, "u1")
+    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_swing)
+    call senddata(sendtarget.toindex, userindex, 0, "u1")
 end if
 
 end sub
@@ -901,7 +921,7 @@ if intervalopermiteatacar(userindex) then
     if userlist(userindex).stats.minsta >= 10 then
         call quitarsta(userindex, randomnumber(1, 10))
     else
-        call senddata(toindex, userindex, 0, "||estas muy cansado para luchar." & fonttype_info)
+        call senddata(sendtarget.toindex, userindex, 0, "||estas muy cansado para luchar." & fonttype_info)
         exit sub
     end if
     
@@ -913,7 +933,7 @@ if intervalopermiteatacar(userindex) then
     
     'exit if not legal
     if attackpos.x < xminmapsize or attackpos.x > xmaxmapsize or attackpos.y <= yminmapsize or attackpos.y > ymaxmapsize then
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_swing)
+        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_swing)
         exit sub
     end if
     
@@ -935,14 +955,14 @@ if intervalopermiteatacar(userindex) then
             
             if npclist(mapdata(attackpos.map, attackpos.x, attackpos.y).npcindex).maestrouser > 0 and _
                mapinfo(npclist(mapdata(attackpos.map, attackpos.x, attackpos.y).npcindex).pos.map).pk = false then
-                    call senddata(toindex, userindex, 0, "||no pod�s atacar mascotas en zonas seguras" & fonttype_fight)
+                    call senddata(sendtarget.toindex, userindex, 0, "||no pod�s atacar mascotas en zonas seguras" & fonttype_fight)
                     exit sub
             end if
 
             call usuarioatacanpc(userindex, mapdata(attackpos.map, attackpos.x, attackpos.y).npcindex)
             
         else
-            call senddata(toindex, userindex, 0, "||no pod�s atacar a este npc" & fonttype_fight)
+            call senddata(sendtarget.toindex, userindex, 0, "||no pod�s atacar a este npc" & fonttype_fight)
         end if
         
         call senduserstatsbox(userindex)
@@ -951,13 +971,15 @@ if intervalopermiteatacar(userindex) then
     end if
     
     
-    call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_swing)
+    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_swing)
     call senduserstatsbox(userindex)
 end if
 
-'[barrin 30-11-03]
-userlist(userindex).flags.trabajando = false
-'[/barrin 30-11-03]
+if userlist(userindex).counters.trabajando then _
+    userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando - 1
+    
+if userlist(userindex).counters.ocultando then _
+    userlist(userindex).counters.ocultando = userlist(userindex).counters.ocultando - 1
 
 end sub
 
@@ -974,8 +996,8 @@ dim proyectil as boolean
 dim skilltacticas as long
 dim skilldefensa as long
 
-skilltacticas = userlist(victimaindex).stats.userskills(tacticas)
-skilldefensa = userlist(victimaindex).stats.userskills(defensa)
+skilltacticas = userlist(victimaindex).stats.userskills(eskill.tacticas)
+skilldefensa = userlist(victimaindex).stats.userskills(eskill.defensa)
 
 arma = userlist(atacanteindex).invent.weaponeqpobjindex
 if arma > 0 then
@@ -1022,9 +1044,9 @@ if userlist(victimaindex).invent.escudoeqpobjindex > 0 then
       rechazo = (randomnumber(1, 100) <= probrechazo)
       if rechazo = true then
       'se rechazo el ataque con el escudo
-              call senddata(topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & snd_escudo)
-              call senddata(toindex, atacanteindex, 0, "8")
-              call senddata(toindex, victimaindex, 0, "7")
+              call senddata(sendtarget.topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & snd_escudo)
+              call senddata(sendtarget.toindex, atacanteindex, 0, "8")
+              call senddata(sendtarget.toindex, victimaindex, 0, "7")
               call subirskill(victimaindex, defensa)
       end if
     end if
@@ -1049,7 +1071,7 @@ public sub usuarioatacausuario(byval atacanteindex as integer, byval victimainde
 if not puedeatacar(atacanteindex, victimaindex) then exit sub
 
 if distancia(userlist(atacanteindex).pos, userlist(victimaindex).pos) > maxdistanciaarco then
-   call senddata(toindex, atacanteindex, 0, "||est�s muy lejos para disparar." & fonttype_fight)
+   call senddata(sendtarget.toindex, atacanteindex, 0, "||est�s muy lejos para disparar." & fonttype_fight)
    exit sub
 end if
 
@@ -1057,15 +1079,15 @@ end if
 call usuarioatacadoporusuario(atacanteindex, victimaindex)
 
 if usuarioimpacto(atacanteindex, victimaindex) then
-    call senddata(topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & snd_impacto)
+    call senddata(sendtarget.topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & snd_impacto)
     
-    if userlist(victimaindex).flags.navegando = 0 then call senddata(topcarea, victimaindex, userlist(victimaindex).pos.map, "cfx" & userlist(victimaindex).char.charindex & "," & fxsangre & "," & 0)
+    if userlist(victimaindex).flags.navegando = 0 then call senddata(sendtarget.topcarea, victimaindex, userlist(victimaindex).pos.map, "cfx" & userlist(victimaindex).char.charindex & "," & fxsangre & "," & 0)
     
     call userda�ouser(atacanteindex, victimaindex)
 else
-    call senddata(topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & sound_swing)
-    call senddata(toindex, atacanteindex, 0, "u1")
-    call senddata(toindex, victimaindex, 0, "u3" & userlist(atacanteindex).name)
+    call senddata(sendtarget.topcarea, atacanteindex, userlist(atacanteindex).pos.map, "tw" & snd_swing)
+    call senddata(sendtarget.toindex, atacanteindex, 0, "u1")
+    call senddata(sendtarget.toindex, victimaindex, 0, "u3" & userlist(atacanteindex).name)
 end if
 
 if ucase$(userlist(atacanteindex).clase) = "ladron" then call desarmar(atacanteindex, victimaindex)
@@ -1103,7 +1125,7 @@ lugar = randomnumber(1, 6)
 
 select case lugar
   
-  case bcabeza
+  case partescuerpo.bcabeza
         'si tiene casco absorbe el golpe
         if userlist(victimaindex).invent.cascoeqpobjindex > 0 then
            obj = objdata(userlist(victimaindex).invent.cascoeqpobjindex)
@@ -1123,8 +1145,8 @@ select case lugar
         end if
 end select
 
-call senddata(toindex, atacanteindex, 0, "n5" & lugar & "," & da�o & "," & userlist(victimaindex).name)
-call senddata(toindex, victimaindex, 0, "n4" & lugar & "," & da�o & "," & userlist(atacanteindex).name)
+call senddata(sendtarget.toindex, atacanteindex, 0, "n5" & lugar & "," & da�o & "," & userlist(victimaindex).name)
+call senddata(sendtarget.toindex, victimaindex, 0, "n4" & lugar & "," & da�o & "," & userlist(atacanteindex).name)
 
 userlist(victimaindex).stats.minhp = userlist(victimaindex).stats.minhp - da�o
 
@@ -1148,79 +1170,49 @@ end if
 
 
 if userlist(victimaindex).stats.minhp <= 0 then
-     
-     call contarmuerte(victimaindex, atacanteindex)
-     
-     ' para que las mascotas no sigan intentando luchar y
-     ' comiencen a seguir al amo
-     dim j as integer
-     for j = 1 to maxmascotas
+    
+    call contarmuerte(victimaindex, atacanteindex)
+    
+    ' para que las mascotas no sigan intentando luchar y
+    ' comiencen a seguir al amo
+    dim j as integer
+    for j = 1 to maxmascotas
         if userlist(atacanteindex).mascotasindex(j) > 0 then
             if npclist(userlist(atacanteindex).mascotasindex(j)).target = victimaindex then npclist(userlist(atacanteindex).mascotasindex(j)).target = 0
             call followamo(userlist(atacanteindex).mascotasindex(j))
         end if
-     next j
-
-     call actstats(victimaindex, atacanteindex)
+    next j
+    
+    call actstats(victimaindex, atacanteindex)
+else
+    'est� vivo - actualizamos el hp
+    call senddata(sendtarget.toindex, victimaindex, 0, "ash" & userlist(victimaindex).stats.minhp)
 end if
-        
 
 'controla el nivel del usuario
 call checkuserlevel(atacanteindex)
 
-
 end sub
 
 sub usuarioatacadoporusuario(byval attackerindex as integer, byval victimindex as integer)
-
-if triggerzonapelea(attackerindex, victimindex) = trigger6_permite then exit sub
-
-if userlist(attackerindex).guildinfo.guildname = "" or userlist(victimindex).guildinfo.guildname = "" then
+    if triggerzonapelea(attackerindex, victimindex) = trigger6_permite then exit sub
 
     if not criminal(attackerindex) and not criminal(victimindex) then
         call volvercriminal(attackerindex)
     end if
     
     if not criminal(victimindex) then
-          call addtovar(userlist(attackerindex).reputacion.bandidorep, vlasalto, maxrep)
+        userlist(attackerindex).reputacion.bandidorep = userlist(attackerindex).reputacion.bandidorep + vlasalto
+        if userlist(attackerindex).reputacion.bandidorep > maxrep then _
+            userlist(attackerindex).reputacion.bandidorep = maxrep
     else
-          call addtovar(userlist(attackerindex).reputacion.noblerep, vlnoble, maxrep)
+        userlist(attackerindex).reputacion.noblerep = userlist(attackerindex).reputacion.noblerep + vlnoble
+        if userlist(attackerindex).reputacion.noblerep > maxrep then _
+            userlist(attackerindex).reputacion.noblerep = maxrep
     end if
     
-    
-else 'tiene clan
-
-    if not userlist(attackerindex).guildref.isenemy(userlist(victimindex).guildinfo.guildname) then
-        
-            if not criminal(attackerindex) and not criminal(victimindex) then
-                    call volvercriminal(attackerindex)
-            end if
-            
-            if not criminal(victimindex) then
-                  call addtovar(userlist(attackerindex).reputacion.bandidorep, vlasalto, maxrep)
-            else
-                  call addtovar(userlist(attackerindex).reputacion.noblerep, vlnoble, maxrep)
-            end if
-            
-    else
-            
-            if not criminal(victimindex) then
-                  call addtovar(userlist(attackerindex).reputacion.bandidorep, vlasalto, maxrep)
-            else
-                  call addtovar(userlist(attackerindex).reputacion.noblerep, vlnoble, maxrep)
-            end if
-            
-            'call giveguildpoints(1, attackerindex, false)
-    
-    end if
-    
-
-end if
-
-call allmascotasatacanuser(attackerindex, victimindex)
-call allmascotasatacanuser(victimindex, attackerindex)
-
-
+    call allmascotasatacanuser(attackerindex, victimindex)
+    call allmascotasatacanuser(victimindex, attackerindex)
 end sub
 
 sub allmascotasatacanuser(byval victim as integer, byval maestro as integer)
@@ -1230,7 +1222,7 @@ dim icount as integer
 for icount = 1 to maxmascotas
     if userlist(maestro).mascotasindex(icount) > 0 then
             npclist(userlist(maestro).mascotasindex(icount)).flags.attackedby = userlist(victim).name
-            npclist(userlist(maestro).mascotasindex(icount)).movement = npcdefensa
+            npclist(userlist(maestro).mascotasindex(icount)).movement = tipoai.npcdefensa
             npclist(userlist(maestro).mascotasindex(icount)).hostile = 1
     end if
 next icount
@@ -1242,7 +1234,7 @@ public function puedeatacar(byval attackerindex as integer, byval victimindex as
 dim t as etrigger6
 
 if userlist(victimindex).flags.muerto = 1 then
-    senddata toindex, attackerindex, 0, "||no podes atacar a un espiritu" & fonttype_info
+    senddata sendtarget.toindex, attackerindex, 0, "||no podes atacar a un espiritu" & fonttype_info
     puedeatacar = false
     exit function
 end if
@@ -1259,52 +1251,53 @@ end if
 
 
 if mapinfo(userlist(victimindex).pos.map).pk = false then
-    call senddata(toindex, attackerindex, 0, "||esta es una zona segura, aqui no podes atacar otros usuarios." & fonttype_warning)
+    call senddata(sendtarget.toindex, attackerindex, 0, "||esta es una zona segura, aqui no podes atacar otros usuarios." & fonttype_warning)
     puedeatacar = false
     exit function
 end if
 
-if mapdata(userlist(victimindex).pos.map, userlist(victimindex).pos.x, userlist(victimindex).pos.y).trigger = trigger_zonasegura then
-    call senddata(toindex, attackerindex, 0, "||no podes pelear aqui." & fonttype_warning)
+if mapdata(userlist(victimindex).pos.map, userlist(victimindex).pos.x, userlist(victimindex).pos.y).trigger = etrigger.zonasegura or _
+    mapdata(userlist(attackerindex).pos.map, userlist(attackerindex).pos.x, userlist(attackerindex).pos.y).trigger = etrigger.zonasegura then
+    call senddata(sendtarget.toindex, attackerindex, 0, "||no podes pelear aqui." & fonttype_warning)
     puedeatacar = false
     exit function
 end if
 
 if (not criminal(victimindex)) and (userlist(attackerindex).faccion.armadareal = 1) then
-    call senddata(toindex, attackerindex, 0, "||los soldados del ejercito real tienen prohibido atacar ciudadanos." & fonttype_warning)
+    call senddata(sendtarget.toindex, attackerindex, 0, "||los soldados del ejercito real tienen prohibido atacar ciudadanos." & fonttype_warning)
     puedeatacar = false
     exit function
 end if
 
 '[barrin 17-12-03]
 if (userlist(victimindex).faccion.fuerzascaos = 1) and (userlist(attackerindex).faccion.fuerzascaos = 1) then
-    call senddata(toindex, attackerindex, 0, "||los miembros de la legi�n oscura tienen prohibido atacarse entre s�." & fonttype_warning)
+    call senddata(sendtarget.toindex, attackerindex, 0, "||los miembros de la legi�n oscura tienen prohibido atacarse entre s�." & fonttype_warning)
     puedeatacar = false
     exit function
 end if
 '[/barrin]
 
-if userlist(attackerindex).flags.privilegios = 1 then
+if userlist(attackerindex).flags.privilegios = playertype.consejero then
     puedeatacar = false
     exit function
 end if
 
 'se asegura que la victima no es un gm
-if userlist(victimindex).flags.privilegios >= 1 then
-    senddata toindex, attackerindex, 0, "||��no podes atacar a los administradores del juego!! " & fonttype_warning
+if userlist(victimindex).flags.privilegios >= playertype.consejero then
+    senddata sendtarget.toindex, attackerindex, 0, "||��no podes atacar a los administradores del juego!! " & fonttype_warning
     puedeatacar = false
     exit function
 end if
 
 if userlist(attackerindex).flags.muerto = 1 then
-    senddata toindex, attackerindex, 0, "||no podes atacar porque estas muerto" & fonttype_info
+    senddata sendtarget.toindex, attackerindex, 0, "||no podes atacar porque estas muerto" & fonttype_info
     puedeatacar = false
     exit function
 end if
 
 if userlist(attackerindex).flags.seguro then
         if not criminal(victimindex) then
-                call senddata(toindex, attackerindex, 0, "||no podes atacar ciudadanos, para hacerlo debes desactivar el seguro apretando la tecla s" & fonttype_fight)
+                call senddata(sendtarget.toindex, attackerindex, 0, "||no podes atacar ciudadanos, para hacerlo debes desactivar el seguro apretando la tecla s" & fonttype_fight)
                 exit function
         end if
 end if
@@ -1320,7 +1313,7 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
 if npclist(npcindex).maestrouser > 0 then
     if not criminal(attackerindex) and not criminal(npclist(npcindex).maestrouser) then
         if userlist(attackerindex).flags.seguro then
-            call senddata(toindex, attackerindex, 0, "||para atacar mascotas de ciudadanos debes quitarte el seguro" & fonttype_fight)
+            call senddata(sendtarget.toindex, attackerindex, 0, "||para atacar mascotas de ciudadanos debes quitarte el seguro" & fonttype_fight)
             puedeatacarnpc = false
             exit function
         end if
@@ -1328,12 +1321,12 @@ if npclist(npcindex).maestrouser > 0 then
 end if
 
 if userlist(attackerindex).flags.muerto = 1 then
-    senddata toindex, attackerindex, 0, "||no podes atacar porque estas muerto" & fonttype_info
+    senddata sendtarget.toindex, attackerindex, 0, "||no podes atacar porque estas muerto" & fonttype_info
     puedeatacarnpc = false
     exit function
 end if
 
-if userlist(attackerindex).flags.privilegios = 1 then
+if userlist(attackerindex).flags.privilegios = playertype.consejero then
     puedeatacarnpc = false
     exit function
 end if
@@ -1385,10 +1378,11 @@ if expadar > 0 then
     if userlist(userindex).partyindex > 0 then
         call mdparty.obtenerexito(userindex, expadar, npclist(npcindex).pos.map, npclist(npcindex).pos.x, npclist(npcindex).pos.y)
     else
-        call addtovar(userlist(userindex).stats.exp, expadar, maxexp)
-        call senddata(toindex, userindex, 0, "||has ganado " & expadar & " puntos de experiencia." & fonttype_fight)
+        userlist(userindex).stats.exp = userlist(userindex).stats.exp + expadar
+        if userlist(userindex).stats.exp > maxexp then _
+            userlist(userindex).stats.exp = maxexp
+        call senddata(sendtarget.toindex, userindex, 0, "||has ganado " & expadar & " puntos de experiencia." & fonttype_fight)
     end if
-
     
     call checkuserlevel(userindex)
 end if
@@ -1399,8 +1393,8 @@ end sub
 public function triggerzonapelea(byval origen as integer, byval destino as integer) as etrigger6
 
 if origen > 0 and destino > 0 and origen <= ubound(userlist) and destino <= ubound(userlist) then
-    if mapdata(userlist(origen).pos.map, userlist(origen).pos.x, userlist(origen).pos.y).trigger = trigger_zonapelea or _
-        mapdata(userlist(destino).pos.map, userlist(destino).pos.x, userlist(destino).pos.y).trigger = trigger_zonapelea then
+    if mapdata(userlist(origen).pos.map, userlist(origen).pos.x, userlist(origen).pos.y).trigger = etrigger.zonapelea or _
+        mapdata(userlist(destino).pos.map, userlist(destino).pos.x, userlist(destino).pos.y).trigger = etrigger.zonapelea then
         if (mapdata(userlist(origen).pos.map, userlist(origen).pos.x, userlist(origen).pos.y).trigger = mapdata(userlist(destino).pos.map, userlist(destino).pos.x, userlist(destino).pos.y).trigger) then
             triggerzonapelea = trigger6_permite
         else
@@ -1435,8 +1429,8 @@ if armaobjind > 0 then
             
             if num < 60 then
                 userlist(victimaindex).flags.envenenado = 1
-                call senddata(toindex, victimaindex, 0, "||" & userlist(atacanteindex).name & " te ha envenenado!!" & fonttype_fight)
-                call senddata(toindex, atacanteindex, 0, "||has envenenado a " & userlist(victimaindex).name & "!!" & fonttype_fight)
+                call senddata(sendtarget.toindex, victimaindex, 0, "||" & userlist(atacanteindex).name & " te ha envenenado!!" & fonttype_fight)
+                call senddata(sendtarget.toindex, atacanteindex, 0, "||has envenenado a " & userlist(victimaindex).name & "!!" & fonttype_fight)
             end if
         end if
     end if

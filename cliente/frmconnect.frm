@@ -21,42 +21,16 @@ begin vb.form frmconnect
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    visible         =   0   'false
-   begin vb.commandbutton command2 
-      backcolor       =   &h00c0e0ff&
-      caption         =   "actualizar servidores desde la web"
-      beginproperty font 
-         name            =   "ms sans serif"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   735
-      left            =   8760
-      style           =   1  'graphical
-      tabindex        =   5
-      top             =   3120
-      width           =   1335
-   end
-   begin vb.commandbutton command1 
-      caption         =   "este server ->"
-      height          =   375
-      left            =   1530
-      tabindex        =   4
-      top             =   2430
-      width           =   1185
-   end
    begin vb.listbox lst_servers 
       backcolor       =   &h00000000&
       forecolor       =   &h0000ff00&
       height          =   5130
       itemdata        =   "frmconnect.frx":000c
-      left            =   3150
+      left            =   -1755
       list            =   "frmconnect.frx":0013
       tabindex        =   3
-      top             =   3060
+      top             =   2790
+      visible         =   0   'false
       width           =   5415
    end
    begin vb.textbox porttxt 
@@ -105,16 +79,18 @@ begin vb.form frmconnect
    end
    begin vb.image imgservespana 
       height          =   435
-      left            =   4560
+      left            =   225
       mousepointer    =   99  'custom
-      top             =   5220
+      top             =   6495
+      visible         =   0   'false
       width           =   2475
    end
    begin vb.image imgservargentina 
       height          =   795
-      left            =   4500
+      left            =   -195
       mousepointer    =   99  'custom
-      top             =   3720
+      top             =   6765
+      visible         =   0   'false
       width           =   2595
    end
    begin vb.image imggetpass 
@@ -183,6 +159,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -209,6 +189,13 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+'
+'mat�as fernando peque�o
+'matux@fibertel.com.ar
+'www.noland-studios.com.ar
+'acoyte 678 piso 17 dto b
+'capital federal, buenos aires - republica argentina
+'c�digo postal 1405
 
 option explicit
 
@@ -258,13 +245,14 @@ call cargarlst
 
 end sub
 
+
 private sub form_activate()
 'on error resume next
 
 if serversrecibidos then
     if curserver <> 0 then
-        iptxt = serverslst(curserver).ip
-        porttxt = serverslst(curserver).puerto
+        iptxt = serverslst(1).ip
+        porttxt = serverslst(1).puerto
     else
         iptxt = ipdelservidor
         porttxt = puertodelservidor
@@ -368,16 +356,13 @@ ipdelservidor = iptxt
 puertodelservidor = porttxt
 
 
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 select case index
     case 0
         
-        if musica = 0 then
-            curmidi = dirmidi & "7.mid"
-            loopmidi = 1
-            call cargarmidi(curmidi)
-            call play_midi
+        if musica then
+            call audio.playmidi("7.mid")
         end if
         
         
@@ -406,25 +391,35 @@ select case index
         frmoldpersonaje.show vbmodal
         
     case 2
-
-        frmborrar.show vbmodal
+        on error goto errh
+        call shell(app.path & "\recuperar.exe", vbnormalfocus)
 
 end select
+exit sub
+
+errh:
+    call msgbox("no se encuentra el programa recuperar.exe", vbcritical, "argentum online")
 end sub
 
 private sub imggetpass_click()
-    call playwaveds(snd_click)
-    call frmrecuperar.show(vbmodal, frmconnect)
+on error goto errh
+
+    call audio.playwave(snd_click)
+    call shell(app.path & "\recuperar.exe", vbnormalfocus)
+    'call frmrecuperar.show(vbmodal, frmconnect)
+    exit sub
+errh:
+    call msgbox("no se encuentra el programa recuperar.exe", vbcritical, "argentum online")
 end sub
 
 private sub imgservargentina_click()
-    call playwaveds(snd_click)
+    call audio.playwave(snd_click)
     iptxt.text = ipdelservidor
     porttxt.text = puertodelservidor
 end sub
 
 private sub imgservespana_click()
-    call playwaveds(snd_click)
+    call audio.playwave(snd_click)
     iptxt.text = "62.42.193.233"
     porttxt.text = "7666"
 end sub

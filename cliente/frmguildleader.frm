@@ -22,45 +22,55 @@ begin vb.form frmguildleader
    scaleheight     =   6555
    scalewidth      =   5880
    startupposition =   2  'centerscreen
+   begin vb.commandbutton command9 
+      caption         =   "propuestas de alianzas"
+      height          =   495
+      left            =   3000
+      mouseicon       =   "frmguildleader.frx":0000
+      mousepointer    =   99  'custom
+      tabindex        =   17
+      top             =   5460
+      width           =   2775
+   end
    begin vb.commandbutton command8 
       cancel          =   -1  'true
       caption         =   "cerrar"
       height          =   495
       left            =   3000
-      mouseicon       =   "frmguildleader.frx":0000
+      mouseicon       =   "frmguildleader.frx":0152
       mousepointer    =   99  'custom
       tabindex        =   15
-      top             =   5880
+      top             =   5970
       width           =   2775
    end
    begin vb.commandbutton command7 
       caption         =   "propuestas de paz"
       height          =   495
       left            =   3000
-      mouseicon       =   "frmguildleader.frx":0152
+      mouseicon       =   "frmguildleader.frx":02a4
       mousepointer    =   99  'custom
       tabindex        =   14
-      top             =   5280
+      top             =   4950
       width           =   2775
    end
    begin vb.commandbutton command6 
       caption         =   "editar url de la web del clan"
       height          =   495
       left            =   3000
-      mouseicon       =   "frmguildleader.frx":02a4
+      mouseicon       =   "frmguildleader.frx":03f6
       mousepointer    =   99  'custom
       tabindex        =   13
-      top             =   4680
+      top             =   4440
       width           =   2775
    end
    begin vb.commandbutton command5 
       caption         =   "editar codex o descripcion"
       height          =   495
       left            =   3000
-      mouseicon       =   "frmguildleader.frx":03f6
+      mouseicon       =   "frmguildleader.frx":0548
       mousepointer    =   99  'custom
       tabindex        =   12
-      top             =   4080
+      top             =   3930
       width           =   2775
    end
    begin vb.frame frame3 
@@ -81,9 +91,9 @@ begin vb.form frmguildleader
       width           =   2895
       begin vb.listbox guildslist 
          height          =   1425
-         itemdata        =   "frmguildleader.frx":0548
+         itemdata        =   "frmguildleader.frx":069a
          left            =   120
-         list            =   "frmguildleader.frx":054a
+         list            =   "frmguildleader.frx":069c
          tabindex        =   11
          top             =   240
          width           =   2655
@@ -92,7 +102,7 @@ begin vb.form frmguildleader
          caption         =   "detalles"
          height          =   375
          left            =   120
-         mouseicon       =   "frmguildleader.frx":054c
+         mouseicon       =   "frmguildleader.frx":069e
          mousepointer    =   99  'custom
          tabindex        =   10
          top             =   1800
@@ -119,7 +129,7 @@ begin vb.form frmguildleader
          caption         =   "actualizar"
          height          =   375
          left            =   120
-         mouseicon       =   "frmguildleader.frx":069e
+         mouseicon       =   "frmguildleader.frx":07f0
          mousepointer    =   99  'custom
          tabindex        =   8
          top             =   1080
@@ -154,7 +164,7 @@ begin vb.form frmguildleader
          caption         =   "detalles"
          height          =   375
          left            =   120
-         mouseicon       =   "frmguildleader.frx":07f0
+         mouseicon       =   "frmguildleader.frx":0942
          mousepointer    =   99  'custom
          tabindex        =   5
          top             =   1800
@@ -162,9 +172,9 @@ begin vb.form frmguildleader
       end
       begin vb.listbox members 
          height          =   1425
-         itemdata        =   "frmguildleader.frx":0942
+         itemdata        =   "frmguildleader.frx":0a94
          left            =   120
-         list            =   "frmguildleader.frx":0944
+         list            =   "frmguildleader.frx":0a96
          tabindex        =   4
          top             =   240
          width           =   2655
@@ -186,21 +196,31 @@ begin vb.form frmguildleader
       tabindex        =   0
       top             =   3960
       width           =   2895
+      begin vb.commandbutton cmdelecciones 
+         caption         =   "abrir elecciones"
+         height          =   375
+         left            =   120
+         mouseicon       =   "frmguildleader.frx":0a98
+         mousepointer    =   99  'custom
+         tabindex        =   18
+         top             =   1935
+         width           =   2655
+      end
       begin vb.commandbutton command1 
          caption         =   "detalles"
          height          =   375
          left            =   120
-         mouseicon       =   "frmguildleader.frx":0946
+         mouseicon       =   "frmguildleader.frx":0bea
          mousepointer    =   99  'custom
          tabindex        =   2
-         top             =   1560
+         top             =   1170
          width           =   2655
       end
       begin vb.listbox solicitudes 
-         height          =   1230
-         itemdata        =   "frmguildleader.frx":0a98
+         height          =   840
+         itemdata        =   "frmguildleader.frx":0d3c
          left            =   120
-         list            =   "frmguildleader.frx":0a9a
+         list            =   "frmguildleader.frx":0d3e
          tabindex        =   1
          top             =   240
          width           =   2655
@@ -210,7 +230,7 @@ begin vb.form frmguildleader
          height          =   255
          left            =   120
          tabindex        =   16
-         top             =   2040
+         top             =   1620
          width           =   2535
       end
    end
@@ -223,6 +243,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -249,6 +273,13 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+option explicit
+
+private sub cmdelecciones_click()
+    call senddata("abreelec")
+    unload me
+end sub
 
 private sub command1_click()
 
@@ -303,6 +334,10 @@ end sub
 private sub command7_click()
 call senddata("envpropp")
 end sub
+private sub command9_click()
+call senddata("envalpro")
+end sub
+
 
 private sub command8_click()
 unload me
@@ -345,7 +380,7 @@ me.show , frmmain
 
 end sub
 
+
 private sub form_deactivate()
 'me.setfocus
 end sub
-

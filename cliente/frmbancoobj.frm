@@ -186,9 +186,12 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -289,7 +292,7 @@ end sub
 
 private sub image1_click(index as integer)
 
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 if list1(index).list(list1(index).listindex) = "nada" or _
    list1(index).listindex < 0 then exit sub
@@ -300,10 +303,10 @@ select case index
         lastindex1 = list1(0).listindex
         
         senddata ("reti" & "," & list1(0).listindex + 1 & "," & cantidad.text)
-                
+        
    case 1
         lastindex2 = list1(1).listindex
-        if userinventory(list1(1).listindex + 1).equipped = 0 then
+        if not inventario.equipped(list1(1).listindex + 1) then
             senddata ("depo" & "," & list1(1).listindex + 1 & "," & cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no podes depositar el item porque lo estas usando.", 2, 51, 223, 1, 1
@@ -362,27 +365,33 @@ select case index
                 label1(4).caption = "min golpe:" & userbancoinventory(list1(0).listindex + 1).minhit
                 label1(3).visible = true
                 label1(4).visible = true
-            case 3
+            case 3, 17
                 label1(3).visible = false
                 label1(4).caption = "defensa:" & userbancoinventory(list1(0).listindex + 1).def
                 label1(4).visible = true
+            case else
+                label1(3).visible = false
+                label1(4).visible = false
         end select
         call drawgrhtohdc(picture1.hwnd, picture1.hdc, userbancoinventory(list1(0).listindex + 1).grhindex, sr, dr)
     case 1
-        label1(0).caption = userinventory(list1(1).listindex + 1).name
-        label1(2).caption = userinventory(list1(1).listindex + 1).amount
-        select case userinventory(list1(1).listindex + 1).objtype
+        label1(0).caption = inventario.itemname(list1(1).listindex + 1)
+        label1(2).caption = inventario.amount(list1(1).listindex + 1)
+        select case inventario.objtype(list1(1).listindex + 1)
             case 2
-                label1(3).caption = "max golpe:" & userinventory(list1(1).listindex + 1).maxhit
-                label1(4).caption = "min golpe:" & userinventory(list1(1).listindex + 1).minhit
+                label1(3).caption = "max golpe:" & inventario.maxhit(list1(1).listindex + 1)
+                label1(4).caption = "min golpe:" & inventario.minhit(list1(1).listindex + 1)
                 label1(3).visible = true
                 label1(4).visible = true
-            case 3
+            case 3, 17
                 label1(3).visible = false
-                label1(4).caption = "defensa:" & userinventory(list1(1).listindex + 1).def
+                label1(4).caption = "defensa:" & inventario.def(list1(1).listindex + 1)
                 label1(4).visible = true
+            case else
+                label1(3).visible = false
+                label1(4).visible = false
         end select
-        call drawgrhtohdc(picture1.hwnd, picture1.hdc, userinventory(list1(1).listindex + 1).grhindex, sr, dr)
+        call drawgrhtohdc(picture1.hwnd, picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
 end select
 picture1.refresh
 

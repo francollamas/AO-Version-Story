@@ -1,7 +1,11 @@
 attribute vb_name = "api"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -29,6 +33,9 @@ attribute vb_name = "api"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
+option explicit
+
     public declare function findwindow lib "user32" alias "findwindowa" (byval lpclassname as string, byval lpwindowname as string) as long
     
     public const wm_settext = &hc
@@ -39,11 +46,6 @@ attribute vb_name = "api"
 
 public declare function enumdisplaysettings lib "user32" alias "enumdisplaysettingsa" (byval lpszdevicename as long, byval imodenum as long, lptypdevmode as any) as boolean
 public declare function changedisplaysettings lib "user32" alias "changedisplaysettingsa" (lptypdevmode as any, byval dwflags as long) as long
-
-'[matux] : 24 de marzo del 2002
-    declare function setwindowpos& lib "user32" (byval hwnd as long, byval hwndinsertafter as long, byval x as long, byval y as long, byval cx as long, byval cy as long, byval wflags as long)
-'[end]
-
 
 public const ccdevicename = 32
 public const ccformname = 32

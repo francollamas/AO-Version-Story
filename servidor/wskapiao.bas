@@ -1,43 +1,12 @@
 attribute vb_name = "wskapiao"
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
-
-
-
-'amen alejo por este modulo que has hecho :d
-
 option explicit
 
+''
+' modulo para manejar winsock
+'
+
 #if usarquesocket = 1 then
+
 
 'si la variable esta en true , al iniciar el wsapi se crea
 'una ventana label para recibir los mensajes. al detenerlo,
@@ -66,36 +35,39 @@ private declare function destroywindow lib "user32" (byval hwnd as long) as long
 private const ws_child = &h40000000
 public const gwl_wndproc = (-4)
 
-'====================================================================================
-'====================================================================================
+private const size_rcvbuf as long = 8192
+private const size_sndbuf as long = 8192
+
+''
 'esto es para agilizar la busqueda del slot a partir de un socket dado,
 'sino, la funcion buscaslotsock se nos come todo el uso del cpu.
-
+'
+' @param sock sock
+' @param slot slot
+'
 public type tsockcache
     sock as long
     slot as long
 end type
 
-'public wsapisockchache() as tsockcache 'lista de pares socket -> slot
-'public wsapisockchachecant as long 'cantidad de elementos para hacer una busqueda eficiente :p
 public wsapisock2usr as new collection
 
-'====================================================================================
-'====================================================================================
+' ====================================================================================
+' ====================================================================================
 
 public oldwproc as long
 public actualwproc as long
 public hwndmsg as long
 
-'====================================================================================
-'====================================================================================
+' ====================================================================================
+' ====================================================================================
 
 public socklisten as long
 
 #end if
 
-'====================================================================================
-'====================================================================================
+' ====================================================================================
+' ====================================================================================
 
 
 public sub iniciawsapi(byval hwndparent as long)
@@ -143,7 +115,6 @@ end if
 end sub
 
 public function buscaslotsock(byval s as long, optional byval cacheind as boolean = false) as long
-debug.print "buscasockslot"
 #if usarquesocket = 1 then
 
 on error goto hayerror
@@ -154,16 +125,6 @@ exit function
 hayerror:
 buscaslotsock = -1
 
-'dim i as long
-'
-'for i = 1 to maxusers
-'    if userlist(i).connid = s and userlist(i).connidvalida then
-'        buscaslotsock = i
-'        exit function
-'    end if
-'next i
-'
-'buscaslotsock = -1
 
 '
 'dim pri as long, ult as long, med as long
@@ -203,10 +164,10 @@ public sub agregaslotsock(byval sock as long, byval slot as long)
 debug.print "agregasockslot"
 #if (usarquesocket = 1) then
 
-if frmmain.superlog.value = 1 then logcustom ("agregaslotsock:: sock=" & sock & " slot=" & slot)
+'if frmmain.superlog.value = 1 then logcustom ("agregaslotsock:: sock=" & sock & " slot=" & slot)
 
 if wsapisock2usr.count > maxusers then
-    if frmmain.superlog.value = 1 then logcustom ("imposible agregarslotsock (wsapi2usr.count>maxusers)")
+    'if frmmain.superlog.value = 1 then logcustom ("imposible agregarslotsock (wsapi2usr.count>maxusers)")
     call closesocket(slot)
     exit sub
 end if
@@ -256,21 +217,6 @@ wsapisock2usr.remove cstr(sock)
 
 debug.print "borrasockslot " & cant & " -> " & wsapisock2usr.count
 
-'dim n as long, indice as long
-'
-''if ismissing(cacheindice) then
-'    indice = buscaslotsock(sock, true)
-'    if indice < 1 then exit sub
-''else
-''    indice = cacheindice
-''end if
-'
-'wsapisockchachecant = wsapisockchachecant - 1
-'
-'for n = indice to wsapisockchachecant
-'    wsapisockchache(n) = wsapisockchache(n + 1)
-'next n
-
 #end if
 end sub
 
@@ -309,9 +255,9 @@ case 1025
     
     select case e
     case fd_accept
-            if frmmain.superlog.value = 1 then logcustom ("fd_accept")
+            'if frmmain.superlog.value = 1 then logcustom ("fd_accept")
         if s = socklisten then
-            if frmmain.superlog.value = 1 then logcustom ("socklisten = " & s & ". llamo a eventosocketaccept")
+            'if frmmain.superlog.value = 1 then logcustom ("socklisten = " & s & ". llamo a eventosocketaccept")
             call eventosockaccept(s)
         end if
         
@@ -357,7 +303,8 @@ case 1025
         'call wsaasyncselect(s, hwndmsg, byval 1025, byval (0))
         
         '4k de buffer
-        tmp = space(8192)   'si cambias este valor, tambien hacelo mas abajo
+        'buffer externo
+        tmp = space$(size_rcvbuf)   'si cambias este valor, tambien hacelo mas abajo
                             'donde dice ret = 8192 :)
         
         ret = recv(s, tmp, len(tmp), 0)
@@ -367,7 +314,7 @@ case 1025
             ulterror = err.lastdllerror
             if ulterror = wsaemsgsize then
                 debug.print "wsaemsgsize"
-                ret = 8192
+                ret = size_rcvbuf
             else
                 debug.print "error en recv: " & getwsaerrorstring(ulterror)
                 call logapisock("error en recv: n=" & n & " s=" & s & " str=" & getwsaerrorstring(ulterror))
@@ -420,7 +367,7 @@ end function
 public function wsapienviar(byval slot as integer, byval str as string, optional encolar as boolean = true) as long
 #if usarquesocket = 1 then
 
-if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: slot=" & slot & " str=" & str & " len(str)=" & len(str) & " encolar=" & encolar)
+'if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: slot=" & slot & " str=" & str & " len(str)=" & len(str) & " encolar=" & encolar)
 
 dim ret as string
 dim ulterror as long
@@ -431,39 +378,23 @@ retorno = 0
 'debug.print ">>>> " & str
 
 if userlist(slot).connid <> -1 and userlist(slot).connidvalida then
-'    if  then
-'        ' si hay elementos sin enviar, lo mete en la cola
-'        ' ya q hay q mantener un orden de paquetes
-'        userlist(slot).colasalida.add str 'metelo en la cola vite'
-'    if (userlist(slot).sockpuedoenviar and (userlist(slot).colasalida.count = 0)) or (not encolar) then
     if ((userlist(slot).colasalida.count = 0)) or (not encolar) then
-        if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: previo a ret = send(" & userlist(slot).connid & "," & str & "," & len(str) & ",0)")
         ret = send(byval userlist(slot).connid, byval str, byval len(str), byval 0)
-        if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: post a ret = send(" & userlist(slot).connid & "," & str & "," & len(str) & ",0) devolvio: " & ret)
         if ret < 0 then
             ulterror = err.lastdllerror
-            if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: if ret<0 then.. ulterror=" & ulterror)
-        '    debug.print "error en send " & ret & " " & ulterror & " " & getwsaerrorstring(err.lastdllerror)
             if ulterror = wsaewouldblock then
                 userlist(slot).sockpuedoenviar = false
-                if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: seteo ul(" & slot & ").sockpuedoenviar=false")
                 if encolar then
                     userlist(slot).colasalida.add str 'metelo en la cola vite'
-                    if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: encolo en ul(" & slot & ")")
-        '            debug.print "dato encolado."
-'                else
-'                    retorno = ulterror
+                    'logcustom ("encolados datos:" & str)
                 end if
-'            else
-'                retorno = ret
             end if
             retorno = ulterror
-            'logapisock ("error en send, slot: " & slot)
-            'call closesocket(slot)
         end if
     else
         if userlist(slot).colasalida.count < max_colasalida_count or userlist(slot).counters.idlecount < max_tiempoidle_colallena then
             userlist(slot).colasalida.add str 'metelo en la cola vite'
+            
         else
             retorno = -1
         end if
@@ -488,7 +419,7 @@ on error goto errhandler
 dim nfile as integer
 nfile = freefile ' obtenemos un canal
 open app.path & "\logs\custom.log" for append shared as #nfile
-print #nfile, date & " " & time & " " & str
+print #nfile, date & " " & time & "(" & timer & ") " & str
 close #nfile
 
 exit sub
@@ -554,12 +485,6 @@ public sub eventosockaccept(byval sockid as long)
 '==========================================================
 'uso de la api de winsock
 '========================
-
-'call logapisock("eventosockaccept")
-
-if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "pedido de conexion socketid:" & sockid & vbcrlf
-
-'on error resume next
     
     dim newindex as integer
     dim ret as long
@@ -570,63 +495,86 @@ if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "ped
     
     tam = sockaddr_size
     
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "nextopenuser" & vbcrlf
-    
-    newindex = nextopenuser ' nuevo indice
-    if frmmain.superlog.value = 1 then logcustom ("eventsockaccept:: newindex=" & newindex)
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "userindex asignado " & newindex & vbcrlf
-    
-'    debug.print newindex
-
     '=============================================
     'sockid es en este caso es el socket de escucha,
     'a diferencia de socketwrench que es el nuevo
     'socket de la nueva conn
     
-    if frmmain.superlog.value = 1 then logcustom ("eventsockaccept:: llamo a accept(" & sockid & ",sa," & tam & ")")
-    
+'modificado por maraxus
+    'ret = wsaaccept(sockid, sa, tam, addressof condicionsocket, 0)
     ret = accept(sockid, sa, tam)
-    
-    if frmmain.superlog.value = 1 then logcustom ("eventsockaccept:: accept devuelve ret=" & ret)
-    
+
     if ret = invalid_socket then
         i = err.lastdllerror
         call logcriticevent("error en accept() api " & i & ": " & getwsaerrorstring(i))
-        if frmmain.superlog.value = 1 then call logcustom("error en accept() api " & i & ": " & getwsaerrorstring(i))
         exit sub
     end if
-    nuevosock = ret
+    
+    if not securityip.ipsecurityaceptarnuevaconexion(sa.sin_addr) then
+        call wsapiclosesocket(nuevosock)
+        exit sub
+    end if
 
+    'if ret = invalid_socket then
+    '    if err.lastdllerror = 11002 then
+    '        ' we couldn't decide if to accept or reject the connection
+    '        'force reject so we can get it out of the queue
+    '        logcustom ("pre wsaaccept callbackdata=1")
+    '        ret = wsaaccept(sockid, sa, tam, addressof condicionsocket, 1)
+    '        logcustom ("wsaccept callbackdata 1, devuelve " & ret)
+    '        call logcriticevent("error en wsaaccept() api 11002: no se pudo decidir si aceptar o rechazar la conexi�n.")
+    '    else
+    '        i = err.lastdllerror
+    '        logcustom ("error en wsaaccept() api " & i & ": " & getwsaerrorstring(i))
+    '        call logcriticevent("error en wsaaccept() api " & i & ": " & getwsaerrorstring(i))
+    '        exit sub
+    '    end if
+    'end if
+
+    nuevosock = ret
+    
+    'seteamos el tama�o del buffer de entrada a 512 bytes
+    if setsockopt(nuevosock, sol_socket, so_rcvbuffer, size_rcvbuf, 4) <> 0 then
+        i = err.lastdllerror
+        call logcriticevent("error al setear el tama�o del buffer de entrada " & i & ": " & getwsaerrorstring(i))
+    end if
+    'seteamos el tama�o del buffer de salida a 1 kb
+    if setsockopt(nuevosock, sol_socket, so_sndbuffer, size_sndbuf, 4) <> 0 then
+        i = err.lastdllerror
+        call logcriticevent("error al setear el tama�o del buffer de salida " & i & ": " & getwsaerrorstring(i))
+    end if
+
+    if false then
+    'if securityip.ipsecuritysuperalimiteconexiones(sa.sin_addr) then
+        tstr = "errlimite de conexiones para su ip alcanzado." & endc
+        call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
+        call wsapiclosesocket(nuevosock)
+        exit sub
+    end if
+    
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '   bienvenido al servidor!!!!!!!!
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    
+    'mariano: baje la busqueda de slot abajo de condicionsocket y limite x ip
+    newindex = nextopenuser ' nuevo indice
+    
     if newindex <= maxusers then
-        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "cargando socket " & newindex & vbcrlf
         
-               
         userlist(newindex).ip = getascip(sa.sin_addr)
-        
-        if frmmain.superlog.value = 1 then logcustom ("eventsockaccept:: getascip=" & userlist(newindex).ip)
-        
         'busca si esta banneada la ip
         for i = 1 to banips.count
             if banips.item(i) = userlist(newindex).ip then
                 'call apiclosesocket(nuevosock)
+                tstr = "errsu ip se encuentra bloqueada en este servidor." & endc
+                call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
+                'call securityip.iprestarconexion(sa.sin_addr)
                 call wsapiclosesocket(nuevosock)
                 exit sub
             end if
         next i
-        
-        
-        call logapisock("eventosockaccept newindex: " & newindex & " nuevosock: " & nuevosock & " ip: " & userlist(newindex).ip)
-        '=============================================
-        if ados.maxconexiones(userlist(newindex).ip) then
-            userlist(newindex).connid = -1
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "user slot reseteado " & newindex & vbcrlf
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "socket unloaded" & newindex & vbcrlf
-            'call logcriticevent(userlist(newindex).ip & " intento crear mas de 3 conexiones.")
-            call ados.restarconexion(userlist(newindex).ip)
-            'call apiclosesocket(nuevosock)
-            call wsapiclosesocket(nuevosock)
-            'exit sub
-        end if
         
         if newindex > lastuser then lastuser = newindex
         
@@ -636,26 +584,12 @@ if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "ped
         set userlist(newindex).commandsbuffer = new ccolaarray
         set userlist(newindex).colasalida = new collection
         
-        if frmmain.superlog.value = 1 then logcustom ("eventosockaccept:: voy a llamar a agregaslotsock(" & nuevosock & "," & newindex & ")")
         call agregaslotsock(nuevosock, newindex)
-        
-'        debug.print "conexion desde " & userlist(newindex).ip
-        
-        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & userlist(newindex).ip & " logged." & vbcrlf & vbcrlf
     else
-        call logcriticevent("no acepte conexion porque no tenia slots")
-        if frmmain.superlog.value = 1 then logcustom ("eventosockaccept:: no tenia mas slots! sockid=" & sockid & " nuevosock=" & nuevosock & " newindex=" & newindex)
         tstr = "errserver lleno." & endc
         dim aaa as long
         aaa = send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
-        if frmmain.superlog.value = 1 then logcustom ("eventosockaccept:: no tenia mas slots! send devuelve=" & aaa)
-'        ret = accept(sockid, sa, tam)
-'        if ret = invalid_socket then
-'            call logcriticevent("error en accept() api")
-'            exit sub
-'        end if
-
-        'call apiclosesocket(nuevosock)
+        'call securityip.iprestarconexion(sa.sin_addr)
         call wsapiclosesocket(nuevosock)
     end if
     
@@ -668,20 +602,7 @@ public sub eventosockread(byval slot as integer, byref datos as string)
 dim t() as string
 dim loopc as long
 
-debug.print "<<<< " & datos
-
-if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "eventosockread ui: " & slot & " datos: " & datos & vbcrlf
-
-'tcpesstats.bytesrecibidos = tcpesstats.bytesrecibidos + len(datos)
-
-if frmmain.superlog.value = 1 then logcustom ("eventosockread:: slot=" & slot & " datos=" & datos)
-
 userlist(slot).rdbuffer = userlist(slot).rdbuffer & datos
-
-'if instr(1, userlist(slot).rdbuffer, chr(2)) > 0 then
-'    userlist(slot).rdbuffer = "clienteviejo" & endc
-'    debug.print "clienteviejo"
-'end if
 
 t = split(userlist(slot).rdbuffer, endc)
 if ubound(t) > 0 then
@@ -693,9 +614,7 @@ if ubound(t) > 0 then
         '%%% el problema del speedhack          %%%
         '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if clientscommandsqueue = 1 then
-            'if t(loopc) <> "" then if not userlist(slot).commandsbuffer.push(t(loopc)) then call cerrar_usuario(slot, 0)
             if t(loopc) <> "" then if not userlist(slot).commandsbuffer.push(t(loopc)) then call closesocket(slot)
-            if frmmain.superlog.value = 1 then logcustom ("eventosockaccept:: pude pushear los datos del slot " & slot)
         else ' no encolamos los comandos (muy viejo)
               if userlist(slot).connid <> -1 then
                 call handledata(slot, t(loopc))
@@ -712,7 +631,11 @@ end sub
 public sub eventosockclose(byval slot as integer)
 #if usarquesocket = 1 then
 
-    if frmmain.superlog.value = 1 then logcustom ("eventosockclose:: slot=" & slot)
+    'es el mismo user al que est� revisando el centinela??
+    'si estamos ac� es porque se cerr� la conexi�n, no es un /salir, y no queremos banearlo....
+    if centinela.revisandouserindex = slot then _
+        call modcentinela.centinelauserlogout
+    
     if userlist(slot).flags.userlogged then
         call closesocketsl(slot)
         call cerrar_usuario(slot)
@@ -753,21 +676,7 @@ dim i as long
     call iniciawsapi(frmmain.hwnd)
     socklisten = listenforconnect(puerto, hwndmsg, "")
 
-'    'inicia el socket de escucha
-'    socklisten = listenforconnect(puerto, hwndmsg, "")
-'
-'    'comprueba si el proc de la ventana es el correcto
-'    dim tmpwproc as long
-'    tmpwproc = getwindowlong(hwndmsg, gwl_wndproc)
-'    if tmpwproc <> actualwproc then
-'        msgbox "incorrecto proc de ventana (" & tmpwproc & " <> " & actualwproc & ")"
-'        call logapisock("incorrecto proc de ventana")
-'        oldwproc = tmpwproc
-'        if oldwproc <> 0 then
-'            setwindowlong frmmain.hwnd, gwl_wndproc, addressof wndproc
-'            actualwproc = getwindowlong(frmmain.hwnd, gwl_wndproc)
-'        end if
-'    end if
+
 #end if
 end sub
 
@@ -778,3 +687,28 @@ call wsaasyncselect(socket, hwndmsg, byval 1025, byval (fd_close))
 call shutdown(socket, sd_both)
 #end if
 end sub
+
+public function condicionsocket(byref lpcallerid as wsabuf, byref lpcallerdata as wsabuf, byref lpsqos as flowspec, byval reserved as long, byref lpcalleeid as wsabuf, byref lpcalleedata as wsabuf, byref group as long, byval dwcallbackdata as long) as long
+#if usarquesocket = 1 then
+    dim sa as sockaddr
+    
+    'check if we were requested to force reject
+
+    if dwcallbackdata = 1 then
+        condicionsocket = cf_reject
+        exit function
+    end if
+    
+     'get the address
+
+    copymemory sa, byval lpcallerid.lpbuffer, lpcallerid.dwbufferlen
+
+    
+    if not securityip.ipsecurityaceptarnuevaconexion(sa.sin_addr) then
+        condicionsocket = cf_reject
+        exit function
+    end if
+
+    condicionsocket = cf_accept 'en realdiad es al pedo, porque condicionsocket se inicializa a 0, pero as� es m�s claro....
+#end if
+end function

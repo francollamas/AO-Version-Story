@@ -1,7 +1,11 @@
 attribute vb_name = "mod_tileengine"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -28,6 +32,7 @@ attribute vb_name = "mod_tileengine"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 
 
 option explicit
@@ -150,7 +155,7 @@ end type
 'apariencia del personaje
 public type char
     active as byte
-    heading as byte
+    heading as byte ' as e_heading ?
     pos as position
     
     ihead as integer
@@ -311,9 +316,6 @@ public mapinfo as mapinfo ' info acerca del mapa en uso
 '�?�?�?�?�?�?�?�?�?�?�api?�?�?�?�?�?�?�?�?�?�?�?�?�?
 'blt
 public declare function bitblt lib "gdi32" (byval hdestdc as long, byval x as long, byval y as long, byval nwidth as long, byval nheight as long, byval hsrcdc as long, byval xsrc as long, byval ysrc as long, byval dwrop as long) as long
-'sonido
-declare function mcisendstring lib "winmm.dll" alias "mcisendstringa" (byval lpstrcommand as string, byval lpstrreturnstring as string, byval uretrunlength as long, byval hwndcallback as long) as long
-declare function sndplaysound lib "winmm.dll" alias "sndplaysounda" (byval lpszsoundname as string, byval uflags as long) as long
 '�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?
 
 
@@ -321,10 +323,8 @@ declare function sndplaysound lib "winmm.dll" alias "sndplaysounda" (byval lpszs
 '       [code 000]: matux
 '
 public brain        as boolean 'est� raineando?
-public brainst      as boolean
 public btecho       as boolean 'hay techo?
 public brsttick     as long
-public bnoche       as boolean 'es de noche?
 
 private rlluvia(7)  as rect  'rect de la lluvia
 private iframeindex as byte  'frame actual de la ll
@@ -333,7 +333,12 @@ private ltlluvia(4) as integer
 
 public charlist(1 to 10000) as char
 
+#if seguridadalkon then
 
+public mi(1 to 1233) as clsmanagerinvisibles
+public cualmi as integer
+
+#end if
 
 'estados internos del surface (read only)
 public enum texturestatus
@@ -343,25 +348,26 @@ public enum texturestatus
 end enum
 
 '[code 001]:matux
-    public enum playloop
-        plnone = 0
-        pllluviain = 1
-        pllluviaout = 2
-        plfogata = 3
-    end enum
+public enum playloop
+    plnone = 0
+    pllluviain = 1
+    pllluviaout = 2
+end enum
 '[end]'
 '
 '       [end]
 '�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?
 
-''int vbabdx_api
-''bltalphafast( int lpddsdest, int lpddssource, int iwidth, int iheight,
-''             int pitchsrc, int pitchdst, dword dwmode )
+#if conalfab then
 
 private declare function bltalphafast lib "vbabdx" (byref lpddsdest as any, byref lpddssource as any, byval iwidth as long, byval iheight as long, _
         byval pitchsrc as long, byval pitchdst as long, byval dwmode as long) as long
 private declare function bltefectonoche lib "vbabdx" (byref lpddsdest as any, byval iwidth as long, byval iheight as long, _
         byval pitchdst as long, byval dwmode as long) as long
+
+#end if
+
+private declare function getwindowrect lib "user32" (byval hwnd as long, lprect as rect) as long
 
 sub cargarcabezas()
 on error resume next
@@ -630,19 +636,23 @@ end sub
 
 sub resetcharinfo(byval charindex as integer)
 
-charlist(charindex).active = 0
-charlist(charindex).criminal = 0
-charlist(charindex).fx = 0
-charlist(charindex).fxlooptimes = 0
-charlist(charindex).invisible = false
+    charlist(charindex).active = 0
+    charlist(charindex).criminal = 0
+    charlist(charindex).fx = 0
+    charlist(charindex).fxlooptimes = 0
+    charlist(charindex).invisible = false
 
-charlist(charindex).moving = 0
-charlist(charindex).muerto = false
-charlist(charindex).nombre = ""
-charlist(charindex).pie = false
-charlist(charindex).pos.x = 0
-charlist(charindex).pos.y = 0
-charlist(charindex).usandoarma = false
+#if seguridadalkon then
+    call mi(cualmi).resetinvisible(charindex)
+#end if
+
+    charlist(charindex).moving = 0
+    charlist(charindex).muerto = false
+    charlist(charindex).nombre = ""
+    charlist(charindex).pie = false
+    charlist(charindex).pos.x = 0
+    charlist(charindex).pos.y = 0
+    charlist(charindex).usandoarma = false
 
 end sub
 
@@ -705,7 +715,7 @@ if grh.grhindex <> 0 then grh.speedcounter = grhdata(grh.grhindex).speed
 
 end sub
 
-sub movecharbyhead(charindex as integer, nheading as byte)
+sub movecharbyhead(byval charindex as integer, byval nheading as e_heading)
 '*****************************************************************
 'starts the movement of a character in nheading direction
 '*****************************************************************
@@ -722,16 +732,16 @@ y = charlist(charindex).pos.y
 'figure out which way to move
 select case nheading
 
-    case north
+    case e_heading.north
         addy = -1
 
-    case east
+    case e_heading.east
         addx = 1
 
-    case south
+    case e_heading.south
         addy = 1
     
-    case west
+    case e_heading.west
         addx = -1
         
 end select
@@ -752,18 +762,25 @@ charlist(charindex).heading = nheading
 
 if userestado <> 1 then call dopasosfx(charindex)
 
+'areas viejos
+if (ny < minlimitey) or (ny > maxlimitey) or (nx < minlimitex) or (nx > maxlimitex) then
+    debug.print usercharindex
+    call erasechar(charindex)
+end if
 
 end sub
 
-
 public sub dofogatafx()
-if fx = 0 then
+if sound then
     if bfogata then
         bfogata = hayfogata()
-        if not bfogata then frmmain.stopsound
+        if not bfogata then
+            call audio.stopwave(fogatabufferindex)
+            fogatabufferindex = 0
+        end if
     else
         bfogata = hayfogata()
-        if bfogata then frmmain.play "fuego.wav", true
+        if bfogata and fogatabufferindex = 0 then fogatabufferindex = audio.playwave("fuego.wav", loopstyle.enabled)
     end if
 end if
 end sub
@@ -791,23 +808,25 @@ end function
 sub dopasosfx(byval charindex as integer)
 static pie as boolean
 
+if not sound then exit sub
+
 if not usernavegando then
-        if not charlist(charindex).muerto and estapcarea(charindex) then
-            charlist(charindex).pie = not charlist(charindex).pie
-            if charlist(charindex).pie then
-                call playwaveds(snd_pasos1)
-            else
-                call playwaveds(snd_pasos2)
-            end if
+    if not charlist(charindex).muerto and estapcarea(charindex) then
+        charlist(charindex).pie = not charlist(charindex).pie
+        if charlist(charindex).pie then
+            call audio.playwave(snd_pasos1)
+        else
+            call audio.playwave(snd_pasos2)
         end if
+    end if
 else
-        call playwaveds(snd_navegando)
+    call audio.playwave(snd_navegando)
 end if
 
 end sub
 
 
-sub movecharbypos(charindex as integer, nx as integer, ny as integer)
+sub movecharbypos(byval charindex as integer, byval nx as integer, byval ny as integer)
 
 on error resume next
 
@@ -815,7 +834,7 @@ dim x as integer
 dim y as integer
 dim addx as integer
 dim addy as integer
-dim nheading as byte
+dim nheading as e_heading
 
 
 
@@ -828,19 +847,19 @@ addx = nx - x
 addy = ny - y
 
 if sgn(addx) = 1 then
-    nheading = east
+    nheading = e_heading.east
 end if
 
 if sgn(addx) = -1 then
-    nheading = west
+    nheading = e_heading.west
 end if
 
 if sgn(addy) = -1 then
-    nheading = north
+    nheading = e_heading.north
 end if
 
 if sgn(addy) = 1 then
-    nheading = south
+    nheading = e_heading.south
 end if
 
 mapdata(nx, ny).charindex = charindex
@@ -855,12 +874,23 @@ charlist(charindex).moveoffset.y = -1 * (tilepixelheight * addy)
 charlist(charindex).moving = 1
 charlist(charindex).heading = nheading
 
+'parche para que no medite cuando camina
+dim fxch as integer
+fxch = charlist(charindex).fx
+if fxch = fxmeditar.chico or fxch = fxmeditar.grande or fxch = fxmeditar.mediano or fxch = fxmeditar.xgrande then
+    charlist(charindex).fx = 0
+    charlist(charindex).fxlooptimes = 0
+end if
 
+if not estapcarea(charindex) then dialogos.quitardialogo (charindex)
 
+if (ny < minlimitey) or (ny > maxlimitey) or (nx < minlimitex) or (nx > maxlimitex) then
+    call erasechar(charindex)
+end if
 
 end sub
 
-sub movescreen(heading as byte)
+sub movescreen(byval nheading as e_heading)
 '******************************************
 'starts the screen moving in a direction
 '******************************************
@@ -870,18 +900,18 @@ dim tx as integer
 dim ty as integer
 
 'figure out which way to move
-select case heading
+select case nheading
 
-    case north
+    case e_heading.north
         y = -1
 
-    case east
+    case e_heading.east
         x = 1
 
-    case south
+    case e_heading.south
         y = 1
     
-    case west
+    case e_heading.west
         x = -1
         
 end select
@@ -1050,7 +1080,7 @@ msgbox "error while loading the grh.dat! stopped at grh number: " & grh
 
 end sub
 
-function legalpos(x as integer, y as integer) as boolean
+function legalpos(byval x as integer, byval y as integer) as boolean
 '*****************************************************************
 'checks to see if a tile position is legal
 '*****************************************************************
@@ -1092,7 +1122,7 @@ end function
 
 
 
-function inmaplegalbounds(x as integer, y as integer) as boolean
+function inmaplegalbounds(byval x as integer, byval y as integer) as boolean
 '*****************************************************************
 'checks to see if a tile position is in the maps
 'legal/walkable bounds
@@ -1107,7 +1137,7 @@ inmaplegalbounds = true
 
 end function
 
-function inmapbounds(x as integer, y as integer) as boolean
+function inmapbounds(byval x as integer, byval y as integer) as boolean
 '*****************************************************************
 'checks to see if a tile position is in the maps bounds
 '*****************************************************************
@@ -1186,7 +1216,7 @@ if destrect.left >= 0 and destrect.top >= 0 and destrect.right <= surfacedesc.lw
         .bottom = .top + grhdata(grh).pixelheight
     end with
     
-    surface.bltfast destrect.left, destrect.top, surfacedb.getbmp(grhdata(grh).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
+    surface.bltfast destrect.left, destrect.top, surfacedb.surface(grhdata(grh).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
 end if
 
 end sub
@@ -1261,7 +1291,7 @@ with sourcerect
 end with
 
 
-surface.bltfast x, y, surfacedb.getbmp(grhdata(igrhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
+surface.bltfast x, y, surfacedb.surface(grhdata(igrhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
 
 end sub
 
@@ -1333,7 +1363,7 @@ with sourcerect
     .bottom = .top + grhdata(igrhindex).pixelheight
 end with
 
-'surface.bltfast x, y, surfacedb.getbmp(grhdata(igrhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
+'surface.bltfast x, y, surfacedb.surface(grhdata(igrhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait
 
 dim src as directdrawsurface7
 dim rdest as rect
@@ -1341,7 +1371,7 @@ dim darray() as byte, sarray() as byte
 dim ddsdsrc as ddsurfacedesc2, ddsddest as ddsurfacedesc2
 dim modo as long
 
-set src = surfacedb.getbmp(grhdata(igrhindex).filenum, 0)
+set src = surfacedb.surface(grhdata(igrhindex).filenum)
 
 src.getsurfacedesc ddsdsrc
 surface.getsurfacedesc ddsddest
@@ -1411,9 +1441,7 @@ end sub
 #end if 'conalfab = 1
 
 sub drawbackbuffersurface()
-
-primarysurface.blt mainviewrect, backbuffersurface, maindestrect, ddblt_wait
-
+    primarysurface.blt mainviewrect, backbuffersurface, maindestrect, ddblt_wait
 end sub
 
 function getbitmapdimensions(bmpfile as string, byref bmwidth as long, byref bmheight as long)
@@ -1431,29 +1459,16 @@ bmwidth = binfoheader.biwidth
 bmheight = binfoheader.biheight
 end function
 
-
-
 sub drawgrhtohdc(hwnd as long, hdc as long, grh as integer, sourcerect as rect, destrect as rect)
-if grh <= 0 then exit sub
-
-secundaryclipper.sethwnd hwnd
-surfacedb.getbmp(grhdata(grh).filenum).blttodc hdc, sourcerect, destrect
+    if grh <= 0 then exit sub
+    
+    secundaryclipper.sethwnd hwnd
+    surfacedb.surface(grhdata(grh).filenum).blttodc hdc, sourcerect, destrect
 end sub
 
-
-sub playwaveapi(file as string)
-'*****************************************************************
-'plays a wave using windows apis
-'*****************************************************************
-dim rc as integer
-
-rc = sndplaysound(file, snd_async)
-
-end sub
 sub renderscreen(tilex as integer, tiley as integer, pixeloffsetx as integer, pixeloffsety as integer)
-
-
 on error resume next
+
 
 if userciego then exit sub
 
@@ -1488,10 +1503,10 @@ maxx = (tilex + 17)
 
 
 'draw floor layer
-screeny = 8 + rendermod.iimagesize
-for y = (miny + 8) + rendermod.iimagesize to (maxy - 8) - rendermod.iimagesize
-    screenx = 8 + rendermod.iimagesize
-    for x = (minx + 8) + rendermod.iimagesize to (maxx - 8) - rendermod.iimagesize
+screeny = 8
+for y = (miny + 8) to maxy - 8
+    screenx = 8
+    for x = minx + 8 to maxx - 8
         if x > 100 or y < 1 then exit for
         'layer 1 **********************************
         with mapdata(x, y).graphic(1)
@@ -1520,23 +1535,21 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 8) - rendermod.iimagesize
         call backbuffersurface.bltfast( _
                 ((32 * screenx) - 32) + pixeloffsetx, _
                 ((32 * screeny) - 32) + pixeloffsety, _
-                surfacedb.getbmp(grhdata(igrhindex).filenum), _
+                surfacedb.surface(grhdata(igrhindex).filenum), _
                 rsourcerect, _
                 ddbltfast_wait)
         '******************************************
-        if not rendermod.bnocostas then
-            'layer 2 **********************************
-            if mapdata(x, y).graphic(2).grhindex <> 0 then
-                call ddrawtransgrhtosurface( _
-                        backbuffersurface, _
-                        mapdata(x, y).graphic(2), _
-                        ((32 * screenx) - 32) + pixeloffsetx, _
-                        ((32 * screeny) - 32) + pixeloffsety, _
-                        1, _
-                        1)
-            end if
-            '******************************************
+        'layer 2 **********************************
+        if mapdata(x, y).graphic(2).grhindex <> 0 then
+            call ddrawtransgrhtosurface( _
+                    backbuffersurface, _
+                    mapdata(x, y).graphic(2), _
+                    ((32 * screenx) - 32) + pixeloffsetx, _
+                    ((32 * screeny) - 32) + pixeloffsety, _
+                    1, _
+                    1)
         end if
+        '******************************************
         screenx = screenx + 1
     next x
     screeny = screeny + 1
@@ -1549,13 +1562,13 @@ call convertcptotp(frmmain.mainviewshp.left, frmmain.mainviewshp.top, frmmain.mo
 
 
 'draw transparent layers  (layer 2, 3)
-screeny = 8 + rendermod.iimagesize
-for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
-    screenx = 5 + rendermod.iimagesize
-    for x = (minx + 5) + rendermod.iimagesize to (maxx - 5) - rendermod.iimagesize
+screeny = 8
+for y = miny + 8 to maxy - 1
+    screenx = 5
+    for x = minx + 5 to maxx - 5
         if x > 100 or x < -3 then exit for
-        ippx = ((32 * screenx) - 32) + pixeloffsetx
-        ippy = ((32 * screeny) - 32) + pixeloffsety
+        ippx = 32 * screenx - 32 + pixeloffsetx
+        ippy = 32 * screeny - 32 + pixeloffsety
 
         'object layer **********************************
         if mapdata(x, y).objgrh.grhindex <> 0 then
@@ -1622,43 +1635,21 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
             ippy = ((32 * screeny) - 32) + pixeloffsetytemp
             if tempchar.head.head(tempchar.heading).grhindex <> 0 then
                 if not charlist(mapdata(x, y).charindex).invisible then
-    #if (conalfab = 1) then
-                        if tempchar.ibody = 8 or tempchar.ibody = 145 then
-                            call ddrawtransgrhtosurfacealpha(backbuffersurface, tempchar.body.walk(tempchar.heading), _
-                                    (((32 * screenx) - 32) + pixeloffsetxtemp), _
-                                    (((32 * screeny) - 32) + pixeloffsetytemp), _
-                                    1, 1)
-                        else
-    #end if
+#if seguridadalkon then
+                    if not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
+#end if
+                        '[cuerpo]'
                             call ddrawtransgrhtosurface(backbuffersurface, tempchar.body.walk(tempchar.heading), _
                                     (((32 * screenx) - 32) + pixeloffsetxtemp), _
                                     (((32 * screeny) - 32) + pixeloffsetytemp), _
                                     1, 1)
-    #if conalfab = 1 then
-                        end if
-    #end if
-                        '[end]'
                         '[cabeza]'
-    #if conalfab = 1 then
-                        if tempchar.ihead = 500 then
-                            call ddrawtransgrhtosurfacealpha( _
-                                    backbuffersurface, _
-                                    tempchar.head.head(tempchar.heading), _
-                                    ippx + tempchar.body.headoffset.x, _
-                                    ippy + tempchar.body.headoffset.y, _
-                                    1, 0)
-                        else
-    #end if
                             call ddrawtransgrhtosurface( _
                                     backbuffersurface, _
                                     tempchar.head.head(tempchar.heading), _
                                     ippx + tempchar.body.headoffset.x, _
                                     ippy + tempchar.body.headoffset.y, _
                                     1, 0)
-    #if conalfab = 1 then
-                        end if
-    #end if
-                        '[end]'
                         '[casco]'
                             if tempchar.casco.head(tempchar.heading).grhindex <> 0 then
                                 call ddrawtransgrhtosurface( _
@@ -1668,7 +1659,6 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
                                         ippy + tempchar.body.headoffset.y, _
                                         1, 0)
                             end if
-                        '[end]'
                         '[arma]'
                             if tempchar.arma.weaponwalk(tempchar.heading).grhindex <> 0 then
                                 call ddrawtransgrhtosurface( _
@@ -1676,7 +1666,6 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
                                         tempchar.arma.weaponwalk(tempchar.heading), _
                                         ippx, ippy, 1, 1)
                             end if
-                        '[end]'
                         '[escudo]'
                             if tempchar.escudo.shieldwalk(tempchar.heading).grhindex <> 0 then
                                 call ddrawtransgrhtosurface( _
@@ -1684,7 +1673,65 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
                                         tempchar.escudo.shieldwalk(tempchar.heading), _
                                         ippx, ippy, 1, 1)
                             end if
-                        '[end]'
+                    
+                    
+                             if nombres and abs(nx - x) < 2 and (abs(ny - y)) < 2 then
+                                'ya estoy dibujando solo si esta visible
+                                'if tempchar.invisible = false and not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
+                                    if tempchar.nombre <> "" then
+                                        dim lcenter as long
+                                        'call dialogos.drawtext(ippx - 30, ippy + 60, "mi:" & iif(mi(cualmi).isinvisible(mapdata(x, y).charindex), "1", "0") & " .i:" & iif(tempchar.invisible, "1", "0") & "  x,y:" & x & "," & y, rgb(colorespj(5).r, colorespj(5).g, colorespj(5).b))
+                                        if instr(tempchar.nombre, "<") > 0 and instr(tempchar.nombre, ">") > 0 then
+                                            lcenter = (frmmain.textwidth(left(tempchar.nombre, instr(tempchar.nombre, "<") - 1)) / 2) - 16
+                                            dim sclan as string
+                                            sclan = mid(tempchar.nombre, instr(tempchar.nombre, "<"))
+                                            
+                                            select case tempchar.priv
+                                            case 0
+                                                if tempchar.criminal then
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
+                                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
+                                                else
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
+                                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
+                                                end if
+                                            case 25  'admin
+                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                            case else 'el resto
+                                                call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                            end select
+                                        else
+                                            lcenter = (frmmain.textwidth(tempchar.nombre) / 2) - 16
+                                            select case tempchar.priv
+                                            case 0
+                                                if tempchar.criminal then
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
+                                                else
+                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
+                                                end if
+                                            case 7
+                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                            case else
+                                                call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
+                                            end select
+                                        end if
+                                    end if
+                                'end if  'enidf ni
+                             end if
+#if seguridadalkon then
+                    else
+                        do while true
+                            call msgbox("woaaaaa cheater!!! ahora te deben estar matando de lo lindo ;)" & vbnewline & "aprieta ok para salir", vbcritical + vbokonly, ":d")
+                            call msgbox("no, mejor no salimos")
+                        loop
+                    end if  'end if not mi.isi
+#end if
                 end if  'end if ~in
 
                 if dialogos.cantidaddialogos > 0 then
@@ -1694,85 +1741,8 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
                             mapdata(x, y).charindex)
                 end if
                 
-'                if nombres then
- '                   if tempchar.invisible = false then
- '                       if tempchar.nombre <> "" then
- '                               dim lcenter as long
- '                               lcenter = len(tempchar.nombre) \ 2
- '                               if instr(tempchar.nombre, "<") > 0 and instr(tempchar.nombre, ">") > 0 then
- '                                   dim sclan as string: sclan = mid(tempchar.nombre, instr(tempchar.nombre, "<"))
- '                                   if tempchar.criminal then
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(255, 0, 0))
- '                                       lcenter = len(sclan) \ 2
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(255, 0, 0))
- '                                   else
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(0, 128, 255))
- '                                       lcenter = len(sclan) * 2
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(0, 128, 255))
- '                                   end if
- '                               else
- '                                   if tempchar.criminal then
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(255, 0, 0))
- '                                   else
- '                                       call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(0, 128, 255))
- '                                   end if
- '                               end if
- '                       end if
- '                   end if
- '               end if
-                 
-
-                
-                 if nombres and abs(nx - x) < 2 and (abs(ny - y)) < 2 then
-                    if tempchar.invisible = false then
-                        if tempchar.nombre <> "" then
-                            dim lcenter as long
-                            if instr(tempchar.nombre, "<") > 0 and instr(tempchar.nombre, ">") > 0 then
-                                lcenter = (frmmain.textwidth(left(tempchar.nombre, instr(tempchar.nombre, "<") - 1)) / 2) - 16
-                                dim sclan as string: sclan = mid(tempchar.nombre, instr(tempchar.nombre, "<"))
-                                
-                                
-                                select case tempchar.priv
-                                case 0
-                                    if tempchar.criminal then
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                        lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                    else
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                        lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                    end if
-                                case 25  'admin
-                                    call dialogos.drawtextbig(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                    call dialogos.drawtextbig(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                case else 'el resto
-                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                    call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                end select
-                            else
-                                lcenter = (frmmain.textwidth(tempchar.nombre) / 2) - 16
-                                select case tempchar.priv
-                                case 0
-                                    if tempchar.criminal then
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                    else
-                                        call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                    end if
-                                case 7
-                                    call dialogos.drawtextbig(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                case else
-                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                end select
-                            end if
-                        end if
-                    end if  'enidf ni
-                 end if
                 
             else '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
-
                 if dialogos.cantidaddialogos > 0 then
                     call dialogos.update_dialog_pos( _
                             (ippx + tempchar.body.headoffset.x), _
@@ -1784,7 +1754,6 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
                         backbuffersurface, _
                         tempchar.body.walk(tempchar.heading), _
                         ippx, ippy, 1, 1)
-                        
             end if '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
 
 
@@ -1794,23 +1763,19 @@ for y = (miny + 8) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
             'blitfx (tm)
             if charlist(mapdata(x, y).charindex).fx <> 0 then
 #if (conalfab = 1) then
-                if rendermod.bnoalpha then
-#end if
-                    call ddrawtransgrhtosurface( _
-                            backbuffersurface, _
-                            fxdata(tempchar.fx).fx, _
-                            ippx + fxdata(tempchar.fx).offsetx, _
-                            ippy + fxdata(tempchar.fx).offsety, _
-                            1, 1, mapdata(x, y).charindex)
-#if (conalfab = 1) then
-                else
-                    call ddrawtransgrhtosurfacealpha( _
-                            backbuffersurface, _
-                            fxdata(tempchar.fx).fx, _
-                            ippx + fxdata(tempchar.fx).offsetx, _
-                            ippy + fxdata(tempchar.fx).offsety, _
-                            1, 1, mapdata(x, y).charindex)
-                end if
+                call ddrawtransgrhtosurfacealpha( _
+                        backbuffersurface, _
+                        fxdata(tempchar.fx).fx, _
+                        ippx + fxdata(tempchar.fx).offsetx, _
+                        ippy + fxdata(tempchar.fx).offsety, _
+                        1, 1, mapdata(x, y).charindex)
+#else
+                call ddrawtransgrhtosurface( _
+                        backbuffersurface, _
+                        fxdata(tempchar.fx).fx, _
+                        ippx + fxdata(tempchar.fx).offsetx, _
+                        ippy + fxdata(tempchar.fx).offsety, _
+                        1, 1, mapdata(x, y).charindex)
 #end if
             end if
         end if '<-> if mapdata(x, y).charindex <> 0 then
@@ -1834,21 +1799,21 @@ next y
 
 if not btecho then
     'draw blocked tiles and grid
-    screeny = 5 + rendermod.iimagesize
-    for y = (miny + 5) + rendermod.iimagesize to (maxy - 1) - rendermod.iimagesize
-        screenx = 5 + rendermod.iimagesize
-        for x = (minx + 5) + rendermod.iimagesize to (maxx - 0) - rendermod.iimagesize
+    screeny = 5
+    for y = miny + 5 to maxy - 1
+        screenx = 5
+        for x = minx + 5 to maxx
             'check to see if in bounds
             if x < 101 and x > 0 and y < 101 and y > 0 then
-            if mapdata(x, y).graphic(4).grhindex <> 0 then
-                'draw
-                call ddrawtransgrhtosurface( _
-                    backbuffersurface, _
-                    mapdata(x, y).graphic(4), _
-                    ((32 * screenx) - 32) + pixeloffsetx, _
-                    ((32 * screeny) - 32) + pixeloffsety, _
-                    1, 1)
-            end if
+                if mapdata(x, y).graphic(4).grhindex <> 0 then
+                    'draw
+                    call ddrawtransgrhtosurface( _
+                        backbuffersurface, _
+                        mapdata(x, y).graphic(4), _
+                        ((32 * screenx) - 32) + pixeloffsetx, _
+                        ((32 * screeny) - 32) + pixeloffsety, _
+                        1, 1)
+                end if
             end if
             screenx = screenx + 1
         next x
@@ -1857,7 +1822,7 @@ if not btecho then
 end if
 
 if blluvia(usermap) = 1 then
-    if brain or brainst then
+    if brain then
                 'figure out what frame to draw
                 if lltick < directx.tickcount - 50 then
                     iframeindex = iframeindex + 1
@@ -1867,7 +1832,7 @@ if blluvia(usermap) = 1 then
     
                 for y = 0 to 4
                     for x = 0 to 4
-                        call backbuffersurface.bltfast(ltlluvia(y), ltlluvia(x), surfacedb.getbmp(5556), rlluvia(iframeindex), ddbltfast_srccolorkey + ddbltfast_wait)
+                        call backbuffersurface.bltfast(ltlluvia(y), ltlluvia(x), surfacedb.surface(5556), rlluvia(iframeindex), ddbltfast_srccolorkey + ddbltfast_wait)
                     next x
                 next y
     end if
@@ -1883,7 +1848,7 @@ pp.top = 0
 pp.right = windowtilewidth * tilepixelwidth
 pp.bottom = windowtileheight * tilepixelheight
 
-'call backbuffersurface.bltfast(ltlluvia(0) + tilepixelwidth, ltlluvia(0) + tilepixelheight, surfacedb.getbmp(10000), pp, ddbltfast_srccolorkey + ddbltfast_wait)
+'call backbuffersurface.bltfast(ltlluvia(0) + tilepixelwidth, ltlluvia(0) + tilepixelheight, surfacedb.surface(10000), pp, ddbltfast_srccolorkey + ddbltfast_wait)
 
 'efectonoche backbuffersurface
 
@@ -1917,29 +1882,32 @@ pp.bottom = windowtileheight * tilepixelheight
 '[end]'
 end sub
 public function rendersounds()
-'[code 001]:matux'
-    if blluvia(usermap) = 1 then
+'**************************************************************
+'author: juan mart�n sotuyo dodero
+'last modify date: 4/22/2006
+'actualiza todos los sonidos del mapa.
+'**************************************************************
+    if blluvia(usermap) = 1 and sound then
         if brain then
             if btecho then
-                if frmmain.isplaying <> pllluviain then
-                    call frmmain.stopsound
-                    call frmmain.play("lluviain.wav", true)
-                    frmmain.isplaying = pllluviain
+                if frmmain.isplaying <> playloop.pllluviain then
+                    if rainbufferindex then _
+                        call audio.stopwave(rainbufferindex)
+                    rainbufferindex = audio.playwave("lluviain.wav", loopstyle.enabled)
+                    frmmain.isplaying = playloop.pllluviain
                 end if
-                'call stopsound("lluviaout.mp3")
-                'call playsound("lluviain.mp3", true)
             else
-                if frmmain.isplaying <> pllluviaout then
-                    call frmmain.stopsound
-                    call frmmain.play("lluviaout.wav", true)
-                    frmmain.isplaying = pllluviaout
+                if frmmain.isplaying <> playloop.pllluviaout then
+                    if rainbufferindex then _
+                        call audio.stopwave(rainbufferindex)
+                    rainbufferindex = audio.playwave("lluviaout.wav", loopstyle.enabled)
+                    frmmain.isplaying = playloop.pllluviaout
                 end if
-                'call stopsound("lluviain.mp3")
-                'call playsound("lluviaout.mp3", true)
             end if
         end if
     end if
-'[end]'
+    
+    dofogatafx
 end function
 
 
@@ -1954,69 +1922,44 @@ if grhindex > 0 then
         and charlist(usercharindex).pos.y <= y
         
 end if
-
 end function
 
-
-
-function pixelpos(x as integer) as integer
+function pixelpos(byval x as integer) as integer
 '*****************************************************************
 'converts a tile position to a screen position
 '*****************************************************************
-
-pixelpos = (tilepixelwidth * x) - tilepixelwidth
-
+    pixelpos = (tilepixelwidth * x) - tilepixelwidth
 end function
 
-
 sub loadgraphics()
-        dim loopc as integer
-        dim surfacedesc as ddsurfacedesc2
-        dim ddck as ddcolorkey
-        dim ddsd as ddsurfacedesc2
-        dim iloopupdate as integer
+'**************************************************************
+'author: juan mart�n sotuyo dodero - complete rewrite
+'last modify date: 11/03/2006
+'initializes the surfacedb and sets up the rain rects
+'**************************************************************
+    'new surface manager :d
+    call surfacedb.initialize(directdraw, clientsetup.busevideo, dirgraficos, clientsetup.bymemory)
+          
+    'set up te rain rects
+    rlluvia(0).top = 0:      rlluvia(1).top = 0:      rlluvia(2).top = 0:      rlluvia(3).top = 0
+    rlluvia(0).left = 0:     rlluvia(1).left = 128:   rlluvia(2).left = 256:   rlluvia(3).left = 384
+    rlluvia(0).right = 128:  rlluvia(1).right = 256:  rlluvia(2).right = 384:  rlluvia(3).right = 512
+    rlluvia(0).bottom = 128: rlluvia(1).bottom = 128: rlluvia(2).bottom = 128: rlluvia(3).bottom = 128
 
-        surfacedb.totalgraficos = config_inicio.numerodebmps + 1
-        surfacedb.maxentries = 150
-        surfacedb.lpdirectdraw7 = directdraw
-        surfacedb.path = dirgraficos
-        call surfacedb.init(iif(rendermod.busevideo, true, false))
-        
-        if not surfacedb.esdinamico then
-            iloopupdate = 1
-            for loopc = 1 to config_inicio.numerodebmps + 1
-                surfacedb.cargargrafico loopc
-                
-                if loopc > (iloopupdate + (config_inicio.numerodebmps / 80)) then
-                    addtorichtextbox frmcargando.status, ".", , , , , , true
-                    iloopupdate = loopc
-                end if
-            next loopc
-        end if
-        
-        'bmp de la lluvia
-        call getbitmapdimensions(dirgraficos & "5556.bmp", ddsd.lwidth, ddsd.lheight)
-              
-        rlluvia(0).top = 0:      rlluvia(1).top = 0:      rlluvia(2).top = 0:      rlluvia(3).top = 0
-        rlluvia(0).left = 0:     rlluvia(1).left = 128:   rlluvia(2).left = 256:   rlluvia(3).left = 384
-        rlluvia(0).right = 128:  rlluvia(1).right = 256:  rlluvia(2).right = 384:  rlluvia(3).right = 512
-        rlluvia(0).bottom = 128: rlluvia(1).bottom = 128: rlluvia(2).bottom = 128: rlluvia(3).bottom = 128
+    rlluvia(4).top = 128:    rlluvia(5).top = 128:    rlluvia(6).top = 128:    rlluvia(7).top = 128
+    rlluvia(4).left = 0:     rlluvia(5).left = 128:   rlluvia(6).left = 256:   rlluvia(7).left = 384
+    rlluvia(4).right = 128:  rlluvia(5).right = 256:  rlluvia(6).right = 384:  rlluvia(7).right = 512
+    rlluvia(4).bottom = 256: rlluvia(5).bottom = 256: rlluvia(6).bottom = 256: rlluvia(7).bottom = 256
     
-        rlluvia(4).top = 128:    rlluvia(5).top = 128:    rlluvia(6).top = 128:    rlluvia(7).top = 128
-        rlluvia(4).left = 0:     rlluvia(5).left = 128:   rlluvia(6).left = 256:   rlluvia(7).left = 384
-        rlluvia(4).right = 128:  rlluvia(5).right = 256:  rlluvia(6).right = 384:  rlluvia(7).right = 512
-        rlluvia(4).bottom = 256: rlluvia(5).bottom = 256: rlluvia(6).bottom = 256: rlluvia(7).bottom = 256
-        addtorichtextbox frmcargando.status, "hecho.", , , , 1, , false
+    'we are done!
+    addtorichtextbox frmcargando.status, "hecho.", , , , 1, , false
 end sub
-
 
 '[end]'
 function inittileengine(byref setdisplayformhwnd as long, setmainviewtop as integer, setmainviewleft as integer, settilepixelheight as integer, settilepixelwidth as integer, setwindowtileheight as integer, setwindowtilewidth as integer, settilebuffersize as integer) as boolean
 '*****************************************************************
 'initengine
 '*****************************************************************
-
-
 dim surfacedesc as ddsurfacedesc2
 dim ddck as ddcolorkey
 
@@ -2054,10 +1997,6 @@ redim mapdata(xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapbloc
 
 directdraw.setcooperativelevel displayformhwnd, ddscl_normal
 
-if musica = 0 or fx = 0 then
-    directsound.setcooperativelevel displayformhwnd, dsscl_priority
-end if
-
 'primary surface
 ' fill the surface description structure
 with surfacedesc
@@ -2076,14 +2015,15 @@ primarysurface.setclipper primaryclipper
 set secundaryclipper = directdraw.createclipper(0)
 
 with backbufferrect
-    .left = 0 + 32 * rendermod.iimagesize
-    .top = 0 + 32 * rendermod.iimagesize
-    .right = (tilepixelwidth * (windowtilewidth + (2 * tilebuffersize))) - 32 * rendermod.iimagesize
-    .bottom = (tilepixelheight * (windowtileheight + (2 * tilebuffersize))) - 32 * rendermod.iimagesize
+    .left = 0
+    .top = 0
+    .right = tilepixelwidth * (windowtilewidth + 2 * tilebuffersize)
+    .bottom = tilepixelheight * (windowtileheight + 2 * tilebuffersize)
 end with
+
 with surfacedesc
     .lflags = ddsd_caps or ddsd_height or ddsd_width
-    if rendermod.busevideo then
+    if clientsetup.busevideo then
         .ddscaps.lcaps = ddscaps_offscreenplain
     else
         .ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_systemmemory
@@ -2120,70 +2060,58 @@ inittileengine = true
 
 end function
 
-
-
-
-'sub shownextframe(displayformtop as integer, displayformleft as integer)
 sub shownextframe()
-
-'[code]:matux'
-'
-'  esta funci�n fue movida al loop principal en mod_general
-'  para que sea inline. en otras palabras, lo que est� ac�
-'  ya no es llamado por ninguna rutina.
-'
-'[end]'
-
 '***********************************************
 'updates and draws next frame to screen
 '***********************************************
     static offsetcounterx as integer
     static offsetcountery as integer
-
+    
+    '****** set main view rectangle ******
+    getwindowrect displayformhwnd, mainviewrect
+    
+    with mainviewrect
+        .left = .left + mainviewleft
+        .top = .top + mainviewtop
+        .right = .left + mainviewwidth
+        .bottom = .top + mainviewheight
+    end with
+    
     if enginerun then
-        '  '****** move screen left and right if needed ******
-            if addtouserpos.x <> 0 then
-                offsetcounterx = (offsetcounterx - (8 * sgn(addtouserpos.x)))
-                if abs(offsetcounterx) >= abs(tilepixelwidth * addtouserpos.x) then
-                    offsetcounterx = 0
-                    addtouserpos.x = 0
-                    usermoving = 0
-                end if
-            'end if
-
-            '****** move screen up and down if needed ******
-            'if addtouserpos.y <> 0 then
-            elseif addtouserpos.y <> 0 then
-                offsetcountery = offsetcountery - (8 * sgn(addtouserpos.y))
-                if abs(offsetcountery) >= abs(tilepixelheight * addtouserpos.y) then
-                    offsetcountery = 0
-                    addtouserpos.y = 0
-                    usermoving = 0
-                end if
+        '****** move screen left and right if needed ******
+        if addtouserpos.x <> 0 then
+            offsetcounterx = (offsetcounterx - (8 * sgn(addtouserpos.x)))
+            if abs(offsetcounterx) >= abs(tilepixelwidth * addtouserpos.x) then
+                offsetcounterx = 0
+                addtouserpos.x = 0
+                usermoving = 0
             end if
+        '****** move screen up and down if needed ******
+        elseif addtouserpos.y <> 0 then
+            offsetcountery = offsetcountery - (8 * sgn(addtouserpos.y))
+            if abs(offsetcountery) >= abs(tilepixelheight * addtouserpos.y) then
+                offsetcountery = 0
+                addtouserpos.y = 0
+                usermoving = 0
+            end if
+        end if
 
-            '****** update screen ******
-            call renderscreen(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
-            'call donightfx
-            'call dolightfogata(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
-            call mostrarflags
-            call dialogos.mostrartexto
-            call dibujarcartel
-            
-            call drawbackbuffersurface
-            
-            'call dibujarinv(frmmain.picinv.hwnd, 0)
-            framesperseccounter = framesperseccounter + 1
+        '****** update screen ******
+        call renderscreen(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
+
+        if iscombate then call dialogos.drawtext(260, 260, "modo combate", vbred)
+        
+        call dialogos.mostrartexto
+        call dibujarcartel
+        
+        call dialogosclanes.draw(dialogos)
+        
+        call drawbackbuffersurface
+        
+        framesperseccounter = framesperseccounter + 1
     end if
 end sub
-'[code 000]:matux
-' la hice inline
-sub mostrarflags()
-if iscombate then
-    call dialogos.drawtext(260, 260, "modo combate", vbred)
-end if
-'[end]'
-end sub
+
 sub creargrh(grhindex as integer, index as integer)
 redim preserve grh(1 to index) as grh
 grh(index).framecounter = 1
@@ -2201,47 +2129,50 @@ function controlvelocidad(byval lasttime as long) as boolean
 controlvelocidad = (gettickcount - lasttime > 20)
 end function
 
+
+#if conalfab then
+
 public sub efectonoche(byref surface as directdrawsurface7)
-dim darray() as byte, sarray() as byte
-dim ddsddest as ddsurfacedesc2
-dim modo as long
-dim rrect as rect
-
-surface.getsurfacedesc ddsddest
-
-with rrect
-.left = 0
-.top = 0
-.right = ddsddest.lwidth
-.bottom = ddsddest.lheight
-end with
-
-if ddsddest.ddpfpixelformat.lgbitmask = &h3e0 then
-    modo = 0
-elseif ddsddest.ddpfpixelformat.lgbitmask = &h7e0 then
-    modo = 1
-else
-    modo = 2
-end if
-
-dim dstlock as boolean
-dstlock = false
-
-on local error goto hayerroralpha
-
-surface.lock rrect, ddsddest, ddlock_wait, 0
-dstlock = true
-
-surface.getlockedarray darray()
-call bltefectonoche(byval varptr(darray(0, 0)), _
-    ddsddest.lwidth, ddsddest.lheight, ddsddest.lpitch, _
-    modo)
+    dim darray() as byte, sarray() as byte
+    dim ddsddest as ddsurfacedesc2
+    dim modo as long
+    dim rrect as rect
+    
+    surface.getsurfacedesc ddsddest
+    
+    with rrect
+        .left = 0
+        .top = 0
+        .right = ddsddest.lwidth
+        .bottom = ddsddest.lheight
+    end with
+    
+    if ddsddest.ddpfpixelformat.lgbitmask = &h3e0 then
+        modo = 0
+    elseif ddsddest.ddpfpixelformat.lgbitmask = &h7e0 then
+        modo = 1
+    else
+        modo = 2
+    end if
+    
+    dim dstlock as boolean
+    dstlock = false
+    
+    on local error goto hayerroralpha
+    
+    surface.lock rrect, ddsddest, ddlock_wait, 0
+    dstlock = true
+    
+    surface.getlockedarray darray()
+    call bltefectonoche(byval varptr(darray(0, 0)), _
+        ddsddest.lwidth, ddsddest.lheight, ddsddest.lpitch, _
+        modo)
     
 hayerroralpha:
-
-if dstlock = true then
-    surface.unlock rrect
-    dstlock = false
-end if
-
+    if dstlock = true then
+        surface.unlock rrect
+        dstlock = false
+    end if
 end sub
+
+#end if

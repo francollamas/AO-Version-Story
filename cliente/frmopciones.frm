@@ -24,14 +24,56 @@ begin vb.form frmopciones
    scalewidth      =   4680
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
-   begin vb.commandbutton command3 
-      caption         =   "a"
-      height          =   375
-      left            =   120
+   begin vb.frame frame1 
+      backcolor       =   &h00000000&
+      caption         =   "di�logos de clan"
+      forecolor       =   &h00ffffff&
+      height          =   750
+      left            =   255
       tabindex        =   4
-      top             =   120
-      visible         =   0   'false
-      width           =   375
+      top             =   1665
+      width           =   4230
+      begin vb.textbox txtcantmensajes 
+         alignment       =   2  'center
+         height          =   285
+         left            =   2925
+         maxlength       =   1
+         tabindex        =   7
+         text            =   "5"
+         top             =   315
+         width           =   450
+      end
+      begin vb.optionbutton optpantalla 
+         backcolor       =   &h00000000&
+         caption         =   "en pantalla,"
+         forecolor       =   &h00ffffff&
+         height          =   270
+         left            =   1770
+         tabindex        =   6
+         top             =   315
+         value           =   -1  'true
+         width           =   1560
+      end
+      begin vb.optionbutton optconsola 
+         backcolor       =   &h00000000&
+         caption         =   "en consola"
+         forecolor       =   &h00ffffff&
+         height          =   270
+         left            =   105
+         tabindex        =   5
+         top             =   315
+         width           =   1560
+      end
+      begin vb.label label2 
+         backstyle       =   0  'transparent
+         caption         =   "mensajes"
+         forecolor       =   &h00ffffff&
+         height          =   240
+         left            =   3480
+         tabindex        =   8
+         top             =   345
+         width           =   750
+      end
    end
    begin vb.commandbutton command2 
       caption         =   "cerrar"
@@ -44,7 +86,7 @@ begin vb.form frmopciones
       width           =   2790
    end
    begin vb.commandbutton command1 
-      caption         =   "fx activados"
+      caption         =   "sonidos activados"
       height          =   345
       index           =   1
       left            =   960
@@ -91,9 +133,13 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -121,33 +167,34 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
 
 private sub command1_click(index as integer)
 
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 select case index
     case 0
-        if musica = 0 then
-            musica = 1
+        if musica then
+            musica = false
             command1(0).caption = "musica desactivada"
-            stop_midi
+            audio.stopmidi
         else
-            musica = 0
+            musica = true
             command1(0).caption = "musica activada"
-            call cargarmidi(dirmidi & "2.mid")
-            play_midi
-            
+            call audio.playmidi(cstr(currentmidi) & ".mid")
         end if
     case 1
     
-        if fx = 0 then
-            fx = 1
-            command1(1).caption = "fx desactivados"
-            
+        if sound then
+            sound = false
+            command1(1).caption = "sonidos desactivados"
+            call audio.stopwave
+            rainbufferindex = 0
+            frmmain.isplaying = playloop.plnone
         else
-            fx = 0
-            command1(1).caption = "fx activados"
+            sound = true
+            command1(1).caption = "sonidos activados"
         end if
 end select
 end sub
@@ -156,40 +203,33 @@ private sub command2_click()
 me.visible = false
 end sub
 
-private sub command3_click()
-#if conalfab = 1 then
-
-bnoche = not bnoche
-surfacedb.efectopred = iif(bnoche, 1, 0)
-surfacedb.borrartodo
-
-#else
-
-msgbox "que hac�s ?"
-
-#end if
-end sub
-
 private sub form_load()
-if musica = 0 then
-    command1(0).caption = "musica activada"
-else
-    command1(0).caption = "musica desactivada"
-end if
-
-if fx = 0 then
-    command1(1).caption = "fx activados"
-else
-    command1(1).caption = "fx desactivados"
-end if
-
+    if musica then
+        command1(0).caption = "musica activada"
+    else
+        command1(0).caption = "musica desactivada"
+    end if
+    
+    if sound then
+        command1(1).caption = "sonidos activados"
+    else
+        command1(1).caption = "sonidos desactivados"
+    end if
 end sub
 
+private sub optconsola_click()
+    dialogosclanes.activo = false
+end sub
 
-function randomnumber(byval lowerbound as variant, byval upperbound as variant) as single
+private sub optpantalla_click()
+    dialogosclanes.activo = true
+end sub
 
-randomize timer
-
-randomnumber = (upperbound - lowerbound + 1) * rnd + lowerbound
-
-end function
+private sub txtcantmensajes_lostfocus()
+    txtcantmensajes.text = trim$(txtcantmensajes.text)
+    if isnumeric(txtcantmensajes.text) then
+        dialogosclanes.cantidaddialogos = trim$(txtcantmensajes.text)
+    else
+        txtcantmensajes.text = 5
+    end if
+end sub

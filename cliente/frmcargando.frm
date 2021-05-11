@@ -37,17 +37,18 @@ begin vb.form frmcargando
       _extentx        =   9102
       _extenty        =   4233
       _version        =   393217
-      backcolor       =   8421376
+      backcolor       =   16512
+      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       textrtf         =   $"frmcargando.frx":0000
       beginproperty font {0be35203-8f91-11ce-9de3-00aa004bb851} 
-         name            =   "ms sans serif"
+         name            =   "verdana"
          size            =   8.25
          charset         =   0
-         weight          =   400
+         weight          =   700
          underline       =   0   'false
-         italic          =   -1  'true
+         italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
    end
@@ -60,7 +61,7 @@ begin vb.form frmcargando
       scalemode       =   3  'pixel
       scalewidth      =   640
       tabindex        =   0
-      top             =   45
+      top             =   60
       width           =   9600
    end
 end
@@ -69,9 +70,12 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -100,7 +104,7 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
+option explicit
 
 private sub form_load()
 logo.picture = loadpicture(dirgraficos & "cargando.jpg")

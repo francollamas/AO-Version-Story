@@ -1,7 +1,11 @@
 attribute vb_name = "gameini"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -54,42 +58,36 @@ public type tgameini
     numeromapas as integer
 end type
 
-'[code 005]:matux
-    public type trendermods
-        sname      as string * 7
-        busevideo  as long
-        bnocostas  as long
-        busemmx    as long
-        bnoalpha   as long
-        bnotscan   as long
-        bnomusic   as long
-        bnosound   as long
-        iimagesize as long
-    end type
+public type tsetupmods
+    bdinamic    as boolean
+    bymemory    as byte
+    busevideo   as boolean
+    bnomusic    as boolean
+    bnosound    as boolean
+end type
 
-    public rendermod as trendermods
-'[end]'
+public clientsetup as tsetupmods
 
 public micabecera as tcabecera
 public config_inicio as tgameini
 
 public sub iniciarcabecera(byref cabecera as tcabecera)
-cabecera.desc = "argentum online by noland studios. copyright noland-studios 2001, pablomarquez@noland-studios.com.ar"
-cabecera.crc = rnd * 100
-cabecera.magicword = rnd * 10
+    cabecera.desc = "argentum online by noland studios. copyright noland-studios 2001, pablomarquez@noland-studios.com.ar"
+    cabecera.crc = rnd * 100
+    cabecera.magicword = rnd * 10
 end sub
 
 public function leergameini() as tgameini
-dim n as integer
-dim gameini as tgameini
-n = freefile
-open app.path & "\init\inicio.con" for binary as #n
-get #n, , micabecera
-
-get #n, , gameini
-
-close #n
-leergameini = gameini
+    dim n as integer
+    dim gameini as tgameini
+    n = freefile
+    open app.path & "\init\inicio.con" for binary as #n
+    get #n, , micabecera
+    
+    get #n, , gameini
+    
+    close #n
+    leergameini = gameini
 end function
 
 public sub escribirgameini(byref gameiniconfiguration as tgameini)

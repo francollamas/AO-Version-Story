@@ -95,9 +95,12 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -126,10 +129,11 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
 
 private sub command1_click()
 frmcantidad.visible = false
-senddata "ti" & itemelegido & "," & frmcantidad.text1.text
+senddata "ti" & inventario.selecteditem & "," & frmcantidad.text1.text
 frmcantidad.text1.text = "0"
 end sub
 
@@ -138,10 +142,10 @@ private sub command2_click()
 
 
 frmcantidad.visible = false
-if itemelegido <> flagoro then
-    senddata "ti" & itemelegido & "," & userinventory(itemelegido).amount
+if inventario.selecteditem <> flagoro then
+    senddata "ti" & inventario.selecteditem & "," & inventario.amount(inventario.selecteditem)
 else
-    senddata "ti" & itemelegido & "," & usergld
+    senddata "ti" & inventario.selecteditem & "," & usergld
 end if
 
 frmcantidad.text1.text = "0"
@@ -153,21 +157,28 @@ private sub form_deactivate()
 end sub
 
 private sub text1_change()
-
-if val(text1.text) < 0 then
-    text1.text = max_inventory_objs
-end if
-
-if val(text1.text) > max_inventory_objs and itemelegido <> flagoro then
-    text1.text = 1
-end if
-
+on error goto errhandler
+    if val(text1.text) < 0 then
+        text1.text = max_inventory_objs
+    end if
+    
+    if val(text1.text) > max_inventory_objs then
+        if inventario.selecteditem <> flagoro or val(text1.text) > usergld then
+            text1.text = "1"
+        end if
+    end if
+    
+    exit sub
+    
+errhandler:
+    'if we got here the user may have pasted (shift + insert) a really large number, causing an overflow, so we set amount back to 1
+    text1.text = "1"
 end sub
 
 
 private sub text1_keypress(keyascii as integer)
 if (keyascii <> 8) then
-    if (index <> 6) and (keyascii < 48 or keyascii > 57) then
+    if (keyascii < 48 or keyascii > 57) then
         keyascii = 0
     end if
 end if

@@ -1,7 +1,10 @@
 attribute vb_name = "mod_declaraciones"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -29,7 +32,32 @@ attribute vb_name = "mod_declaraciones"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
+
+'objetos p�blicos
+public dialogosclanes as new clsguilddlg
+public dialogos as new cdialogos
+public audio as new clsaudio
+public inventario as new clsgrapchicalinventory
+public surfacedb as clssurfacemanager   'no va new porque es unainterfaz, el new se pone al decidir que clase de objeto es
+
+#if seguridadalkon then
+public md5 as new clsmd5
+#end if
+
+'sonidos
+public const snd_click as string = "click.wav"
+public const snd_pasos1 as string = "23.wav"
+public const snd_pasos2 as string = "24.wav"
+public const snd_navegando as string = "50.wav"
+public const snd_over as string = "click2.wav"
+public const snd_dice as string = "cupdice.wav"
+public const snd_lluviainend as string = "lluviainend.wav"
+public const snd_lluviaoutend as string = "lluviaoutend.wav"
+
+'musica
+public const midi_inicio as byte = 6
 
 public rawserverslist as string
 
@@ -49,6 +77,8 @@ public type tserverinfo
     passrecport as integer
 end type
 
+public currentmidi as long
+
 public serverslst() as tserverinfo
 public serversrecibidos as boolean
 
@@ -62,6 +92,9 @@ public userciego as boolean
 public userestupido as boolean
 
 public nores as boolean 'no cambiar la resolucion
+
+public rainbufferindex as long
+public fogatabufferindex as long
 
 public const bcabeza = 1
 public const bpiernaizquierda = 2
@@ -77,8 +110,6 @@ public const tus = 600
 public const primerbodybarco = 84
 public const ultimobodybarco = 87
 
-
-public dialogos as new cdialogos
 public numescudosanims as integer
 
 public armasherrero(0 to 100) as integer
@@ -102,13 +133,13 @@ public userbancoinventory(1 to max_bancoinventory_slots) as inventory
 public tips() as string * 255
 public const loopadeternum = 999
 
-public const numciudades = 3
-
 'direcciones
-public const north = 1
-public const east = 2
-public const south = 3
-public const west = 4
+public enum e_heading
+    north = 1
+    east = 2
+    south = 3
+    west = 4
+end enum
 
 'objetos
 public const max_inventory_objs = 10000
@@ -116,41 +147,96 @@ public const max_inventory_slots = 20
 public const max_npc_inventory_slots = 50
 public const maxhechi = 35
 
-public const numskills = 21
-public const numatributos = 5
-public const numclases = 16
-public const numrazas = 5
-
 public const maxskillpoints = 100
 
 public const flagoro = 777
 
 public const fogata = 1521
 
+public enum skills
+     suerte = 1
+     magia = 2
+     robar = 3
+     tacticas = 4
+     armas = 5
+     meditar = 6
+     apu�alar = 7
+     ocultarse = 8
+     supervivencia = 9
+     talar = 10
+     comerciar = 11
+     defensa = 12
+     pesca = 13
+     mineria = 14
+     carpinteria = 15
+     herreria = 16
+     liderazgo = 17 ' nota: solia decir "curacion"
+     domar = 18
+     proyectiles = 19
+     wresterling = 20
+     navegacion = 21
+end enum
 
-public const suerte = 1
-public const magia = 2
-public const robar = 3
-public const tacticas = 4
-public const armas = 5
-public const meditar = 6
-public const apu�alar = 7
-public const ocultarse = 8
-public const supervivencia = 9
-public const talar = 10
-public const comerciar = 11
-public const defensa = 12
-public const pesca = 13
-public const mineria = 14
-public const carpinteria = 15
-public const herreria = 16
-public const curacion = 17
-public const domar = 18
-public const proyectiles = 19
-public const wresterling = 20
-public const navegacion = 21
+public const fundirmetal as integer = 88
 
-public const fundirmetal = 88
+'
+' mensajes
+'
+' mensaje_*  --> mensajes de texto que se muestran en el cuadro de texto
+'
+
+public const mensaje_criatura_falla_golpe as string = "la criatura fallo el golpe!!!"
+public const mensaje_criatura_matado as string = "la criatura te ha matado!!!"
+public const mensaje_rechazo_ataque_escudo as string = "has rechazado el ataque con el escudo!!!"
+public const mensaje_usuario_rechazo_ataque_escudo  as string = "el usuario rechazo el ataque con su escudo!!!"
+public const mensaje_fallado_golpe as string = "has fallado el golpe!!!"
+public const mensaje_seguro_activado as string = ">>seguro activado<<"
+public const mensaje_seguro_desactivado as string = ">>seguro desactivado<<"
+public const mensaje_pierde_nobleza as string = "��has perdido puntaje de nobleza y ganado puntaje de criminalidad!! si sigues ayudando a criminales te convertir�s en uno de ellos y ser�s perseguido por las tropas de las ciudades."
+public const mensaje_usar_meditando as string = "�est�s meditando! debes dejar de meditar para usar objetos."
+
+public const mensaje_golpe_cabeza as string = "��la criatura te ha pegado en la cabeza por "
+public const mensaje_golpe_brazo_izq as string = "��la criatura te ha pegado el brazo izquierdo por "
+public const mensaje_golpe_brazo_der as string = "��la criatura te ha pegado el brazo derecho por "
+public const mensaje_golpe_pierna_izq as string = "��la criatura te ha pegado la pierna izquierda por "
+public const mensaje_golpe_pierna_der as string = "��la criatura te ha pegado la pierna derecha por "
+public const mensaje_golpe_torso  as string = "��la criatura te ha pegado en el torso por "
+
+' mensaje_[12]: aparecen antes y despues del valor de los mensajes anteriores (mensaje_golpe_*)
+public const mensaje_1 as string = "��"
+public const mensaje_2 as string = "!!"
+
+public const mensaje_golpe_criatura_1 as string = "��le has pegado a la criatura por "
+
+public const mensaje_ataque_fallo as string = " te ataco y fallo!!"
+
+public const mensaje_recive_impacto_cabeza as string = " te ha pegado en la cabeza por "
+public const mensaje_recive_impacto_brazo_izq as string = " te ha pegado el brazo izquierdo por "
+public const mensaje_recive_impacto_brazo_der as string = " te ha pegado el brazo derecho por "
+public const mensaje_recive_impacto_pierna_izq as string = " te ha pegado la pierna izquierda por "
+public const mensaje_recive_impacto_pierna_der as string = " te ha pegado la pierna derecha por "
+public const mensaje_recive_impacto_torso as string = " te ha pegado en el torso por "
+
+public const mensaje_produce_impacto_1 as string = "��le has pegado a "
+public const mensaje_produce_impacto_cabeza as string = " en la cabeza por "
+public const mensaje_produce_impacto_brazo_izq as string = " en el brazo izquierdo por "
+public const mensaje_produce_impacto_brazo_der as string = " en el brazo derecho por "
+public const mensaje_produce_impacto_pierna_izq as string = " en la pierna izquierda por "
+public const mensaje_produce_impacto_pierna_der as string = " en la pierna derecha por "
+public const mensaje_produce_impacto_torso as string = " en el torso por "
+
+public const mensaje_trabajo_magia as string = "haz click sobre el objetivo..."
+public const mensaje_trabajo_pesca as string = "haz click sobre el sitio donde quieres pescar..."
+public const mensaje_trabajo_robar as string = "haz click sobre la victima..."
+public const mensaje_trabajo_talar as string = "haz click sobre el �rbol..."
+public const mensaje_trabajo_mineria as string = "haz click sobre el yacimiento..."
+public const mensaje_trabajo_fundirmetal as string = "haz click sobre la fragua..."
+public const mensaje_trabajo_proyectiles as string = "haz click sobre la victima..."
+
+public const mensaje_entrar_party_1 as string = "si deseas entrar en una party con "
+public const mensaje_entrar_party_2 as string = ", escribe /entrarparty"
+
+public const mensaje_nene as string = "cantidad de npcs: "
 
 'inventario
 type inventory
@@ -208,15 +294,11 @@ type testadisticasusu
     penacarcel as long
 end type
 
-public listarazas() as string
-public listaclases() as string
-
 public nombres as boolean
 
 public mixedkey as long
 
 'user status vars
-public userinventory(1 to max_inventory_slots) as inventory
 global otroinventario(1 to max_inventory_slots) as inventory
 
 public userhechizos(1 to maxhechi) as integer
@@ -252,12 +334,6 @@ public userparalizado as boolean
 public usernavegando as boolean
 public userhogar as string
 
-'barrin 29/9/03
-public padrinoname as string
-public padrinopassword as string
-public usandosistemapadrinos as byte
-public puedecrearpjs as integer
-
 '<-------------------------nuevo-------------------------->
 public comerciando as boolean
 '<-------------------------nuevo-------------------------->
@@ -267,17 +343,26 @@ public usersexo as string
 public userraza as string
 public useremail as string
 
-public userskills() as integer
-public skillsnames() as string
+public const numciudades as byte = 3
+public const numskills as byte = 21
+public const numatributos as byte = 5
+public const numclases as byte = 16
+public const numrazas as byte = 5
 
-public useratributos() as integer
-public atributosnames() as string
+public userskills(1 to numskills) as integer
+public skillsnames(1 to numskills) as string
 
-public ciudades() as string
-public citydesc() as string
+public useratributos(1 to numatributos) as integer
+public atributosnames(1 to numatributos) as string
 
-public musica as byte
-public fx as byte
+public ciudades(1 to numciudades) as string
+public citydesc(1 to numciudades) as string
+
+public listarazas(1 to numrazas) as string
+public listaclases(1 to numclases) as string
+
+public musica as boolean
+public sound as boolean
 
 public skillpoints as integer
 public alocados as integer
@@ -301,7 +386,20 @@ public enum e_modo
     dados = 4
     recuperarpass = 5
 end enum
+
 public estadologin as e_modo
+   
+public enum fxmeditar
+'    fxmeditarchico = 4
+'    fxmeditarmediano = 5
+'    fxmeditargrande = 6
+'    fxmeditarxgrande = 16
+    chico = 4
+    mediano = 5
+    grande = 6
+    xgrande = 16
+end enum
+
 
 'server stuff
 public requestpostimer as integer 'used in main loop
@@ -313,17 +411,19 @@ public downloadingmap as boolean 'currently downloading a map from server
 public usermap as integer
 
 'string contants
-public endc as string 'endline character for talking with server
-public endl as string 'holds the endline character for textboxes
+public const endc as string * 1 = vbnullchar    'endline character for talking with server
+public const endl as string * 2 = vbcrlf        'holds the endline character for textboxes
 
 'control
 public prgrun as boolean 'when true the program ends
-public finpres as boolean
 
 public ipdelservidor as string
 public puertodelservidor as string
 
+'
 '********** funciones api ***********
+'
+
 public declare function gettickcount lib "kernel32" () as long
 
 'para escribir y leer variables
@@ -332,6 +432,8 @@ public declare function getprivateprofilestring lib "kernel32" alias "getprivate
 
 'teclado
 public declare function getkeystate lib "user32" (byval nvirtkey as long) as integer
+public declare function getasynckeystate lib "user32" (byval nvirtkey as long) as integer
+
 public declare sub sleep lib "kernel32" (byval dwmilliseconds as long)
 
 'lista de cabezas
@@ -350,6 +452,4 @@ public type tindicefx
     offsetx as integer
     offsety as integer
 end type
-
-const estosolucionaunproblemaconelmd5 = 69
 

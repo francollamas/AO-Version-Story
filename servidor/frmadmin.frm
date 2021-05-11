@@ -75,39 +75,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
 option explicit
-
 
 private sub cbopjs_change()
 call actualizapjinfo
@@ -122,7 +90,7 @@ dim tindex as long
 
 tindex = nameindex(cbopjs.text)
 if tindex > 0 then
-    call senddata(toall, 0, 0, "||servidor> " & userlist(tindex).name & " ha sido hechado. " & fonttype_server)
+    call senddata(sendtarget.toall, 0, 0, "||servidor> " & userlist(tindex).name & " ha sido hechado. " & fonttype_server)
     call closesocket(tindex)
 end if
 
@@ -136,7 +104,7 @@ with cbopjs
     
     for loopc = 1 to lastuser
         if userlist(loopc).flags.userlogged and userlist(loopc).connid >= 0 and userlist(loopc).connidvalida then
-            if userlist(loopc).flags.privilegios < 1 then
+            if userlist(loopc).flags.privilegios = playertype.user then
                 .additem userlist(loopc).name
                 .itemdata(.newindex) = loopc
             end if

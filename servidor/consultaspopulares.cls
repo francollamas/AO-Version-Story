@@ -11,52 +11,17 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
-
-
-
 option explicit
 'modulo de consultas popluares
 'en realidad el modulo inicial guardaba los datos de las votaciones
 'en memoria, pero no le vi el punto, las votaciones son de vez en cuando nomas
 'y el query a un .ini que registra todos los mails q ya votaron, es soportable
 'si cuando uno vota y averiguo que el mail ya voto pero el pj no, entonces seteo
-'el flag de yavoto en el charfile ese tambien agregando redundancia para velocidad,
+'el flag de yavoto en el charfile ese tambien,
 'por lo que la busqueda secuencial en el .dat que tiene todos los mails q ya votaron
 'se hara .. 1 vez por pj nomas.
 '
-'hecha por el oso (ositear@yahoo.com.ar)
-
+'hecha por el oso
 
 private const archivomails = "\logs\votaron.dat"
 private const archivoconfig = "\dat\consultas.dat"
@@ -156,13 +121,13 @@ end function
 
 public function sendinfoencuesta(byval userindex as integer) as string
 dim i as integer
-    call senddata(toindex, userindex, 0, "||consulta popular numero " & pencuestaactualnum & fonttype_guild)
-    call senddata(toindex, userindex, 0, "||" & pencuestaactualtex & fonttype_guild)
-    call senddata(toindex, userindex, 0, "|| opciones de voto: " & fonttype_guildmsg)
+    call senddata(sendtarget.toindex, userindex, 0, "||consulta popular numero " & pencuestaactualnum & fonttype_guild)
+    call senddata(sendtarget.toindex, userindex, 0, "||" & pencuestaactualtex & fonttype_guild)
+    call senddata(sendtarget.toindex, userindex, 0, "|| opciones de voto: " & fonttype_guildmsg)
     for i = 1 to ubound(popciones)
-        call senddata(toindex, userindex, 0, "||(opcion " & i & "): " & getvar(app.path & archivoconfig, "encuesta" & pencuestaactualnum, "opcion" & i) & fonttype_guildmsg)
+        call senddata(sendtarget.toindex, userindex, 0, "||(opcion " & i & "): " & getvar(app.path & archivoconfig, "encuesta" & pencuestaactualnum, "opcion" & i) & fonttype_guildmsg)
     next i
-    call senddata(toindex, userindex, 0, "|| para votar una opcion, escribe /encuesta numerodeopcion, por ejemplo para votar la opcion 1, escribe /encuesta 1. tu voto no podra ser cambiado." & fonttype_veneno)
+    call senddata(sendtarget.toindex, userindex, 0, "|| para votar una opcion, escribe /encuesta numerodeopcion, por ejemplo para votar la opcion 1, escribe /encuesta 1. tu voto no podra ser cambiado." & fonttype_veneno)
 end function
 
 

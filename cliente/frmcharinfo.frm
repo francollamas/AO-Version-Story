@@ -5,7 +5,7 @@ begin vb.form frmcharinfo
    clientheight    =   6195
    clientleft      =   45
    clienttop       =   330
-   clientwidth     =   5325
+   clientwidth     =   6390
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"
@@ -20,27 +20,27 @@ begin vb.form frmcharinfo
    maxbutton       =   0   'false
    minbutton       =   0   'false
    scaleheight     =   6195
-   scalewidth      =   5325
+   scalewidth      =   6390
    startupposition =   1  'centerowner
    begin vb.commandbutton desc 
       caption         =   "peticion"
       height          =   495
-      left            =   2100
+      left            =   2655
       mouseicon       =   "frmcharinfo.frx":0000
       mousepointer    =   99  'custom
-      tabindex        =   24
-      top             =   5640
-      width           =   855
+      tabindex        =   14
+      top             =   5625
+      width           =   1000
    end
    begin vb.commandbutton echar 
       caption         =   "echar"
       height          =   495
-      left            =   1080
+      left            =   1395
       mouseicon       =   "frmcharinfo.frx":0152
       mousepointer    =   99  'custom
-      tabindex        =   23
-      top             =   5640
-      width           =   855
+      tabindex        =   13
+      top             =   5625
+      width           =   1000
    end
    begin vb.commandbutton aceptar 
       caption         =   "aceptar"
@@ -54,22 +54,22 @@ begin vb.form frmcharinfo
          strikethrough   =   0   'false
       endproperty
       height          =   495
-      left            =   4200
+      left            =   5085
       mouseicon       =   "frmcharinfo.frx":02a4
       mousepointer    =   99  'custom
-      tabindex        =   22
-      top             =   5640
-      width           =   975
+      tabindex        =   12
+      top             =   5625
+      width           =   1000
    end
    begin vb.commandbutton rechazar 
       caption         =   "rechazar"
       height          =   495
-      left            =   3120
+      left            =   3870
       mouseicon       =   "frmcharinfo.frx":03f6
       mousepointer    =   99  'custom
-      tabindex        =   21
-      top             =   5640
-      width           =   855
+      tabindex        =   11
+      top             =   5625
+      width           =   1000
    end
    begin vb.commandbutton command1 
       cancel          =   -1  'true
@@ -78,50 +78,9 @@ begin vb.form frmcharinfo
       left            =   120
       mouseicon       =   "frmcharinfo.frx":0548
       mousepointer    =   99  'custom
-      tabindex        =   20
-      top             =   5640
-      width           =   855
-   end
-   begin vb.frame rep 
-      caption         =   "reputacion"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   1095
-      left            =   120
-      tabindex        =   16
-      top             =   4440
-      width           =   5055
-      begin vb.label reputacion 
-         caption         =   "reputacion:"
-         height          =   255
-         left            =   120
-         tabindex        =   19
-         top             =   720
-         width           =   4695
-      end
-      begin vb.label criminales 
-         caption         =   "criminales asesinados:"
-         height          =   255
-         left            =   120
-         tabindex        =   18
-         top             =   480
-         width           =   4695
-      end
-      begin vb.label ciudadanos 
-         caption         =   "ciudadanos asesinados:"
-         height          =   255
-         left            =   120
-         tabindex        =   17
-         top             =   240
-         width           =   4695
-      end
+      tabindex        =   10
+      top             =   5625
+      width           =   1000
    end
    begin vb.frame frame1 
       caption         =   "clanes"
@@ -134,58 +93,44 @@ begin vb.form frmcharinfo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   1815
-      left            =   120
+      height          =   3120
+      left            =   135
       tabindex        =   9
-      top             =   2640
-      width           =   5055
-      begin vb.label faccion 
-         caption         =   "faccion:"
-         height          =   255
-         left            =   120
+      top             =   2355
+      width           =   6075
+      begin vb.textbox txtmiembro 
+         height          =   1110
+         left            =   135
+         multiline       =   -1  'true
+         scrollbars      =   2  'vertical
+         tabindex        =   22
+         top             =   1800
+         width           =   5790
+      end
+      begin vb.textbox txtpeticiones 
+         height          =   1110
+         left            =   135
+         multiline       =   -1  'true
+         scrollbars      =   2  'vertical
          tabindex        =   15
-         top             =   1440
-         width           =   4695
+         top             =   450
+         width           =   5790
       end
-      begin vb.label integro 
-         caption         =   "clanes que integro:"
+      begin vb.label lblmiembro 
+         caption         =   "ultimos clanes en los que particip�:"
          height          =   255
-         left            =   120
-         tabindex        =   14
-         top             =   1200
-         width           =   4695
+         left            =   135
+         tabindex        =   23
+         top             =   1620
+         width           =   2985
       end
-      begin vb.label lider 
-         caption         =   "veces fue lider de clan:"
+      begin vb.label lblsolicitado 
+         caption         =   "ultimas membres�as solicitadas:"
          height          =   255
-         left            =   120
-         tabindex        =   13
-         top             =   960
-         width           =   4695
-      end
-      begin vb.label fundo 
-         caption         =   "fundo el clan:"
-         height          =   255
-         left            =   120
-         tabindex        =   12
-         top             =   720
-         width           =   4695
-      end
-      begin vb.label solicitudesrechazadas 
-         caption         =   "solicitudes rechazadas:"
-         height          =   255
-         left            =   120
-         tabindex        =   11
-         top             =   480
-         width           =   4695
-      end
-      begin vb.label solicitudes 
-         caption         =   "solicitudes para ingresar a clanes:"
-         height          =   255
-         left            =   120
-         tabindex        =   10
-         top             =   240
-         width           =   4695
+         left            =   135
+         tabindex        =   21
+         top             =   270
+         width           =   2985
       end
    end
    begin vb.frame charinfo 
@@ -199,18 +144,58 @@ begin vb.form frmcharinfo
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   2415
+      height          =   2100
       left            =   120
       tabindex        =   0
       top             =   120
-      width           =   5055
+      width           =   6075
+      begin vb.label reputacion 
+         caption         =   "reputacion:"
+         height          =   255
+         left            =   3060
+         tabindex        =   20
+         top             =   1560
+         width           =   2445
+      end
+      begin vb.label criminales 
+         caption         =   "criminales asesinados:"
+         height          =   255
+         left            =   3060
+         tabindex        =   19
+         top             =   1325
+         width           =   2900
+      end
+      begin vb.label ciudadanos 
+         caption         =   "ciudadanos asesinados:"
+         height          =   255
+         left            =   3060
+         tabindex        =   18
+         top             =   1080
+         width           =   2850
+      end
+      begin vb.label ejercito 
+         caption         =   "faccion:"
+         height          =   255
+         left            =   3060
+         tabindex        =   17
+         top             =   844
+         width           =   2880
+      end
+      begin vb.label guildactual 
+         caption         =   "clan actual:"
+         height          =   255
+         left            =   3030
+         tabindex        =   16
+         top             =   600
+         width           =   2880
+      end
       begin vb.label status 
          caption         =   "status:"
          height          =   255
-         left            =   120
+         left            =   3060
          tabindex        =   8
-         top             =   2040
-         width           =   4695
+         top             =   1800
+         width           =   2760
       end
       begin vb.label banco 
          caption         =   "banco:"
@@ -218,7 +203,7 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   7
          top             =   1800
-         width           =   4695
+         width           =   2985
       end
       begin vb.label oro 
          caption         =   "oro:"
@@ -226,7 +211,7 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   6
          top             =   1560
-         width           =   4695
+         width           =   2805
       end
       begin vb.label genero 
          caption         =   "genero:"
@@ -234,7 +219,7 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   5
          top             =   1080
-         width           =   4695
+         width           =   2895
       end
       begin vb.label raza 
          caption         =   "raza:"
@@ -242,7 +227,7 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   4
          top             =   600
-         width           =   4695
+         width           =   2880
       end
       begin vb.label clase 
          caption         =   "clase:"
@@ -250,7 +235,7 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   3
          top             =   840
-         width           =   4695
+         width           =   3270
       end
       begin vb.label nivel 
          caption         =   "nivel:"
@@ -258,15 +243,15 @@ begin vb.form frmcharinfo
          left            =   120
          tabindex        =   2
          top             =   1320
-         width           =   4695
+         width           =   3105
       end
       begin vb.label nombre 
          caption         =   "nombre:"
          height          =   255
-         left            =   120
+         left            =   135
          tabindex        =   1
          top             =   360
-         width           =   4695
+         width           =   5640
       end
    end
 end
@@ -278,6 +263,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -305,6 +294,7 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
 
 public frmmiembros as boolean
 public frmsolicitudes as boolean
@@ -312,7 +302,7 @@ public frmsolicitudes as boolean
 private sub aceptar_click()
 frmmiembros = false
 frmsolicitudes = false
-call senddata("aceptari" & right(nombre, len(nombre) - 7))
+call senddata("aceptari" & trim$(right(nombre, len(nombre) - 8)))
 unload frmguildleader
 call senddata("glinfo")
 unload me
@@ -337,86 +327,53 @@ else
     desc.visible = true
 end if
 
-
-'h$ = "chrinfo" & username & ","
-'h$ = h$ & miuser.raza & ","
-'h$ = h$ & miuser.clase & ","
-'h$ = h$ & miuser.genero & ","
-'h$ = h$ & miuser.stats.elv & ","
-'h$ = h$ & miuser.stats.gld & ","
-'h$ = h$ & miuser.stats.banco & ","
-'h$ = h$ & miuser.reputacion.promedio & ","
-
-
-nombre.caption = "nombre:" & readfield(1, rdata, 44)
-raza.caption = "raza:" & readfield(2, rdata, 44)
-clase.caption = "clase:" & readfield(3, rdata, 44)
-genero.caption = "genero:" & readfield(4, rdata, 44)
-nivel.caption = "nivel:" & readfield(5, rdata, 44)
-oro.caption = "oro:" & readfield(6, rdata, 44)
-banco.caption = "banco:" & readfield(7, rdata, 44)
-
-dim y as long, k as long
-
-y = val(readfield(8, rdata, 44))
-
-if y > 0 then
-    status.caption = "status: ciudadano"
-else
-    status.caption = "status: criminal"
-end if
+'    tstr = personaje & "�"1
+'    tstr = tstr & getvar(userfile, "init", "raza") & "�"2
+'    tstr = tstr & getvar(userfile, "init", "clase") & "�"3
+'    tstr = tstr & getvar(userfile, "init", "genero") & "�"4
+'    tstr = tstr & getvar(userfile, "stats", "elv") & "�"5
+'    tstr = tstr & getvar(userfile, "stats", "gld") & "�"6
+'    tstr = tstr & getvar(userfile, "stats", "banco") & "�"7
+'    tstr = tstr & getvar(userfile, "rep", "promedio") & "�"8
 
 
-'h$ = h$ & miuser.guildinfo.fundoclan & ","9
-'h$ = h$ & miuser.guildinfo.esguildleader & ","10
-'h$ = h$ & miuser.guildinfo.echadas & ","11
-'h$ = h$ & miuser.guildinfo.solicitudes & ","12
-'h$ = h$ & miuser.guildinfo.solicitudesrechazadas & ","13
-'h$ = h$ & miuser.guildinfo.vecesfueguildleader & ","14
-'h$ = h$ & miuser.guildinfo.clanesparticipo & ","15
-
-'h$ = h$ & miuser.guildinfo.clanfundado & ","16
-'h$ = h$ & miuser.guildinfo.guildname & ","17
+nombre.caption = "nombre: " & readfield(1, rdata, asc("�"))
+raza.caption = "raza: " & readfield(2, rdata, asc("�"))
+clase.caption = "clase: " & readfield(3, rdata, asc("�"))
+genero.caption = "genero: " & readfield(4, rdata, asc("�"))
+nivel.caption = "nivel: " & readfield(5, rdata, asc("�"))
+oro.caption = "oro: " & readfield(6, rdata, asc("�"))
+banco.caption = "banco: " & readfield(7, rdata, asc("�"))
+me.reputacion.caption = "reputaci�n: " & readfield(8, rdata, asc("�"))
 
 
+'    peticiones = getvar(userfile, "guilds", "pedidos")9
+'    tstr = tstr & iif(len(peticiones > 400), ".." & right$(peticiones, 400), peticiones) & "�"
+    
+'    miembro = getvar(userfile, "guilds", "miembro")10
+'    tstr = tstr & iif(len(miembro) > 400, ".." & right$(miembro, 400), miembro) & "�"
 
-y = val(readfield(9, rdata, 44))
-
-solicitudes.caption = "solicitudes para ingresar a clanes:" & readfield(12, rdata, 44)
-solicitudesrechazadas.caption = "solicitudes rechazadas:" & readfield(13, rdata, 44)
-
-
-if y = 1 then
-    fundo.caption = "fundo el clan: " & readfield(16, rdata, 44)
-else
-    fundo.caption = "fundo el clan: ninguno"
-end if
+me.txtpeticiones.text = readfield(9, rdata, asc("�"))
+me.txtmiembro.text = readfield(10, rdata, asc("�"))
 
 
-lider.caption = "veces fue lider de clan:" & readfield(14, rdata, 44)
-integro.caption = "clanes que integro:" & readfield(15, rdata, 44)
+'guildactual = val(getvar(userfile, "guild", "guildindex"))11
+me.guildactual.caption = "clan: " & readfield(11, rdata, asc("�"))
 
-'h$ = h$ & miuser.faccion.armadareal & "," 18
-'h$ = h$ & miuser.faccion.fuerzascaos & "," 19
-'h$ = h$ & miuser.faccion.ciudadanosmatados & "," 20
-'h$ = h$ & miuser.faccion.criminalesmatados 21
 
-y = val(readfield(18, rdata, 44))
+'    tstr = tstr & getvar(userfile, "facciones", "ejercitoreal") & "�"12
+'    tstr = tstr & getvar(userfile, "facciones", "ejercitocaos") & "�"13
+'    tstr = tstr & getvar(userfile, "facciones", "ciudmatados") & "�"14
+'    tstr = tstr & getvar(userfile, "facciones", "crimmatados") & "�"15
 
-if y = 1 then
-    faccion.caption = "faccion: ejercito real"
-else
-    k = val(readfield(19, rdata, 44))
-    if k = 1 then
-        faccion.caption = "faccion: fuerzas del caos"
-    else
-        faccion.caption = "faccion: ninguna"
-    end if
-end if
+me.ejercito.caption = "ej�rcito: " & iif(val(readfield(12, rdata, asc("�"))) <> 0, "armada real", iif(val(readfield(13, rdata, asc("�"))) <> 0, "legi�n oscura", "-"))
 
-ciudadanos.caption = "ciudadanos asesinados:" & readfield(20, rdata, 44)
-criminales.caption = "criminales asesinados:" & readfield(21, rdata, 44)
-reputacion.caption = "reputacion:" & val(readfield(8, rdata, 44))
+ciudadanos.caption = "ciudadanos asesinados: " & readfield(14, rdata, asc("�"))
+criminales.caption = "criminales asesinados: " & readfield(15, rdata, asc("�"))
+
+
+status.caption = iif(val(readfield(8, rdata, asc("�"))) > 0, " (ciudadano)", " (criminal)")
+status.forecolor = iif(val(readfield(8, rdata, asc("�"))) > 0, vbblue, vbred)
 me.show vbmodeless, frmmain
 
 
@@ -436,10 +393,10 @@ unload me
 end sub
 
 private sub rechazar_click()
-call senddata("rechazar" & right(nombre, len(nombre) - 7))
-frmmiembros = false
-frmsolicitudes = false
-unload frmguildleader
-call senddata("glinfo")
-unload me
+load frmcommet
+frmcommet.t = rechazopj
+frmcommet.nombre = right$(nombre, len(nombre) - 7)
+frmcommet.caption = "ingrese motivo para rechazo"
+frmcommet.show vbmodeless, frmcharinfo
+
 end sub

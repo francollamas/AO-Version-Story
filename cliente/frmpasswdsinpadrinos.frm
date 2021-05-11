@@ -165,9 +165,13 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -195,6 +199,7 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
 
 function checkdatos() as boolean
@@ -210,7 +215,12 @@ end function
 private sub command1_click()
 
 if checkdatos() then
-    userpassword = md5string(txtpasswd.text)
+#if seguridadalkon then
+    userpassword = md5.getmd5string(txtpasswd.text)
+    call md5.md5reset
+#else
+    userpassword = txtpasswd.text
+#end if
     useremail = txtcorreo.text
     
     if not checkmailstring(useremail) then
@@ -227,12 +237,6 @@ if checkdatos() then
     estadologin = crearnuevopj
     
     me.mousepointer = 11
-    
-'    if not frmmain.socket1.connected then
-'        frmmain.socket1.connect
-'    else
-'        call senddata("givemevalcode")
-'    end if
 
     estadologin = crearnuevopj
 
@@ -245,7 +249,7 @@ if checkdatos() then
         unload me
         
     else
-        call login(0)
+        call login(validarloginmsg(cint(brk)))
     end if
 end if
 

@@ -11,44 +11,6 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
-
-
-'clase party
-'por el oso (ositear@yahoo.com.ar)
-'define los metodos de control de la entidad party.
-'las reglas del negocio de la parties se definen el el mdparty.bas
-
 option explicit
 
 private p_members(1 to party_maxmembers) as tpartymember
@@ -84,7 +46,7 @@ i = 0
 while i <= party_maxmembers and p_members(i).userindex <> userindex
     i = i + 1
 wend
- 
+
 if i <= party_maxmembers then
     miexperiencia = p_members(i).experiencia
 else        'esto no deberia pasar :p
@@ -113,7 +75,9 @@ for i = 1 to party_maxmembers
                     p_members(i).experiencia = 0
                 end if
                 if party_experienciaporgolpe then
-                    call addtovar(userlist(ui).stats.exp, exppercapita, maxexp)
+                    userlist(ui).stats.exp = userlist(ui).stats.exp + exppercapita
+                    if userlist(ui).stats.exp > maxexp then _
+                        userlist(ui).stats.exp = maxexp
                     call checkuserlevel(ui)
                     call senduserstatsbox(ui)
                 end if
@@ -130,7 +94,7 @@ dim i as integer
 
 for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
-        call senddata(toindex, p_members(i).userindex, 0, "|| [" & sender & "] " & texto & fonttype_party)
+        call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| [" & sender & "] " & texto & fonttype_party)
     end if
 next i
 
@@ -174,12 +138,14 @@ if i = 1 then
     call mandarmensajeaconsola("el lider disuelve la party.", "servidor")
     for j = party_maxmembers to 1 step -1
         if p_members(j).userindex > 0 then
-            call senddata(toindex, p_members(j).userindex, 0, "|| abandonas la party liderada por " & userlist(p_members(1).userindex).name & fonttype_party)
+            call senddata(sendtarget.toindex, p_members(j).userindex, 0, "|| abandonas la party liderada por " & userlist(p_members(1).userindex).name & fonttype_party)
     
-            call senddata(toindex, p_members(j).userindex, 0, "|| durante la misma has conseguido " & p_members(j).experiencia & " puntos de experiencia!" & fonttype_party)
+            call senddata(sendtarget.toindex, p_members(j).userindex, 0, "|| durante la misma has conseguido " & p_members(j).experiencia & " puntos de experiencia!" & fonttype_party)
     
             if not party_experienciaporgolpe then
-                call addtovar(userlist(p_members(j).userindex).stats.exp, p_members(j).experiencia, maxexp)
+                userlist(p_members(j).userindex).stats.exp = userlist(p_members(j).userindex).stats.exp + p_members(j).experiencia
+                if userlist(p_members(j).userindex).stats.exp > maxexp then _
+                    userlist(p_members(j).userindex).stats.exp = maxexp
                 call checkuserlevel(p_members(j).userindex)
                 call senduserstatsbox(p_members(j).userindex)
             end if
@@ -193,12 +159,14 @@ if i = 1 then
 else
     if i <= party_maxmembers then
         if not party_experienciaporgolpe then
-            call addtovar(userlist(p_members(i).userindex).stats.exp, p_members(i).experiencia, maxexp)
+            userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + p_members(i).experiencia
+            if userlist(p_members(i).userindex).stats.exp > maxexp then _
+                userlist(p_members(i).userindex).stats.exp = maxexp
             call checkuserlevel(p_members(i).userindex)
             call senduserstatsbox(p_members(i).userindex)
         end if
         call mandarmensajeaconsola(userlist(p_members(i).userindex).name & " abandona la party." & fonttype_party, "servidor")
-        call senddata(toindex, p_members(i).userindex, 0, "|| durante la misma has conseguido " & p_members(i).experiencia & " puntos de experiencia!" & fonttype_party)
+        call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| durante la misma has conseguido " & p_members(i).experiencia & " puntos de experiencia!" & fonttype_party)
         p_cantmiembros = p_cantmiembros - 1
         p_members(i).userindex = 0
         p_members(i).experiencia = 0
@@ -225,7 +193,7 @@ for i = 1 to party_maxmembers
         end if
         'chequeo la dif entre levels
         if abs(userlist(userindex).stats.elv - userlist(p_members(i).userindex).stats.elv) > maxpartydeltalevel then
-            call senddata(toindex, p_members(i).userindex, 0, "|| no se puede hacer l�der a " & userlist(userindex).name & " pues la diferencia entre niveles de los miembros de la party ser�a mayor a " & maxpartydeltalevel & fonttype_party)
+            call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| no se puede hacer l�der a " & userlist(userindex).name & " pues la diferencia entre niveles de los miembros de la party ser�a mayor a " & maxpartydeltalevel & fonttype_party)
             hacerleader = false
         end if
     end if
@@ -236,7 +204,7 @@ if not hacerleader then exit function
 if userindexindex = 0 then
     'catastrofe! esto no deberia pasar nunca! pero como es ao.... :p
     call logerror("inconsistencia de parties")
-    call senddata(toadmins, 0, 0, "|| inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!")
+    call senddata(sendtarget.toadmins, 0, 0, "|| inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!")
     hacerleader = false
     exit function
 end if
@@ -346,7 +314,9 @@ if not party_experienciaporgolpe then   'esto sirve solo cuando acumulamos la ex
     for i = 1 to party_maxmembers
         if p_members(i).userindex > 0 then
             if p_members(i).experiencia > 0 then
-                call addtovar(userlist(p_members(i).userindex).stats.exp, p_members(i).experiencia, maxexp)
+                userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + p_members(i).experiencia
+                if userlist(p_members(i).userindex).stats.exp > maxexp then _
+                    userlist(p_members(i).userindex).stats.exp = maxexp
                 call checkuserlevel(p_members(i).userindex)
             else
                 if abs(userlist(p_members(i).userindex).stats.exp) > abs(p_members(i).experiencia) then

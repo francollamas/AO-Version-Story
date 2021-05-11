@@ -1,36 +1,4 @@
 attribute vb_name = "wsksock"
-
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
 #if usarquesocket = 1 then
 
 'date stamp: sept 1, 1996 (for version control, please don't remove)
@@ -138,6 +106,32 @@ type wsadatatype
     lpvendorinfo as long
 end type
 
+'agregado por maraxus
+type wsabuf
+    dwbufferlen as long
+    lpbuffer    as long
+end type
+
+'agregado por maraxus
+type flowspec
+    tokenrate           as long     'in bytes/sec
+    tokenbucketsize     as long     'in bytes
+    peakbandwidth       as long     'in bytes/sec
+    latency             as long     'in microseconds
+    delayvariation      as long     'in microseconds
+    servicetype         as integer  'guaranteed, predictive,
+                                    'best effort, etc.
+    maxsdusize          as long     'in bytes
+    minimumpolicedsize  as long     'in bytes
+end type
+
+'agregado por maraxus
+public const wsa_flag_overlapped = &h1
+
+'agregados por maraxus
+public const cf_accept = &h0
+public const cf_reject = &h1
+
 public const invalid_socket = -1
 public const socket_error = -1
 
@@ -220,6 +214,9 @@ global const wsano_address = 11004
 '---async notification constants
     public const sol_socket = &hffff
     public const so_linger = &h80
+    public const so_rcvbuffer = &h1002              ' agregado por maraxus
+    public const so_sndbuffer = &h1001              ' agregado por maraxus
+    public const so_conditional_accept = &h3002    ' agregado por maraxus
     public const fd_read = &h1
     public const fd_write = &h2
     public const fd_oob = &h4
@@ -227,55 +224,60 @@ global const wsano_address = 11004
     public const fd_connect = &h10
     public const fd_close = &h20
 '---socket functions
-    public declare function accept lib "winsock.dll" (byval s as integer, addr as sockaddr, addrlen as integer) as integer
-    public declare function bind lib "winsock.dll" (byval s as integer, addr as sockaddr, byval namelen as integer) as integer
-    public declare function apiclosesocket lib "winsock.dll" alias "closesocket" (byval s as integer) as integer
-    public declare function connect lib "winsock.dll" (byval s as integer, addr as sockaddr, byval namelen as integer) as integer
-    public declare function ioctlsocket lib "winsock.dll" (byval s as integer, byval cmd as long, argp as long) as integer
-    public declare function getpeername lib "winsock.dll" (byval s as integer, sname as sockaddr, namelen as integer) as integer
-    public declare function getsockname lib "winsock.dll" (byval s as integer, sname as sockaddr, namelen as integer) as integer
-    public declare function getsockopt lib "winsock.dll" (byval s as integer, byval level as integer, byval optname as integer, optval as any, optlen as integer) as integer
-    public declare function htonl lib "winsock.dll" (byval hostlong as long) as long
-    public declare function htons lib "winsock.dll" (byval hostshort as integer) as integer
-    public declare function inet_addr lib "winsock.dll" (byval cp as string) as long
-    public declare function inet_ntoa lib "winsock.dll" (byval inn as long) as long
-    public declare function listen lib "winsock.dll" (byval s as integer, byval backlog as integer) as integer
-    public declare function ntohl lib "winsock.dll" (byval netlong as long) as long
-    public declare function ntohs lib "winsock.dll" (byval netshort as integer) as integer
-    public declare function recv lib "winsock.dll" (byval s as integer, byval buf as any, byval buflen as integer, byval flags as integer) as integer
-    public declare function recvfrom lib "winsock.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, from as sockaddr, fromlen as integer) as integer
-    public declare function ws_select lib "winsock.dll" alias "select" (byval nfds as integer, readfds as any, writefds as any, exceptfds as any, timeout as timeval) as integer
-    public declare function send lib "winsock.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer) as integer
-    public declare function sendto lib "winsock.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, to_addr as sockaddr, byval tolen as integer) as integer
-    public declare function setsockopt lib "winsock.dll" (byval s as integer, byval level as integer, byval optname as integer, optval as any, byval optlen as integer) as integer
-    public declare function shutdown lib "winsock.dll" alias "shutdown" (byval s as integer, byval how as integer) as integer
-    public declare function socket lib "winsock.dll" alias "socket" (byval af as integer, byval s_type as integer, byval protocol as integer) as integer
+    public declare function accept lib "ws2_32.dll" (byval s as integer, addr as sockaddr, addrlen as integer) as integer
+    public declare function bind lib "ws2_32.dll" (byval s as integer, addr as sockaddr, byval namelen as integer) as integer
+    public declare function apiclosesocket lib "ws2_32.dll" alias "closesocket" (byval s as integer) as integer
+    public declare function connect lib "ws2_32.dll" (byval s as integer, addr as sockaddr, byval namelen as integer) as integer
+    public declare function ioctlsocket lib "ws2_32.dll" (byval s as integer, byval cmd as long, argp as long) as integer
+    public declare function getpeername lib "ws2_32.dll" (byval s as integer, sname as sockaddr, namelen as integer) as integer
+    public declare function getsockname lib "ws2_32.dll" (byval s as integer, sname as sockaddr, namelen as integer) as integer
+    public declare function getsockopt lib "ws2_32.dll" (byval s as integer, byval level as integer, byval optname as integer, optval as any, optlen as integer) as integer
+    public declare function htonl lib "ws2_32.dll" (byval hostlong as long) as long
+    public declare function htons lib "ws2_32.dll" (byval hostshort as integer) as integer
+    public declare function inet_addr lib "ws2_32.dll" (byval cp as string) as long
+    public declare function inet_ntoa lib "ws2_32.dll" (byval inn as long) as long
+    public declare function listen lib "ws2_32.dll" (byval s as integer, byval backlog as integer) as integer
+    public declare function ntohl lib "ws2_32.dll" (byval netlong as long) as long
+    public declare function ntohs lib "ws2_32.dll" (byval netshort as integer) as integer
+    public declare function recv lib "ws2_32.dll" (byval s as integer, byval buf as any, byval buflen as integer, byval flags as integer) as integer
+    public declare function recvfrom lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, from as sockaddr, fromlen as integer) as integer
+    public declare function ws_select lib "ws2_32.dll" alias "select" (byval nfds as integer, readfds as any, writefds as any, exceptfds as any, timeout as timeval) as integer
+    public declare function send lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer) as integer
+    public declare function sendto lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, to_addr as sockaddr, byval tolen as integer) as integer
+    public declare function setsockopt lib "ws2_32.dll" (byval s as integer, byval level as integer, byval optname as integer, optval as any, byval optlen as integer) as integer
+    public declare function shutdown lib "ws2_32.dll" alias "shutdown" (byval s as integer, byval how as integer) as integer
+    public declare function socket lib "ws2_32.dll" alias "socket" (byval af as integer, byval s_type as integer, byval protocol as integer) as integer
 '---database functions
-    public declare function gethostbyaddr lib "winsock.dll" (addr as long, byval addr_len as integer, byval addr_type as integer) as long
-    public declare function gethostbyname lib "winsock.dll" (byval host_name as string) as long
-    public declare function gethostname lib "winsock.dll" (byval host_name as string, byval namelen as integer) as integer
-    public declare function getservbyport lib "winsock.dll" (byval port as integer, byval proto as string) as long
-    public declare function getservbyname lib "winsock.dll" (byval serv_name as string, byval proto as string) as long
-    public declare function getprotobynumber lib "winsock.dll" (byval proto as integer) as long
-    public declare function getprotobyname lib "winsock.dll" (byval proto_name as string) as long
+    public declare function gethostbyaddr lib "ws2_32.dll" (addr as long, byval addr_len as integer, byval addr_type as integer) as long
+    public declare function gethostbyname lib "ws2_32.dll" (byval host_name as string) as long
+    public declare function gethostname lib "ws2_32.dll" (byval host_name as string, byval namelen as integer) as integer
+    public declare function getservbyport lib "ws2_32.dll" (byval port as integer, byval proto as string) as long
+    public declare function getservbyname lib "ws2_32.dll" (byval serv_name as string, byval proto as string) as long
+    public declare function getprotobynumber lib "ws2_32.dll" (byval proto as integer) as long
+    public declare function getprotobyname lib "ws2_32.dll" (byval proto_name as string) as long
 '---windows extensions
-    public declare function wsastartup lib "winsock.dll" (byval wvr as integer, lpwsad as wsadatatype) as integer
-    public declare function wsacleanup lib "winsock.dll" () as integer
-    public declare sub wsasetlasterror lib "winsock.dll" (byval ierror as integer)
-    public declare function wsagetlasterror lib "winsock.dll" () as integer
-    public declare function wsaisblocking lib "winsock.dll" () as integer
-    public declare function wsaunhookblockinghook lib "winsock.dll" () as integer
-    public declare function wsasetblockinghook lib "winsock.dll" (byval lpblockfunc as long) as long
-    public declare function wsacancelblockingcall lib "winsock.dll" () as integer
-    public declare function wsaasyncgetservbyname lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, byval serv_name as string, byval proto as string, buf as any, byval buflen as integer) as integer
-    public declare function wsaasyncgetservbyport lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, byval port as integer, byval proto as string, buf as any, byval buflen as integer) as integer
-    public declare function wsaasyncgetprotobyname lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, byval proto_name as string, buf as any, byval buflen as integer) as integer
-    public declare function wsaasyncgetprotobynumber lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, byval number as integer, buf as any, byval buflen as integer) as integer
-    public declare function wsaasyncgethostbyname lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, byval host_name as string, buf as any, byval buflen as integer) as integer
-    public declare function wsaasyncgethostbyaddr lib "winsock.dll" (byval hwnd as integer, byval wmsg as integer, addr as long, byval addr_len as integer, byval addr_type as integer, buf as any, byval buflen as integer) as integer
-    public declare function wsacancelasyncrequest lib "winsock.dll" (byval hasynctaskhandle as integer) as integer
-    public declare function wsaasyncselect lib "winsock.dll" (byval s as integer, byval hwnd as integer, byval wmsg as integer, byval levent as long) as integer
-    public declare function wsarecvex lib "winsock.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer) as integer
+    public declare function wsastartup lib "ws2_32.dll" (byval wvr as integer, lpwsad as wsadatatype) as integer
+    public declare function wsacleanup lib "ws2_32.dll" () as integer
+    public declare sub wsasetlasterror lib "ws2_32.dll" (byval ierror as integer)
+    public declare function wsagetlasterror lib "ws2_32.dll" () as integer
+    public declare function wsaisblocking lib "ws2_32.dll" () as integer
+    public declare function wsaunhookblockinghook lib "ws2_32.dll" () as integer
+    public declare function wsasetblockinghook lib "ws2_32.dll" (byval lpblockfunc as long) as long
+    public declare function wsacancelblockingcall lib "ws2_32.dll" () as integer
+    public declare function wsaasyncgetservbyname lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, byval serv_name as string, byval proto as string, buf as any, byval buflen as integer) as integer
+    public declare function wsaasyncgetservbyport lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, byval port as integer, byval proto as string, buf as any, byval buflen as integer) as integer
+    public declare function wsaasyncgetprotobyname lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, byval proto_name as string, buf as any, byval buflen as integer) as integer
+    public declare function wsaasyncgetprotobynumber lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, byval number as integer, buf as any, byval buflen as integer) as integer
+    public declare function wsaasyncgethostbyname lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, byval host_name as string, buf as any, byval buflen as integer) as integer
+    public declare function wsaasyncgethostbyaddr lib "ws2_32.dll" (byval hwnd as integer, byval wmsg as integer, addr as long, byval addr_len as integer, byval addr_type as integer, buf as any, byval buflen as integer) as integer
+    public declare function wsacancelasyncrequest lib "ws2_32.dll" (byval hasynctaskhandle as integer) as integer
+    public declare function wsaasyncselect lib "ws2_32.dll" (byval s as integer, byval hwnd as integer, byval wmsg as integer, byval levent as long) as integer
+    public declare function wsarecvex lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer) as integer
+'agregado por maraxus
+    declare function wsaaccept lib "ws2_32.dll" (byval s as integer, psockaddr as sockaddr, addrlen as integer, byval lpfncondition as long, byval dwcallbackdata as long) as integer
+    
+    public const somaxconn as integer = &h7fff            ' agregado por maraxus
+
 #elseif win32 then
 '---windows system functions
     public declare function postmessage lib "user32" alias "postmessagea" (byval hwnd as long, byval wmsg as long, byval wparam as long, byval lparam as long) as long
@@ -284,6 +286,9 @@ global const wsano_address = 11004
 '---async notification constants
     public const sol_socket = &hffff&
     public const so_linger = &h80&
+    public const so_rcvbuffer = &h1002&             ' agregado por maraxus
+    public const so_sndbuffer = &h1001&              ' agregado por maraxus
+    public const so_conditional_accept = &h3002&    ' agregado por maraxus
     public const fd_read = &h1&
     public const fd_write = &h2&
     public const fd_oob = &h4&
@@ -340,6 +345,11 @@ global const wsano_address = 11004
     public declare function wsacancelasyncrequest lib "wsock32.dll" (byval hasynctaskhandle as long) as long
     public declare function wsaasyncselect lib "wsock32.dll" (byval s as long, byval hwnd as long, byval wmsg as long, byval levent as long) as long
     public declare function wsarecvex lib "wsock32.dll" (byval s as long, buf as any, byval buflen as long, byval flags as long) as long
+'agregado por maraxus
+    declare function wsaaccept lib "ws2_32.dll" (byval s as long, psockaddr as sockaddr, addrlen as long, byval lpfncondition as long, byval dwcallbackdata as long) as long
+    public const somaxconn as long = &h7fffffff            ' agregado por maraxus
+
+
 #end if
 
 
@@ -764,6 +774,11 @@ ircgetasciperror:
     resume
 end function
 
+public function getlongip(byval ips as string) as long
+    getlongip = inet_addr(ips)
+end function
+
+
 'this function does work on 16 and 32 bit systems
 function ircgetlongip(byval ascip$) as string
     'this function converts an ascii ip string into a long ip in network byte order
@@ -818,6 +833,16 @@ public function listenforconnect(byval port&, byval hwndtomsg&, byval enlazar as
         listenforconnect = invalid_socket
         exit function
     end if
+    
+'agregado por maraxus
+    'if setsockopt(s, sol_socket, so_conditional_accept, true, 2) then
+    '    logapisock ("error seteando conditional accept")
+    '    debug.print "error seteando conditional accept"
+    'else
+    '    logapisock ("conditional accept seteado")
+    '    debug.print "conditional accept seteado ^^"
+    'end if
+    
     if bind(s, sockin, sockaddr_size) then
         if s > 0 then
             dummy = apiclosesocket(s)
@@ -835,7 +860,8 @@ public function listenforconnect(byval port&, byval hwndtomsg&, byval enlazar as
         exit function
     end if
     
-    if listen(s, 5) then
+    'if listen(s, 5) then
+    if listen(s, somaxconn) then
         if s > 0 then
             dummy = apiclosesocket(s)
         end if
@@ -884,7 +910,8 @@ end function
 public function startwinsock(sdescription as string) as boolean
     dim startupdata as wsadatatype
     if not wsastartedup then
-        if not wsastartup(&h101, startupdata) then
+        'if not wsastartup(&h101, startupdata) then
+        if not wsastartup(&h202, startupdata) then  'use sockets v2.2 instead of 1.1 (maraxus)
             wsastartedup = true
 '            debug.print "wversion="; startupdata.wversion, "whighversion="; startupdata.whighversion
 '            debug.print "if wversion == 257 then everything is kewl"
@@ -902,6 +929,5 @@ end function
 public function wsamakeselectreply(theevent%, theerror%) as long
     wsamakeselectreply = (theerror * &h10000) + (theevent and &hffff&)
 end function
-
 
 #end if

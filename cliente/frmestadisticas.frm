@@ -902,6 +902,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -933,17 +937,6 @@ option explicit
 
 private sub command1_click()
 unload me
-end sub
-
-private sub form_deactivate()
-'me.visible = false
-end sub
-
-private sub form_load()
-'dim i as integer
-'for i = 1 to numatributos
-'    atri(i).caption = atributosnames(i - 1)
-'next
 end sub
 
 public sub iniciar_labels()

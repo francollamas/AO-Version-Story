@@ -46,6 +46,7 @@ begin vb.form frmguildsol
    begin vb.textbox text1 
       height          =   1215
       left            =   240
+      maxlength       =   400
       multiline       =   -1  'true
       tabindex        =   1
       top             =   1440
@@ -69,6 +70,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -96,13 +101,15 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
+
 dim cname as string
 
 private sub command1_click()
 dim f$
 
 f$ = "solicitud" & cname
-f$ = f$ & "," & replace(text1, vbcrlf, "�")
+f$ = f$ & "," & replace(replace(text1.text, ",", ";"), vbcrlf, "�")
 
 call senddata(f$)
 

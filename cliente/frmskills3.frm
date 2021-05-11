@@ -1210,9 +1210,13 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -1244,14 +1248,14 @@ option explicit
 
 private sub command1_click(index as integer)
 
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 dim indice
 if index mod 2 = 0 then
     if alocados > 0 then
         indice = index \ 2 + 1
         if indice > numskills then indice = numskills
-        if userskills(indice) < maxskillpoints then
+        if val(text1(indice).caption) < maxskillpoints then
             text1(indice).caption = val(text1(indice).caption) + 1
             flags(indice) = flags(indice) + 1
             alocados = alocados - 1
@@ -1311,15 +1315,18 @@ next
 end sub
 
 private sub image1_click()
-
-dim i as integer
-dim cad as string
-for i = 1 to numskills
-    cad = cad & flags(i) & ","
-next
-senddata "skse" & cad
-if alocados = 0 then frmmain.label1.visible = false
-skillpoints = alocados
-unload me
+    dim i as integer
+    dim cad as string
+    
+    for i = 1 to numskills
+        cad = cad & flags(i) & ","
+        'actualizamos nuestros datos locales
+        userskills(i) = val(text1(i).caption)
+    next i
+    
+    senddata "skse" & cad
+    if alocados = 0 then frmmain.label1.visible = false
+    skillpoints = alocados
+    unload me
 end sub
 

@@ -89,6 +89,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -116,6 +120,7 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
 
 private sub command1_click()
 
@@ -124,6 +129,7 @@ call senddata("clandetails" & guildslist.list(guildslist.listindex))
 
 end sub
 
+
 private sub command3_click()
 unload me
 end sub
@@ -131,14 +137,15 @@ end sub
 public sub parseguildlist(byval rdata as string)
 
 dim j as integer, k as integer
-
+for j = 0 to guildslist.listcount - 1
+    me.guildslist.removeitem 0
+next j
 k = cint(readfield(1, rdata, 44))
 
 for j = 1 to k
     guildslist.additem readfield(1 + j, rdata, 44)
 next j
 
-me.show
+me.show vbmodal, frmmain
 
 end sub
-

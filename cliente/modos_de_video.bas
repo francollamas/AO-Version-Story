@@ -1,7 +1,11 @@
 attribute vb_name = "mod_modos_de_video"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -29,8 +33,8 @@ attribute vb_name = "mod_modos_de_video"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
+
 'testea si la maquina soporta un modo de video ;-)
 function soportadisplay(dd as directdraw7, ddsdatestear as ddsurfacedesc2) as boolean
 dim ddsd as ddsurfacedesc2

@@ -1,7 +1,11 @@
 attribute vb_name = "mod_tcp"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -35,10 +39,7 @@ public warping as boolean
 public llegaronskills as boolean
 public llegaronatrib as boolean
 public llegofama as boolean
-private enum sentidorotacion
-    rotizquierda = 0
-    rotderecha = 1
-end enum
+
 
 
 public function puedoquitarfoco() as boolean
@@ -77,11 +78,8 @@ sub handledata(byval rdata as string)
     
     
     dim sdata as string
-    sdata = ucase(rdata)
+    sdata = ucase$(rdata)
     
-    debug.print "begin>>> " & rdata
-    
-   
     select case sdata
         case "logged"            ' >>>>> login :: logged
             logged = true
@@ -91,11 +89,10 @@ sub handledata(byval rdata as string)
             userdescansar = false
             nombres = true
             if frmcrearpersonaje.visible then
-                   unload frmpasswd
-                   unload frmpasswdsinpadrinos
-                   unload frmcrearpersonaje
-                   unload frmconnect
-                   frmmain.show
+                unload frmpasswdsinpadrinos
+                unload frmcrearpersonaje
+                unload frmconnect
+                frmmain.show
             end if
             call setconnected
             'mostramos el tip
@@ -107,7 +104,6 @@ sub handledata(byval rdata as string)
             btecho = iif(mapdata(userpos.x, userpos.y).trigger = 1 or _
             mapdata(userpos.x, userpos.y).trigger = 2 or _
             mapdata(userpos.x, userpos.y).trigger = 4, true, false)
-            call dofogatafx
             exit sub
         case "qtdl"              ' >>>>> quitar dialogos :: qtdl
             call dialogos.borrardialogos
@@ -131,10 +127,9 @@ sub handledata(byval rdata as string)
             userdescansar = false
             usernavegando = false
             frmconnect.visible = true
-            call frmmain.stopsound
-            frmmain.isplaying = plnone
+            call audio.stopwave
+            frmmain.isplaying = playloop.plnone
             brain = false
-            bnoche = false
             bfogata = false
             skillpoints = 0
             frmmain.label1.visible = false
@@ -142,8 +137,11 @@ sub handledata(byval rdata as string)
             for i = 1 to lastchar
                 charlist(i).invisible = false
             next i
-
-            bo = 0
+            
+#if seguridadalkon then
+            call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
+#end if
+            
             bk = 0
             exit sub
         case "fincomok"          ' >>>>> finaliza comerciar :: fincomok
@@ -166,9 +164,9 @@ sub handledata(byval rdata as string)
         '------------------------------------------------------------------------------
         case "initcom"           ' >>>>> inicia comerciar :: initcom
             i = 1
-            do while i <= ubound(userinventory)
-                if userinventory(i).objindex <> 0 then
-                        frmcomerciar.list1(1).additem userinventory(i).name
+            do while i <= max_inventory_slots
+                if inventario.objindex(i) <> 0 then
+                        frmcomerciar.list1(1).additem inventario.itemname(i)
                 else
                         frmcomerciar.list1(1).additem "nada"
                 end if
@@ -182,9 +180,9 @@ sub handledata(byval rdata as string)
         case "initbanco"           ' >>>>> inicia comerciar :: initbanco
             dim ii as integer
             ii = 1
-            do while ii <= ubound(userinventory)
-                if userinventory(ii).objindex <> 0 then
-                        frmbancoobj.list1(1).additem userinventory(ii).name
+            do while ii <= max_inventory_slots
+                if inventario.objindex(ii) <> 0 then
+                        frmbancoobj.list1(1).additem inventario.itemname(ii)
                 else
                         frmbancoobj.list1(1).additem "nada"
                 end if
@@ -211,10 +209,10 @@ sub handledata(byval rdata as string)
             if frmcomerciarusu.list1.listcount > 0 then frmcomerciarusu.list1.clear
             if frmcomerciarusu.list2.listcount > 0 then frmcomerciarusu.list2.clear
             
-            for i = 1 to ubound(userinventory)
-                if userinventory(i).objindex <> 0 then
-                        frmcomerciarusu.list1.additem userinventory(i).name
-                        frmcomerciarusu.list1.itemdata(frmcomerciarusu.list1.newindex) = userinventory(i).amount
+            for i = 1 to max_inventory_slots
+                if inventario.objindex(i) <> 0 then
+                        frmcomerciarusu.list1.additem inventario.itemname(i)
+                        frmcomerciarusu.list1.itemdata(frmcomerciarusu.list1.newindex) = inventario.amount(i)
                 else
                         frmcomerciarusu.list1.additem "nada"
                         frmcomerciarusu.list1.itemdata(frmcomerciarusu.list1.newindex) = 0
@@ -269,73 +267,178 @@ sub handledata(byval rdata as string)
             frmcarp.show , frmmain
             exit sub
         case "n1" ' <--- npc ataco y fallo
-            call addtorichtextbox(frmmain.rectxt, "la criatura fallo el golpe!!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_criatura_falla_golpe, 255, 0, 0, true, false, false)
             exit sub
         case "6" ' <--- npc mata al usuario
-            call addtorichtextbox(frmmain.rectxt, "la criatura te ha matado!!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_criatura_matado, 255, 0, 0, true, false, false)
             exit sub
         case "7" ' <--- ataque rechazado con el escudo
-            call addtorichtextbox(frmmain.rectxt, "has rechazado el ataque con el escudo!!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_rechazo_ataque_escudo, 255, 0, 0, true, false, false)
             exit sub
         case "8" ' <--- ataque rechazado con el escudo
-            call addtorichtextbox(frmmain.rectxt, "el usuario rechazo el ataque con su escudo!!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_usuario_rechazo_ataque_escudo, 255, 0, 0, true, false, false)
             exit sub
         case "u1" ' <--- user ataco y fallo el golpe
-            call addtorichtextbox(frmmain.rectxt, "has fallado el golpe!!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_fallado_golpe, 255, 0, 0, true, false, false)
             exit sub
         case "reau" '<--- requiere autoupdate
             call frmmain.dibujarsatelite
             exit sub
         case "segon" '  <--- activa el seguro
             call frmmain.dibujarseguro
-            call addtorichtextbox(frmmain.rectxt, ">>seguro activado<<", 0, 255, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_activado, 0, 255, 0, true, false, false)
             exit sub
         case "segoff" ' <--- desactiva el seguro
             call frmmain.desdibujarseguro
-            call addtorichtextbox(frmmain.rectxt, ">>seguro desactivado<<", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_seguro_desactivado, 255, 0, 0, true, false, false)
             exit sub
         case "pn"     ' <--- pierde nobleza
-            call addtorichtextbox(frmmain.rectxt, "��has perdido puntaje de nobleza y ganado puntaje de criminalidad!! si sigues ayudando a criminales te convertir�s en uno de ellos y ser�s perseguido por las tropas de las ciudades.", 255, 0, 0, false, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_pierde_nobleza, 255, 0, 0, false, false, false)
             exit sub
         case "m!"     ' <--- usa meditando
-            call addtorichtextbox(frmmain.rectxt, "�est�s meditando! debes dejar de meditar para usar objetos.", 255, 0, 0, false, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_usar_meditando, 255, 0, 0, false, false, false)
             exit sub
     end select
 
+    select case left(sdata, 1)
+        case "+"              ' >>>>> mover char >>> +
+            rdata = right$(rdata, len(rdata) - 1)
 
-    select case left(sdata, 2)
+#if seguridadalkon then
+            'obtengo todo
+            call cheatingdeath.movechardecrypt(rdata, charindex, x, y)
+#else
+            charindex = val(readfield(1, rdata, asc(",")))
+            x = val(readfield(2, rdata, asc(",")))
+            y = val(readfield(3, rdata, asc(",")))
+#end if
+
+            'antigua codificacion del mensaje (decodificada x un chitero)
+            'charindex = asc(mid$(rdata, 1, 1)) * 64 + (asc(mid$(rdata, 2, 1)) and &hfc&) / 4
+
+            ' constantes todo: de donde sale el 40-49 ?
+            
+            if charlist(charindex).fx >= 40 and charlist(charindex).fx <= 49 then   'si esta meditando
+                charlist(charindex).fx = 0
+                charlist(charindex).fxlooptimes = 0
+            end if
+            
+            ' constantes todo: que es .priv ?
+            
+            if charlist(charindex).priv = 0 then
+                call dopasosfx(charindex)
+            end if
+
+            call movecharbypos(charindex, x, y)
+            
+            call refreshallchars
+            exit sub
+        case "*", "_"             ' >>>>> mover npc >>> *
+            rdata = right$(rdata, len(rdata) - 1)
+            
+#if seguridadalkon then
+            'obtengo todo
+            call cheatingdeath.movenpcdecrypt(rdata, charindex, x, y, left$(sdata, 1) <> "*")
+#else
+            charindex = val(readfield(1, rdata, asc(",")))
+            x = val(readfield(2, rdata, asc(",")))
+            y = val(readfield(3, rdata, asc(",")))
+#end if
+            
+            'antigua codificacion del mensaje (decodificada x un chitero)
+            'charindex = asc(mid$(rdata, 1, 1)) * 64 + (asc(mid$(rdata, 2, 1)) and &hfc&) / 4
+            
+'            if charlist(charindex).body.walk(1).grhindex = 4747 then
+'                debug.print "hola"
+'            end if
+            
+            ' constantes todo: de donde sale el 40-49 ?
+            
+            if charlist(charindex).fx >= 40 and charlist(charindex).fx <= 49 then   'si esta meditando
+                charlist(charindex).fx = 0
+                charlist(charindex).fxlooptimes = 0
+            end if
+            
+            ' constantes todo: que es .priv ?
+            
+            if charlist(charindex).priv = 0 then
+                call dopasosfx(charindex)
+            end if
+            
+            call movecharbypos(charindex, x, y)
+            'call movecharbypos(charindex, asc(mid$(rdata, 3, 1)), asc(mid$(rdata, 4, 1)))
+            
+            call refreshallchars
+            exit sub
+    
+    end select
+
+    select case left$(sdata, 2)
+        case "as"
+            tstr = mid$(sdata, 3, 1)
+            k = val(right$(sdata, len(sdata) - 3))
+            
+            select case tstr
+                case "m": userminman = val(right$(sdata, len(sdata) - 3))
+                case "h": userminhp = val(right$(sdata, len(sdata) - 3))
+                case "s": userminsta = val(right$(sdata, len(sdata) - 3))
+                case "g": usergld = val(right$(sdata, len(sdata) - 3))
+                case "e": userexp = val(right$(sdata, len(sdata) - 3))
+            end select
+            
+            frmmain.exp.caption = "exp: " & userexp & "/" & userpasarnivel
+            frmmain.lblporclvl.caption = "[" & round(cdbl(userexp) * cdbl(100) / cdbl(userpasarnivel), 2) & "%]"
+            frmmain.hpshp.width = (((userminhp / 100) / (usermaxhp / 100)) * 94)
+            
+            if usermaxman > 0 then
+                frmmain.manshp.width = (((userminman + 1 / 100) / (usermaxman + 1 / 100)) * 94)
+            else
+                frmmain.manshp.width = 0
+            end if
+            
+            frmmain.stashp.width = (((userminsta / 100) / (usermaxsta / 100)) * 94)
+        
+            frmmain.gldlbl.caption = usergld
+            frmmain.lvllbl.caption = userlvl
+            
+            if userminhp = 0 then
+                userestado = 1
+            else
+                userestado = 0
+            end if
+            
+            exit sub
         case "cm"              ' >>>>> cargar mapa :: cm
             rdata = right$(rdata, len(rdata) - 2)
             usermap = readfield(1, rdata, 44)
             'obtiene la version del mapa
-                        
+
+#if seguridadalkon then
             call initmi
+#end if
             
             if fileexist(dirmapas & "mapa" & usermap & ".map", vbnormal) then
                 open dirmapas & "mapa" & usermap & ".map" for binary as #1
                 seek #1, 1
                 get #1, , tempint
                 close #1
-                if tempint = val(readfield(2, rdata, 44)) then
+'                if tempint = val(readfield(2, rdata, 44)) then
                     'si es la vers correcta cambiamos el mapa
                     call switchmap(usermap)
                     if blluvia(usermap) = 0 then
                         if brain then
-                            'call stopsound("lluviain.mp3")
-                            'call stopsound("lluviaout.mp3")
-                            '[code 001]:matux'
-                                frmmain.stopsound
-                                frmmain.isplaying = plnone
-                            '[end]'
+                            call audio.stopwave(rainbufferindex)
+                            rainbufferindex = 0
+                            frmmain.isplaying = playloop.plnone
                         end if
                     end if
-                else
-                    'vers incorrecta
-                    msgbox "error en los mapas, algun archivo ha sido modificado o esta da�ado."
-                    call liberarobjetosdx
-                    call unloadallforms
-                    end
-                end if
+'                else
+'                    'vers incorrecta
+'                    msgbox "error en los mapas, algun archivo ha sido modificado o esta da�ado."
+'                    call liberarobjetosdx
+'                    call unloadallforms
+'                    end
+'                end if
             else
                 'no encontramos el mapa en el hd
                 msgbox "error en los mapas, algun archivo ha sido modificado o esta da�ado."
@@ -345,6 +448,7 @@ sub handledata(byval rdata as string)
                 end
             end if
             exit sub
+        
         case "pu"                 ' >>>>> actualiza posici�n usuario :: pu
             rdata = right$(rdata, len(rdata) - 2)
             mapdata(userpos.x, userpos.y).charindex = 0
@@ -352,49 +456,51 @@ sub handledata(byval rdata as string)
             userpos.y = cint(readfield(2, rdata, 44))
             mapdata(userpos.x, userpos.y).charindex = usercharindex
             charlist(usercharindex).pos = userpos
+            frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
             exit sub
+        
         case "n2" ' <<--- npc nos impacto (ahorramos ancho de banda)
             rdata = right$(rdata, len(rdata) - 2)
             i = val(readfield(1, rdata, 44))
             select case i
                 case bcabeza
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado en la cabeza por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoizquierdo
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado el brazo izquierdo por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoderecho
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado el brazo derecho por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaizquierda
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado la pierna izquierda por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaderecha
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado la pierna derecha por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case btorso
-                    call addtorichtextbox(frmmain.rectxt, "��la criatura te ha pegado en el torso por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
             end select
             exit sub
         case "u2" ' <<--- el user ataco un npc e impacato
             rdata = right$(rdata, len(rdata) - 2)
-            call addtorichtextbox(frmmain.rectxt, "��le has pegado a la criatura por " & rdata & "!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_criatura_1 & rdata & mensaje_2, 255, 0, 0, true, false, false)
             exit sub
         case "u3" ' <<--- el user ataco un user y falla
             rdata = right$(rdata, len(rdata) - 2)
-            call addtorichtextbox(frmmain.rectxt, "��" & rdata & " te ataco y fallo!!", 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_1 & rdata & mensaje_ataque_fallo, 255, 0, 0, true, false, false)
             exit sub
         case "n4" ' <<--- user nos impacto
             rdata = right$(rdata, len(rdata) - 2)
             i = val(readfield(1, rdata, 44))
             select case i
                 case bcabeza
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado en la cabeza por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_cabeza & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoizquierdo
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado el brazo izquierdo por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_brazo_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoderecho
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado el brazo derecho por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_brazo_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaizquierda
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado la pierna izquierda por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_pierna_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaderecha
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado la pierna derecha por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_pierna_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case btorso
-                    call addtorichtextbox(frmmain.rectxt, "��" & readfield(3, rdata, 44) & " te ha pegado en el torso por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_1 & readfield(3, rdata, 44) & mensaje_recive_impacto_torso & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
             end select
             exit sub
         case "n5" ' <<--- impactamos un user
@@ -402,35 +508,48 @@ sub handledata(byval rdata as string)
             i = val(readfield(1, rdata, 44))
             select case i
                 case bcabeza
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en la cabeza por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_cabeza & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoizquierdo
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en el brazo izquierdo por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_brazo_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bbrazoderecho
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en el brazo derecho por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_brazo_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaizquierda
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en la pierna izquierda por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_pierna_izq & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case bpiernaderecha
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en la pierna derecha por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_pierna_der & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
                 case btorso
-                    call addtorichtextbox(frmmain.rectxt, "��le has pegado a " & readfield(3, rdata, 44) & " en el torso por " & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_produce_impacto_1 & readfield(3, rdata, 44) & mensaje_produce_impacto_torso & val(readfield(2, rdata, 44)), 255, 0, 0, true, false, false)
             end select
             exit sub
         case "||"                 ' >>>>> dialogo de usuarios y npcs :: ||
             rdata = right$(rdata, len(rdata) - 2)
             dim iuser as integer
             iuser = val(readfield(3, rdata, 176))
+            
             if iuser > 0 then
                 dialogos.creardialogo readfield(2, rdata, 176), iuser, val(readfield(1, rdata, 176))
-                'i = 1
-                'do while i <= iuser
-                '    dialogos.creardialogo readfield(2, rdata, 176), i, val(readfield(1, rdata, 176))
-                '    i = i + 1
-                'loop
             else
-                  if puedoquitarfoco then _
+                if puedoquitarfoco then
                     addtorichtextbox frmmain.rectxt, readfield(1, rdata, 126), val(readfield(2, rdata, 126)), val(readfield(3, rdata, 126)), val(readfield(4, rdata, 126)), val(readfield(5, rdata, 126)), val(readfield(6, rdata, 126))
+                end if
             end if
+
             exit sub
+        case "|+"                 ' >>>>> consola de clan y npcs :: |+
+            rdata = right$(rdata, len(rdata) - 2)
+            
+            iuser = val(readfield(3, rdata, 176))
+
+            if iuser = 0 then
+                if puedoquitarfoco and not dialogosclanes.activo then
+                    addtorichtextbox frmmain.rectxt, readfield(1, rdata, 126), val(readfield(2, rdata, 126)), val(readfield(3, rdata, 126)), val(readfield(4, rdata, 126)), val(readfield(5, rdata, 126)), val(readfield(6, rdata, 126))
+                elseif dialogosclanes.activo then
+                    dialogosclanes.pushbacktext readfield(1, rdata, 126)
+                end if
+            end if
+
+            exit sub
+
         case "!!"                ' >>>>> msgbox :: !!
             if puedoquitarfoco then
                 rdata = right$(rdata, len(rdata) - 2)
@@ -446,12 +565,18 @@ sub handledata(byval rdata as string)
             rdata = right$(rdata, len(rdata) - 2)
             usercharindex = val(rdata)
             userpos = charlist(usercharindex).pos
+            frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
             exit sub
         case "cc"              ' >>>>> crear un personaje :: cc
             rdata = right$(rdata, len(rdata) - 2)
             charindex = readfield(4, rdata, 44)
             x = readfield(5, rdata, 44)
             y = readfield(6, rdata, 44)
+            'debug.print "cc"
+            'if charlist(charindex).pos.x or charlist(charindex).pos.y then
+            '    debug.print "char duplicado: " & charindex
+            '    call erasechar(charindex)
+           ' end if
             
             charlist(charindex).fx = val(readfield(9, rdata, 44))
             charlist(charindex).fxlooptimes = val(readfield(10, rdata, 44))
@@ -479,14 +604,8 @@ sub handledata(byval rdata as string)
                 charlist(charindex).fxlooptimes = 0
             end if
             
-            if fx = 0 then
-                'if not usernavegando and val(readfield(4, rdata, 44)) <> 0 then
-                        if charlist(charindex).priv <> 1 and charlist(charindex).priv <> 2 and charlist(charindex).priv <> 3 then
-                            call dopasosfx(charindex)
-                        end if
-                'else
-                        'fx navegando
-                'end if
+            if charlist(charindex).priv = 0 then
+                call dopasosfx(charindex)
             end if
             
             call movecharbypos(charindex, readfield(2, rdata, 44), readfield(3, rdata, 44))
@@ -495,6 +614,7 @@ sub handledata(byval rdata as string)
             exit sub
         case "cp"             ' >>>>> cambiar apariencia personaje :: cp
             rdata = right$(rdata, len(rdata) - 2)
+            
             charindex = val(readfield(1, rdata, 44))
             charlist(charindex).muerto = val(readfield(3, rdata, 44)) = 500
             charlist(charindex).body = bodydata(val(readfield(2, rdata, 44)))
@@ -508,7 +628,7 @@ sub handledata(byval rdata as string)
             if tempint <> 0 then charlist(charindex).escudo = shieldanimdata(tempint)
             tempint = val(readfield(9, rdata, 44))
             if tempint <> 0 then charlist(charindex).casco = cascoanimdata(tempint)
-            
+
             call refreshallchars
             exit sub
         case "ho"            ' >>>>> crear un objeto
@@ -531,23 +651,24 @@ sub handledata(byval rdata as string)
             mapdata(val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44))).blocked = val(readfield(3, rdata, 44))
             exit sub
         case "tm"           ' >>>>> play un midi :: tm
-            if musica = 0 then
-                rdata = right$(rdata, len(rdata) - 2)
-                if val(readfield(1, rdata, 45)) <> 0 then
-                    'stop_midi
-                    if musica = 0 then
-                        curmidi = val(readfield(1, rdata, 45)) & ".mid"
-                        loopmidi = val(readfield(2, rdata, 45))
-                        call cargarmidi(dirmidi & curmidi)
-                        call play_midi
+            rdata = right$(rdata, len(rdata) - 2)
+            currentmidi = val(readfield(1, rdata, 45))
+            
+            if musica then
+                if currentmidi <> 0 then
+                    rdata = right$(rdata, len(rdata) - len(readfield(1, rdata, 45)))
+                    if len(rdata) > 0 then
+                        call audio.playmidi(cstr(currentmidi) & ".mid", val(right$(rdata, len(rdata) - 1)))
+                    else
+                        call audio.playmidi(cstr(currentmidi) & ".mid")
                     end if
                 end if
             end if
             exit sub
         case "tw"          ' >>>>> play un wav :: tw
-            if fx = 0 then
+            if sound then
                 rdata = right$(rdata, len(rdata) - 2)
-                 call playwaveds(rdata & ".wav")
+                 call audio.playwave(rdata & ".wav")
             end if
             exit sub
         case "gl" 'lista de guilds
@@ -556,27 +677,34 @@ sub handledata(byval rdata as string)
             exit sub
         case "fo"          ' >>>>> play un wav :: tw
             bfogata = true
-            '[code 001]:matux
-                if frmmain.isplaying <> plfogata then
-                    frmmain.stopsound
-                    call frmmain.play("fuego.wav", true)
-                    frmmain.isplaying = plfogata
-                end if
-            '[end]'
+            if fogatabufferindex = 0 then
+                fogatabufferindex = audio.playwave("fuego.wav", loopstyle.enabled)
+            end if
+            exit sub
+        case "ca"
+            cambiodearea asc(mid$(sdata, 3, 1)), asc(mid$(sdata, 4, 1))
             exit sub
     end select
 
-    select case left(sdata, 3)
+    select case left$(sdata, 3)
         case "val"                  ' >>>>> validar cliente :: val
+            dim valstring as string
             rdata = right$(rdata, len(rdata) - 3)
-            'if frmborrar.visible then
             bk = clng(readfield(1, rdata, asc(",")))
-            bo = 100 'cint(readfield(1, rdata, asc(",")))
             brk = readfield(2, rdata, asc(","))
+            valstring = readfield(3, rdata, asc(","))
+            cargarcabezas
+            
+#if seguridadalkon then
+            cheatingdeath.inputk
+            
+            if not cheatingdeath.validararchivoscriticos(valstring) then end
+#end if
+
             if estadologin = borrarpj then
                 call senddata("borr" & frmborrar.txtnombre.text & "," & frmborrar.txtpasswd.text & "," & validarloginmsg(cint(rdata)))
             elseif estadologin = normal or estadologin = crearnuevopj then
-                call login(0)
+                call login(validarloginmsg(cint(brk)))
             elseif estadologin = dados then
                 frmcrearpersonaje.show vbmodal
             end if
@@ -592,36 +720,20 @@ sub handledata(byval rdata as string)
             if not brain then
                 brain = true
             else
-               if blluvia(usermap) <> 0 then
+                if blluvia(usermap) <> 0 and sound then
+                    'stop playing the rain sound
+                    call audio.stopwave(rainbufferindex)
+                    rainbufferindex = 0
                     if btecho then
-                        'call stopsound("lluviain.mp3")
-                        'call playsound("lluviainend.mp3")
-                        '[code 001]:matux'
-                        call frmmain.stopsound
-                        call frmmain.play("lluviainend.wav", false)
-                        frmmain.isplaying = plnone
-                        '[end]'
-                   else
-                        'call stopsound("lluviaout.mp3")
-                        'call playsound("lluviaoutend.mp3")
-                        '[code 001]:matux'
-                        call frmmain.stopsound
-                        call frmmain.play("lluviaoutend.wav", false)
-                        frmmain.isplaying = plnone
-                        '[end]'
+                        call audio.playwave("lluviainend.wav", loopstyle.disabled)
+                    else
+                        call audio.playwave("lluviaoutend.wav", loopstyle.disabled)
                     end if
-               end if
-               brain = false
+                    frmmain.isplaying = playloop.plnone
+                end if
+                brain = false
             end if
-                        
-            exit sub
-        case "noc" 'nocheeeee
-'            debug.print rdata
-            rdata = right$(rdata, len(rdata) - 3)
-            bnoche = iif(rdata = "1", true, false)
-            surfacedb.efectopred = iif(bnoche, 1, 0)
             
-            call surfacedb.borrartodo
             exit sub
         case "qdl"                  ' >>>>> quitar dialogo :: qdl
             rdata = right$(rdata, len(rdata) - 3)
@@ -681,47 +793,26 @@ sub handledata(byval rdata as string)
             frmmain.mousepointer = 2
             select case usingskill
                 case magia
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre el objetivo...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_magia, 100, 100, 120, 0, 0)
                 case pesca
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre el sitio donde quieres pescar...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_pesca, 100, 100, 120, 0, 0)
                 case robar
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre la victima...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_robar, 100, 100, 120, 0, 0)
                 case talar
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre el �rbol...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_talar, 100, 100, 120, 0, 0)
                 case mineria
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre el yacimiento...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_mineria, 100, 100, 120, 0, 0)
                 case fundirmetal
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre la fragua...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_fundirmetal, 100, 100, 120, 0, 0)
                 case proyectiles
-                    call addtorichtextbox(frmmain.rectxt, "haz click sobre la victima...", 100, 100, 120, 0, 0)
+                    call addtorichtextbox(frmmain.rectxt, mensaje_trabajo_proyectiles, 100, 100, 120, 0, 0)
             end select
             exit sub
         case "csi"                 ' >>>>> actualiza slot inventario :: csi
             rdata = right$(rdata, len(rdata) - 3)
             slot = readfield(1, rdata, 44)
-            userinventory(slot).objindex = readfield(2, rdata, 44)
-            userinventory(slot).name = readfield(3, rdata, 44)
-            userinventory(slot).amount = readfield(4, rdata, 44)
-            userinventory(slot).equipped = readfield(5, rdata, 44)
-            userinventory(slot).grhindex = val(readfield(6, rdata, 44))
-            userinventory(slot).objtype = val(readfield(7, rdata, 44))
-            userinventory(slot).maxhit = val(readfield(8, rdata, 44))
-            userinventory(slot).minhit = val(readfield(9, rdata, 44))
-            userinventory(slot).def = val(readfield(10, rdata, 44))
-            userinventory(slot).valor = val(readfield(11, rdata, 44))
-        
-            tempstr = ""
-            if userinventory(slot).equipped = 1 then
-                tempstr = tempstr & "(eqp)"
-            end if
-            
-            if userinventory(slot).amount > 0 then
-                tempstr = tempstr & "(" & userinventory(slot).amount & ") " & userinventory(slot).name
-            else
-                tempstr = tempstr & userinventory(slot).name
-            end if
-            
-            binvmod = true
+            call inventario.setitem(slot, readfield(2, rdata, 44), readfield(4, rdata, 44), readfield(5, rdata, 44), val(readfield(6, rdata, 44)), val(readfield(7, rdata, 44)), _
+                                    val(readfield(8, rdata, 44)), val(readfield(9, rdata, 44)), val(readfield(10, rdata, 44)), val(readfield(11, rdata, 44)), readfield(3, rdata, 44))
             
             exit sub
         '[kevin]-------------------------------------------------------
@@ -745,8 +836,6 @@ sub handledata(byval rdata as string)
             else
                 tempstr = tempstr & userbancoinventory(slot).name
             end if
-            
-            binvmod = true
             
             exit sub
         '************************************************************************
@@ -831,7 +920,6 @@ sub handledata(byval rdata as string)
         case "err"
             rdata = right$(rdata, len(rdata) - 3)
             frmoldpersonaje.mousepointer = 1
-            frmpasswd.mousepointer = 1
             frmpasswdsinpadrinos.mousepointer = 1
             if not frmcrearpersonaje.visible then
 #if usarwrench = 1 then
@@ -846,9 +934,9 @@ sub handledata(byval rdata as string)
     end select
     
     
-    select case left(sdata, 4)
+    select case left$(sdata, 4)
         case "part"
-            call addtorichtextbox(frmmain.rectxt, "si deseas entrar en una party con " & readfield(1, rdata, 44) & ", escribe /entrarparty", 0, 255, 0, false, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_entrar_party_1 & readfield(1, rdata, 44) & mensaje_entrar_party_2, 0, 255, 0, false, false, false)
             exit sub
         case "cegu"
             userciego = true
@@ -871,6 +959,7 @@ sub handledata(byval rdata as string)
             frmcrearpersonaje.lbagilidad.caption = useratributos(3)
             frmcrearpersonaje.lbcarisma.caption = useratributos(4)
             frmcrearpersonaje.lbconstitucion.caption = useratributos(5)
+            
             exit sub
         case "mcar"              ' >>>>> mostrar cartel :: mcar
             rdata = right$(rdata, len(rdata) - 4)
@@ -896,8 +985,6 @@ sub handledata(byval rdata as string)
             npcinventory(npcinvdim).c6 = readfield(15, rdata, 44)
             npcinventory(npcinvdim).c7 = readfield(16, rdata, 44)
             frmcomerciar.list1(0).additem npcinventory(npcinvdim).name
-            
-            binvmod = true
             exit sub
         case "ehys"              ' actualiza hambre y sed :: ehys
             rdata = right$(rdata, len(rdata) - 4)
@@ -937,7 +1024,7 @@ sub handledata(byval rdata as string)
             exit sub
         case "nene"             ' >>>>> nro de personajes :: nene
             rdata = right$(rdata, len(rdata) - 4)
-            addtorichtextbox frmmain.rectxt, "hay " & rdata & " npcs.", 255, 255, 255, 0, 0
+            addtorichtextbox frmmain.rectxt, mensaje_nene & rdata, 255, 255, 255, 0, 0
             exit sub
         case "rsos"             ' >>>>> mensaje :: rsos
             rdata = right$(rdata, len(rdata) - 4)
@@ -957,17 +1044,22 @@ sub handledata(byval rdata as string)
                   frmforo.show , frmmain
             end if
             exit sub
-        case "cose"
-            usandosistemapadrinos = readfield(1, rdata, 44)
-            puedecrearpjs = readfield(1, rdata, 44)
-            exit sub
     end select
 
-    select case left(sdata, 5)
-        case "nover"
+    select case left$(sdata, 5)
+        case ucase$(chr$(110)) & mid$("medok", 4, 1) & right$("akv", 1) & "e" & trim$(left$("  rs", 3))
             rdata = right$(rdata, len(rdata) - 5)
             charindex = val(readfield(1, rdata, 44))
             charlist(charindex).invisible = (val(readfield(2, rdata, 44)) = 1)
+            
+#if seguridadalkon then
+            if (10 * val(readfield(2, rdata, 44)) = 10) then
+                call mi(cualmi).setinvisible(charindex)
+            else
+                call mi(cualmi).resetinvisible(charindex)
+            end if
+#end if
+
             exit sub
         case "zmotd"
             rdata = right$(rdata, len(rdata) - 5)
@@ -983,11 +1075,9 @@ sub handledata(byval rdata as string)
                     .lbinteligencia.caption = readfield(3, rdata, 44)
                     .lbcarisma.caption = readfield(4, rdata, 44)
                     .lbconstitucion.caption = readfield(5, rdata, 44)
-                    
-                    tempstr = readfield(6, rdata, 44)
-                    if tempstr <> "" then usandosistemapadrinos = val(tempstr)
                 end if
             end with
+            
             exit sub
         case "medok"            ' >>>>> meditar ok :: medok
             usermeditar = not usermeditar
@@ -1017,16 +1107,23 @@ sub handledata(byval rdata as string)
             exit sub
     end select
     
-    select case left(sdata, 7)
+    select case left$(sdata, 7)
         case "guildne"
             rdata = right(rdata, len(rdata) - 7)
             call frmguildnews.parseguildnews(rdata)
             exit sub
-        case "peacede"
+        case "peacede"  'detalles de paz
             rdata = right(rdata, len(rdata) - 7)
             call frmuserrequest.recievepeticion(rdata)
             exit sub
-        case "peacepr"
+        case "alliede"  'detalles de paz
+            rdata = right(rdata, len(rdata) - 7)
+            call frmuserrequest.recievepeticion(rdata)
+            exit sub
+        case "alliepr"  'lista de prop de alianzas
+            rdata = right(rdata, len(rdata) - 7)
+            call frmpeaceprop.parseallieoffers(rdata)
+        case "peacepr"  'lista de prop de paz
             rdata = right(rdata, len(rdata) - 7)
             call frmpeaceprop.parsepeaceoffers(rdata)
             exit sub
@@ -1057,20 +1154,20 @@ sub handledata(byval rdata as string)
         case "transok"           ' transacci�n ok :: transok
             if frmcomerciar.visible then
                 i = 1
-                do while i <= ubound(userinventory)
-                    if userinventory(i).objindex <> 0 then
-                            frmcomerciar.list1(1).additem userinventory(i).name
+                do while i <= max_inventory_slots
+                    if inventario.objindex(i) <> 0 then
+                        frmcomerciar.list1(1).additem inventario.itemname(i)
                     else
-                            frmcomerciar.list1(1).additem "nada"
+                        frmcomerciar.list1(1).additem "nada"
                     end if
                     i = i + 1
                 loop
                 rdata = right(rdata, len(rdata) - 7)
                 
                 if readfield(2, rdata, 44) = "0" then
-                        frmcomerciar.list1(0).listindex = frmcomerciar.lastindex1
+                    frmcomerciar.list1(0).listindex = frmcomerciar.lastindex1
                 else
-                        frmcomerciar.list1(1).listindex = frmcomerciar.lastindex2
+                    frmcomerciar.list1(1).listindex = frmcomerciar.lastindex2
                 end if
             end if
             exit sub
@@ -1079,9 +1176,9 @@ sub handledata(byval rdata as string)
         case "bancook"           ' banco ok :: bancook
             if frmbancoobj.visible then
                 i = 1
-                do while i <= ubound(userinventory)
-                    if userinventory(i).objindex <> 0 then
-                            frmbancoobj.list1(1).additem userinventory(i).name
+                do while i <= max_inventory_slots
+                    if inventario.objindex(i) <> 0 then
+                            frmbancoobj.list1(1).additem inventario.itemname(i)
                     else
                             frmbancoobj.list1(1).additem "nada"
                     end if
@@ -1089,7 +1186,7 @@ sub handledata(byval rdata as string)
                 loop
                 
                 ii = 1
-                do while ii <= ubound(userbancoinventory)
+                do while ii <= max_bancoinventory_slots
                     if userbancoinventory(ii).objindex <> 0 then
                             frmbancoobj.list1(0).additem userbancoinventory(ii).name
                     else
@@ -1110,10 +1207,10 @@ sub handledata(byval rdata as string)
         '[/kevin]************************************************************************
         '----------------------------------------------------------------------------------
         case "abpanel"
-            frmpanelgm.show , frmmain
+            frmpanelgm.show vbmodal, frmmain
             exit sub
         case "listusu"
-            rdata = right(rdata, len(rdata) - 7)
+            rdata = right$(rdata, len(rdata) - 7)
             t = split(rdata, ",")
             if frmpanelgm.visible then
                 frmpanelgm.cbolistausus.clear
@@ -1127,57 +1224,71 @@ sub handledata(byval rdata as string)
     end select
     
     '[alejo]
-    select case ucase(left(rdata, 9))
-    case "comusuinv"
-        rdata = right(rdata, len(rdata) - 9)
-        otroinventario(1).objindex = readfield(2, rdata, 44)
-        otroinventario(1).name = readfield(3, rdata, 44)
-        otroinventario(1).amount = readfield(4, rdata, 44)
-        otroinventario(1).equipped = readfield(5, rdata, 44)
-        otroinventario(1).grhindex = val(readfield(6, rdata, 44))
-        otroinventario(1).objtype = val(readfield(7, rdata, 44))
-        otroinventario(1).maxhit = val(readfield(8, rdata, 44))
-        otroinventario(1).minhit = val(readfield(9, rdata, 44))
-        otroinventario(1).def = val(readfield(10, rdata, 44))
-        otroinventario(1).valor = val(readfield(11, rdata, 44))
-        
-        frmcomerciarusu.list2.clear
-        
-        frmcomerciarusu.list2.additem otroinventario(1).name
-        frmcomerciarusu.list2.itemdata(frmcomerciarusu.list2.newindex) = otroinventario(1).amount
-        
-        frmcomerciarusu.lblestadoresp.visible = false
+    select case ucase$(left$(rdata, 9))
+        case "comusuinv"
+            rdata = right$(rdata, len(rdata) - 9)
+            otroinventario(1).objindex = readfield(2, rdata, 44)
+            otroinventario(1).name = readfield(3, rdata, 44)
+            otroinventario(1).amount = readfield(4, rdata, 44)
+            otroinventario(1).equipped = readfield(5, rdata, 44)
+            otroinventario(1).grhindex = val(readfield(6, rdata, 44))
+            otroinventario(1).objtype = val(readfield(7, rdata, 44))
+            otroinventario(1).maxhit = val(readfield(8, rdata, 44))
+            otroinventario(1).minhit = val(readfield(9, rdata, 44))
+            otroinventario(1).def = val(readfield(10, rdata, 44))
+            otroinventario(1).valor = val(readfield(11, rdata, 44))
+            
+            frmcomerciarusu.list2.clear
+            
+            frmcomerciarusu.list2.additem otroinventario(1).name
+            frmcomerciarusu.list2.itemdata(frmcomerciarusu.list2.newindex) = otroinventario(1).amount
+            
+            frmcomerciarusu.lblestadoresp.visible = false
     end select
+    
+#if seguridadalkon then
+    if handlecrypteddata(rdata) then exit sub
+    
+    if handledataex(rdata) then exit sub
+#end if
+    
+    ';call logcustom("unhandled data: " & rdata)
     
 end sub
 
-
 sub senddata(byval sddata as string)
-dim retcode
 
-dim auxcmd as string
-auxcmd = ucase(left(sddata, 5))
+    'no enviamos nada si no estamos conectados
+#if usarwrench = 1 then
+    if not frmmain.socket1.connected then exit sub
+#else
+    if frmmain.winsock1.state <> sckconnected then exit sub
+#end if
 
-'debug.print ">> " & sddata
+    dim auxcmd as string
+    auxcmd = ucase$(left$(sddata, 5))
+    
+    'debug.print ">> " & sddata
 
-bk = gencrc(bk, sddata)
-
-bo = bo + 1
-if bo > 10000 then bo = 100
+#if seguridadalkon then
+    bk = checksum(bk, sddata)
 
 
-'agregamos el fin de linea
-sddata = sddata & "~" & bk & endc
+    'agregamos el fin de linea
+    sddata = sddata & "~" & bk & endc
+#else
+    sddata = sddata & endc
+#end if
 
-'para evitar el spamming
-if auxcmd = "demsg" and len(sddata) > 8000 then
-    exit sub
-elseif len(sddata) > 300 and auxcmd <> "demsg" then
-    exit sub
-end if
+    'para evitar el spamming
+    if auxcmd = "demsg" and len(sddata) > 8000 then
+        exit sub
+    elseif len(sddata) > 300 and auxcmd <> "demsg" then
+        exit sub
+    end if
 
 #if usarwrench = 1 then
-    retcode = frmmain.socket1.write(sddata, len(sddata))
+    call frmmain.socket1.write(sddata, len(sddata))
 #else
     call frmmain.winsock1.senddata(sddata)
 #end if
@@ -1185,55 +1296,23 @@ end if
 end sub
 
 sub login(byval valcode as integer)
-
-'personaje grabado
-'if sendnewchar = false then
-
-if estadologin = normal then
-    senddata ("ologin" & username & "," & userpassword & "," & app.major & "." & app.minor & "." & app.revision & "," & valcode & md5hushyo & "," & versiones(1) & "," & versiones(2) & "," & versiones(3) & "," & versiones(4) & "," & versiones(5) & "," & versiones(6) & "," & versiones(7))
-'end if
-'crear personaje
-'if sendnewchar = true then
-'barrin 3/10/03
-'mandamos diferentes datos de login nuevo a partir de si se esta usando o no el sistema de
-'padrinos en el servidor
-elseif estadologin = crearnuevopj and usandosistemapadrinos = 1 then
-    senddata ("nlogin" & username & "," & userpassword _
-    & "," & 0 & "," & 0 & "," _
-    & app.major & "." & app.minor & "." & app.revision & _
-    "," & userraza & "," & usersexo & "," & userclase & "," & _
-    useratributos(1) & "," & useratributos(2) & "," & useratributos(3) _
-    & "," & useratributos(4) & "," & useratributos(5) _
-     & "," & userskills(1) & "," & userskills(2) _
-     & "," & userskills(3) & "," & userskills(4) _
-     & "," & userskills(5) & "," & userskills(6) _
-     & "," & userskills(7) & "," & userskills(8) _
-     & "," & userskills(9) & "," & userskills(10) _
-     & "," & userskills(11) & "," & userskills(12) _
-     & "," & userskills(13) & "," & userskills(14) _
-     & "," & userskills(15) & "," & userskills(16) _
-     & "," & userskills(17) & "," & userskills(18) _
-     & "," & userskills(19) & "," & userskills(20) _
-     & "," & userskills(21) & "," & useremail & "," _
-     & userhogar & "," & padrinoname & "," & padrinopassword & "," & versiones(1) & "," & versiones(2) & "," & versiones(3) & "," & versiones(4) & "," & versiones(5) & "," & versiones(6) & "," & versiones(7) & "," & valcode & md5hushyo)
-elseif estadologin = crearnuevopj and usandosistemapadrinos = 0 then
-    senddata ("nlogin" & username & "," & userpassword _
-    & "," & 0 & "," & 0 & "," _
-    & app.major & "." & app.minor & "." & app.revision & _
-    "," & userraza & "," & usersexo & "," & userclase & "," & _
-    useratributos(1) & "," & useratributos(2) & "," & useratributos(3) _
-    & "," & useratributos(4) & "," & useratributos(5) _
-     & "," & userskills(1) & "," & userskills(2) _
-     & "," & userskills(3) & "," & userskills(4) _
-     & "," & userskills(5) & "," & userskills(6) _
-     & "," & userskills(7) & "," & userskills(8) _
-     & "," & userskills(9) & "," & userskills(10) _
-     & "," & userskills(11) & "," & userskills(12) _
-     & "," & userskills(13) & "," & userskills(14) _
-     & "," & userskills(15) & "," & userskills(16) _
-     & "," & userskills(17) & "," & userskills(18) _
-     & "," & userskills(19) & "," & userskills(20) _
-     & "," & userskills(21) & "," & useremail & "," _
-     & userhogar & "," & versiones(1) & "," & versiones(2) & "," & versiones(3) & "," & versiones(4) & "," & versiones(5) & "," & versiones(6) & "," & versiones(7) & "," & valcode & md5hushyo)
-end if
+    if estadologin = normal then
+        senddata ("ologin" & username & "," & userpassword & "," & app.major & "." & app.minor & "." & app.revision & "," & versiones(1) & "," & versiones(2) & "," & versiones(3) & "," & versiones(4) & "," & versiones(5) & "," & versiones(6) & "," & versiones(7) & "," & valcode & md5hushyo)
+    elseif estadologin = crearnuevopj then
+        senddata ("nlogin" & username & "," & userpassword _
+                & "," & app.major & "." & app.minor & "." & app.revision _
+                & "," & userraza & "," & usersexo & "," & userclase _
+                & "," & userskills(1) & "," & userskills(2) _
+                & "," & userskills(3) & "," & userskills(4) _
+                & "," & userskills(5) & "," & userskills(6) _
+                & "," & userskills(7) & "," & userskills(8) _
+                & "," & userskills(9) & "," & userskills(10) _
+                & "," & userskills(11) & "," & userskills(12) _
+                & "," & userskills(13) & "," & userskills(14) _
+                & "," & userskills(15) & "," & userskills(16) _
+                & "," & userskills(17) & "," & userskills(18) _
+                & "," & userskills(19) & "," & userskills(20) _
+                & "," & userskills(21) & "," & useremail _
+                & "," & userhogar & "," & versiones(1) & "," & versiones(2) & "," & versiones(3) & "," & versiones(4) & "," & versiones(5) & "," & versiones(6) & "," & versiones(7) & "," & valcode & md5hushyo)
+    end if
 end sub

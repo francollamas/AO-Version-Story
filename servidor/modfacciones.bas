@@ -1,5 +1,5 @@
 attribute vb_name = "modfacciones"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@ attribute vb_name = "modfacciones"
 'pablo ignacio m�rquez
 
 
-
 option explicit
 
 public armaduraimperial1 as integer 'primer jerarquia
@@ -55,55 +54,50 @@ public tunicaegregiahumano as integer
 public tunicaegregiaenano as integer
 public sacerdotedemoniaco as integer
 
-
-
-
-
-
 public armaduracaos1 as integer
 public tunicamagocaos as integer
 public tunicamagocaosenanos as integer
 public armaduracaos2 as integer
 public armaduracaos3 as integer
 
-public const expalunirse = 50000
-public const expx100 = 5000
+public const expalunirse as long = 50000
+public const expx100 as integer = 5000
 
 
 public sub enlistararmadareal(byval userindex as integer)
 
 if userlist(userindex).faccion.armadareal = 1 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a las tropas reales!!! ve a combatir criminales!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a las tropas reales!!! ve a combatir criminales!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.fuerzascaos = 1 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "maldito insolente!!! vete de aqui seguidor de las sombras!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "maldito insolente!!! vete de aqui seguidor de las sombras!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if criminal(userindex) then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no se permiten criminales en el ejercito imperial!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "no se permiten criminales en el ejercito imperial!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.criminalesmatados < 30 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 30 criminales, solo has matado " & userlist(userindex).faccion.criminalesmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 30 criminales, solo has matado " & userlist(userindex).faccion.criminalesmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).stats.elv < 25 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
  
 if userlist(userindex).faccion.ciudadanosmatados > 0 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has asesinado gente inocente, no aceptamos asesinos en las tropas reales!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "has asesinado gente inocente, no aceptamos asesinos en las tropas reales!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.reenlistadas > 4 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas reales demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas reales demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
@@ -112,7 +106,7 @@ userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlista
 
 userlist(userindex).faccion.recompensasreal = userlist(userindex).faccion.criminalesmatados \ 100
 
-call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "���bienvenido a al ejercito imperial!!!, aqui tienes tus vestimentas. por cada centena de criminales que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "���bienvenido a al ejercito imperial!!!, aqui tienes tus vestimentas. por cada centena de criminales que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 
 if userlist(userindex).faccion.recibioarmadurareal = 0 then
     dim miobj as obj
@@ -143,7 +137,7 @@ if userlist(userindex).faccion.recibioarmadurareal = 0 then
         
     if ucase$(userlist(userindex).raza) = "enano" or ucase$(userlist(userindex).raza) = "gnomo" then
         miobj.objindex = vestimentaimperialenano
-        select case userlist(userindex).clase
+        select case ucase$(userlist(userindex).clase)
             case "mago"
                 miobj2.objindex = tunicaconspicuaenano
             case else
@@ -151,7 +145,7 @@ if userlist(userindex).faccion.recibioarmadurareal = 0 then
         end select
     else
         miobj.objindex = vestimentaimperialhumano
-        select case userlist(userindex).clase
+        select case ucase$(userlist(userindex).clase)
             case "mago"
                 miobj2.objindex = tunicaconspicuahumano
             case "clerigo", "druida", "bardo"
@@ -172,8 +166,10 @@ if userlist(userindex).faccion.recibioarmadurareal = 0 then
 end if
 
 if userlist(userindex).faccion.recibioexpinicialreal = 0 then
-    call addtovar(userlist(userindex).stats.exp, expalunirse, maxexp)
-    call senddata(toindex, userindex, 0, "||has ganado " & expalunirse & " puntos de experiencia." & fonttype_fight)
+    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expalunirse
+    if userlist(userindex).stats.exp > maxexp then _
+        userlist(userindex).stats.exp = maxexp
+    call senddata(sendtarget.toindex, userindex, 0, "||has ganado " & expalunirse & " puntos de experiencia." & fonttype_fight)
     userlist(userindex).faccion.recibioexpinicialreal = 1
     call checkuserlevel(userindex)
 end if
@@ -187,11 +183,13 @@ public sub recompensaarmadareal(byval userindex as integer)
 
 if userlist(userindex).faccion.criminalesmatados \ 100 = _
    userlist(userindex).faccion.recompensasreal then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya has recibido tu recompensa, mata 100 crinales mas para recibir la proxima!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "ya has recibido tu recompensa, mata 100 crinales mas para recibir la proxima!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 else
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "aqui tienes tu recompensa noble guerrero!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-    call addtovar(userlist(userindex).stats.exp, expx100, maxexp)
-    call senddata(toindex, userindex, 0, "||has ganado " & expx100 & " puntos de experiencia." & fonttype_fight)
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "aqui tienes tu recompensa noble guerrero!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expx100
+    if userlist(userindex).stats.exp > maxexp then _
+        userlist(userindex).stats.exp = maxexp
+    call senddata(sendtarget.toindex, userindex, 0, "||has ganado " & expx100 & " puntos de experiencia." & fonttype_fight)
     userlist(userindex).faccion.recompensasreal = userlist(userindex).faccion.recompensasreal + 1
     call checkuserlevel(userindex)
 end if
@@ -199,22 +197,28 @@ end if
 end sub
 
 public sub expulsarfaccionreal(byval userindex as integer)
-userlist(userindex).faccion.armadareal = 0
-'call perderitemsfaccionarios(userindex)
-call senddata(toindex, userindex, 0, "||has sido expulsado de las tropas reales!!!." & fonttype_fight)
+
+    userlist(userindex).faccion.armadareal = 0
+    'call perderitemsfaccionarios(userindex)
+    call senddata(sendtarget.toindex, userindex, 0, "||has sido expulsado de las tropas reales!!!." & fonttype_fight)
+    'desequipamos la armadura real si est� equipada
+    if objdata(userlist(userindex).invent.armoureqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
 end sub
 
 public sub expulsarfaccioncaos(byval userindex as integer)
-userlist(userindex).faccion.fuerzascaos = 0
-'call perderitemsfaccionarios(userindex)
-call senddata(toindex, userindex, 0, "||has sido expulsado de la legi�n oscura!!!." & fonttype_fight)
+
+    userlist(userindex).faccion.fuerzascaos = 0
+    'call perderitemsfaccionarios(userindex)
+    call senddata(sendtarget.toindex, userindex, 0, "||has sido expulsado de la legi�n oscura!!!." & fonttype_fight)
+    'desequipamos la armadura real si est� equipada
+    if objdata(userlist(userindex).invent.armoureqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
 end sub
 
 public function tituloreal(byval userindex as integer) as string
 
 select case userlist(userindex).faccion.recompensasreal
     case 0
-        tituloreal = "aprendiz "
+        tituloreal = "aprendiz"
     case 1
         tituloreal = "escudero"
     case 2
@@ -242,48 +246,48 @@ end function
 public sub enlistarcaos(byval userindex as integer)
 
 if not criminal(userindex) then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "largate de aqui, bufon!!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "largate de aqui, bufon!!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.fuerzascaos = 1 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a la legi�n oscura!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a la legi�n oscura!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.armadareal = 1 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "las sombras reinaran en argentum, largate de aqui estupido ciudadano.!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "las sombras reinaran en argentum, largate de aqui estupido ciudadano.!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 '[barrin 17-12-03] si era miembro de la armada real no se puede enlistar
 if userlist(userindex).faccion.recibioexpinicialreal = 1 then 'tomamos el valor de ah�: �recibio la experiencia para entrar?
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no permitir� que ning�n insecto real ingrese �traidor del rey!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "no permitir� que ning�n insecto real ingrese �traidor del rey!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 '[/barrin]
 
 if not criminal(userindex) then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ja ja ja tu no eres bienvenido aqui!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "ja ja ja tu no eres bienvenido aqui!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).faccion.ciudadanosmatados < 70 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 70 ciudadanos, solo has matado " & userlist(userindex).faccion.ciudadanosmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 70 ciudadanos, solo has matado " & userlist(userindex).faccion.ciudadanosmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 if userlist(userindex).stats.elv < 25 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
 
 if userlist(userindex).faccion.reenlistadas > 4 then
     if userlist(userindex).faccion.reenlistadas = 200 then
-        call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras y durante tu rebeld�a has atacado a mi ej�rcito. vete de aqu�!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+        call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras y durante tu rebeld�a has atacado a mi ej�rcito. vete de aqu�!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     else
-        call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+        call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     end if
     exit sub
 end if
@@ -292,7 +296,7 @@ userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlista
 userlist(userindex).faccion.fuerzascaos = 1
 userlist(userindex).faccion.recompensascaos = userlist(userindex).faccion.ciudadanosmatados \ 100
 
-call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "bienvenido a al lado oscuro!!!, aqui tienes tu armadura. por cada centena de ciudadanos que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "bienvenido a al lado oscuro!!!, aqui tienes tu armadura. por cada centena de ciudadanos que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 
 if userlist(userindex).faccion.recibioarmaduracaos = 0 then
     dim miobj as obj
@@ -302,21 +306,21 @@ if userlist(userindex).faccion.recibioarmaduracaos = 0 then
     
     if ucase$(userlist(userindex).raza) = "enano" or ucase$(userlist(userindex).raza) = "gnomo" then
         miobj.objindex = vestimentalegionenano
-        select case userlist(userindex).clase
+        select case ucase$(userlist(userindex).clase)
             case "mago"
                 miobj2.objindex = tunicaegregiaenano
             case else
                 miobj2.objindex = tunicalobregaenano
         end select
     else
-        miobj.objindex = vestimentaimperialhumano
-        select case userlist(userindex).clase
+        miobj.objindex = vestimentalegionhumano
+        select case ucase$(userlist(userindex).clase)
             case "mago"
                 miobj2.objindex = tunicaegregiahumano
             case "clerigo", "druida", "bardo"
                 miobj2.objindex = sacerdotedemoniaco
             case else
-                miobj2.objindex = tunicaegregiahumano
+                miobj2.objindex = tunicalobregahumano
         end select
     end if
     
@@ -334,8 +338,10 @@ if userlist(userindex).faccion.recibioarmaduracaos = 0 then
 end if
 
 if userlist(userindex).faccion.recibioexpinicialcaos = 0 then
-    call addtovar(userlist(userindex).stats.exp, expalunirse, maxexp)
-    call senddata(toindex, userindex, 0, "||has ganado " & expalunirse & " puntos de experiencia." & fonttype_fight)
+    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expalunirse
+    if userlist(userindex).stats.exp > maxexp then _
+        userlist(userindex).stats.exp = maxexp
+    call senddata(sendtarget.toindex, userindex, 0, "||has ganado " & expalunirse & " puntos de experiencia." & fonttype_fight)
     userlist(userindex).faccion.recibioexpinicialcaos = 1
     call checkuserlevel(userindex)
 end if
@@ -349,11 +355,13 @@ public sub recompensacaos(byval userindex as integer)
 
 if userlist(userindex).faccion.ciudadanosmatados \ 100 = _
    userlist(userindex).faccion.recompensascaos then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya has recibido tu recompensa, mata 100 ciudadanos mas para recibir la proxima!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "ya has recibido tu recompensa, mata 100 ciudadanos mas para recibir la proxima!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 else
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "aqui tienes tu recompensa noble guerrero!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-    call addtovar(userlist(userindex).stats.exp, expx100, maxexp)
-    call senddata(toindex, userindex, 0, "||has ganado " & expx100 & " puntos de experiencia." & fonttype_fight)
+    call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "aqui tienes tu recompensa noble guerrero!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    userlist(userindex).stats.exp = userlist(userindex).stats.exp + expx100
+    if userlist(userindex).stats.exp > maxexp then _
+        userlist(userindex).stats.exp = maxexp
+    call senddata(sendtarget.toindex, userindex, 0, "||has ganado " & expx100 & " puntos de experiencia." & fonttype_fight)
     userlist(userindex).faccion.recompensascaos = userlist(userindex).faccion.recompensascaos + 1
     call checkuserlevel(userindex)
 end if
@@ -400,7 +408,7 @@ end function
 '         if objdata(itemindex).real = 1 or objdata(itemindex).caos = 1 then
 '            call quitaruserinvitem(userindex, i, userlist(userindex).invent.object(i).amount)
 '            call updateuserinv(false, userindex, i)
-'            if objdata(itemindex).objtype = objtype_armour then
+'            if objdata(itemindex).objtype = eobjtype.armour then
 '                if objdata(itemindex).real = 1 then userlist(userindex).faccion.recibioarmadurareal = 0
 '                if objdata(itemindex).caos = 1 then userlist(userindex).faccion.recibioarmaduracaos = 0
 '            else

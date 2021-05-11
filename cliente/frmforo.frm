@@ -174,6 +174,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -221,7 +225,7 @@ if not mimensaje(0).visible then
     label1.visible = true
     label2.visible = true
 else
-    call senddata("demsg" & mimensaje(0).text & chr(176) & mimensaje(1).text)
+    call senddata("demsg" & mimensaje(0).text & chr(176) & left(mimensaje(1).text, 450))
     list.additem mimensaje(0).text
     load text(list.listcount)
     text(list.listcount - 1).text = mimensaje(1).text

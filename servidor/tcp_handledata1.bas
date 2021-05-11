@@ -1,5 +1,5 @@
 attribute vb_name = "tcp_handledata1"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ attribute vb_name = "tcp_handledata1"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 
 
 option explicit
@@ -74,41 +73,30 @@ procesado = true 'ver al final del sub
             end if
         
             '[consejeros]
-            if userlist(userindex).flags.privilegios = 1 then
+            if userlist(userindex).flags.privilegios = playertype.consejero then
                 call loggm(userlist(userindex).name, "dijo: " & rdata, true)
             end if
             
             ind = userlist(userindex).char.charindex
-            '[cdt 17-02-2004]
-'            rdata = " " & rdata & " "
-'            rdata = replace(rdata, " pt", " capo")
-'            rdata = replace(rdata, " nw", " pro")
-'            rdata = replace(rdata, " pt", " capo")
-'            rdata = replace(rdata, " nw", " pro")
-'            rdata = replace(rdata, " pt", " capo")
-'            rdata = replace(rdata, " nw", " pro")
-'            rdata = replace(rdata, " pt", " capo")
-'            rdata = replace(rdata, " nw", " pro")
-'            rdata = mid(rdata, 2, len(rdata) - 2)
-            '[/cdt]
             
             'piedra libre para todos los compas!
             if userlist(userindex).flags.oculto > 0 then
                 userlist(userindex).flags.oculto = 0
-                userlist(userindex).flags.invisible = 0
-                call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-                call senddata(toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                if userlist(userindex).flags.invisible = 0 then
+                    call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+                    call senddata(sendtarget.toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                end if
             end if
             
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(todeadarea, userindex, userlist(userindex).pos.map, "||12632256�" & rdata & "�" & str(ind))
+                call senddata(sendtarget.todeadarea, userindex, userlist(userindex).pos.map, "||12632256�" & rdata & "�" & cstr(ind))
             else
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & rdata & "�" & str(ind))
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & rdata & "�" & cstr(ind))
             end if
             exit sub
         case "-" 'gritar
             if userlist(userindex).flags.muerto = 1 then
-                    call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
                     exit sub
             end if
             rdata = right$(rdata, len(rdata) - 1)
@@ -116,42 +104,52 @@ procesado = true 'ver al final del sub
                 exit sub
             end if
             '[consejeros]
-            if userlist(userindex).flags.privilegios = 1 then
+            if userlist(userindex).flags.privilegios = playertype.consejero then
                 call loggm(userlist(userindex).name, "grito: " & rdata, true)
             end if
     
             'piedra libre para todos los compas!
             if userlist(userindex).flags.oculto > 0 then
                 userlist(userindex).flags.oculto = 0
-                userlist(userindex).flags.invisible = 0
-                call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-                call senddata(toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                if userlist(userindex).flags.invisible = 0 then
+                    call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+                    call senddata(sendtarget.toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                end if
             end if
     
     
             ind = userlist(userindex).char.charindex
-            call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbred & "�" & rdata & "�" & str(ind))
+            call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & vbred & "�" & rdata & "�" & str(ind))
             exit sub
         case "\" 'susurrar al oido
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
                 exit sub
             end if
             rdata = right$(rdata, len(rdata) - 1)
             tname = readfield(1, rdata, 32)
+            
+            'a los dioses y admins no vale susurrarles si no sos uno vos mismo (as� no pueden ver si est�n conectados o no)
+            if (esdios(tname) or esadmin(tname)) and userlist(userindex).flags.privilegios < playertype.dios then
+                call senddata(sendtarget.toindex, userindex, 0, "||no puedes susurrarle a los dioses y admins." & fonttype_info)
+                exit sub
+            end if
+            
+            'a los consejeros y semidioses no vale susurrarles si sos un pj com�n.
+            if userlist(userindex).flags.privilegios = playertype.user and (essemidios(tname) or esconsejero(tname)) then
+                call senddata(sendtarget.toindex, userindex, 0, "||no puedes susurrarle a los gms" & fonttype_info)
+                exit sub
+            end if
+            
             tindex = nameindex(tname)
             if tindex <> 0 then
-                if userlist(tindex).flags.privilegios > 0 and userlist(userindex).flags.privilegios = 0 then
-                    call senddata(toindex, userindex, 0, "||no puedes susurrarle a los gms" & fonttype_info)
-                    exit sub
-                end if
                 if len(rdata) <> len(tname) then
                     tmessage = right$(rdata, len(rdata) - (1 + len(tname)))
                 else
                     tmessage = " "
                 end if
                 if not estapcarea(userindex, tindex) then
-                    call senddata(toindex, userindex, 0, "||estas muy lejos del usuario." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||estas muy lejos del usuario." & fonttype_info)
                     exit sub
                 end if
                 ind = userlist(userindex).char.charindex
@@ -160,20 +158,20 @@ procesado = true 'ver al final del sub
                 end if
                 
                 '[consejeros]
-                if userlist(userindex).flags.privilegios = 1 then
+                if userlist(userindex).flags.privilegios = playertype.consejero then
                     call loggm(userlist(userindex).name, "le dijo a '" & userlist(tindex).name & "' " & tmessage, true)
                 end if
     
-                call senddata(toindex, userindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
-                call senddata(toindex, tindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
+                call senddata(sendtarget.toindex, userindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
+                call senddata(sendtarget.toindex, tindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
                 '[cdt 17-02-2004]
-                if userlist(userindex).flags.privilegios < 2 then
-                    call senddata(toadminsareabutconsejeros, userindex, userlist(userindex).pos.map, "||" & vbyellow & "�" & "a " & userlist(tindex).name & "> " & tmessage & "�" & str(ind))
+                if userlist(userindex).flags.privilegios < playertype.semidios then
+                    call senddata(sendtarget.toadminsareabutconsejeros, userindex, userlist(userindex).pos.map, "||" & vbyellow & "�" & "a " & userlist(tindex).name & "> " & tmessage & "�" & str(ind))
                 end if
                 '[/cdt]
                 exit sub
             end if
-            call senddata(toindex, userindex, 0, "||usuario inexistente. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||usuario inexistente. " & fonttype_info)
             exit sub
         case "m" 'moverse
             dim dummy as long
@@ -186,9 +184,9 @@ procesado = true 'ver al final del sub
                         userlist(userindex).flags.countsh = 0
                     end if
                     if not userlist(userindex).flags.countsh = 0 then
-                        dummy = 126000 / dummy
+                        dummy = 126000 \ dummy
                         call loghackattemp("tramposo sh: " & userlist(userindex).name & " , " & dummy)
-                        call senddata(toadmins, 0, 0, "||servidor> " & userlist(userindex).name & " ha sido echado por el servidor por posible uso de sh." & fonttype_server)
+                        call senddata(sendtarget.toadmins, 0, 0, "||servidor> " & userlist(userindex).name & " ha sido echado por el servidor por posible uso de sh." & fonttype_server)
                         call closesocket(userindex)
                         exit sub
                     else
@@ -205,7 +203,7 @@ procesado = true 'ver al final del sub
             
             'salida parche
             if userlist(userindex).counters.saliendo then
-                call senddata(toindex, userindex, 0, "||/salir cancelado." & fonttype_warning)
+                call senddata(sendtarget.toindex, userindex, 0, "||/salir cancelado." & fonttype_warning)
                 userlist(userindex).counters.saliendo = false
                 userlist(userindex).counters.salir = 0
             end if
@@ -214,41 +212,38 @@ procesado = true 'ver al final del sub
                 if not userlist(userindex).flags.descansar and not userlist(userindex).flags.meditando then
                     call moveuserchar(userindex, val(rdata))
                 elseif userlist(userindex).flags.descansar then
-                  userlist(userindex).flags.descansar = false
-                  call senddata(toindex, userindex, 0, "dok")
-                  call senddata(toindex, userindex, 0, "||has dejado de descansar." & fonttype_info)
-                  call moveuserchar(userindex, val(rdata))
+                    userlist(userindex).flags.descansar = false
+                    call senddata(sendtarget.toindex, userindex, 0, "dok")
+                    call senddata(sendtarget.toindex, userindex, 0, "||has dejado de descansar." & fonttype_info)
+                    call moveuserchar(userindex, val(rdata))
                 elseif userlist(userindex).flags.meditando then
-                  userlist(userindex).flags.meditando = false
-                  call senddata(toindex, userindex, 0, "medok")
-                  call senddata(toindex, userindex, 0, "||dejas de meditar." & fonttype_info)
-                  userlist(userindex).char.fx = 0
-                  userlist(userindex).char.loops = 0
-                  call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & 0 & "," & 0)
-                  
-                  'retirado en el parche de setiembre 2004
-                  'call moveuserchar(userindex, val(rdata))
+                    userlist(userindex).flags.meditando = false
+                    call senddata(sendtarget.toindex, userindex, 0, "medok")
+                    call senddata(sendtarget.toindex, userindex, 0, "||dejas de meditar." & fonttype_info)
+                    userlist(userindex).char.fx = 0
+                    userlist(userindex).char.loops = 0
+                    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & 0 & "," & 0)
                 end if
             else    'paralizado
-              '[cdt 17-02-2004] (<- emmmmm ?????)
-              if not userlist(userindex).flags.ultimomensaje = 1 then
-                call senddata(toindex, userindex, 0, "||no podes moverte porque estas paralizado." & fonttype_info)
-                userlist(userindex).flags.ultimomensaje = 1
-              end if
-              '[/cdt]
-              userlist(userindex).flags.countsh = 0
+                '[cdt 17-02-2004] (<- emmmmm ?????)
+                if not userlist(userindex).flags.ultimomensaje = 1 then
+                    call senddata(sendtarget.toindex, userindex, 0, "||no podes moverte porque estas paralizado." & fonttype_info)
+                    userlist(userindex).flags.ultimomensaje = 1
+                end if
+                '[/cdt]
+                userlist(userindex).flags.countsh = 0
             end if
             
             if userlist(userindex).flags.oculto = 1 then
-                
                 if ucase$(userlist(userindex).clase) <> "ladron" then
-                    call senddata(toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
                     userlist(userindex).flags.oculto = 0
-                    userlist(userindex).flags.invisible = 0
-                    call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+                    if userlist(userindex).flags.invisible = 0 then
+                        call senddata(sendtarget.toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
+                        call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+                    end if
                 end if
-                
             end if
+            
             if userlist(userindex).flags.muerto = 1 then
                 call empollando(userindex)
             else
@@ -260,82 +255,72 @@ procesado = true 'ver al final del sub
     
     select case ucase$(rdata)
         case "rpu" 'pedido de actualizacion de la posicion
-            call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
+            call senddata(sendtarget.toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
             exit sub
         case "at"
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��no podes atacar a nadie porque estas muerto!!. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��no podes atacar a nadie porque estas muerto!!. " & fonttype_info)
                 exit sub
             end if
-            '[consejeros]
-'            if userlist(userindex).flags.privilegios = 1 then
-'                call senddata(toindex, userindex, 0, "||no puedes atacar a nadie. " & fonttype_info)
-'                exit sub
-'            end if
             if not userlist(userindex).flags.modocombate then
-                call senddata(toindex, userindex, 0, "||no estas en modo de combate, presiona la tecla ""c"" para pasar al modo combate. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||no estas en modo de combate, presiona la tecla ""c"" para pasar al modo combate. " & fonttype_info)
             else
                 if userlist(userindex).invent.weaponeqpobjindex > 0 then
                     if objdata(userlist(userindex).invent.weaponeqpobjindex).proyectil = 1 then
-                                call senddata(toindex, userindex, 0, "||no pod�s usar asi esta arma." & fonttype_info)
-                                exit sub
+                        call senddata(sendtarget.toindex, userindex, 0, "||no pod�s usar asi esta arma." & fonttype_info)
+                        exit sub
                     end if
                 end if
                 call usuarioataca(userindex)
                 
                 'piedra libre para todos los compas!
-                if userlist(userindex).flags.oculto > 0 then
+                if userlist(userindex).flags.oculto > 0 and userlist(userindex).flags.admininvisible = 0 then
                     userlist(userindex).flags.oculto = 0
-                    userlist(userindex).flags.invisible = 0
-                    call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-                    call senddata(toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                    if userlist(userindex).flags.invisible = 0 then
+                        call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+                        call senddata(sendtarget.toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
+                    end if
                 end if
                 
             end if
             exit sub
         case "ag"
             if userlist(userindex).flags.muerto = 1 then
-                    call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden tomar objetos. " & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! los muertos no pueden tomar objetos. " & fonttype_info)
                     exit sub
             end if
             '[consejeros]
-            if userlist(userindex).flags.privilegios = 1 then
-                    call senddata(toindex, userindex, 0, "||no puedes tomar ningun objeto. " & fonttype_info)
-                    exit sub
+            if userlist(userindex).flags.privilegios = playertype.consejero and not userlist(userindex).flags.esrolesmaster then
+                call senddata(sendtarget.toindex, userindex, 0, "||no puedes tomar ningun objeto. " & fonttype_info)
+                exit sub
             end if
             call getobj(userindex)
             exit sub
         case "tab" 'entrar o salir modo combate
             if userlist(userindex).flags.modocombate then
-                senddata toindex, userindex, 0, "||has salido del modo de combate. " & fonttype_info
-                '[arkaris]
-'                if userlist(userindex).partydata.remxp > 0 then
-'                    senddata toindex, userindex, 0, "||has ganado " & userlist(userindex).partydata.remxp & " puntos de experiencia." & fonttype_fight
-'                    addtovar userlist(userindex).stats.exp, userlist(userindex).partydata.remxp, maxexp
-'                    userlist(userindex).partydata.remxp = 0
-'                end if
-                    '[/arkaris]
+                senddata sendtarget.toindex, userindex, 0, "||has salido del modo de combate. " & fonttype_info
             else
-                senddata toindex, userindex, 0, "||has pasado al modo de combate. " & fonttype_info
+                senddata sendtarget.toindex, userindex, 0, "||has pasado al modo de combate. " & fonttype_info
             end if
             userlist(userindex).flags.modocombate = not userlist(userindex).flags.modocombate
             exit sub
         case "seg" 'activa / desactiva el seguro
             if userlist(userindex).flags.seguro then
-                call senddata(toindex, userindex, 0, "||escribe /seg para quitar el seguro" & fonttype_fight)
+                call senddata(sendtarget.toindex, userindex, 0, "||escribe /seg para quitar el seguro" & fonttype_fight)
             else
-                call senddata(toindex, userindex, 0, "segon")
+                call senddata(sendtarget.toindex, userindex, 0, "segon")
                 userlist(userindex).flags.seguro = not userlist(userindex).flags.seguro
             end if
             exit sub
         case "actualizar"
-            call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
+            call senddata(sendtarget.toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
             exit sub
         case "glinfo"
-            if userlist(userindex).guildinfo.esguildleader = 1 then
-                        call sendguildleaderinfo(userindex)
+            tstr = sendguildleaderinfo(userindex)
+            if tstr = vbnullstring then
+                call senddata(sendtarget.toindex, userindex, 0, "gl" & sendguildslist(userindex))
             else
-                        call sendguildslist(userindex)
+                call senddata(sendtarget.toindex, userindex, 0, "leaderi" & tstr)
             end if
             exit sub
         case "atri"
@@ -354,13 +339,13 @@ procesado = true 'ver al final del sub
         case "fincom"
             'user sale del modo comercio
             userlist(userindex).flags.comerciando = false
-            call senddata(toindex, userindex, 0, "fincomok")
+            call senddata(sendtarget.toindex, userindex, 0, "fincomok")
             exit sub
         case "fincomusu"
             'sale modo comercio usuario
             if userlist(userindex).comusu.destusu > 0 and _
                 userlist(userlist(userindex).comusu.destusu).comusu.destusu = userindex then
-                call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha dejado de comerciar con vos." & fonttype_talk)
+                call senddata(sendtarget.toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha dejado de comerciar con vos." & fonttype_talk)
                 call fincomerciarusu(userlist(userindex).comusu.destusu)
             end if
             
@@ -371,7 +356,7 @@ procesado = true 'ver al final del sub
         case "finban"
             'user sale del modo banco
             userlist(userindex).flags.comerciando = false
-            call senddata(toindex, userindex, 0, "finbanok")
+            call senddata(sendtarget.toindex, userindex, 0, "finbanok")
             exit sub
         '-------------------------------------------------------
         '[/kevin]**************************************
@@ -383,11 +368,11 @@ procesado = true 'ver al final del sub
             'rechazar el cambio
             if userlist(userindex).comusu.destusu > 0 then
                 if userlist(userlist(userindex).comusu.destusu).flags.userlogged then
-                    call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha rechazado tu oferta." & fonttype_talk)
+                    call senddata(sendtarget.toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha rechazado tu oferta." & fonttype_talk)
                     call fincomerciarusu(userlist(userindex).comusu.destusu)
                 end if
             end if
-            call senddata(toindex, userindex, 0, "||has rechazado la oferta del otro usuario." & fonttype_talk)
+            call senddata(sendtarget.toindex, userindex, 0, "||has rechazado la oferta del otro usuario." & fonttype_talk)
             call fincomerciarusu(userindex)
             exit sub
         '[/alejo]
@@ -411,14 +396,14 @@ procesado = true 'ver al final del sub
     '            'call tilelibre(pos, pos2)
     '            'if pos2.x = 0 or pos2.y = 0 then exit for
     '
-    '            'call makeobj(tomap, 0, userlist(userindex).pos.map, o, pos2.map, pos2.x, pos2.y)
+    '            'call makeobj(sendtarget.tomap, 0, userlist(userindex).pos.map, o, pos2.map, pos2.x, pos2.y)
     '        next loopc
     '
     '        exit sub
         case "ti" 'tirar item
                 if userlist(userindex).flags.navegando = 1 or _
                    userlist(userindex).flags.muerto = 1 or _
-                   userlist(userindex).flags.privilegios = 1 then exit sub
+                   (userlist(userindex).flags.privilegios = playertype.consejero and not userlist(userindex).flags.esrolesmaster) then exit sub
                    '[consejeros]
                 
                 rdata = right$(rdata, len(rdata) - 2)
@@ -443,7 +428,7 @@ procesado = true 'ver al final del sub
                 exit sub
         case "lh" ' lanzar hechizo
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
                 exit sub
             end if
             rdata = right$(rdata, len(rdata) - 2)
@@ -469,38 +454,37 @@ procesado = true 'ver al final del sub
             exit sub
         case "uk"
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
                 exit sub
             end if
     
             rdata = right$(rdata, len(rdata) - 2)
             select case val(rdata)
                 case robar
-                    call senddata(toindex, userindex, 0, "t01" & robar)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & robar)
                 case magia
-                    call senddata(toindex, userindex, 0, "t01" & magia)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & magia)
                 case domar
-                    call senddata(toindex, userindex, 0, "t01" & domar)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & domar)
                 case ocultarse
-                    
                     if userlist(userindex).flags.navegando = 1 then
-                              '[cdt 17-02-2004]
-                              if not userlist(userindex).flags.ultimomensaje = 3 then
-                                call senddata(toindex, userindex, 0, "||no podes ocultarte si estas navegando." & fonttype_info)
-                                userlist(userindex).flags.ultimomensaje = 3
-                              end if
-                              '[/cdt]
-                          exit sub
+                        '[cdt 17-02-2004]
+                        if not userlist(userindex).flags.ultimomensaje = 3 then
+                            call senddata(sendtarget.toindex, userindex, 0, "||no podes ocultarte si estas navegando." & fonttype_info)
+                            userlist(userindex).flags.ultimomensaje = 3
+                        end if
+                        '[/cdt]
+                        exit sub
                     end if
                     
                     if userlist(userindex).flags.oculto = 1 then
-                              '[cdt 17-02-2004]
-                              if not userlist(userindex).flags.ultimomensaje = 2 then
-                                call senddata(toindex, userindex, 0, "||ya estas oculto." & fonttype_info)
-                                userlist(userindex).flags.ultimomensaje = 2
-                              end if
-                              '[/cdt]
-                          exit sub
+                        '[cdt 17-02-2004]
+                        if not userlist(userindex).flags.ultimomensaje = 2 then
+                            call senddata(sendtarget.toindex, userindex, 0, "||ya estas oculto." & fonttype_info)
+                            userlist(userindex).flags.ultimomensaje = 2
+                        end if
+                        '[/cdt]
+                        exit sub
                     end if
                     
                     call doocultarse(userindex)
@@ -511,8 +495,8 @@ procesado = true 'ver al final del sub
     
     select case ucase$(left$(rdata, 3))
          case "umh" ' usa macro de hechizos
-            call senddata(toadmins, userindex, 0, "||" & userlist(userindex).name & " fue expulsado por anti-macro de hechizos " & fonttype_veneno)
-            call senddata(toindex, userindex, 0, "err has sido expulsado por usar macro de hechizos. recomendamos leer el reglamento sobre el tema macros" & fonttype_info)
+            call senddata(sendtarget.toadmins, userindex, 0, "||" & userlist(userindex).name & " fue expulsado por anti-macro de hechizos " & fonttype_veneno)
+            call senddata(sendtarget.toindex, userindex, 0, "err has sido expulsado por usar macro de hechizos. recomendamos leer el reglamento sobre el tema macros" & fonttype_info)
             call closesocket(userindex)
             exit sub
         case "usa"
@@ -523,7 +507,7 @@ procesado = true 'ver al final del sub
                 exit sub
             end if
             if userlist(userindex).flags.meditando then
-                call senddata(toindex, userindex, 0, "m!")
+                call senddata(sendtarget.toindex, userindex, 0, "m!")
                 exit sub
             end if
             call useinvitem(userindex, val(rdata))
@@ -557,9 +541,9 @@ procesado = true 'ver al final del sub
                userlist(userindex).flags.descansar or _
                userlist(userindex).flags.meditando or _
                not inmapbounds(userlist(userindex).pos.map, x, y) then exit sub
-                              
+            
             if not inrangovision(userindex, x, y) then
-                call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
+                call senddata(sendtarget.toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
                 exit sub
             end if
             
@@ -568,6 +552,10 @@ procesado = true 'ver al final del sub
             case proyectiles
                 dim tu as integer, tn as integer
                 'nos aseguramos que este usando un arma de proyectiles
+                if not intervalopermiteatacar(userindex, false) or not intervalopermiteusararcos(userindex) then
+                    exit sub
+                end if
+
                 dummyint = 0
 
                 if userlist(userindex).invent.weaponeqpobjindex = 0 then
@@ -580,7 +568,7 @@ procesado = true 'ver al final del sub
                     dummyint = 1
                 elseif objdata(userlist(userindex).invent.weaponeqpobjindex).proyectil <> 1 then
                     dummyint = 2
-                elseif objdata(userlist(userindex).invent.municioneqpobjindex).objtype <> objtype_flechas then
+                elseif objdata(userlist(userindex).invent.municioneqpobjindex).objtype <> eobjtype.otflechas then
                     dummyint = 1
                 elseif userlist(userindex).invent.object(userlist(userindex).invent.municioneqpslot).amount < 1 then
                     dummyint = 1
@@ -588,7 +576,7 @@ procesado = true 'ver al final del sub
                 
                 if dummyint <> 0 then
                     if dummyint = 1 then
-                        call senddata(toindex, userindex, 0, "||no tenes municiones." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||no tenes municiones." & fonttype_info)
                     end if
                     call desequipar(userindex, userlist(userindex).invent.municioneqpslot)
                     call desequipar(userindex, userlist(userindex).invent.weaponeqpslot)
@@ -596,12 +584,11 @@ procesado = true 'ver al final del sub
                 end if
                 
                 dummyint = 0
-                
                 'quitamos stamina
                 if userlist(userindex).stats.minsta >= 10 then
                      call quitarsta(userindex, randomnumber(1, 10))
                 else
-                     call senddata(toindex, userindex, 0, "||estas muy cansado para luchar." & fonttype_info)
+                     call senddata(sendtarget.toindex, userindex, 0, "||estas muy cansado para luchar." & fonttype_info)
                      exit sub
                 end if
                  
@@ -609,11 +596,25 @@ procesado = true 'ver al final del sub
                 
                 tu = userlist(userindex).flags.targetuser
                 tn = userlist(userindex).flags.targetnpc
-                                
+                
+                's�lo permitimos atacar si el otro nos puede atacar tambi�n
+                if tu > 0 then
+                    if abs(userlist(userlist(userindex).flags.targetuser).pos.y - userlist(userindex).pos.y) > rango_vision_y then
+                        call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos para atacar." & fonttype_warning)
+                        exit sub
+                    end if
+                elseif tn > 0 then
+                    if abs(npclist(userlist(userindex).flags.targetnpc).pos.y - userlist(userindex).pos.y) > rango_vision_y then
+                        call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos para atacar." & fonttype_warning)
+                        exit sub
+                    end if
+                end if
+                
+                
                 if tu > 0 then
                     'previene pegarse a uno mismo
                     if tu = userindex then
-                        call senddata(toindex, userindex, 0, "||�no puedes atacarte a vos mismo!" & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||�no puedes atacarte a vos mismo!" & fonttype_info)
                         dummyint = 1
                         exit sub
                     end if
@@ -636,7 +637,7 @@ procesado = true 'ver al final del sub
                     end if
                     '-----------------------------------
                 end if
-                
+
                 if tn > 0 then
                     if npclist(tn).attackable <> 0 then
                         call usuarioatacanpc(userindex, tn)
@@ -644,7 +645,7 @@ procesado = true 'ver al final del sub
                 elseif tu > 0 then
                     if userlist(userindex).flags.seguro then
                         if not criminal(tu) then
-                            call senddata(toindex, userindex, 0, "||�para atacar ciudadanos desactiva el seguro!" & fonttype_fight)
+                            call senddata(sendtarget.toindex, userindex, 0, "||�para atacar ciudadanos desactiva el seguro!" & fonttype_fight)
                             exit sub
                         end if
                     end if
@@ -652,12 +653,8 @@ procesado = true 'ver al final del sub
                 end if
                 
             case magia
-'                if userlist(userindex).flags.puedelanzarspell = 0 then exit sub
-                '[consejeros]
-'                if userlist(userindex).flags.privilegios = 1 then exit sub
-                
                 if mapinfo(userlist(userindex).pos.map).magiasinefecto > 0 then
-                    call senddata(toindex, userindex, 0, "||una fuerza oscura te impide canalizar tu energ�a" & fonttype_fight)
+                    call senddata(sendtarget.toindex, userindex, 0, "||una fuerza oscura te impide canalizar tu energ�a" & fonttype_fight)
                     exit sub
                 end if
                 call lookattile(userindex, userlist(userindex).pos.map, x, y)
@@ -675,7 +672,7 @@ procesado = true 'ver al final del sub
                         userlist(userindex).flags.hechizo = 0
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||�primero selecciona el hechizo que quieres lanzar!" & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||�primero selecciona el hechizo que quieres lanzar!" & fonttype_info)
                 end if
                 
                 'if distancia(userlist(userindex).pos, wp2) > 10 then
@@ -705,23 +702,24 @@ procesado = true 'ver al final del sub
                 'if userlist(userindex).flags.puedetrabajar = 0 then exit sub
                 if not intervalopermitetrabajar(userindex) then exit sub
                 
-                if auxind <> objtype_ca�a and auxind <> red_pesca then
-                        call cerrar_usuario(userindex)
-                        exit sub
+                if auxind <> ca�a_pesca and auxind <> red_pesca then
+                    'call cerrar_usuario(userindex)
+                    ' podemos llegar ac� si el user equip� el anillo dsp de la u y antes del click
+                    exit sub
                 end if
                 
                 'basado en la idea de barrin
                 'comentario por barrin: jah, "basado", caradura ! ^^
                 if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 1 then
-                    call senddata(toindex, userindex, 0, "||no puedes pescar desde donde te encuentras." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||no puedes pescar desde donde te encuentras." & fonttype_info)
                     exit sub
                 end if
                 
                 if hayagua(userlist(userindex).pos.map, x, y) then
-                    call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_pescar)
+                    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_pescar)
                     
                     select case auxind
-                    case objtype_ca�a
+                    case ca�a_pesca
                         call dopescar(userindex)
                     case red_pesca
                         with userlist(userindex)
@@ -731,7 +729,7 @@ procesado = true 'ver al final del sub
                         end with
                         
                         if distancia(userlist(userindex).pos, wpaux) > 2 then
-                            call senddata(toindex, userindex, 0, "||est�s demasiado lejos para pescar." & fonttype_info)
+                            call senddata(sendtarget.toindex, userindex, 0, "||est�s demasiado lejos para pescar." & fonttype_info)
                             exit sub
                         end if
                         
@@ -739,7 +737,7 @@ procesado = true 'ver al final del sub
                     end select
     
                 else
-                    call senddata(toindex, userindex, 0, "||no hay agua donde pescar busca un lago, rio o mar." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||no hay agua donde pescar busca un lago, rio o mar." & fonttype_info)
                 end if
                 
             case robar
@@ -755,27 +753,27 @@ procesado = true 'ver al final del sub
                             wpaux.x = val(readfield(1, rdata, 44))
                             wpaux.y = val(readfield(2, rdata, 44))
                             if distancia(wpaux, userlist(userindex).pos) > 2 then
-                                call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+                                call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
                                 exit sub
                             end if
                             '17/09/02
                             'no aseguramos que el trigger le permite robar
-                            if mapdata(userlist(userlist(userindex).flags.targetuser).pos.map, userlist(userlist(userindex).flags.targetuser).pos.x, userlist(userlist(userindex).flags.targetuser).pos.y).trigger = trigger_zonasegura then
-                                call senddata(toindex, userindex, 0, "||no podes robar aqu�." & fonttype_warning)
+                            if mapdata(userlist(userlist(userindex).flags.targetuser).pos.map, userlist(userlist(userindex).flags.targetuser).pos.x, userlist(userlist(userindex).flags.targetuser).pos.y).trigger = etrigger.zonasegura then
+                                call senddata(sendtarget.toindex, userindex, 0, "||no podes robar aqu�." & fonttype_warning)
                                 exit sub
                             end if
-                            if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = trigger_zonasegura then
-                                call senddata(toindex, userindex, 0, "||no podes robar aqu�." & fonttype_warning)
+                            if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = etrigger.zonasegura then
+                                call senddata(sendtarget.toindex, userindex, 0, "||no podes robar aqu�." & fonttype_warning)
                                 exit sub
                             end if
                             
                             call dorobar(userindex, userlist(userindex).flags.targetuser)
                        end if
                     else
-                        call senddata(toindex, userindex, 0, "||no a quien robarle!." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||no a quien robarle!." & fonttype_info)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||�no podes robarle en zonas seguras!." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||�no podes robarle en zonas seguras!." & fonttype_info)
                 end if
             case talar
                 
@@ -783,13 +781,14 @@ procesado = true 'ver al final del sub
                 if not intervalopermitetrabajar(userindex) then exit sub
                 
                 if userlist(userindex).invent.herramientaeqpobjindex = 0 then
-                    call senddata(toindex, userindex, 0, "||deber�as equiparte el hacha." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||deber�as equiparte el hacha." & fonttype_info)
                     exit sub
                 end if
                 
                 if userlist(userindex).invent.herramientaeqpobjindex <> hacha_le�ador then
-                        call closesocket(userindex)
-                        exit sub
+                    ' call cerrar_usuario(userindex)
+                    ' podemos llegar ac� si el user equip� el anillo dsp de la u y antes del click
+                    exit sub
                 end if
                 
                 auxind = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
@@ -798,34 +797,35 @@ procesado = true 'ver al final del sub
                     wpaux.x = x
                     wpaux.y = y
                     if distancia(wpaux, userlist(userindex).pos) > 2 then
-                        call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
                         exit sub
                     end if
                     
                     'barrin 29/9/03
                     if distancia(wpaux, userlist(userindex).pos) = 0 then
-                        call senddata(toindex, userindex, 0, "||no podes talar desde all�." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||no podes talar desde all�." & fonttype_info)
                         exit sub
                     end if
                     
                     '�hay un arbol donde clickeo?
-                    if objdata(auxind).objtype = objtype_arboles then
-                        call senddata(topcarea, cint(userindex), userlist(userindex).pos.map, "tw" & sound_talar)
+                    if objdata(auxind).objtype = eobjtype.otarboles then
+                        call senddata(sendtarget.topcarea, cint(userindex), userlist(userindex).pos.map, "tw" & snd_talar)
                         call dotalar(userindex)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||no hay ningun arbol ahi." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||no hay ningun arbol ahi." & fonttype_info)
                 end if
             case mineria
                 
                 'if userlist(userindex).flags.puedetrabajar = 0 then exit sub
-                
+                if not intervalopermitetrabajar(userindex) then exit sub
+                                
                 if userlist(userindex).invent.herramientaeqpobjindex = 0 then exit sub
                 
                 if userlist(userindex).invent.herramientaeqpobjindex <> piquete_minero then
-                        call closesocketsl(userindex)
-                        call cerrar_usuario(userindex)
-                        exit sub
+                    ' call cerrar_usuario(userindex)
+                    ' podemos llegar ac� si el user equip� el anillo dsp de la u y antes del click
+                    exit sub
                 end if
                 
                 call lookattile(userindex, userlist(userindex).pos.map, x, y)
@@ -836,18 +836,18 @@ procesado = true 'ver al final del sub
                     wpaux.x = x
                     wpaux.y = y
                     if distancia(wpaux, userlist(userindex).pos) > 2 then
-                        call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
                         exit sub
                     end if
                     '�hay un yacimiento donde clickeo?
-                    if objdata(auxind).objtype = objtype_yacimiento then
-                        call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_minero)
+                    if objdata(auxind).objtype = eobjtype.otyacimiento then
+                        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_minero)
                         call domineria(userindex)
                     else
-                        call senddata(toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
                 end if
             case domar
               'modificado 25/11/02
@@ -864,30 +864,31 @@ procesado = true 'ver al final del sub
                             wpaux.x = x
                             wpaux.y = y
                             if distancia(wpaux, npclist(userlist(userindex).flags.targetnpc).pos) > 2 then
-                                  call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+                                  call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
                                   exit sub
                             end if
                             if npclist(ci).flags.attackedby <> "" then
-                                  call senddata(toindex, userindex, 0, "||no pod�s domar una criatura que est� luchando con un jugador." & fonttype_info)
+                                  call senddata(sendtarget.toindex, userindex, 0, "||no pod�s domar una criatura que est� luchando con un jugador." & fonttype_info)
                                   exit sub
                             end if
                             call dodomar(userindex, ci)
                         else
-                            call senddata(toindex, userindex, 0, "||no podes domar a esa criatura." & fonttype_info)
+                            call senddata(sendtarget.toindex, userindex, 0, "||no podes domar a esa criatura." & fonttype_info)
                         end if
               else
-                     call senddata(toindex, userindex, 0, "||no hay ninguna criatura alli!." & fonttype_info)
+                     call senddata(sendtarget.toindex, userindex, 0, "||no hay ninguna criatura alli!." & fonttype_info)
               end if
               
             case fundirmetal
                 'call lookattile(userindex, userlist(userindex).pos.map, x, y)
+                if not intervalopermitetrabajar(userindex) then exit sub
                 
                 if userlist(userindex).flags.targetobj > 0 then
-                    if objdata(userlist(userindex).flags.targetobj).objtype = objtype_fragua then
+                    if objdata(userlist(userindex).flags.targetobj).objtype = eobjtype.otfragua then
                         ''chequeamos que no se zarpe duplicando oro
                         if userlist(userindex).invent.object(userlist(userindex).flags.targetobjinvslot).objindex <> userlist(userindex).flags.targetobjinvindex then
                             if userlist(userindex).invent.object(userlist(userindex).flags.targetobjinvslot).objindex = 0 or userlist(userindex).invent.object(userlist(userindex).flags.targetobjinvslot).amount = 0 then
-                                call senddata(toindex, userindex, 0, "||no tienes mas minerales" & fonttype_info)
+                                call senddata(sendtarget.toindex, userindex, 0, "||no tienes mas minerales" & fonttype_info)
                                 exit sub
                             end if
                             
@@ -895,32 +896,32 @@ procesado = true 'ver al final del sub
                             'call ban(userlist(userindex).name, "sistema anti cheats", "intento de duplicacion de items")
                             'call logcheating(userlist(userindex).name & " intento crear minerales a partir de otros: flagslot/usaba/usoconclick/cantidad/ip:" & userlist(userindex).flags.targetobjinvslot & "/" & userlist(userindex).flags.targetobjinvindex & "/" & userlist(userindex).invent.object(userlist(userindex).flags.targetobjinvslot).objindex & "/" & userlist(userindex).invent.object(userlist(userindex).flags.targetobjinvslot).amount & "/" & userlist(userindex).ip)
                             'userlist(userindex).flags.ban = 1
-                            'call senddata(toall, 0, 0, "||>>>> el sistema anti-cheats bane� a " & userlist(userindex).name & " (intento de duplicaci�n). ip logged. " & fonttype_fight)
-                            call senddata(toindex, userindex, 0, "errhas sido expulsado por el sistema anti cheats. recon�ctate.")
+                            'call senddata(sendtarget.toall, 0, 0, "||>>>> el sistema anti-cheats bane� a " & userlist(userindex).name & " (intento de duplicaci�n). ip logged. " & fonttype_fight)
+                            call senddata(sendtarget.toindex, userindex, 0, "errhas sido expulsado por el sistema anti cheats. recon�ctate.")
                             call closesocket(userindex)
                             exit sub
                         end if
                         call fundirmineral(userindex)
                     else
-                        call senddata(toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
                 end if
                 
             case herreria
                 call lookattile(userindex, userlist(userindex).pos.map, x, y)
                 
                 if userlist(userindex).flags.targetobj > 0 then
-                    if objdata(userlist(userindex).flags.targetobj).objtype = objtype_yunque then
+                    if objdata(userlist(userindex).flags.targetobj).objtype = eobjtype.otyunque then
                         call enivararmasconstruibles(userindex)
                         call enivararmadurasconstruibles(userindex)
-                        call senddata(toindex, userindex, 0, "sfh")
+                        call senddata(sendtarget.toindex, userindex, 0, "sfh")
                     else
-                        call senddata(toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
                 end if
                 
             end select
@@ -929,15 +930,11 @@ procesado = true 'ver al final del sub
             exit sub
         case "cig"
             rdata = right$(rdata, len(rdata) - 3)
-            x = guilds.count
             
-            if createguild(userlist(userindex).name, userlist(userindex).reputacion.promedio, userindex, rdata) then
-                if x = 0 then
-                    call senddata(toindex, userindex, 0, "||felicidades has creado el primer clan de argentum!!!." & fonttype_info)
-                else
-                    call senddata(toindex, userindex, 0, "||felicidades has creado el clan numero " & x + 1 & " de argentum!!!." & fonttype_info)
-                end if
-                call saveguildsdb
+            if modguilds.crearnuevoclan(rdata, userindex, userlist(userindex).fundandoguildalineacion, tstr) then
+                call senddata(sendtarget.toall, 0, 0, "||" & userlist(userindex).name & " fund� el clan " & guilds(userlist(userindex).guildindex).guildname & " de alineaci�n " & alineacion2string(guilds(userlist(userindex).guildindex).alineacion) & "." & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
             end if
             
             exit sub
@@ -954,22 +951,22 @@ procesado = true 'ver al final del sub
                     dim h as integer
                     h = userlist(userindex).stats.userhechizos(val(rdata))
                     if h > 0 and h < numerohechizos + 1 then
-                        call senddata(toindex, userindex, 0, "||%%%%%%%%%%%% info del hechizo %%%%%%%%%%%%" & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||nombre:" & hechizos(h).nombre & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||descripcion:" & hechizos(h).desc & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||skill requerido: " & hechizos(h).minskill & " de magia." & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||mana necesario: " & hechizos(h).manarequerido & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||stamina necesaria: " & hechizos(h).starequerido & fonttype_info)
-                        call senddata(toindex, userindex, 0, "||%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||%%%%%%%%%%%% info del hechizo %%%%%%%%%%%%" & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||nombre:" & hechizos(h).nombre & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||descripcion:" & hechizos(h).desc & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||skill requerido: " & hechizos(h).minskill & " de magia." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||mana necesario: " & hechizos(h).manarequerido & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||stamina necesaria: " & hechizos(h).starequerido & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" & fonttype_info)
                     end if
                 else
-                    call senddata(toindex, userindex, 0, "||�primero selecciona el hechizo.!" & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||�primero selecciona el hechizo.!" & fonttype_info)
                 end if
                 exit sub
         case "equi"
                 if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
-                exit sub
+                    call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                    exit sub
                 end if
                 rdata = right$(rdata, len(rdata) - 4)
                 if val(rdata) <= max_inventory_slots and val(rdata) > 0 then
@@ -983,7 +980,7 @@ procesado = true 'ver al final del sub
             rdata = right$(rdata, len(rdata) - 4)
             if val(rdata) > 0 and val(rdata) < 5 then
                 userlist(userindex).char.heading = rdata
-                call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
             end if
             exit sub
         case "skse" 'modificar skills
@@ -997,7 +994,7 @@ procesado = true 'ver al final del sub
                 incremento = val(readfield(i, rdata, 44))
                 
                 if incremento < 0 then
-                    'call senddata(toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
+                    'call senddata(sendtarget.toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
                     call loghackattemp(userlist(userindex).name & " ip:" & userlist(userindex).ip & " trato de hackear los skills.")
                     userlist(userindex).stats.skillpts = 0
                     call closesocket(userindex)
@@ -1009,7 +1006,7 @@ procesado = true 'ver al final del sub
             
             if sumatoria > userlist(userindex).stats.skillpts then
                 'userlist(userindex).flags.administrativeban = 1
-                'call senddata(toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
+                'call senddata(sendtarget.toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
                 call loghackattemp(userlist(userindex).name & " ip:" & userlist(userindex).ip & " trato de hackear los skills.")
                 call closesocket(userindex)
                 exit sub
@@ -1035,48 +1032,48 @@ procesado = true 'ver al final del sub
                 if val(rdata) > 0 and val(rdata) < npclist(userlist(userindex).flags.targetnpc).nrocriaturas + 1 then
                         dim spawnednpc as integer
                         spawnednpc = spawnnpc(npclist(userlist(userindex).flags.targetnpc).criaturas(val(rdata)).npcindex, npclist(userlist(userindex).flags.targetnpc).pos, true, false)
-                        if spawnednpc <= maxnpcs then
+                        if spawnednpc > 0 then
                             npclist(spawnednpc).maestronpc = userlist(userindex).flags.targetnpc
                             npclist(userlist(userindex).flags.targetnpc).mascotas = npclist(userlist(userindex).flags.targetnpc).mascotas + 1
                         end if
                 end if
             else
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "no puedo traer mas criaturas, mata las existentes!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "no puedo traer mas criaturas, mata las existentes!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
             end if
             
             exit sub
         case "comp"
-             '�esta el user muerto? si es asi no puede comerciar
-             if userlist(userindex).flags.muerto = 1 then
-                       call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                       exit sub
-             end if
-             
-             '�el target es un npc valido?
-             if userlist(userindex).flags.targetnpc > 0 then
-                   '�el npc puede comerciar?
-                   if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
-                       call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                       exit sub
-                   end if
-             else
-               exit sub
-             end if
-             rdata = right$(rdata, len(rdata) - 5)
-             'user compra el item del slot rdata
-             if userlist(userindex).flags.comerciando = false then
-                call senddata(toindex, userindex, 0, "||no estas comerciando " & fonttype_info)
+            '�esta el user muerto? si es asi no puede comerciar
+            if userlist(userindex).flags.muerto = 1 then
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
                 exit sub
-             end if
-             'listindex+1, cantidad
-             call npcventaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)), userlist(userindex).flags.targetnpc)
-             exit sub
+            end if
+            
+            '�el target es un npc valido?
+            if userlist(userindex).flags.targetnpc > 0 then
+                '�el npc puede comerciar?
+                if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
+                    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+                    exit sub
+                end if
+            else
+                exit sub
+            end if
+            rdata = right$(rdata, len(rdata) - 5)
+            'user compra el item del slot rdata
+            if userlist(userindex).flags.comerciando = false then
+                call senddata(sendtarget.toindex, userindex, 0, "||no estas comerciando " & fonttype_info)
+                exit sub
+            end if
+            'listindex+1, cantidad
+            call npcventaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)), userlist(userindex).flags.targetnpc)
+            exit sub
         '[kevin]*********************************************************************
         '------------------------------------------------------------------------------------
         case "reti"
              '�esta el user muerto? si es asi no puede comerciar
              if userlist(userindex).flags.muerto = 1 then
-                       call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
+                       call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
                        exit sub
              end if
              '�el target es un npc valido?
@@ -1095,56 +1092,52 @@ procesado = true 'ver al final del sub
         '-----------------------------------------------------------------------------------
         '[/kevin]****************************************************************************
         case "vend"
-             '�esta el user muerto? si es asi no puede comerciar
-             if userlist(userindex).flags.muerto = 1 then
-                       call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                       exit sub
-             end if
-             rdata = right$(rdata, len(rdata) - 5)
-             '�el target es un npc valido?
-             tint = val(readfield(1, rdata, 44))
-             if userlist(userindex).flags.targetnpc > 0 then
-                   '�el npc puede comerciar?
-                   if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
-                       call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                       exit sub
-                   end if
-                   if (not npclist(userlist(userindex).flags.targetnpc).name = "sr" and not npclist(userlist(userindex).flags.targetnpc).name = "sc") and (objdata(userlist(userindex).invent.object(tint).objindex).real = 1 or objdata(userlist(userindex).invent.object(tint).objindex).caos = 1) then
-                       call senddata(toindex, userindex, 0, "||es ilegal el comercio de este �tem en esta zona." & fonttype_warning)
-                       exit sub
-                   end if
-             else
-               exit sub
-             end if
-'             rdata = right$(rdata, len(rdata) - 5)
-             'user compra el item del slot rdata
-             call npccompraitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
-             exit sub
+            '�esta el user muerto? si es asi no puede comerciar
+            if userlist(userindex).flags.muerto = 1 then
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
+                exit sub
+            end if
+            rdata = right$(rdata, len(rdata) - 5)
+            '�el target es un npc valido?
+            tint = val(readfield(1, rdata, 44))
+            if userlist(userindex).flags.targetnpc > 0 then
+                '�el npc puede comerciar?
+                if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
+                    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+                    exit sub
+                end if
+            else
+                exit sub
+            end if
+'           rdata = right$(rdata, len(rdata) - 5)
+            'user compra el item del slot rdata
+            call npccompraitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
+            exit sub
         '[kevin]-------------------------------------------------------------------------
         '****************************************************************************************
         case "depo"
-             '�esta el user muerto? si es asi no puede comerciar
-             if userlist(userindex).flags.muerto = 1 then
-                       call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                       exit sub
-             end if
-             '�el target es un npc valido?
-             if userlist(userindex).flags.targetnpc > 0 then
-                   '�el npc puede comerciar?
-                   if npclist(userlist(userindex).flags.targetnpc).npctype <> 4 then
-                       exit sub
-                   end if
-             else
-               exit sub
-             end if
-             rdata = right(rdata, len(rdata) - 5)
-             'user deposita el item del slot rdata
-             call userdepositaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
-             exit sub
+            '�esta el user muerto? si es asi no puede comerciar
+            if userlist(userindex).flags.muerto = 1 then
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
+                exit sub
+            end if
+            '�el target es un npc valido?
+            if userlist(userindex).flags.targetnpc > 0 then
+                '�el npc puede comerciar?
+                if npclist(userlist(userindex).flags.targetnpc).npctype <> enpctype.banquero then
+                    exit sub
+                end if
+            else
+                exit sub
+            end if
+            rdata = right(rdata, len(rdata) - 5)
+            'user deposita el item del slot rdata
+            call userdepositaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
+            exit sub
         '****************************************************************************************
         '[/kevin]---------------------------------------------------------------------------------
     end select
-    
+
     select case ucase$(left$(rdata, 5))
         case "demsg"
             if userlist(userindex).flags.targetobj > 0 then
@@ -1194,7 +1187,7 @@ procesado = true 'ver al final del sub
             exit sub
         case "descod" 'informacion del hechizo
                 rdata = right$(rdata, len(rdata) - 6)
-                call updatecodexanddesc(rdata, userindex)
+                call modguilds.actualizarcodexydesc(rdata, userlist(userindex).guildindex)
                 exit sub
     end select
     
@@ -1222,21 +1215,28 @@ procesado = true 'ver al final del sub
                 if val(arg1) = flagoro then
                     'oro
                     if val(arg2) > userlist(userindex).stats.gld then
-                        call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+                        call senddata(sendtarget.toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
                         exit sub
                     end if
                 else
                     'inventario
                     if val(arg2) > userlist(userindex).invent.object(val(arg1)).amount then
-                        call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+                        call senddata(sendtarget.toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
                         exit sub
                     end if
                 end if
-                '[consejeros]
                 if userlist(userindex).comusu.objeto > 0 then
-                    call senddata(toindex, userindex, 0, "||no puedes cambiar tu oferta." & fonttype_talk)
+                    call senddata(sendtarget.toindex, userindex, 0, "||no puedes cambiar tu oferta." & fonttype_talk)
                     exit sub
                 end if
+                'no permitimos vender barcos mientras est�n equipados (no pod�s desequiparlos y causa errores)
+                if userlist(userindex).flags.navegando = 1 then
+                    if userlist(userindex).invent.barcoslot = val(arg1) then
+                        call senddata(sendtarget.toindex, userindex, 0, "||no pod�s vender tu barco mientras lo est�s usando." & fonttype_talk)
+                        exit sub
+                    end if
+                end if
+                
                 userlist(userindex).comusu.objeto = val(arg1)
                 userlist(userindex).comusu.cant = val(arg2)
                 if userlist(userlist(userindex).comusu.destusu).comusu.destusu <> userindex then
@@ -1247,7 +1247,7 @@ procesado = true 'ver al final del sub
                     if userlist(userlist(userindex).comusu.destusu).comusu.acepto = true then
                         'no no no vos te estas pasando de listo...
                         userlist(userlist(userindex).comusu.destusu).comusu.acepto = false
-                        call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha cambiado su oferta." & fonttype_talk)
+                        call senddata(sendtarget.toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha cambiado su oferta." & fonttype_talk)
                     end if
                     '[/corregido]
                     'es la ofrenda de respuesta :)
@@ -1259,71 +1259,210 @@ procesado = true 'ver al final del sub
     '[/alejo]
     
     select case ucase$(left$(rdata, 8))
-        case "aceppeat"
+        'clanesnuevo
+        case "aceppeat" 'aceptar paz
             rdata = right$(rdata, len(rdata) - 8)
-            call acceptpeaceoffer(userindex, rdata)
+            tint = modguilds.r_aceptarpropuestadepaz(userindex, rdata, tstr)
+            if tint = 0 then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||tu clan ha firmado la paz con " & rdata & fonttype_guild)
+                call senddata(sendtarget.toguildmembers, tint, 0, "||tu clan ha firmado la paz con " & userlist(userindex).name & fonttype_guild)
+            end if
+            exit sub
+        case "recpalia" 'rechazar alianza
+            rdata = right$(rdata, len(rdata) - 8)
+            tint = modguilds.r_rechazarpropuestadealianza(userindex, rdata, tstr)
+            if tint = 0 then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||tu clan rechazado la propuesta de alianza de " & rdata & fonttype_guild)
+                call senddata(sendtarget.toguildmembers, tint, 0, "||" & userlist(userindex).name & " ha rechazado nuestra propuesta de alianza con su clan." & fonttype_guild)
+            end if
+            exit sub
+        case "recppeat" 'rechazar propuesta de paz
+            rdata = right$(rdata, len(rdata) - 8)
+            tint = modguilds.r_rechazarpropuestadepaz(userindex, rdata, tstr)
+            if tint = 0 then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||tu clan rechazado la propuesta de paz de " & rdata & fonttype_guild)
+                call senddata(sendtarget.toguildmembers, tint, 0, "||" & userlist(userindex).name & " ha rechazado nuestra propuesta de paz con su clan." & fonttype_guild)
+            end if
+            exit sub
+        case "acepalia" 'aceptar alianza
+            rdata = right$(rdata, len(rdata) - 8)
+            tint = modguilds.r_aceptarpropuestadealianza(userindex, rdata, tstr)
+            if tint = 0 then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||tu clan ha firmado la alianza con " & rdata & fonttype_guild)
+                call senddata(sendtarget.toguildmembers, tint, 0, "||tu clan ha firmado la paz con " & userlist(userindex).name & fonttype_guild)
+            end if
             exit sub
         case "peaceoff"
+            'un clan solicita propuesta de paz a otro
             rdata = right$(rdata, len(rdata) - 8)
-            call recievepeaceoffer(userindex, rdata)
+            arg1 = readfield(1, rdata, asc(","))
+            arg2 = readfield(2, rdata, asc(","))
+            if modguilds.r_clangenerapropuesta(userindex, arg1, paz, arg2, arg3) then
+                call senddata(sendtarget.toindex, userindex, 0, "||propuesta de paz enviada" & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "||" & arg3 & fonttype_guild)
+            end if
             exit sub
-        case "peacedet"
+        case "allieoff" 'un clan solicita propuesta de alianza a otro
             rdata = right$(rdata, len(rdata) - 8)
-            call sendpeacerequest(userindex, rdata)
+            arg1 = readfield(1, rdata, asc(","))
+            arg2 = readfield(2, rdata, asc(","))
+            if modguilds.r_clangenerapropuesta(userindex, arg1, aliados, arg2, arg3) then
+                call senddata(sendtarget.toindex, userindex, 0, "||propuesta de alianza enviada" & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "||" & arg3 & fonttype_guild)
+            end if
+            exit sub
+        case "alliedet"
+            'un clan pide los detalles de una propuesta de alianza
+            rdata = right$(rdata, len(rdata) - 8)
+            tstr = modguilds.r_verpropuesta(userindex, rdata, aliados, arg1)
+            if tstr = vbnullstring then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & arg1 & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "alliede" & tstr)
+            end if
+            exit sub
+        case "peacedet" '-"alliedet"
+            'un clan pide los detalles de una propuesta de paz
+            rdata = right$(rdata, len(rdata) - 8)
+            tstr = modguilds.r_verpropuesta(userindex, rdata, paz, arg1)
+            if tstr = vbnullstring then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & arg1 & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "peacede" & tstr)
+            end if
             exit sub
         case "envcomen"
-            rdata = right$(rdata, len(rdata) - 8)
-            call sendpeticion(userindex, rdata)
+            rdata = trim$(right$(rdata, len(rdata) - 8))
+            if rdata = vbnullstring then exit sub
+            tstr = modguilds.a_detallesaspirante(userindex, rdata)
+            if tstr = vbnullstring then
+                call senddata(sendtarget.toindex, userindex, 0, "|| el personaje no ha mandado solicitud, o no est�s habilitado para verla." & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "peticio" & tstr)
+            end if
             exit sub
-        case "envpropp"
-            call sendpeacepropositions(userindex)
+        case "envalpro" 'enviame la lista de propuestas de alianza
+            tindex = modguilds.r_cantidaddepropuestas(userindex, aliados)
+            tstr = "alliepr" & tindex & ","
+            if tindex > 0 then
+                tstr = tstr & modguilds.r_listadepropuestas(userindex, aliados)
+            end if
+            call senddata(sendtarget.toindex, userindex, 0, tstr)
             exit sub
-        case "decguerr"
-            rdata = right$(rdata, len(rdata) - 8)
-            call declarewar(userindex, rdata)
+        case "envpropp" 'enviame la lista de propuestas de paz
+            tindex = modguilds.r_cantidaddepropuestas(userindex, paz)
+            tstr = "peacepr" & tindex & ","
+            if tindex > 0 then
+                tstr = tstr & modguilds.r_listadepropuestas(userindex, paz)
+            end if
+            call senddata(sendtarget.toindex, userindex, 0, tstr)
             exit sub
-        case "decaliad"
+        case "decguerr" 'declaro la guerra
             rdata = right$(rdata, len(rdata) - 8)
-            call declareallie(userindex, rdata)
+            tint = modguilds.r_declararguerra(userindex, rdata, tstr)
+            if tint = 0 then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                'war shall be!
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "|| tu clan ha entrado en guerra con " & rdata & fonttype_guild)
+                call senddata(sendtarget.toguildmembers, tint, 0, "|| " & userlist(userindex).name & " le declara la guerra a tu clan" & fonttype_guild)
+            end if
             exit sub
         case "newwebsi"
             rdata = right$(rdata, len(rdata) - 8)
-            call setnewurl(userindex, rdata)
+            call modguilds.actualizarwebsite(userindex, rdata)
             exit sub
         case "aceptari"
             rdata = right$(rdata, len(rdata) - 8)
-            call acceptclanmember(userindex, rdata)
+            if not modguilds.a_aceptaraspirante(userindex, rdata, tstr) then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                tint = nameindex(rdata)
+                if tint > 0 then
+                    call modguilds.m_conectarmiembroaclan(tint, userlist(userindex).guildindex)
+                end if
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||" & rdata & " ha sido aceptado como miembro del clan." & fonttype_guild)
+            end if
             exit sub
         case "rechazar"
-            rdata = right$(rdata, len(rdata) - 8)
-            call denyrequest(userindex, rdata)
+            rdata = trim$(right$(rdata, len(rdata) - 8))
+            arg1 = readfield(1, rdata, asc(","))
+            arg2 = readfield(2, rdata, asc(","))
+            if not modguilds.a_rechazaraspirante(userindex, arg1, arg2, arg3) then
+                call senddata(sendtarget.toindex, userindex, 0, "|| " & arg3 & fonttype_guild)
+            else
+                tint = nameindex(arg1)
+                tstr = arg3 & ": " & arg2       'el mensaje de rechazo
+                if tint > 0 then
+                    call senddata(sendtarget.toindex, tint, 0, "|| " & tstr & fonttype_guild)
+                else
+                    'hay que grabar en el char su rechazo
+                    call modguilds.a_rechazaraspirantechar(arg1, userlist(userindex).guildindex, arg2)
+                end if
+            end if
             exit sub
         case "echarcla"
-            rdata = right$(rdata, len(rdata) - 8)
-            call eacharmember(userindex, rdata)
+            'el lider echa de clan a alguien
+            rdata = trim$(right$(rdata, len(rdata) - 8))
+            tint = modguilds.m_echarmiembrodeclan(userindex, rdata)
+            if tint > 0 then
+                call senddata(sendtarget.toguildmembers, tint, 0, "||" & rdata & " fue expulsado del clan." & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "|| no puedes expulsar ese personaje del clan." & fonttype_guild)
+            end if
             exit sub
         case "actgnews"
             rdata = right$(rdata, len(rdata) - 8)
-            call updateguildnews(rdata, userindex)
+            call modguilds.actualizarnoticias(userindex, rdata)
             exit sub
         case "1hrinfo<"
             rdata = right$(rdata, len(rdata) - 8)
-            call sendcharinfo(rdata, userindex)
+            if trim$(rdata) = vbnullstring then exit sub
+            tstr = modguilds.a_detallespersonaje(userindex, rdata, arg1)
+            if tstr = vbnullstring then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & arg1 & fonttype_guild)
+            else
+                call senddata(sendtarget.toindex, userindex, 0, "chrinfo" & tstr)
+            end if
+            exit sub
+        case "abreelec"
+            if not modguilds.v_abrirelecciones(userindex, tstr) then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+            else
+                call senddata(sendtarget.toguildmembers, userlist(userindex).guildindex, 0, "||�han comenzado las elecciones del clan! puedes votar escribiendo /voto seguido del nombre del personaje, por ejemplo: /voto " & userlist(userindex).name & fonttype_guild)
+            end if
             exit sub
     end select
     
-    
+
     select case ucase$(left$(rdata, 9))
         case "solicitud"
              rdata = right$(rdata, len(rdata) - 9)
-             call solicitudingresoclan(userindex, rdata)
+             arg1 = readfield(1, rdata, asc(","))
+             arg2 = readfield(2, rdata, asc(","))
+             if not modguilds.a_nuevoaspirante(userindex, arg1, arg2, tstr) then
+                call senddata(sendtarget.toindex, userindex, 0, "||" & tstr & fonttype_guild)
+             else
+                call senddata(sendtarget.toindex, userindex, 0, "||tu solicitud ha sido enviada. espera prontas noticias del l�der de " & arg1 & "." & fonttype_guild)
+             end if
              exit sub
     end select
     
     select case ucase$(left$(rdata, 11))
-      case "clandetails"
+        case "clandetails"
             rdata = right$(rdata, len(rdata) - 11)
-            call sendguilddetails(userindex, rdata)
+            if trim$(rdata) = vbnullstring then exit sub
+            call senddata(sendtarget.toindex, userindex, 0, "clandet" & modguilds.sendguilddetails(rdata))
             exit sub
     end select
     

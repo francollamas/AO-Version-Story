@@ -1,5 +1,5 @@
 attribute vb_name = "es"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,11 +29,9 @@ attribute vb_name = "es"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
 
 public sub cargarspawnlist()
-
     dim n as integer, loopc as integer
     n = val(getvar(app.path & "\dat\invokar.dat", "init", "numnpcs"))
     redim spawnlist(n) as tcriaturasentrenador
@@ -41,15 +39,16 @@ public sub cargarspawnlist()
         spawnlist(loopc).npcindex = val(getvar(app.path & "\dat\invokar.dat", "list", "ni" & loopc))
         spawnlist(loopc).npcname = getvar(app.path & "\dat\invokar.dat", "list", "nn" & loopc)
     next loopc
-
-
+    
 end sub
 
 function esadmin(byval name as string) as boolean
 dim numwizs as integer
 dim wiznum as integer
 dim nomb as string
+
 numwizs = val(getvar(inipath & "server.ini", "init", "admines"))
+
 for wiznum = 1 to numwizs
     nomb = ucase$(getvar(inipath & "server.ini", "admines", "admin" & wiznum))
     if left(nomb, 1) = "*" or left(nomb, 1) = "+" then nomb = right(nomb, len(nomb) - 1)
@@ -59,12 +58,14 @@ for wiznum = 1 to numwizs
     end if
 next wiznum
 esadmin = false
+
 end function
 
 function esdios(byval name as string) as boolean
 dim numwizs as integer
 dim wiznum as integer
 dim nomb as string
+
 numwizs = val(getvar(inipath & "server.ini", "init", "dioses"))
 for wiznum = 1 to numwizs
     nomb = ucase$(getvar(inipath & "server.ini", "dioses", "dios" & wiznum))
@@ -81,6 +82,7 @@ function essemidios(byval name as string) as boolean
 dim numwizs as integer
 dim wiznum as integer
 dim nomb as string
+
 numwizs = val(getvar(inipath & "server.ini", "init", "semidioses"))
 for wiznum = 1 to numwizs
     nomb = ucase$(getvar(inipath & "server.ini", "semidioses", "semidios" & wiznum))
@@ -91,12 +93,14 @@ for wiznum = 1 to numwizs
     end if
 next wiznum
 essemidios = false
+
 end function
 
 function esconsejero(byval name as string) as boolean
 dim numwizs as integer
 dim wiznum as integer
 dim nomb as string
+
 numwizs = val(getvar(inipath & "server.ini", "init", "consejeros"))
 for wiznum = 1 to numwizs
     nomb = ucase$(getvar(inipath & "server.ini", "consejeros", "consejero" & wiznum))
@@ -113,6 +117,7 @@ function esrolesmaster(byval name as string) as boolean
 dim numwizs as integer
 dim wiznum as integer
 dim nomb as string
+
 numwizs = val(getvar(inipath & "server.ini", "init", "rolesmasters"))
 for wiznum = 1 to numwizs
     nomb = ucase$(getvar(inipath & "server.ini", "rolesmasters", "rm" & wiznum))
@@ -174,13 +179,12 @@ on error goto errhandler
 if frmmain.visible then frmmain.txstatus.caption = "cargando hechizos."
 
 dim hechizo as integer
-dim leer as new clsleerinis
+dim leer as new clsinireader
 
-leer.abrir datpath & "hechizos.dat"
-'j = val(leer.darvalor(
+call leer.initialize(datpath & "hechizos.dat")
 
 'obtiene el numero de hechizos
-numerohechizos = val(leer.darvalor("init", "numerohechizos"))
+numerohechizos = val(leer.getvalue("init", "numerohechizos"))
 redim hechizos(1 to numerohechizos) as thechizo
 
 frmcargando.cargar.min = 0
@@ -190,206 +194,104 @@ frmcargando.cargar.value = 0
 'llena la lista
 for hechizo = 1 to numerohechizos
 
-    hechizos(hechizo).nombre = leer.darvalor("hechizo" & hechizo, "nombre")
-    hechizos(hechizo).desc = leer.darvalor("hechizo" & hechizo, "desc")
-    hechizos(hechizo).palabrasmagicas = leer.darvalor("hechizo" & hechizo, "palabrasmagicas")
+    hechizos(hechizo).nombre = leer.getvalue("hechizo" & hechizo, "nombre")
+    hechizos(hechizo).desc = leer.getvalue("hechizo" & hechizo, "desc")
+    hechizos(hechizo).palabrasmagicas = leer.getvalue("hechizo" & hechizo, "palabrasmagicas")
     
-    hechizos(hechizo).hechizeromsg = leer.darvalor("hechizo" & hechizo, "hechizeromsg")
-    hechizos(hechizo).targetmsg = leer.darvalor("hechizo" & hechizo, "targetmsg")
-    hechizos(hechizo).propiomsg = leer.darvalor("hechizo" & hechizo, "propiomsg")
+    hechizos(hechizo).hechizeromsg = leer.getvalue("hechizo" & hechizo, "hechizeromsg")
+    hechizos(hechizo).targetmsg = leer.getvalue("hechizo" & hechizo, "targetmsg")
+    hechizos(hechizo).propiomsg = leer.getvalue("hechizo" & hechizo, "propiomsg")
     
-    hechizos(hechizo).tipo = val(leer.darvalor("hechizo" & hechizo, "tipo"))
-    hechizos(hechizo).wav = val(leer.darvalor("hechizo" & hechizo, "wav"))
-    hechizos(hechizo).fxgrh = val(leer.darvalor("hechizo" & hechizo, "fxgrh"))
+    hechizos(hechizo).tipo = val(leer.getvalue("hechizo" & hechizo, "tipo"))
+    hechizos(hechizo).wav = val(leer.getvalue("hechizo" & hechizo, "wav"))
+    hechizos(hechizo).fxgrh = val(leer.getvalue("hechizo" & hechizo, "fxgrh"))
     
-    hechizos(hechizo).loops = val(leer.darvalor("hechizo" & hechizo, "loops"))
+    hechizos(hechizo).loops = val(leer.getvalue("hechizo" & hechizo, "loops"))
     
-    hechizos(hechizo).resis = val(leer.darvalor("hechizo" & hechizo, "resis"))
+    hechizos(hechizo).resis = val(leer.getvalue("hechizo" & hechizo, "resis"))
     
-    hechizos(hechizo).subehp = val(leer.darvalor("hechizo" & hechizo, "subehp"))
-    hechizos(hechizo).minhp = val(leer.darvalor("hechizo" & hechizo, "minhp"))
-    hechizos(hechizo).maxhp = val(leer.darvalor("hechizo" & hechizo, "maxhp"))
+    hechizos(hechizo).subehp = val(leer.getvalue("hechizo" & hechizo, "subehp"))
+    hechizos(hechizo).minhp = val(leer.getvalue("hechizo" & hechizo, "minhp"))
+    hechizos(hechizo).maxhp = val(leer.getvalue("hechizo" & hechizo, "maxhp"))
     
-    hechizos(hechizo).subemana = val(leer.darvalor("hechizo" & hechizo, "subemana"))
-    hechizos(hechizo).mimana = val(leer.darvalor("hechizo" & hechizo, "minmana"))
-    hechizos(hechizo).mamana = val(leer.darvalor("hechizo" & hechizo, "maxmana"))
+    hechizos(hechizo).subemana = val(leer.getvalue("hechizo" & hechizo, "subemana"))
+    hechizos(hechizo).mimana = val(leer.getvalue("hechizo" & hechizo, "minmana"))
+    hechizos(hechizo).mamana = val(leer.getvalue("hechizo" & hechizo, "maxmana"))
     
-    hechizos(hechizo).subesta = val(leer.darvalor("hechizo" & hechizo, "subesta"))
-    hechizos(hechizo).minsta = val(leer.darvalor("hechizo" & hechizo, "minsta"))
-    hechizos(hechizo).maxsta = val(leer.darvalor("hechizo" & hechizo, "maxsta"))
+    hechizos(hechizo).subesta = val(leer.getvalue("hechizo" & hechizo, "subesta"))
+    hechizos(hechizo).minsta = val(leer.getvalue("hechizo" & hechizo, "minsta"))
+    hechizos(hechizo).maxsta = val(leer.getvalue("hechizo" & hechizo, "maxsta"))
     
-    hechizos(hechizo).subeham = val(leer.darvalor("hechizo" & hechizo, "subeham"))
-    hechizos(hechizo).minham = val(leer.darvalor("hechizo" & hechizo, "minham"))
-    hechizos(hechizo).maxham = val(leer.darvalor("hechizo" & hechizo, "maxham"))
+    hechizos(hechizo).subeham = val(leer.getvalue("hechizo" & hechizo, "subeham"))
+    hechizos(hechizo).minham = val(leer.getvalue("hechizo" & hechizo, "minham"))
+    hechizos(hechizo).maxham = val(leer.getvalue("hechizo" & hechizo, "maxham"))
     
-    hechizos(hechizo).subesed = val(leer.darvalor("hechizo" & hechizo, "subesed"))
-    hechizos(hechizo).minsed = val(leer.darvalor("hechizo" & hechizo, "minsed"))
-    hechizos(hechizo).maxsed = val(leer.darvalor("hechizo" & hechizo, "maxsed"))
+    hechizos(hechizo).subesed = val(leer.getvalue("hechizo" & hechizo, "subesed"))
+    hechizos(hechizo).minsed = val(leer.getvalue("hechizo" & hechizo, "minsed"))
+    hechizos(hechizo).maxsed = val(leer.getvalue("hechizo" & hechizo, "maxsed"))
     
-    hechizos(hechizo).subeagilidad = val(leer.darvalor("hechizo" & hechizo, "subeag"))
-    hechizos(hechizo).minagilidad = val(leer.darvalor("hechizo" & hechizo, "minag"))
-    hechizos(hechizo).maxagilidad = val(leer.darvalor("hechizo" & hechizo, "maxag"))
+    hechizos(hechizo).subeagilidad = val(leer.getvalue("hechizo" & hechizo, "subeag"))
+    hechizos(hechizo).minagilidad = val(leer.getvalue("hechizo" & hechizo, "minag"))
+    hechizos(hechizo).maxagilidad = val(leer.getvalue("hechizo" & hechizo, "maxag"))
     
-    hechizos(hechizo).subefuerza = val(leer.darvalor("hechizo" & hechizo, "subefu"))
-    hechizos(hechizo).minfuerza = val(leer.darvalor("hechizo" & hechizo, "minfu"))
-    hechizos(hechizo).maxfuerza = val(leer.darvalor("hechizo" & hechizo, "maxfu"))
+    hechizos(hechizo).subefuerza = val(leer.getvalue("hechizo" & hechizo, "subefu"))
+    hechizos(hechizo).minfuerza = val(leer.getvalue("hechizo" & hechizo, "minfu"))
+    hechizos(hechizo).maxfuerza = val(leer.getvalue("hechizo" & hechizo, "maxfu"))
     
-    hechizos(hechizo).subecarisma = val(leer.darvalor("hechizo" & hechizo, "subeca"))
-    hechizos(hechizo).mincarisma = val(leer.darvalor("hechizo" & hechizo, "minca"))
-    hechizos(hechizo).maxcarisma = val(leer.darvalor("hechizo" & hechizo, "maxca"))
-    
-    
-    hechizos(hechizo).invisibilidad = val(leer.darvalor("hechizo" & hechizo, "invisibilidad"))
-    hechizos(hechizo).paraliza = val(leer.darvalor("hechizo" & hechizo, "paraliza"))
-    hechizos(hechizo).inmoviliza = val(leer.darvalor("hechizo" & hechizo, "inmoviliza"))
-    hechizos(hechizo).removerparalisis = val(leer.darvalor("hechizo" & hechizo, "removerparalisis"))
-    hechizos(hechizo).removerestupidez = val(leer.darvalor("hechizo" & hechizo, "removerestupidez"))
-    hechizos(hechizo).removerestupidez = val(leer.darvalor("hechizo" & hechizo, "removerestupidez"))
-    hechizos(hechizo).remueveinvisibilidadparcial = val(leer.darvalor("hechizo" & hechizo, "remueveinvisibilidadparcial"))
+    hechizos(hechizo).subecarisma = val(leer.getvalue("hechizo" & hechizo, "subeca"))
+    hechizos(hechizo).mincarisma = val(leer.getvalue("hechizo" & hechizo, "minca"))
+    hechizos(hechizo).maxcarisma = val(leer.getvalue("hechizo" & hechizo, "maxca"))
     
     
-    hechizos(hechizo).curaveneno = val(leer.darvalor("hechizo" & hechizo, "curaveneno"))
-    hechizos(hechizo).envenena = val(leer.darvalor("hechizo" & hechizo, "envenena"))
-    hechizos(hechizo).maldicion = val(leer.darvalor("hechizo" & hechizo, "maldicion"))
-    hechizos(hechizo).removermaldicion = val(leer.darvalor("hechizo" & hechizo, "removermaldicion"))
-    hechizos(hechizo).bendicion = val(leer.darvalor("hechizo" & hechizo, "bendicion"))
-    hechizos(hechizo).revivir = val(leer.darvalor("hechizo" & hechizo, "revivir"))
-    
-    hechizos(hechizo).ceguera = val(leer.darvalor("hechizo" & hechizo, "ceguera"))
-    hechizos(hechizo).estupidez = val(leer.darvalor("hechizo" & hechizo, "estupidez"))
-    
-    hechizos(hechizo).invoca = val(leer.darvalor("hechizo" & hechizo, "invoca"))
-    hechizos(hechizo).numnpc = val(leer.darvalor("hechizo" & hechizo, "numnpc"))
-    hechizos(hechizo).cant = val(leer.darvalor("hechizo" & hechizo, "cant"))
-    hechizos(hechizo).mimetiza = val(leer.darvalor("hechizo" & hechizo, "mimetiza"))
+    hechizos(hechizo).invisibilidad = val(leer.getvalue("hechizo" & hechizo, "invisibilidad"))
+    hechizos(hechizo).paraliza = val(leer.getvalue("hechizo" & hechizo, "paraliza"))
+    hechizos(hechizo).inmoviliza = val(leer.getvalue("hechizo" & hechizo, "inmoviliza"))
+    hechizos(hechizo).removerparalisis = val(leer.getvalue("hechizo" & hechizo, "removerparalisis"))
+    hechizos(hechizo).removerestupidez = val(leer.getvalue("hechizo" & hechizo, "removerestupidez"))
+    hechizos(hechizo).removerestupidez = val(leer.getvalue("hechizo" & hechizo, "removerestupidez"))
+    hechizos(hechizo).remueveinvisibilidadparcial = val(leer.getvalue("hechizo" & hechizo, "remueveinvisibilidadparcial"))
     
     
-    hechizos(hechizo).materializa = val(leer.darvalor("hechizo" & hechizo, "materializa"))
-    hechizos(hechizo).itemindex = val(leer.darvalor("hechizo" & hechizo, "itemindex"))
+    hechizos(hechizo).curaveneno = val(leer.getvalue("hechizo" & hechizo, "curaveneno"))
+    hechizos(hechizo).envenena = val(leer.getvalue("hechizo" & hechizo, "envenena"))
+    hechizos(hechizo).maldicion = val(leer.getvalue("hechizo" & hechizo, "maldicion"))
+    hechizos(hechizo).removermaldicion = val(leer.getvalue("hechizo" & hechizo, "removermaldicion"))
+    hechizos(hechizo).bendicion = val(leer.getvalue("hechizo" & hechizo, "bendicion"))
+    hechizos(hechizo).revivir = val(leer.getvalue("hechizo" & hechizo, "revivir"))
     
-    hechizos(hechizo).minskill = val(leer.darvalor("hechizo" & hechizo, "minskill"))
-    hechizos(hechizo).manarequerido = val(leer.darvalor("hechizo" & hechizo, "manarequerido"))
+    hechizos(hechizo).ceguera = val(leer.getvalue("hechizo" & hechizo, "ceguera"))
+    hechizos(hechizo).estupidez = val(leer.getvalue("hechizo" & hechizo, "estupidez"))
+    
+    hechizos(hechizo).invoca = val(leer.getvalue("hechizo" & hechizo, "invoca"))
+    hechizos(hechizo).numnpc = val(leer.getvalue("hechizo" & hechizo, "numnpc"))
+    hechizos(hechizo).cant = val(leer.getvalue("hechizo" & hechizo, "cant"))
+    hechizos(hechizo).mimetiza = val(leer.getvalue("hechizo" & hechizo, "mimetiza"))
+    
+    
+    hechizos(hechizo).materializa = val(leer.getvalue("hechizo" & hechizo, "materializa"))
+    hechizos(hechizo).itemindex = val(leer.getvalue("hechizo" & hechizo, "itemindex"))
+    
+    hechizos(hechizo).minskill = val(leer.getvalue("hechizo" & hechizo, "minskill"))
+    hechizos(hechizo).manarequerido = val(leer.getvalue("hechizo" & hechizo, "manarequerido"))
     
     'barrin 30/9/03
-    hechizos(hechizo).starequerido = val(leer.darvalor("hechizo" & hechizo, "starequerido"))
+    hechizos(hechizo).starequerido = val(leer.getvalue("hechizo" & hechizo, "starequerido"))
     
-    hechizos(hechizo).target = val(leer.darvalor("hechizo" & hechizo, "target"))
+    hechizos(hechizo).target = val(leer.getvalue("hechizo" & hechizo, "target"))
     frmcargando.cargar.value = frmcargando.cargar.value + 1
     
-    hechizos(hechizo).needstaff = val(leer.darvalor("hechizo" & hechizo, "needstaff"))
-    hechizos(hechizo).staffaffected = cbool(val(leer.darvalor("hechizo" & hechizo, "staffaffected")))
+    hechizos(hechizo).needstaff = val(leer.getvalue("hechizo" & hechizo, "needstaff"))
+    hechizos(hechizo).staffaffected = cbool(val(leer.getvalue("hechizo" & hechizo, "staffaffected")))
     
-next
+next hechizo
+
+set leer = nothing
 exit sub
 
 errhandler:
  msgbox "error cargando hechizos.dat " & err.number & ": " & err.description
  
 end sub
-
-'public sub cargarhechizos()
-'on error goto errhandler
-'
-'if frmmain.visible then frmmain.txstatus.caption = "cargando hechizos."
-'
-'dim hechizo as integer
-'
-''obtiene el numero de hechizos
-'numerohechizos = val(getvar(datpath & "hechizos.dat", "init", "numerohechizos"))
-'redim hechizos(1 to numerohechizos) as thechizo
-'
-'frmcargando.cargar.min = 0
-'frmcargando.cargar.max = numerohechizos
-'frmcargando.cargar.value = 0
-'
-''llena la lista
-'for hechizo = 1 to numerohechizos
-'
-'    hechizos(hechizo).nombre = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "nombre")
-'    hechizos(hechizo).desc = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "desc")
-'    hechizos(hechizo).palabrasmagicas = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "palabrasmagicas")
-'
-'    hechizos(hechizo).hechizeromsg = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "hechizeromsg")
-'    hechizos(hechizo).targetmsg = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "targetmsg")
-'    hechizos(hechizo).propiomsg = getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "propiomsg")
-'
-'    hechizos(hechizo).tipo = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "tipo"))
-'    hechizos(hechizo).wav = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "wav"))
-'    hechizos(hechizo).fxgrh = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "fxgrh"))
-'
-'    hechizos(hechizo).loops = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "loops"))
-'
-'    hechizos(hechizo).resis = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "resis"))
-'
-'    hechizos(hechizo).subehp = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subehp"))
-'    hechizos(hechizo).minhp = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minhp"))
-'    hechizos(hechizo).maxhp = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxhp"))
-'
-'    hechizos(hechizo).subemana = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subemana"))
-'    hechizos(hechizo).mimana = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minmana"))
-'    hechizos(hechizo).mamana = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxmana"))
-'
-'    hechizos(hechizo).subesta = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subesta"))
-'    hechizos(hechizo).minsta = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minsta"))
-'    hechizos(hechizo).maxsta = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxsta"))
-'
-'    hechizos(hechizo).subeham = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subeham"))
-'    hechizos(hechizo).minham = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minham"))
-'    hechizos(hechizo).maxham = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxham"))
-'
-'    hechizos(hechizo).subesed = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subesed"))
-'    hechizos(hechizo).minsed = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minsed"))
-'    hechizos(hechizo).maxsed = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxsed"))
-'
-'    hechizos(hechizo).subeagilidad = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subeag"))
-'    hechizos(hechizo).minagilidad = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minag"))
-'    hechizos(hechizo).maxagilidad = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxag"))
-'
-'    hechizos(hechizo).subefuerza = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subefu"))
-'    hechizos(hechizo).minfuerza = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minfu"))
-'    hechizos(hechizo).maxfuerza = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxfu"))
-'
-'    hechizos(hechizo).subecarisma = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "subeca"))
-'    hechizos(hechizo).mincarisma = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minca"))
-'    hechizos(hechizo).maxcarisma = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maxca"))
-'
-'
-'    hechizos(hechizo).invisibilidad = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "invisibilidad"))
-'    hechizos(hechizo).paraliza = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "paraliza"))
-'    hechizos(hechizo).removerparalisis = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "removerparalisis"))
-'
-'    hechizos(hechizo).curaveneno = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "curaveneno"))
-'    hechizos(hechizo).envenena = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "envenena"))
-'    hechizos(hechizo).maldicion = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "maldicion"))
-'    hechizos(hechizo).removermaldicion = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "removermaldicion"))
-'    hechizos(hechizo).bendicion = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "bendicion"))
-'    hechizos(hechizo).revivir = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "revivir"))
-'
-'    hechizos(hechizo).ceguera = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "ceguera"))
-'    hechizos(hechizo).estupidez = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "estupidez"))
-'
-'    hechizos(hechizo).invoca = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "invoca"))
-'    hechizos(hechizo).numnpc = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "numnpc"))
-'    hechizos(hechizo).cant = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "cant"))
-'
-'
-'    hechizos(hechizo).materializa = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "materializa"))
-'    hechizos(hechizo).itemindex = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "itemindex"))
-'
-'    hechizos(hechizo).minskill = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "minskill"))
-'    hechizos(hechizo).manarequerido = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "manarequerido"))
-'
-'    'barrin 30/9/03
-'    hechizos(hechizo).starequerido = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "starequerido"))
-'
-'    hechizos(hechizo).target = val(getvar(datpath & "hechizos.dat", "hechizo" & hechizo, "target"))
-'    frmcargando.cargar.value = frmcargando.cargar.value + 1
-'next
-'exit sub
-'
-'errhandler:
-' msgbox "error cargando hechizos.dat"
-'end sub
 
 sub loadmotd()
 dim i as integer
@@ -410,28 +312,31 @@ dim i as integer
 
 
 
-
+' lo saco porque elimina elementales y mascotas - maraxus
 ''''''''''''''lo pongo aca x sugernecia del yind
-for i = 1 to lastnpc
-    if npclist(i).flags.npcactive then
-        if npclist(i).contadores.tiempoexistencia > 0 then
-            call muerenpc(i, 0)
-        end if
-    end if
-next i
+'for i = 1 to lastnpc
+'    if npclist(i).flags.npcactive then
+'        if npclist(i).contadores.tiempoexistencia > 0 then
+'            call muerenpc(i, 0)
+'        end if
+'    end if
+'next i
 '''''''''''/'lo pongo aca x sugernecia del yind
 
 
 
-call senddata(toall, 0, 0, "bkw")
+call senddata(sendtarget.toall, 0, 0, "bkw")
 
-call saveguildsdb
+
 call limpiarmundo
 call worldsave
+call modguilds.v_rutinaelecciones
+call resetcentinelainfo     'reseteamos al centinela
 
-call senddata(toall, 0, 0, "bkw")
 
-call estadisticasweb.informar(evento_nuevo_clan, 0)
+call senddata(sendtarget.toall, 0, 0, "bkw")
+
+'call estadisticasweb.informar(evento_nuevo_clan, 0)
 
 haciendobk = false
 
@@ -444,129 +349,132 @@ print #nfile, date & " " & time
 close #nfile
 end sub
 
+public sub grabarmapa(byval map as long, byval mapfile as string)
+on error resume next
+    dim freefilemap as long
+    dim freefileinf as long
+    dim y as long
+    dim x as long
+    dim byflags as byte
+    dim tempint as integer
+    dim loopc as long
+    
+    if fileexist(mapfile & ".map", vbnormal) then
+        kill mapfile & ".map"
+    end if
+    
+    if fileexist(mapfile & ".inf", vbnormal) then
+        kill mapfile & ".inf"
+    end if
+    
+    'open .map file
+    freefilemap = freefile
+    open mapfile & ".map" for binary as freefilemap
+    seek freefilemap, 1
+    
+    'open .inf file
+    freefileinf = freefile
+    open mapfile & ".inf" for binary as freefileinf
+    seek freefileinf, 1
+    'map header
+            
+    put freefilemap, , mapinfo(map).mapversion
+    put freefilemap, , micabecera
+    put freefilemap, , tempint
+    put freefilemap, , tempint
+    put freefilemap, , tempint
+    put freefilemap, , tempint
+    
+    'inf header
+    put freefileinf, , tempint
+    put freefileinf, , tempint
+    put freefileinf, , tempint
+    put freefileinf, , tempint
+    put freefileinf, , tempint
+    
+    'write .map file
+    for y = yminmapsize to ymaxmapsize
+        for x = xminmapsize to xmaxmapsize
+            
+                byflags = 0
+                
+                if mapdata(map, x, y).blocked then byflags = byflags or 1
+                if mapdata(map, x, y).graphic(2) then byflags = byflags or 2
+                if mapdata(map, x, y).graphic(3) then byflags = byflags or 4
+                if mapdata(map, x, y).graphic(4) then byflags = byflags or 8
+                if mapdata(map, x, y).trigger then byflags = byflags or 16
+                
+                put freefilemap, , byflags
+                
+                put freefilemap, , mapdata(map, x, y).graphic(1)
+                
+                for loopc = 2 to 4
+                    if mapdata(map, x, y).graphic(loopc) then _
+                        put freefilemap, , mapdata(map, x, y).graphic(loopc)
+                next loopc
+                
+                if mapdata(map, x, y).trigger then _
+                    put freefilemap, , cint(mapdata(map, x, y).trigger)
+                
+                '.inf file
+                
+                byflags = 0
+                
+                if mapdata(map, x, y).objinfo.objindex > 0 then
+                   if objdata(mapdata(map, x, y).objinfo.objindex).objtype = eobjtype.otfogata then
+                        mapdata(map, x, y).objinfo.objindex = 0
+                        mapdata(map, x, y).objinfo.amount = 0
+                    end if
+                end if
+    
+                if mapdata(map, x, y).tileexit.map then byflags = byflags or 1
+                if mapdata(map, x, y).npcindex then byflags = byflags or 2
+                if mapdata(map, x, y).objinfo.objindex then byflags = byflags or 4
+                
+                put freefileinf, , byflags
+                
+                if mapdata(map, x, y).tileexit.map then
+                    put freefileinf, , mapdata(map, x, y).tileexit.map
+                    put freefileinf, , mapdata(map, x, y).tileexit.x
+                    put freefileinf, , mapdata(map, x, y).tileexit.y
+                end if
+                
+                if mapdata(map, x, y).npcindex then _
+                    put freefileinf, , npclist(mapdata(map, x, y).npcindex).numero
+                
+                if mapdata(map, x, y).objinfo.objindex then
+                    put freefileinf, , mapdata(map, x, y).objinfo.objindex
+                    put freefileinf, , mapdata(map, x, y).objinfo.amount
+                end if
+            
+            
+        next x
+    next y
+    
+    'close .map file
+    close freefilemap
 
-public sub savemapdata(byval n as integer)
+    'close .inf file
+    close freefileinf
 
-'call logtarea("sub savemapdata n:" & n)
+    'write .dat file
+    call writevar(mapfile & ".dat", "mapa" & map, "name", mapinfo(map).name)
+    call writevar(mapfile & ".dat", "mapa" & map, "musicnum", mapinfo(map).music)
+    call writevar(mapfile & ".dat", "mapa" & map, "magiasinefecto", mapinfo(map).magiasinefecto)
+    call writevar(mapfile & ".dat", "mapa" & map, "startpos", mapinfo(map).startpos.map & "-" & mapinfo(map).startpos.x & "-" & mapinfo(map).startpos.y)
 
-dim loopc as integer
-dim tempint as integer
-dim y as integer
-dim x as integer
-dim saveas as string
+    call writevar(mapfile & ".dat", "mapa" & map, "terreno", mapinfo(map).terreno)
+    call writevar(mapfile & ".dat", "mapa" & map, "zona", mapinfo(map).zona)
+    call writevar(mapfile & ".dat", "mapa" & map, "restringir", mapinfo(map).restringir)
+    call writevar(mapfile & ".dat", "mapa" & map, "backup", str(mapinfo(map).backup))
 
-saveas = app.path & "\worldbackup\map" & n & ".map"
-
-if fileexist(saveas, vbnormal) then
-    kill saveas
-end if
-
-if fileexist(left$(saveas, len(saveas) - 4) & ".inf", vbnormal) then
-    kill left$(saveas, len(saveas) - 4) & ".inf"
-end if
-
-'open .map file
-open saveas for binary as #1
-seek #1, 1
-saveas = left$(saveas, len(saveas) - 4)
-saveas = saveas & ".inf"
-'open .inf file
-open saveas for binary as #2
-seek #2, 1
-'map header
-        
-put #1, , mapinfo(n).mapversion
-put #1, , micabecera
-put #1, , tempint
-put #1, , tempint
-put #1, , tempint
-put #1, , tempint
-
-'inf header
-put #2, , tempint
-put #2, , tempint
-put #2, , tempint
-put #2, , tempint
-put #2, , tempint
-
-'write .map file
-for y = yminmapsize to ymaxmapsize
-    for x = xminmapsize to xmaxmapsize
-        
-        '.map file
-        put #1, , mapdata(n, x, y).blocked
-        
-        for loopc = 1 to 4
-            put #1, , mapdata(n, x, y).graphic(loopc)
-        next loopc
-        
-        'lugar vacio para futuras expansiones
-        put #1, , mapdata(n, x, y).trigger
-        
-        put #1, , tempint
-        
-        '.inf file
-        'tile exit
-        put #2, , mapdata(n, x, y).tileexit.map
-        put #2, , mapdata(n, x, y).tileexit.x
-        put #2, , mapdata(n, x, y).tileexit.y
-        
-        'npc
-        if mapdata(n, x, y).npcindex > 0 then
-            put #2, , npclist(mapdata(n, x, y).npcindex).numero
-        else
-            put #2, , 0
-        end if
-        'object
-        
-        if mapdata(n, x, y).objinfo.objindex > 0 then
-            if objdata(mapdata(n, x, y).objinfo.objindex).objtype = objtype_fogata then
-                mapdata(n, x, y).objinfo.objindex = 0
-                mapdata(n, x, y).objinfo.amount = 0
-            end if
-'            if objdata(mapdata(n, x, y).objinfo.objindex).objtype = objtype_manchas then
-'                mapdata(n, x, y).objinfo.objindex = 0
-'                mapdata(n, x, y).objinfo.amount = 0
-'            end if
-        end if
-        
-        put #2, , mapdata(n, x, y).objinfo.objindex
-        put #2, , mapdata(n, x, y).objinfo.amount
-        
-        'empty place holders for future expansion
-        put #2, , tempint
-        put #2, , tempint
-        
-    next x
-next y
-
-'close .map file
-close #1
-
-'close .inf file
-close #2
-
-'write .dat file
-saveas = left$(saveas, len(saveas) - 4) & ".dat"
-call writevar(saveas, "mapa" & n, "name", mapinfo(n).name)
-call writevar(saveas, "mapa" & n, "musicnum", mapinfo(n).music)
-call writevar(saveas, "mapa" & n, "magiasinefecto", mapinfo(n).magiasinefecto)
-call writevar(saveas, "mapa" & n, "noencriptarmp", mapinfo(n).noencriptarmp)
-call writevar(saveas, "mapa" & n, "startpos", mapinfo(n).startpos.map & "-" & mapinfo(n).startpos.x & "-" & mapinfo(n).startpos.y)
-
-call writevar(saveas, "mapa" & n, "terreno", mapinfo(n).terreno)
-call writevar(saveas, "mapa" & n, "zona", mapinfo(n).zona)
-call writevar(saveas, "mapa" & n, "restringir", mapinfo(n).restringir)
-call writevar(saveas, "mapa" & n, "backup", str(mapinfo(n).backup))
-
-if mapinfo(n).pk then
-    call writevar(saveas, "mapa" & n, "pk", "0")
-else
-    call writevar(saveas, "mapa" & n, "pk", "1")
-end if
+    if mapinfo(map).pk then
+        call writevar(mapfile & ".dat", "mapa" & map, "pk", "0")
+    else
+        call writevar(mapfile & ".dat", "mapa" & map, "pk", "1")
+    end if
 
 end sub
-
 sub loadarmasherreria()
 
 dim n as integer, lc as integer
@@ -578,7 +486,6 @@ redim preserve armasherrero(1 to n) as integer
 for lc = 1 to n
     armasherrero(lc) = val(getvar(datpath & "armasherrero.dat", "arma" & lc, "index"))
 next lc
-
 
 end sub
 
@@ -638,13 +545,12 @@ if frmmain.visible then frmmain.txstatus.caption = "cargando base de datos de lo
 'carga la lista de objetos
 '*****************************************************************
 dim object as integer
-dim leer as new clsleerinis
+dim leer as new clsinireader
 
-leer.abrir datpath & "obj.dat"
-'j = val(leer.darvalor("init", "numobjs"))  '
+call leer.initialize(datpath & "obj.dat")
 
 'obtiene el numero de obj
-numobjdatas = val(leer.darvalor("init", "numobjs"))
+numobjdatas = val(leer.getvalue("init", "numobjs"))
 
 frmcargando.cargar.min = 0
 frmcargando.cargar.max = numobjdatas
@@ -656,177 +562,162 @@ redim preserve objdata(1 to numobjdatas) as objdata
 'llena la lista
 for object = 1 to numobjdatas
         
-    objdata(object).name = leer.darvalor("obj" & object, "name")
+    objdata(object).name = leer.getvalue("obj" & object, "name")
     
-    objdata(object).grhindex = val(leer.darvalor("obj" & object, "grhindex"))
+    objdata(object).grhindex = val(leer.getvalue("obj" & object, "grhindex"))
     if objdata(object).grhindex = 0 then
         objdata(object).grhindex = objdata(object).grhindex
     end if
     
-    objdata(object).objtype = val(leer.darvalor("obj" & object, "objtype"))
-    objdata(object).subtipo = val(leer.darvalor("obj" & object, "subtipo"))
+    objdata(object).objtype = val(leer.getvalue("obj" & object, "objtype"))
     
-    objdata(object).newbie = val(leer.darvalor("obj" & object, "newbie"))
+    objdata(object).newbie = val(leer.getvalue("obj" & object, "newbie"))
     
-    if objdata(object).subtipo = objtype_escudo then
-        objdata(object).shieldanim = val(leer.darvalor("obj" & object, "anim"))
-        objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-        objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-        objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-        objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-    end if
+    select case objdata(object).objtype
+        case eobjtype.otarmadura
+            objdata(object).real = val(leer.getvalue("obj" & object, "real"))
+            objdata(object).caos = val(leer.getvalue("obj" & object, "caos"))
+            objdata(object).lingh = val(leer.getvalue("obj" & object, "lingh"))
+            objdata(object).lingp = val(leer.getvalue("obj" & object, "lingp"))
+            objdata(object).lingo = val(leer.getvalue("obj" & object, "lingo"))
+            objdata(object).skherreria = val(leer.getvalue("obj" & object, "skherreria"))
+        
+        case eobjtype.otescudo
+            objdata(object).shieldanim = val(leer.getvalue("obj" & object, "anim"))
+            objdata(object).lingh = val(leer.getvalue("obj" & object, "lingh"))
+            objdata(object).lingp = val(leer.getvalue("obj" & object, "lingp"))
+            objdata(object).lingo = val(leer.getvalue("obj" & object, "lingo"))
+            objdata(object).skherreria = val(leer.getvalue("obj" & object, "skherreria"))
+            objdata(object).real = val(leer.getvalue("obj" & object, "real"))
+            objdata(object).caos = val(leer.getvalue("obj" & object, "caos"))
+        
+        case eobjtype.otcasco
+            objdata(object).cascoanim = val(leer.getvalue("obj" & object, "anim"))
+            objdata(object).lingh = val(leer.getvalue("obj" & object, "lingh"))
+            objdata(object).lingp = val(leer.getvalue("obj" & object, "lingp"))
+            objdata(object).lingo = val(leer.getvalue("obj" & object, "lingo"))
+            objdata(object).skherreria = val(leer.getvalue("obj" & object, "skherreria"))
+            objdata(object).real = val(leer.getvalue("obj" & object, "real"))
+            objdata(object).caos = val(leer.getvalue("obj" & object, "caos"))
+        
+        case eobjtype.otweapon
+            objdata(object).weaponanim = val(leer.getvalue("obj" & object, "anim"))
+            objdata(object).apu�ala = val(leer.getvalue("obj" & object, "apu�ala"))
+            objdata(object).envenena = val(leer.getvalue("obj" & object, "envenena"))
+            objdata(object).maxhit = val(leer.getvalue("obj" & object, "maxhit"))
+            objdata(object).minhit = val(leer.getvalue("obj" & object, "minhit"))
+            objdata(object).proyectil = val(leer.getvalue("obj" & object, "proyectil"))
+            objdata(object).municion = val(leer.getvalue("obj" & object, "municiones"))
+            objdata(object).staffpower = val(leer.getvalue("obj" & object, "staffpower"))
+            objdata(object).staffdamagebonus = val(leer.getvalue("obj" & object, "staffdamagebonus"))
+            objdata(object).refuerzo = val(leer.getvalue("obj" & object, "refuerzo"))
+            
+            objdata(object).lingh = val(leer.getvalue("obj" & object, "lingh"))
+            objdata(object).lingp = val(leer.getvalue("obj" & object, "lingp"))
+            objdata(object).lingo = val(leer.getvalue("obj" & object, "lingo"))
+            objdata(object).skherreria = val(leer.getvalue("obj" & object, "skherreria"))
+            objdata(object).real = val(leer.getvalue("obj" & object, "real"))
+            objdata(object).caos = val(leer.getvalue("obj" & object, "caos"))
+        
+        case eobjtype.otherramientas
+            objdata(object).lingh = val(leer.getvalue("obj" & object, "lingh"))
+            objdata(object).lingp = val(leer.getvalue("obj" & object, "lingp"))
+            objdata(object).lingo = val(leer.getvalue("obj" & object, "lingo"))
+            objdata(object).skherreria = val(leer.getvalue("obj" & object, "skherreria"))
+        
+        case eobjtype.otinstrumentos
+            objdata(object).snd1 = val(leer.getvalue("obj" & object, "snd1"))
+            objdata(object).snd2 = val(leer.getvalue("obj" & object, "snd2"))
+            objdata(object).snd3 = val(leer.getvalue("obj" & object, "snd3"))
+        
+        case eobjtype.otminerales
+            objdata(object).minskill = val(leer.getvalue("obj" & object, "minskill"))
+        
+        case eobjtype.otpuertas, eobjtype.otbotellavacia, eobjtype.otbotellallena
+            objdata(object).indexabierta = val(leer.getvalue("obj" & object, "indexabierta"))
+            objdata(object).indexcerrada = val(leer.getvalue("obj" & object, "indexcerrada"))
+            objdata(object).indexcerradallave = val(leer.getvalue("obj" & object, "indexcerradallave"))
+        
+        case otpociones
+            objdata(object).tipopocion = val(leer.getvalue("obj" & object, "tipopocion"))
+            objdata(object).maxmodificador = val(leer.getvalue("obj" & object, "maxmodificador"))
+            objdata(object).minmodificador = val(leer.getvalue("obj" & object, "minmodificador"))
+            objdata(object).duracionefecto = val(leer.getvalue("obj" & object, "duracionefecto"))
+        
+        case eobjtype.otbarcos
+            objdata(object).minskill = val(leer.getvalue("obj" & object, "minskill"))
+            objdata(object).maxhit = val(leer.getvalue("obj" & object, "maxhit"))
+            objdata(object).minhit = val(leer.getvalue("obj" & object, "minhit"))
+        
+        case eobjtype.otflechas
+            objdata(object).maxhit = val(leer.getvalue("obj" & object, "maxhit"))
+            objdata(object).minhit = val(leer.getvalue("obj" & object, "minhit"))
+            objdata(object).envenena = val(leer.getvalue("obj" & object, "envenena"))
+            objdata(object).paraliza = val(leer.getvalue("obj" & object, "paraliza"))
+    end select
     
-    if objdata(object).subtipo = objtype_casco then
-        objdata(object).cascoanim = val(leer.darvalor("obj" & object, "anim"))
-        objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-        objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-        objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-        objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-    end if
+    objdata(object).ropaje = val(leer.getvalue("obj" & object, "numropaje"))
+    objdata(object).hechizoindex = val(leer.getvalue("obj" & object, "hechizoindex"))
     
-    objdata(object).ropaje = val(leer.darvalor("obj" & object, "numropaje"))
-    objdata(object).hechizoindex = val(leer.darvalor("obj" & object, "hechizoindex"))
+    objdata(object).lingoteindex = val(leer.getvalue("obj" & object, "lingoteindex"))
     
-    if objdata(object).objtype = objtype_weapon then
-            objdata(object).weaponanim = val(leer.darvalor("obj" & object, "anim"))
-            objdata(object).apu�ala = val(leer.darvalor("obj" & object, "apu�ala"))
-            objdata(object).envenena = val(leer.darvalor("obj" & object, "envenena"))
-            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-            objdata(object).real = val(leer.darvalor("obj" & object, "real"))
-            objdata(object).caos = val(leer.darvalor("obj" & object, "caos"))
-            objdata(object).proyectil = val(leer.darvalor("obj" & object, "proyectil"))
-            objdata(object).municion = val(leer.darvalor("obj" & object, "municiones"))
-            objdata(object).staffpower = val(leer.darvalor("obj" & object, "staffpower"))
-            objdata(object).staffdamagebonus = val(leer.darvalor("obj" & object, "staffdamagebonus"))
-            objdata(object).refuerzo = val(leer.darvalor("obj" & object, "refuerzo"))
-    end if
+    objdata(object).mineralindex = val(leer.getvalue("obj" & object, "mineralindex"))
     
-    if objdata(object).objtype = objtype_armour then
-            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-            objdata(object).real = val(leer.darvalor("obj" & object, "real"))
-            objdata(object).caos = val(leer.darvalor("obj" & object, "caos"))
-    end if
+    objdata(object).maxhp = val(leer.getvalue("obj" & object, "maxhp"))
+    objdata(object).minhp = val(leer.getvalue("obj" & object, "minhp"))
     
-    if objdata(object).objtype = objtype_herramientas then
-            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-    end if
+    objdata(object).mujer = val(leer.getvalue("obj" & object, "mujer"))
+    objdata(object).hombre = val(leer.getvalue("obj" & object, "hombre"))
     
-    if objdata(object).objtype = objtype_instrumentos then
-        objdata(object).snd1 = val(leer.darvalor("obj" & object, "snd1"))
-        objdata(object).snd2 = val(leer.darvalor("obj" & object, "snd2"))
-        objdata(object).snd3 = val(leer.darvalor("obj" & object, "snd3"))
-        objdata(object).minint = val(leer.darvalor("obj" & object, "minint"))
-    end if
+    objdata(object).minham = val(leer.getvalue("obj" & object, "minham"))
+    objdata(object).minsed = val(leer.getvalue("obj" & object, "minagu"))
     
-    objdata(object).lingoteindex = val(leer.darvalor("obj" & object, "lingoteindex"))
+    objdata(object).mindef = val(leer.getvalue("obj" & object, "mindef"))
+    objdata(object).maxdef = val(leer.getvalue("obj" & object, "maxdef"))
     
-    if objdata(object).objtype = 31 or objdata(object).objtype = 23 then
-        objdata(object).minskill = val(leer.darvalor("obj" & object, "minskill"))
-    end if
+    objdata(object).razaenana = val(leer.getvalue("obj" & object, "razaenana"))
     
-    objdata(object).mineralindex = val(leer.darvalor("obj" & object, "mineralindex"))
+    objdata(object).valor = val(leer.getvalue("obj" & object, "valor"))
     
-    objdata(object).maxhp = val(leer.darvalor("obj" & object, "maxhp"))
-    objdata(object).minhp = val(leer.darvalor("obj" & object, "minhp"))
-  
+    objdata(object).crucial = val(leer.getvalue("obj" & object, "crucial"))
     
-    objdata(object).mujer = val(leer.darvalor("obj" & object, "mujer"))
-    objdata(object).hombre = val(leer.darvalor("obj" & object, "hombre"))
-    
-    objdata(object).minham = val(leer.darvalor("obj" & object, "minham"))
-    objdata(object).minsed = val(leer.darvalor("obj" & object, "minagu"))
-    
-    
-    objdata(object).mindef = val(leer.darvalor("obj" & object, "mindef"))
-    objdata(object).maxdef = val(leer.darvalor("obj" & object, "maxdef"))
-    
-    objdata(object).respawn = val(leer.darvalor("obj" & object, "respawn"))
-    
-    objdata(object).razaenana = val(leer.darvalor("obj" & object, "razaenana"))
-    
-    objdata(object).valor = val(leer.darvalor("obj" & object, "valor"))
-    
-    objdata(object).crucial = val(leer.darvalor("obj" & object, "crucial"))
-    
-    objdata(object).cerrada = val(leer.darvalor("obj" & object, "abierta"))
+    objdata(object).cerrada = val(leer.getvalue("obj" & object, "abierta"))
     if objdata(object).cerrada = 1 then
-            objdata(object).llave = val(leer.darvalor("obj" & object, "llave"))
-            objdata(object).clave = val(leer.darvalor("obj" & object, "clave"))
+        objdata(object).llave = val(leer.getvalue("obj" & object, "llave"))
+        objdata(object).clave = val(leer.getvalue("obj" & object, "clave"))
     end if
-    
-    
-    if objdata(object).objtype = objtype_puertas or objdata(object).objtype = objtype_botellavacia or objdata(object).objtype = objtype_botellallena then
-        objdata(object).indexabierta = val(leer.darvalor("obj" & object, "indexabierta"))
-        objdata(object).indexcerrada = val(leer.darvalor("obj" & object, "indexcerrada"))
-        objdata(object).indexcerradallave = val(leer.darvalor("obj" & object, "indexcerradallave"))
-    end if
-    
     
     'puertas y llaves
-    objdata(object).clave = val(leer.darvalor("obj" & object, "clave"))
+    objdata(object).clave = val(leer.getvalue("obj" & object, "clave"))
     
-    objdata(object).texto = leer.darvalor("obj" & object, "texto")
-    objdata(object).grhsecundario = val(leer.darvalor("obj" & object, "vgrande"))
+    objdata(object).texto = leer.getvalue("obj" & object, "texto")
+    objdata(object).grhsecundario = val(leer.getvalue("obj" & object, "vgrande"))
     
-    objdata(object).agarrable = val(leer.darvalor("obj" & object, "agarrable"))
-    objdata(object).foroid = leer.darvalor("obj" & object, "id")
-    
+    objdata(object).agarrable = val(leer.getvalue("obj" & object, "agarrable"))
+    objdata(object).foroid = leer.getvalue("obj" & object, "id")
     
     dim i as integer
     for i = 1 to numclases
-        objdata(object).claseprohibida(i) = leer.darvalor("obj" & object, "cp" & i)
-    next
-            
-    objdata(object).resistencia = val(leer.darvalor("obj" & object, "resistencia"))
-    objdata(object).defensamagicamax = val(leer.darvalor("obj" & object, "defensamagicamax"))
-    objdata(object).defensamagicamin = val(leer.darvalor("obj" & object, "defensamagicamin"))
+        objdata(object).claseprohibida(i) = leer.getvalue("obj" & object, "cp" & i)
+    next i
     
-    'pociones
-    if objdata(object).objtype = 11 then
-        objdata(object).tipopocion = val(leer.darvalor("obj" & object, "tipopocion"))
-        objdata(object).maxmodificador = val(leer.darvalor("obj" & object, "maxmodificador"))
-        objdata(object).minmodificador = val(leer.darvalor("obj" & object, "minmodificador"))
-        objdata(object).duracionefecto = val(leer.darvalor("obj" & object, "duracionefecto"))
-    end if
-
-    objdata(object).skcarpinteria = val(leer.darvalor("obj" & object, "skcarpinteria"))
+    objdata(object).defensamagicamax = val(leer.getvalue("obj" & object, "defensamagicamax"))
+    objdata(object).defensamagicamin = val(leer.getvalue("obj" & object, "defensamagicamin"))
+    
+    objdata(object).skcarpinteria = val(leer.getvalue("obj" & object, "skcarpinteria"))
     
     if objdata(object).skcarpinteria > 0 then _
-        objdata(object).madera = val(leer.darvalor("obj" & object, "madera"))
-    
-    if objdata(object).objtype = objtype_barcos then
-            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-    end if
-    
-    if objdata(object).objtype = objtype_flechas then
-            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-            objdata(object).envenena = val(leer.darvalor("obj" & object, "envenena"))
-            objdata(object).paraliza = val(leer.darvalor("obj" & object, "paraliza"))
-    end if
+        objdata(object).madera = val(leer.getvalue("obj" & object, "madera"))
     
     'bebidas
-    objdata(object).minsta = val(leer.darvalor("obj" & object, "minst"))
+    objdata(object).minsta = val(leer.getvalue("obj" & object, "minst"))
     
-    objdata(object).nosecae = val(leer.darvalor("obj" & object, "nosecae"))
+    objdata(object).nosecae = val(leer.getvalue("obj" & object, "nosecae"))
     
     frmcargando.cargar.value = frmcargando.cargar.value + 1
-    'frmcargando.cargar.
-    
-    'doevents
 next object
+
+set leer = nothing
 
 exit sub
 
@@ -836,691 +727,174 @@ errhandler:
 
 end sub
 
-'sub loadobjdata()
-'
-''call logtarea("sub loadobjdata")
-'
-'on error goto errhandler
-'
-'if frmmain.visible then frmmain.txstatus.caption = "cargando base de datos de los objetos."
-'
-''*****************************************************************
-''carga la lista de objetos
-''*****************************************************************
-'dim object as integer
-'
-''obtiene el numero de obj
-'numobjdatas = val(leer.darvalor("init", "numobjs"))
-'
-'frmcargando.cargar.min = 0
-'frmcargando.cargar.max = numobjdatas
-'frmcargando.cargar.value = 0
-'
-'
-'redim preserve objdata(1 to numobjdatas) as objdata
-'
-''llena la lista
-'for object = 1 to numobjdatas
-'
-'    objdata(object).name = leer.darvalor("obj" & object, "name")
-'
-'    objdata(object).grhindex = val(leer.darvalor("obj" & object, "grhindex"))
-'
-'    objdata(object).objtype = val(leer.darvalor("obj" & object, "objtype"))
-'    objdata(object).subtipo = val(leer.darvalor("obj" & object, "subtipo"))
-'
-'    objdata(object).newbie = val(leer.darvalor("obj" & object, "newbie"))
-'
-'    if objdata(object).subtipo = objtype_escudo then
-'        objdata(object).shieldanim = val(leer.darvalor("obj" & object, "anim"))
-'        objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-'        objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-'        objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-'        objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-'    end if
-'
-'    if objdata(object).subtipo = objtype_casco then
-'        objdata(object).cascoanim = val(leer.darvalor("obj" & object, "anim"))
-'        objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-'        objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-'        objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-'        objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-'    end if
-'
-'    objdata(object).ropaje = val(leer.darvalor("obj" & object, "numropaje"))
-'    objdata(object).hechizoindex = val(leer.darvalor("obj" & object, "hechizoindex"))
-'
-'    if objdata(object).objtype = objtype_weapon then
-'            objdata(object).weaponanim = val(leer.darvalor("obj" & object, "anim"))
-'            objdata(object).apu�ala = val(leer.darvalor("obj" & object, "apu�ala"))
-'            objdata(object).envenena = val(leer.darvalor("obj" & object, "envenena"))
-'            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-'            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-'            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-'            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-'            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-'            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-'            objdata(object).real = val(leer.darvalor("obj" & object, "real"))
-'            objdata(object).caos = val(leer.darvalor("obj" & object, "caos"))
-'            objdata(object).proyectil = val(leer.darvalor("obj" & object, "proyectil"))
-'            objdata(object).municion = val(leer.darvalor("obj" & object, "municiones"))
-'    end if
-'
-'    if objdata(object).objtype = objtype_armour then
-'            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-'            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-'            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-'            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-'            objdata(object).real = val(leer.darvalor("obj" & object, "real"))
-'            objdata(object).caos = val(leer.darvalor("obj" & object, "caos"))
-'    end if
-'
-'    if objdata(object).objtype = objtype_herramientas then
-'            objdata(object).lingh = val(leer.darvalor("obj" & object, "lingh"))
-'            objdata(object).lingp = val(leer.darvalor("obj" & object, "lingp"))
-'            objdata(object).lingo = val(leer.darvalor("obj" & object, "lingo"))
-'            objdata(object).skherreria = val(leer.darvalor("obj" & object, "skherreria"))
-'    end if
-'
-'    if objdata(object).objtype = objtype_instrumentos then
-'        objdata(object).snd1 = val(leer.darvalor("obj" & object, "snd1"))
-'        objdata(object).snd2 = val(leer.darvalor("obj" & object, "snd2"))
-'        objdata(object).snd3 = val(leer.darvalor("obj" & object, "snd3"))
-'        objdata(object).minint = val(leer.darvalor("obj" & object, "minint"))
-'    end if
-'
-'    objdata(object).lingoteindex = val(leer.darvalor("obj" & object, "lingoteindex"))
-'
-'    if objdata(object).objtype = 31 or objdata(object).objtype = 23 then
-'        objdata(object).minskill = val(leer.darvalor("obj" & object, "minskill"))
-'    end if
-'
-'    objdata(object).mineralindex = val(leer.darvalor("obj" & object, "mineralindex"))
-'
-'    objdata(object).maxhp = val(leer.darvalor("obj" & object, "maxhp"))
-'    objdata(object).minhp = val(leer.darvalor("obj" & object, "minhp"))
-'
-'
-'    objdata(object).mujer = val(leer.darvalor("obj" & object, "mujer"))
-'    objdata(object).hombre = val(leer.darvalor("obj" & object, "hombre"))
-'
-'    objdata(object).minham = val(leer.darvalor("obj" & object, "minham"))
-'    objdata(object).minsed = val(leer.darvalor("obj" & object, "minagu"))
-'
-'
-'    objdata(object).mindef = val(leer.darvalor("obj" & object, "mindef"))
-'    objdata(object).maxdef = val(leer.darvalor("obj" & object, "maxdef"))
-'
-'    objdata(object).respawn = val(leer.darvalor("obj" & object, "respawn"))
-'
-'    objdata(object).razaenana = val(leer.darvalor("obj" & object, "razaenana"))
-'
-'    objdata(object).valor = val(leer.darvalor("obj" & object, "valor"))
-'
-'    objdata(object).crucial = val(leer.darvalor("obj" & object, "crucial"))
-'
-'    objdata(object).cerrada = val(leer.darvalor("obj" & object, "abierta"))
-'    if objdata(object).cerrada = 1 then
-'            objdata(object).llave = val(leer.darvalor("obj" & object, "llave"))
-'            objdata(object).clave = val(leer.darvalor("obj" & object, "clave"))
-'    end if
-'
-'
-'    if objdata(object).objtype = objtype_puertas or objdata(object).objtype = objtype_botellavacia or objdata(object).objtype = objtype_botellallena then
-'        objdata(object).indexabierta = val(leer.darvalor("obj" & object, "indexabierta"))
-'        objdata(object).indexcerrada = val(leer.darvalor("obj" & object, "indexcerrada"))
-'        objdata(object).indexcerradallave = val(leer.darvalor("obj" & object, "indexcerradallave"))
-'    end if
-'
-'
-'    'puertas y llaves
-'    objdata(object).clave = val(leer.darvalor("obj" & object, "clave"))
-'
-'    objdata(object).texto = leer.darvalor("obj" & object, "texto")
-'    objdata(object).grhsecundario = val(leer.darvalor("obj" & object, "vgrande"))
-'
-'    objdata(object).agarrable = val(leer.darvalor("obj" & object, "agarrable"))
-'    objdata(object).foroid = leer.darvalor("obj" & object, "id")
-'
-'
-'    dim i as integer
-'    for i = 1 to numclases
-'        objdata(object).claseprohibida(i) = leer.darvalor("obj" & object, "cp" & i)
-'    next
-'
-'    objdata(object).resistencia = val(leer.darvalor("obj" & object, "resistencia"))
-'
-'    'pociones
-'    if objdata(object).objtype = 11 then
-'        objdata(object).tipopocion = val(leer.darvalor("obj" & object, "tipopocion"))
-'        objdata(object).maxmodificador = val(leer.darvalor("obj" & object, "maxmodificador"))
-'        objdata(object).minmodificador = val(leer.darvalor("obj" & object, "minmodificador"))
-'        objdata(object).duracionefecto = val(leer.darvalor("obj" & object, "duracionefecto"))
-'    end if
-'
-'    objdata(object).skcarpinteria = val(leer.darvalor("obj" & object, "skcarpinteria"))
-'
-'    if objdata(object).skcarpinteria > 0 then _
-'        objdata(object).madera = val(leer.darvalor("obj" & object, "madera"))
-'
-'    if objdata(object).objtype = objtype_barcos then
-'            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-'            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-'    end if
-'
-'    if objdata(object).objtype = objtype_flechas then
-'            objdata(object).maxhit = val(leer.darvalor("obj" & object, "maxhit"))
-'            objdata(object).minhit = val(leer.darvalor("obj" & object, "minhit"))
-'    end if
-'
-'    'bebidas
-'    objdata(object).minsta = val(leer.darvalor("obj" & object, "minst"))
-'
-'    frmcargando.cargar.value = frmcargando.cargar.value + 1
-'
-'
-'    doevents
-'next object
-'
-'exit sub
-'
-'errhandler:
-'    msgbox "error cargando objetos"
-'
-'
-'end sub
-
-'sub loadobjdata_nuevo()
-'
-''call logtarea("sub loadobjdata")
-'
-'on error goto errhandler
-''on error goto 0
-'
-'if frmmain.visible then frmmain.txstatus.caption = "cargando base de datos de los objetos."
-'
-''*****************************************************************
-''carga la lista de objetos
-''*****************************************************************
-'dim object as integer
-'
-'dim a as long, s as long
-'
-'a = inicarga(datpath & "obj.dat")
-'call iniconf(a, 0, "", 0)
-'
-''obtiene el numero de obj
-''numobjdatas = val(getvar(datpath & "obj.dat", "init", "numobjs"))
-'s = inibuscarseccion(a, "init")
-'numobjdatas = inidarclaveint(a, s, "numobjs")
-'
-'frmcargando.cargar.min = 0
-'frmcargando.cargar.max = numobjdatas
-'frmcargando.cargar.value = 0
-'
-'
-'redim preserve objdata(1 to numobjdatas) as objdata
-'
-''llena la lista
-'for object = 1 to numobjdatas
-'    s = inibuscarseccion(a, "obj" & object)
-'
-'    'objdata(object).name = getvar(datpath & "obj.dat", "obj" & object, "name")
-'    objdata(object).name = inidarclavestr(a, s, "name")
-'
-'    'objdata(object).grhindex = val(getvar(datpath & "obj.dat", "obj" & object, "grhindex"))
-'    objdata(object).grhindex = inidarclaveint(a, s, "grhindex")
-'
-'    'objdata(object).objtype = val(getvar(datpath & "obj.dat", "obj" & object, "objtype"))
-'    'objdata(object).subtipo = val(getvar(datpath & "obj.dat", "obj" & object, "subtipo"))
-'
-'    objdata(object).objtype = inidarclaveint(a, s, "objtype")
-'    objdata(object).subtipo = inidarclaveint(a, s, "subtipo")
-'
-'    'objdata(object).newbie = val(getvar(datpath & "obj.dat", "obj" & object, "newbie"))
-'    objdata(object).newbie = inidarclaveint(a, s, "newbie")
-'
-'    if objdata(object).subtipo = objtype_escudo then
-''        objdata(object).shieldanim = val(getvar(datpath & "obj.dat", "obj" & object, "anim"))
-''        objdata(object).lingh = val(getvar(datpath & "obj.dat", "obj" & object, "lingh"))
-''        objdata(object).lingp = val(getvar(datpath & "obj.dat", "obj" & object, "lingp"))
-''        objdata(object).lingo = val(getvar(datpath & "obj.dat", "obj" & object, "lingo"))
-''        objdata(object).skherreria = val(getvar(datpath & "obj.dat", "obj" & object, "skherreria"))
-'        objdata(object).shieldanim = inidarclaveint(a, s, "anim")
-'        objdata(object).lingh = inidarclaveint(a, s, "lingh")
-'        objdata(object).lingp = inidarclaveint(a, s, "lingp")
-'        objdata(object).lingo = inidarclaveint(a, s, "lingo")
-'        objdata(object).skherreria = inidarclaveint(a, s, "skherreria")
-'    end if
-'
-'    if objdata(object).subtipo = objtype_casco then
-''        objdata(object).cascoanim = val(getvar(datpath & "obj.dat", "obj" & object, "anim"))
-''        objdata(object).lingh = val(getvar(datpath & "obj.dat", "obj" & object, "lingh"))
-''        objdata(object).lingp = val(getvar(datpath & "obj.dat", "obj" & object, "lingp"))
-''        objdata(object).lingo = val(getvar(datpath & "obj.dat", "obj" & object, "lingo"))
-''        objdata(object).skherreria = val(getvar(datpath & "obj.dat", "obj" & object, "skherreria"))
-'        objdata(object).cascoanim = inidarclaveint(a, s, "anim")
-'        objdata(object).lingh = inidarclaveint(a, s, "lingh")
-'        objdata(object).lingp = inidarclaveint(a, s, "lingp")
-'        objdata(object).lingo = inidarclaveint(a, s, "lingo")
-'        objdata(object).skherreria = inidarclaveint(a, s, "skherreria")
-'    end if
-'
-''    objdata(object).ropaje = val(getvar(datpath & "obj.dat", "obj" & object, "numropaje"))
-''    objdata(object).hechizoindex = val(getvar(datpath & "obj.dat", "obj" & object, "hechizoindex"))
-'    objdata(object).ropaje = inidarclaveint(a, s, "numropaje")
-'    objdata(object).hechizoindex = inidarclaveint(a, s, "hechizoindex")
-'
-'    if objdata(object).objtype = objtype_weapon then
-''            objdata(object).weaponanim = val(getvar(datpath & "obj.dat", "obj" & object, "anim"))
-''            objdata(object).apu�ala = val(getvar(datpath & "obj.dat", "obj" & object, "apu�ala"))
-''            objdata(object).envenena = val(getvar(datpath & "obj.dat", "obj" & object, "envenena"))
-''            objdata(object).maxhit = val(getvar(datpath & "obj.dat", "obj" & object, "maxhit"))
-''            objdata(object).minhit = val(getvar(datpath & "obj.dat", "obj" & object, "minhit"))
-''            objdata(object).lingh = val(getvar(datpath & "obj.dat", "obj" & object, "lingh"))
-''            objdata(object).lingp = val(getvar(datpath & "obj.dat", "obj" & object, "lingp"))
-''            objdata(object).lingo = val(getvar(datpath & "obj.dat", "obj" & object, "lingo"))
-''            objdata(object).skherreria = val(getvar(datpath & "obj.dat", "obj" & object, "skherreria"))
-''            objdata(object).real = val(getvar(datpath & "obj.dat", "obj" & object, "real"))
-''            objdata(object).caos = val(getvar(datpath & "obj.dat", "obj" & object, "caos"))
-''            objdata(object).proyectil = val(getvar(datpath & "obj.dat", "obj" & object, "proyectil"))
-''            objdata(object).municion = val(getvar(datpath & "obj.dat", "obj" & object, "municiones"))
-'
-'            objdata(object).weaponanim = inidarclaveint(a, s, "anim")
-'            objdata(object).apu�ala = inidarclaveint(a, s, "apu�ala")
-'            objdata(object).envenena = inidarclaveint(a, s, "envenena")
-'            objdata(object).maxhit = inidarclaveint(a, s, "maxhit")
-'            objdata(object).minhit = inidarclaveint(a, s, "minhit")
-'            objdata(object).lingh = inidarclaveint(a, s, "lingh")
-'            objdata(object).lingp = inidarclaveint(a, s, "lingp")
-'            objdata(object).lingo = inidarclaveint(a, s, "lingo")
-'            objdata(object).skherreria = inidarclaveint(a, s, "skherreria")
-'            objdata(object).real = inidarclaveint(a, s, "real")
-'            objdata(object).caos = inidarclaveint(a, s, "caos")
-'            objdata(object).proyectil = inidarclaveint(a, s, "proyectil")
-'            objdata(object).municion = inidarclaveint(a, s, "municiones")
-'    end if
-'
-'    if objdata(object).objtype = objtype_armour then
-''            objdata(object).lingh = val(getvar(datpath & "obj.dat", "obj" & object, "lingh"))
-''            objdata(object).lingp = val(getvar(datpath & "obj.dat", "obj" & object, "lingp"))
-''            objdata(object).lingo = val(getvar(datpath & "obj.dat", "obj" & object, "lingo"))
-''            objdata(object).skherreria = val(getvar(datpath & "obj.dat", "obj" & object, "skherreria"))
-''            objdata(object).real = val(getvar(datpath & "obj.dat", "obj" & object, "real"))
-''            objdata(object).caos = val(getvar(datpath & "obj.dat", "obj" & object, "caos"))
-'            objdata(object).lingh = inidarclaveint(a, s, "lingh")
-'            objdata(object).lingp = inidarclaveint(a, s, "lingp")
-'            objdata(object).lingo = inidarclaveint(a, s, "lingo")
-'            objdata(object).skherreria = inidarclaveint(a, s, "skherreria")
-'            objdata(object).real = inidarclaveint(a, s, "real")
-'            objdata(object).caos = inidarclaveint(a, s, "caos")
-'    end if
-'
-'    if objdata(object).objtype = objtype_herramientas then
-''            objdata(object).lingh = val(getvar(datpath & "obj.dat", "obj" & object, "lingh"))
-''            objdata(object).lingp = val(getvar(datpath & "obj.dat", "obj" & object, "lingp"))
-''            objdata(object).lingo = val(getvar(datpath & "obj.dat", "obj" & object, "lingo"))
-''            objdata(object).skherreria = val(getvar(datpath & "obj.dat", "obj" & object, "skherreria"))
-'            objdata(object).lingh = inidarclaveint(a, s, "lingh")
-'            objdata(object).lingp = inidarclaveint(a, s, "lingp")
-'            objdata(object).lingo = inidarclaveint(a, s, "lingo")
-'            objdata(object).skherreria = inidarclaveint(a, s, "skherreria")
-'    end if
-'
-'    if objdata(object).objtype = objtype_instrumentos then
-''        objdata(object).snd1 = val(getvar(datpath & "obj.dat", "obj" & object, "snd1"))
-''        objdata(object).snd2 = val(getvar(datpath & "obj.dat", "obj" & object, "snd1"))
-''        objdata(object).snd3 = val(getvar(datpath & "obj.dat", "obj" & object, "snd3"))
-''        objdata(object).minint = val(getvar(datpath & "obj.dat", "obj" & object, "minint"))
-'        objdata(object).snd1 = inidarclaveint(a, s, "snd1")
-'        objdata(object).snd2 = inidarclaveint(a, s, "snd2")
-'        objdata(object).snd3 = inidarclaveint(a, s, "snd3")
-'        objdata(object).minint = inidarclaveint(a, s, "minint")
-'    end if
-'
-'    'objdata(object).lingoteindex = val(getvar(datpath & "obj.dat", "obj" & object, "lingoteindex"))
-'    objdata(object).lingoteindex = inidarclaveint(a, s, "lingoteindex")
-'
-'    if objdata(object).objtype = 31 or objdata(object).objtype = 23 then
-'        'objdata(object).minskill = val(getvar(datpath & "obj.dat", "obj" & object, "minskill"))
-'        objdata(object).minskill = inidarclaveint(a, s, "minskill")
-'    end if
-'
-''    objdata(object).mineralindex = val(getvar(datpath & "obj.dat", "obj" & object, "mineralindex"))
-''
-''    objdata(object).maxhp = val(getvar(datpath & "obj.dat", "obj" & object, "maxhp"))
-''    objdata(object).minhp = val(getvar(datpath & "obj.dat", "obj" & object, "minhp"))
-''
-''
-''    objdata(object).mujer = val(getvar(datpath & "obj.dat", "obj" & object, "mujer"))
-''    objdata(object).hombre = val(getvar(datpath & "obj.dat", "obj" & object, "hombre"))
-''
-''    objdata(object).minham = val(getvar(datpath & "obj.dat", "obj" & object, "minham"))
-''    objdata(object).minsed = val(getvar(datpath & "obj.dat", "obj" & object, "minagu"))
-'
-'    objdata(object).mineralindex = inidarclaveint(a, s, "mineralindex")
-'
-'    objdata(object).maxhp = inidarclaveint(a, s, "maxhp")
-'    objdata(object).minhp = inidarclaveint(a, s, "minhp")
-'
-'    objdata(object).mujer = inidarclaveint(a, s, "mujer")
-'    objdata(object).hombre = inidarclaveint(a, s, "hombre")
-'
-'    objdata(object).minham = inidarclaveint(a, s, "minham")
-'    objdata(object).minsed = inidarclaveint(a, s, "minagu")
-'
-'
-''    objdata(object).mindef = val(getvar(datpath & "obj.dat", "obj" & object, "mindef"))
-''    objdata(object).maxdef = val(getvar(datpath & "obj.dat", "obj" & object, "maxdef"))
-''
-''    objdata(object).respawn = val(getvar(datpath & "obj.dat", "obj" & object, "respawn"))
-''
-''    objdata(object).razaenana = val(getvar(datpath & "obj.dat", "obj" & object, "razaenana"))
-''
-''    objdata(object).valor = val(getvar(datpath & "obj.dat", "obj" & object, "valor"))
-''
-''    objdata(object).crucial = val(getvar(datpath & "obj.dat", "obj" & object, "crucial"))
-''
-''    objdata(object).cerrada = val(getvar(datpath & "obj.dat", "obj" & object, "abierta"))
-'
-'    objdata(object).mindef = inidarclaveint(a, s, "mindef")
-'    objdata(object).maxdef = inidarclaveint(a, s, "maxdef")
-'
-'    objdata(object).respawn = inidarclaveint(a, s, "respawn")
-'
-'    objdata(object).razaenana = inidarclaveint(a, s, "razaenana")
-'
-'    objdata(object).valor = inidarclaveint(a, s, "valor")
-'
-'    objdata(object).crucial = inidarclaveint(a, s, "crucial")
-'
-'    objdata(object).cerrada = inidarclaveint(a, s, "abierta")
-'
-'    if objdata(object).cerrada = 1 then
-''            objdata(object).llave = val(getvar(datpath & "obj.dat", "obj" & object, "llave"))
-''            objdata(object).clave = val(getvar(datpath & "obj.dat", "obj" & object, "clave"))
-'            objdata(object).llave = inidarclaveint(a, s, "llave")
-'            objdata(object).clave = inidarclaveint(a, s, "clave")
-'    end if
-'
-'
-'    if objdata(object).objtype = objtype_puertas or objdata(object).objtype = objtype_botellavacia or objdata(object).objtype = objtype_botellallena then
-''        objdata(object).indexabierta = val(getvar(datpath & "obj.dat", "obj" & object, "indexabierta"))
-''        objdata(object).indexcerrada = val(getvar(datpath & "obj.dat", "obj" & object, "indexcerrada"))
-''        objdata(object).indexcerradallave = val(getvar(datpath & "obj.dat", "obj" & object, "indexcerradallave"))
-'        objdata(object).indexabierta = inidarclaveint(a, s, "indexabierta")
-'        objdata(object).indexcerrada = inidarclaveint(a, s, "indexcerrada")
-'        objdata(object).indexcerradallave = inidarclaveint(a, s, "indexcerradallave")
-'    end if
-'
-'
-'    'puertas y llaves
-''    objdata(object).clave = val(getvar(datpath & "obj.dat", "obj" & object, "clave"))
-''
-''    objdata(object).texto = getvar(datpath & "obj.dat", "obj" & object, "texto")
-''    objdata(object).grhsecundario = val(getvar(datpath & "obj.dat", "obj" & object, "vgrande"))
-''
-''    objdata(object).agarrable = val(getvar(datpath & "obj.dat", "obj" & object, "agarrable"))
-''    objdata(object).foroid = getvar(datpath & "obj.dat", "obj" & object, "id")
-'    objdata(object).clave = inidarclaveint(a, s, "clave")
-'
-'    objdata(object).texto = inidarclavestr(a, s, "texto")
-'    objdata(object).grhsecundario = inidarclaveint(a, s, "vgrande")
-'
-'    objdata(object).agarrable = inidarclaveint(a, s, "agarrable")
-'    objdata(object).foroid = inidarclavestr(a, s, "id")
-'
-'
-'    dim i as integer
-'    for i = 1 to numclases
-'        'objdata(object).claseprohibida(i) = getvar(datpath & "obj.dat", "obj" & object, "cp" & i)
-'        objdata(object).claseprohibida(i) = inidarclavestr(a, s, "cp" & i)
-'    next
-'
-'    'objdata(object).resistencia = val(getvar(datpath & "obj.dat", "obj" & object, "resistencia"))
-'    objdata(object).resistencia = inidarclaveint(a, s, "resistencia")
-'
-'    'pociones
-'    if objdata(object).objtype = 11 then
-''        objdata(object).tipopocion = val(getvar(datpath & "obj.dat", "obj" & object, "tipopocion"))
-''        objdata(object).maxmodificador = val(getvar(datpath & "obj.dat", "obj" & object, "maxmodificador"))
-''        objdata(object).minmodificador = val(getvar(datpath & "obj.dat", "obj" & object, "minmodificador"))
-''        objdata(object).duracionefecto = val(getvar(datpath & "obj.dat", "obj" & object, "duracionefecto"))
-'        objdata(object).tipopocion = inidarclaveint(a, s, "tipopocion")
-'        objdata(object).maxmodificador = inidarclaveint(a, s, "maxmodificador")
-'        objdata(object).minmodificador = inidarclaveint(a, s, "minmodificador")
-'        objdata(object).duracionefecto = inidarclaveint(a, s, "duracionefecto")
-'
-'    end if
-'
-''    objdata(object).skcarpinteria = val(getvar(datpath & "obj.dat", "obj" & object, "skcarpinteria"))
-'    objdata(object).skcarpinteria = inidarclaveint(a, s, "skcarpinteria")
-'
-'    if objdata(object).skcarpinteria > 0 then
-'        'objdata(object).madera = val(getvar(datpath & "obj.dat", "obj" & object, "madera"))
-'        objdata(object).madera = inidarclaveint(a, s, "madera")
-'    end if
-'
-'    if objdata(object).objtype = objtype_barcos then
-''            objdata(object).maxhit = val(getvar(datpath & "obj.dat", "obj" & object, "maxhit"))
-''            objdata(object).minhit = val(getvar(datpath & "obj.dat", "obj" & object, "minhit"))
-'            objdata(object).maxhit = inidarclaveint(a, s, "maxhit")
-'            objdata(object).minhit = inidarclaveint(a, s, "minhit")
-'    end if
-'
-'    if objdata(object).objtype = objtype_flechas then
-''            objdata(object).maxhit = val(getvar(datpath & "obj.dat", "obj" & object, "maxhit"))
-''            objdata(object).minhit = val(getvar(datpath & "obj.dat", "obj" & object, "minhit"))
-'            objdata(object).maxhit = inidarclaveint(a, s, "maxhit")
-'            objdata(object).minhit = inidarclaveint(a, s, "minhit")
-'    end if
-'
-'    'bebidas
-'    'objdata(object).minsta = val(getvar(datpath & "obj.dat", "obj" & object, "minst"))
-'    objdata(object).minsta = inidarclaveint(a, s, "minst")
-'
-'    frmcargando.cargar.value = frmcargando.cargar.value + 1
-'
-'
-'    'doevents
-'next object
-'
-'
-'call inidescarga(a)
-'
-'exit sub
-'
-'errhandler:
-'
-'call inidescarga(a)
-'
-'    msgbox "error cargando objetos: " & err.number & " : " & err.description
-'
-'
-'end sub
-
-
-
-sub loaduserstats(userindex as integer, userfile as string)
-
-
+sub loaduserstats(byval userindex as integer, byref userfile as clsinireader)
 
 dim loopc as integer
+
 
 for loopc = 1 to numatributos
-  userlist(userindex).stats.useratributos(loopc) = getvar(userfile, "atributos", "at" & loopc)
+  userlist(userindex).stats.useratributos(loopc) = cint(userfile.getvalue("atributos", "at" & loopc))
   userlist(userindex).stats.useratributosbackup(loopc) = userlist(userindex).stats.useratributos(loopc)
-next
+next loopc
 
 for loopc = 1 to numskills
-  userlist(userindex).stats.userskills(loopc) = val(getvar(userfile, "skills", "sk" & loopc))
-next
+  userlist(userindex).stats.userskills(loopc) = cint(userfile.getvalue("skills", "sk" & loopc))
+next loopc
 
 for loopc = 1 to maxuserhechizos
-  userlist(userindex).stats.userhechizos(loopc) = val(getvar(userfile, "hechizos", "h" & loopc))
-next
+  userlist(userindex).stats.userhechizos(loopc) = cint(userfile.getvalue("hechizos", "h" & loopc))
+next loopc
 
-userlist(userindex).stats.gld = val(getvar(userfile, "stats", "gld"))
-userlist(userindex).stats.banco = val(getvar(userfile, "stats", "banco"))
+userlist(userindex).stats.gld = clng(userfile.getvalue("stats", "gld"))
+userlist(userindex).stats.banco = clng(userfile.getvalue("stats", "banco"))
 
-userlist(userindex).stats.met = val(getvar(userfile, "stats", "met"))
-userlist(userindex).stats.maxhp = val(getvar(userfile, "stats", "maxhp"))
-userlist(userindex).stats.minhp = val(getvar(userfile, "stats", "minhp"))
+userlist(userindex).stats.met = cint(userfile.getvalue("stats", "met"))
+userlist(userindex).stats.maxhp = cint(userfile.getvalue("stats", "maxhp"))
+userlist(userindex).stats.minhp = cint(userfile.getvalue("stats", "minhp"))
 
-userlist(userindex).stats.fit = val(getvar(userfile, "stats", "fit"))
-userlist(userindex).stats.minsta = val(getvar(userfile, "stats", "minsta"))
-userlist(userindex).stats.maxsta = val(getvar(userfile, "stats", "maxsta"))
+userlist(userindex).stats.fit = cint(userfile.getvalue("stats", "fit"))
+userlist(userindex).stats.minsta = cint(userfile.getvalue("stats", "minsta"))
+userlist(userindex).stats.maxsta = cint(userfile.getvalue("stats", "maxsta"))
 
-userlist(userindex).stats.maxman = val(getvar(userfile, "stats", "maxman"))
-userlist(userindex).stats.minman = val(getvar(userfile, "stats", "minman"))
+userlist(userindex).stats.maxman = cint(userfile.getvalue("stats", "maxman"))
+userlist(userindex).stats.minman = cint(userfile.getvalue("stats", "minman"))
 
-userlist(userindex).stats.maxhit = val(getvar(userfile, "stats", "maxhit"))
-userlist(userindex).stats.minhit = val(getvar(userfile, "stats", "minhit"))
+userlist(userindex).stats.maxhit = cint(userfile.getvalue("stats", "maxhit"))
+userlist(userindex).stats.minhit = cint(userfile.getvalue("stats", "minhit"))
 
-userlist(userindex).stats.maxagu = val(getvar(userfile, "stats", "maxagu"))
-userlist(userindex).stats.minagu = val(getvar(userfile, "stats", "minagu"))
+userlist(userindex).stats.maxagu = cint(userfile.getvalue("stats", "maxagu"))
+userlist(userindex).stats.minagu = cint(userfile.getvalue("stats", "minagu"))
 
-userlist(userindex).stats.maxham = val(getvar(userfile, "stats", "maxham"))
-userlist(userindex).stats.minham = val(getvar(userfile, "stats", "minham"))
+userlist(userindex).stats.maxham = cint(userfile.getvalue("stats", "maxham"))
+userlist(userindex).stats.minham = cint(userfile.getvalue("stats", "minham"))
 
-userlist(userindex).stats.skillpts = val(getvar(userfile, "stats", "skillptslibres"))
+userlist(userindex).stats.skillpts = cint(userfile.getvalue("stats", "skillptslibres"))
 
-userlist(userindex).stats.exp = val(getvar(userfile, "stats", "exp"))
-userlist(userindex).stats.elu = val(getvar(userfile, "stats", "elu"))
-userlist(userindex).stats.elv = val(getvar(userfile, "stats", "elv"))
-
-
-userlist(userindex).stats.usuariosmatados = val(getvar(userfile, "muertes", "usermuertes"))
-userlist(userindex).stats.criminalesmatados = val(getvar(userfile, "muertes", "crimmuertes"))
-userlist(userindex).stats.npcsmuertos = val(getvar(userfile, "muertes", "npcsmuertes"))
-
-userlist(userindex).flags.pertalcons = val(getvar(userfile, "consejo", "pertenece"))
-userlist(userindex).flags.pertalconscaos = val(getvar(userfile, "consejo", "pertenececaos"))
+userlist(userindex).stats.exp = cdbl(userfile.getvalue("stats", "exp"))
+userlist(userindex).stats.elu = clng(userfile.getvalue("stats", "elu"))
+userlist(userindex).stats.elv = clng(userfile.getvalue("stats", "elv"))
 
 
+userlist(userindex).stats.usuariosmatados = cint(userfile.getvalue("muertes", "usermuertes"))
+userlist(userindex).stats.criminalesmatados = cint(userfile.getvalue("muertes", "crimmuertes"))
+userlist(userindex).stats.npcsmuertos = cint(userfile.getvalue("muertes", "npcsmuertes"))
+
+userlist(userindex).flags.pertalcons = cbyte(userfile.getvalue("consejo", "pertenece"))
+userlist(userindex).flags.pertalconscaos = cbyte(userfile.getvalue("consejo", "pertenececaos"))
 
 end sub
 
-sub loaduserreputacion(userindex as integer, userfile as string)
+sub loaduserreputacion(byval userindex as integer, byref userfile as clsinireader)
 
-userlist(userindex).reputacion.asesinorep = val(getvar(userfile, "rep", "asesino"))
-userlist(userindex).reputacion.bandidorep = val(getvar(userfile, "rep", "bandido"))
-userlist(userindex).reputacion.burguesrep = val(getvar(userfile, "rep", "burguesia"))
-userlist(userindex).reputacion.ladronesrep = val(getvar(userfile, "rep", "ladrones"))
-userlist(userindex).reputacion.noblerep = val(getvar(userfile, "rep", "nobles"))
-userlist(userindex).reputacion.pleberep = val(getvar(userfile, "rep", "plebe"))
-userlist(userindex).reputacion.promedio = val(getvar(userfile, "rep", "promedio"))
+userlist(userindex).reputacion.asesinorep = cdbl(userfile.getvalue("rep", "asesino"))
+userlist(userindex).reputacion.bandidorep = cdbl(userfile.getvalue("rep", "bandido"))
+userlist(userindex).reputacion.burguesrep = cdbl(userfile.getvalue("rep", "burguesia"))
+userlist(userindex).reputacion.ladronesrep = cdbl(userfile.getvalue("rep", "ladrones"))
+userlist(userindex).reputacion.noblerep = cdbl(userfile.getvalue("rep", "nobles"))
+userlist(userindex).reputacion.pleberep = cdbl(userfile.getvalue("rep", "plebe"))
+userlist(userindex).reputacion.promedio = cdbl(userfile.getvalue("rep", "promedio"))
 
 end sub
 
+sub loaduserinit(byval userindex as integer, byref userfile as clsinireader)
 
-sub loaduserinit(userindex as integer, userfile as string)
-
-
-dim loopc as integer
+dim loopc as long
 dim ln as string
-dim ln2 as string
-dim cantidad as long
 
-userlist(userindex).faccion.armadareal = val(getvar(userfile, "facciones", "ejercitoreal"))
-userlist(userindex).faccion.fuerzascaos = val(getvar(userfile, "facciones", "ejercitocaos"))
-userlist(userindex).faccion.ciudadanosmatados = val(getvar(userfile, "facciones", "ciudmatados"))
-userlist(userindex).faccion.criminalesmatados = val(getvar(userfile, "facciones", "crimmatados"))
-userlist(userindex).faccion.recibioarmaduracaos = val(getvar(userfile, "facciones", "rarcaos"))
-userlist(userindex).faccion.recibioarmadurareal = val(getvar(userfile, "facciones", "rarreal"))
-userlist(userindex).faccion.recibioexpinicialcaos = val(getvar(userfile, "facciones", "rexcaos"))
-userlist(userindex).faccion.recibioexpinicialreal = val(getvar(userfile, "facciones", "rexreal"))
-userlist(userindex).faccion.recompensascaos = val(getvar(userfile, "facciones", "reccaos"))
-userlist(userindex).faccion.recompensasreal = val(getvar(userfile, "facciones", "recreal"))
-userlist(userindex).faccion.reenlistadas = val(getvar(userfile, "facciones", "reenlistadas"))
+userlist(userindex).faccion.armadareal = cbyte(userfile.getvalue("facciones", "ejercitoreal"))
+userlist(userindex).faccion.fuerzascaos = cbyte(userfile.getvalue("facciones", "ejercitocaos"))
+userlist(userindex).faccion.ciudadanosmatados = cdbl(userfile.getvalue("facciones", "ciudmatados"))
+userlist(userindex).faccion.criminalesmatados = cdbl(userfile.getvalue("facciones", "crimmatados"))
+userlist(userindex).faccion.recibioarmaduracaos = cbyte(userfile.getvalue("facciones", "rarcaos"))
+userlist(userindex).faccion.recibioarmadurareal = cbyte(userfile.getvalue("facciones", "rarreal"))
+userlist(userindex).faccion.recibioexpinicialcaos = cbyte(userfile.getvalue("facciones", "rexcaos"))
+userlist(userindex).faccion.recibioexpinicialreal = cbyte(userfile.getvalue("facciones", "rexreal"))
+userlist(userindex).faccion.recompensascaos = clng(userfile.getvalue("facciones", "reccaos"))
+userlist(userindex).faccion.recompensasreal = clng(userfile.getvalue("facciones", "recreal"))
+userlist(userindex).faccion.reenlistadas = cbyte(userfile.getvalue("facciones", "reenlistadas"))
 
-userlist(userindex).flags.muerto = val(getvar(userfile, "flags", "muerto"))
-userlist(userindex).flags.escondido = val(getvar(userfile, "flags", "escondido"))
+userlist(userindex).flags.muerto = cbyte(userfile.getvalue("flags", "muerto"))
+userlist(userindex).flags.escondido = cbyte(userfile.getvalue("flags", "escondido"))
 
-userlist(userindex).flags.hambre = val(getvar(userfile, "flags", "hambre"))
-userlist(userindex).flags.sed = val(getvar(userfile, "flags", "sed"))
-userlist(userindex).flags.desnudo = val(getvar(userfile, "flags", "desnudo"))
+userlist(userindex).flags.hambre = cbyte(userfile.getvalue("flags", "hambre"))
+userlist(userindex).flags.sed = cbyte(userfile.getvalue("flags", "sed"))
+userlist(userindex).flags.desnudo = cbyte(userfile.getvalue("flags", "desnudo"))
 
-userlist(userindex).flags.envenenado = val(getvar(userfile, "flags", "envenenado"))
-userlist(userindex).flags.paralizado = val(getvar(userfile, "flags", "paralizado"))
+userlist(userindex).flags.envenenado = cbyte(userfile.getvalue("flags", "envenenado"))
+userlist(userindex).flags.paralizado = cbyte(userfile.getvalue("flags", "paralizado"))
 if userlist(userindex).flags.paralizado = 1 then
     userlist(userindex).counters.paralisis = intervaloparalizado
 end if
-userlist(userindex).flags.navegando = val(getvar(userfile, "flags", "navegando"))
+userlist(userindex).flags.navegando = cbyte(userfile.getvalue("flags", "navegando"))
 
 
-userlist(userindex).counters.pena = val(getvar(userfile, "counters", "pena"))
+userlist(userindex).counters.pena = clng(userfile.getvalue("counters", "pena"))
 
-userlist(userindex).email = getvar(userfile, "contacto", "email")
+userlist(userindex).email = userfile.getvalue("contacto", "email")
 
-'barrin 2/10/03
-userlist(userindex).apadrinados = val(getvar(userfile, "contacto", "apadrinados"))
-
-userlist(userindex).genero = getvar(userfile, "init", "genero")
-userlist(userindex).clase = getvar(userfile, "init", "clase")
-userlist(userindex).raza = getvar(userfile, "init", "raza")
-userlist(userindex).hogar = getvar(userfile, "init", "hogar")
-userlist(userindex).char.heading = val(getvar(userfile, "init", "heading"))
+userlist(userindex).genero = userfile.getvalue("init", "genero")
+userlist(userindex).clase = userfile.getvalue("init", "clase")
+userlist(userindex).raza = userfile.getvalue("init", "raza")
+userlist(userindex).hogar = userfile.getvalue("init", "hogar")
+userlist(userindex).char.heading = cint(userfile.getvalue("init", "heading"))
 
 
-userlist(userindex).origchar.head = val(getvar(userfile, "init", "head"))
-userlist(userindex).origchar.body = val(getvar(userfile, "init", "body"))
-userlist(userindex).origchar.weaponanim = val(getvar(userfile, "init", "arma"))
-userlist(userindex).origchar.shieldanim = val(getvar(userfile, "init", "escudo"))
-userlist(userindex).origchar.cascoanim = val(getvar(userfile, "init", "casco"))
-userlist(userindex).origchar.heading = south
+userlist(userindex).origchar.head = cint(userfile.getvalue("init", "head"))
+userlist(userindex).origchar.body = cint(userfile.getvalue("init", "body"))
+userlist(userindex).origchar.weaponanim = cint(userfile.getvalue("init", "arma"))
+userlist(userindex).origchar.shieldanim = cint(userfile.getvalue("init", "escudo"))
+userlist(userindex).origchar.cascoanim = cint(userfile.getvalue("init", "casco"))
+userlist(userindex).origchar.heading = eheading.south
 
 if userlist(userindex).flags.muerto = 0 then
-        userlist(userindex).char = userlist(userindex).origchar
+    userlist(userindex).char = userlist(userindex).origchar
 else
-        userlist(userindex).char.body = icuerpomuerto
-        userlist(userindex).char.head = icabezamuerto
-        userlist(userindex).char.weaponanim = ningunarma
-        userlist(userindex).char.shieldanim = ningunescudo
-        userlist(userindex).char.cascoanim = ninguncasco
+    userlist(userindex).char.body = icuerpomuerto
+    userlist(userindex).char.head = icabezamuerto
+    userlist(userindex).char.weaponanim = ningunarma
+    userlist(userindex).char.shieldanim = ningunescudo
+    userlist(userindex).char.cascoanim = ninguncasco
 end if
 
 
-userlist(userindex).desc = getvar(userfile, "init", "desc")
+userlist(userindex).desc = userfile.getvalue("init", "desc")
 
 
-userlist(userindex).pos.map = val(readfield(1, getvar(userfile, "init", "position"), 45))
-userlist(userindex).pos.x = val(readfield(2, getvar(userfile, "init", "position"), 45))
-userlist(userindex).pos.y = val(readfield(3, getvar(userfile, "init", "position"), 45))
+userlist(userindex).pos.map = cint(readfield(1, userfile.getvalue("init", "position"), 45))
+userlist(userindex).pos.x = cint(readfield(2, userfile.getvalue("init", "position"), 45))
+userlist(userindex).pos.y = cint(readfield(3, userfile.getvalue("init", "position"), 45))
 
-userlist(userindex).invent.nroitems = getvar(userfile, "inventory", "cantidaditems")
-
-dim loopd as integer
+userlist(userindex).invent.nroitems = cint(userfile.getvalue("inventory", "cantidaditems"))
 
 '[kevin]--------------------------------------------------------------------
 '***********************************************************************************
-userlist(userindex).bancoinvent.nroitems = val(getvar(userfile, "bancoinventory", "cantidaditems"))
+userlist(userindex).bancoinvent.nroitems = cint(userfile.getvalue("bancoinventory", "cantidaditems"))
 'lista de objetos del banco
-for loopd = 1 to max_bancoinventory_slots
-    ln2 = getvar(userfile, "bancoinventory", "obj" & loopd)
-    userlist(userindex).bancoinvent.object(loopd).objindex = val(readfield(1, ln2, 45))
-    userlist(userindex).bancoinvent.object(loopd).amount = val(readfield(2, ln2, 45))
-next loopd
+for loopc = 1 to max_bancoinventory_slots
+    ln = userfile.getvalue("bancoinventory", "obj" & loopc)
+    userlist(userindex).bancoinvent.object(loopc).objindex = cint(readfield(1, ln, 45))
+    userlist(userindex).bancoinvent.object(loopc).amount = cint(readfield(2, ln, 45))
+next loopc
 '------------------------------------------------------------------------------------
 '[/kevin]*****************************************************************************
 
 
 'lista de objetos
 for loopc = 1 to max_inventory_slots
-    ln = getvar(userfile, "inventory", "obj" & loopc)
-    userlist(userindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
-    userlist(userindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
-    userlist(userindex).invent.object(loopc).equipped = val(readfield(3, ln, 45))
+    ln = userfile.getvalue("inventory", "obj" & loopc)
+    userlist(userindex).invent.object(loopc).objindex = cint(readfield(1, ln, 45))
+    userlist(userindex).invent.object(loopc).amount = cint(readfield(2, ln, 45))
+    userlist(userindex).invent.object(loopc).equipped = cbyte(readfield(3, ln, 45))
 next loopc
 
 'obtiene el indice-objeto del arma
-userlist(userindex).invent.weaponeqpslot = val(getvar(userfile, "inventory", "weaponeqpslot"))
+userlist(userindex).invent.weaponeqpslot = cbyte(userfile.getvalue("inventory", "weaponeqpslot"))
 if userlist(userindex).invent.weaponeqpslot > 0 then
     userlist(userindex).invent.weaponeqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.weaponeqpslot).objindex
 end if
 
 'obtiene el indice-objeto del armadura
-userlist(userindex).invent.armoureqpslot = val(getvar(userfile, "inventory", "armoureqpslot"))
+userlist(userindex).invent.armoureqpslot = cbyte(userfile.getvalue("inventory", "armoureqpslot"))
 if userlist(userindex).invent.armoureqpslot > 0 then
     userlist(userindex).invent.armoureqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.armoureqpslot).objindex
     userlist(userindex).flags.desnudo = 0
@@ -1529,626 +903,142 @@ else
 end if
 
 'obtiene el indice-objeto del escudo
-userlist(userindex).invent.escudoeqpslot = val(getvar(userfile, "inventory", "escudoeqpslot"))
+userlist(userindex).invent.escudoeqpslot = cbyte(userfile.getvalue("inventory", "escudoeqpslot"))
 if userlist(userindex).invent.escudoeqpslot > 0 then
     userlist(userindex).invent.escudoeqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.escudoeqpslot).objindex
 end if
 
 'obtiene el indice-objeto del casco
-userlist(userindex).invent.cascoeqpslot = val(getvar(userfile, "inventory", "cascoeqpslot"))
+userlist(userindex).invent.cascoeqpslot = cbyte(userfile.getvalue("inventory", "cascoeqpslot"))
 if userlist(userindex).invent.cascoeqpslot > 0 then
     userlist(userindex).invent.cascoeqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.cascoeqpslot).objindex
 end if
 
 'obtiene el indice-objeto barco
-userlist(userindex).invent.barcoslot = val(getvar(userfile, "inventory", "barcoslot"))
+userlist(userindex).invent.barcoslot = cbyte(userfile.getvalue("inventory", "barcoslot"))
 if userlist(userindex).invent.barcoslot > 0 then
     userlist(userindex).invent.barcoobjindex = userlist(userindex).invent.object(userlist(userindex).invent.barcoslot).objindex
 end if
 
 'obtiene el indice-objeto municion
-userlist(userindex).invent.municioneqpslot = val(getvar(userfile, "inventory", "municionslot"))
+userlist(userindex).invent.municioneqpslot = cbyte(userfile.getvalue("inventory", "municionslot"))
 if userlist(userindex).invent.municioneqpslot > 0 then
     userlist(userindex).invent.municioneqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.municioneqpslot).objindex
 end if
 
 '[alejo]
 'obtiene el indice-objeto herramienta
-userlist(userindex).invent.herramientaeqpslot = val(getvar(userfile, "inventory", "herramientaslot"))
+userlist(userindex).invent.herramientaeqpslot = cint(userfile.getvalue("inventory", "herramientaslot"))
 if userlist(userindex).invent.herramientaeqpslot > 0 then
     userlist(userindex).invent.herramientaeqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.herramientaeqpslot).objindex
 end if
 
 userlist(userindex).nromacotas = 0
-'
-'userlist(userindex).nromacotas = val(getvar(userfile, "mascotas", "nromascotas"))
-'cantidad = 0
-'
-''lista de mascotas
-'for loopc = 1 to maxmascotas
-'    userlist(userindex).mascotastype(loopc) = val(getvar(userfile, "mascotas", "mas" & loopc))
-'    if userlist(userindex).mascotastype(loopc) > 0 then
-'        cantidad = cantidad + 1
-'    end if
-'next loopc
-'if cantidad <> userlist(userindex).nromacotas then
-'    userlist(userindex).nromacotas = cantidad
-'end if
 
-
-userlist(userindex).guildinfo.fundoclan = val(getvar(userfile, "guild", "fundoclan"))
-userlist(userindex).guildinfo.esguildleader = val(getvar(userfile, "guild", "esguildleader"))
-userlist(userindex).guildinfo.echadas = val(getvar(userfile, "guild", "echadas"))
-userlist(userindex).guildinfo.solicitudes = val(getvar(userfile, "guild", "solicitudes"))
-userlist(userindex).guildinfo.solicitudesrechazadas = val(getvar(userfile, "guild", "solicitudesrechazadas"))
-userlist(userindex).guildinfo.vecesfueguildleader = val(getvar(userfile, "guild", "vecesfueguildleader"))
-userlist(userindex).guildinfo.yavoto = val(getvar(userfile, "guild", "yavoto"))
-userlist(userindex).guildinfo.clanesparticipo = val(getvar(userfile, "guild", "clanesparticipo"))
-userlist(userindex).guildinfo.guildpoints = val(getvar(userfile, "guild", "guildpts"))
-
-userlist(userindex).guildinfo.clanfundado = getvar(userfile, "guild", "clanfundado")
-userlist(userindex).guildinfo.guildname = getvar(userfile, "guild", "guildname")
-
-'userlist(userindex).partydata.pindex = -1
+ln = userfile.getvalue("guild", "guildindex")
+if isnumeric(ln) then
+    userlist(userindex).guildindex = cint(ln)
+else
+    userlist(userindex).guildindex = 0
+end if
 
 end sub
 
-
-
-
-
-function getvar(byval file as string, byval main as string, byval var as string) as string
+function getvar(byval file as string, byval main as string, byval var as string, optional emptyspaces as long = 1024) as string
 
 dim sspaces as string ' this will hold the input that the program will retrieve
 dim szreturn as string ' this will be the defaul value if the string is not found
   
 szreturn = ""
   
-sspaces = space(5000) ' this tells the computer how long the longest string can be
+sspaces = space$(emptyspaces) ' this tells the computer how long the longest string can be
   
   
-getprivateprofilestring main, var, szreturn, sspaces, len(sspaces), file
+getprivateprofilestring main, var, szreturn, sspaces, emptyspaces, file
   
-getvar = rtrim(sspaces)
+getvar = rtrim$(sspaces)
 getvar = left$(getvar, len(getvar) - 1)
   
 end function
 
-'sub cargarbackup_nuevo()
-'
-''call logtarea("sub cargarbackup")
-'
-'if frmmain.visible then frmmain.txstatus.caption = "cargando backup."
-'
-'dim map as integer
-'dim loopc as integer
-'dim x as integer
-'dim y as integer
-'dim dummyint as integer
-'dim tempint as integer
-'dim saveas as string
-'dim npcfile as string
-'dim porc as long
-'dim filename as string
-'dim c$
-'
-'dim archmap as string, archinf as string
-'
-'on error goto man
-'
-'
-'nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
-'frmcargando.cargar.min = 0
-'frmcargando.cargar.max = nummaps
-'frmcargando.cargar.value = 0
-'
-'mappath = getvar(datpath & "map.dat", "init", "mappath")
-'
-'redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
-'redim mapinfo(1 to nummaps) as mapinfo
-'
-'for map = 1 to nummaps
-'
-'    filename = app.path & "\worldbackup\map" & map & ".map"
-'
-'    if fileexist(filename, vbnormal) then
-'        archmap = app.path & "\worldbackup\map" & map & ".map"
-'        archinf = app.path & "\worldbackup\map" & map & ".inf"
-'        c$ = app.path & "\worldbackup\map" & map & ".dat"
-'    else
-'        archmap = app.path & mappath & "mapa" & map & ".map"
-'        archinf = app.path & mappath & "mapa" & map & ".inf"
-'        c$ = app.path & mappath & "mapa" & map & ".dat"
-'    end if
-'
-'        call cargarunmapa(map, archmap, archinf)
-'
-'          frmcargando.cargar.value = frmcargando.cargar.value + 1
-'
-'          doevents
-'next map
-'
-'frmstat.visible = false
-'
-'exit sub
-'
-'man:
-'    msgbox ("error durante la carga de mapas.")
-'    call logerror(date & " " & err.description & " " & err.helpcontext & " " & err.helpfile & " " & err.source)
-'
-'
-'
-'end sub
-
-sub cargarbackup_nuevo2()
-
-'call logtarea("sub cargarbackup")
-
-if frmmain.visible then frmmain.txstatus.caption = "cargando backup."
-
-dim map as integer
-dim loopc as integer
-dim x as integer
-dim y as integer
-dim dummyint as integer
-dim tempint as integer
-dim saveas as string
-dim npcfile as string
-dim porc as long
-dim filename as string
-dim c$
-    
-on error goto man
-
- 
-nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
-frmcargando.cargar.min = 0
-frmcargando.cargar.max = nummaps
-frmcargando.cargar.value = 0
-
-mappath = getvar(datpath & "map.dat", "init", "mappath")
-
-redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
-redim mapinfo(1 to nummaps) as mapinfo
-
-dim buffer(1 to ((ymaxmapsize - yminmapsize + 1) * (xmaxmapsize - xminmapsize + 1))) as tilemap
-dim buffer2(1 to ((ymaxmapsize - yminmapsize + 1) * (xmaxmapsize - xminmapsize + 1))) as tileinf
-dim idx as integer
-
-for map = 1 to nummaps
-    
-    filename = app.path & "\worldbackup\map" & map & ".map"
-    
-    if fileexist(filename, vbnormal) then
-        open app.path & "\worldbackup\map" & map & ".map" for binary as #1
-        open app.path & "\worldbackup\map" & map & ".inf" for binary as #2
-        c$ = app.path & "\worldbackup\map" & map & ".dat"
-    else
-        open app.path & mappath & "mapa" & map & ".map" for binary as #1
-        open app.path & mappath & "mapa" & map & ".inf" for binary as #2
-        c$ = app.path & mappath & "mapa" & map & ".dat"
-    end if
-    
-    seek #1, 1
-    seek #2, 1
-    'map header
-    get #1, , mapinfo(map).mapversion
-    get #1, , micabecera
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
-    'inf header
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
-    'load arrays
-                   
-    get #1, , buffer
-    get #2, , buffer2
-    
-    
-    idx = 1
-    for y = yminmapsize to ymaxmapsize
-        for x = xminmapsize to xmaxmapsize
-            
-            mapdata(map, x, y).blocked = buffer(idx).bloqueado
-            mapdata(map, x, y).graphic(1) = buffer(idx).grafs(1)
-            mapdata(map, x, y).graphic(2) = buffer(idx).grafs(2)
-            mapdata(map, x, y).graphic(3) = buffer(idx).grafs(3)
-            mapdata(map, x, y).graphic(4) = buffer(idx).grafs(4)
-            mapdata(map, x, y).trigger = buffer(idx).trigger
-            
-            mapdata(map, x, y).tileexit.map = buffer2(idx).dest_mapa
-            mapdata(map, x, y).tileexit.x = buffer2(idx).dest_x
-            mapdata(map, x, y).tileexit.y = buffer2(idx).dest_y
-            
-            mapdata(map, x, y).npcindex = buffer2(idx).npc
-            if mapdata(map, x, y).npcindex > 0 then
-                
-                if mapdata(map, x, y).npcindex > 499 then
-                        npcfile = datpath & "npcs-hostiles.dat"
-                else
-                        npcfile = datpath & "npcs.dat"
-                end if
-                
-                'si el npc debe hacer respawn en la pos
-                'original la guardamos
-                if val(getvar(npcfile, "npc" & mapdata(map, x, y).npcindex, "posorig")) = 1 then
-                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-                    npclist(mapdata(map, x, y).npcindex).orig.map = map
-                    npclist(mapdata(map, x, y).npcindex).orig.x = x
-                    npclist(mapdata(map, x, y).npcindex).orig.y = y
-                else
-                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-                end if
-                
-                npclist(mapdata(map, x, y).npcindex).pos.map = map
-                npclist(mapdata(map, x, y).npcindex).pos.x = x
-                npclist(mapdata(map, x, y).npcindex).pos.y = y
-                
-                call makenpcchar(tonone, 0, 0, mapdata(map, x, y).npcindex, map, x, y)
-            end if
-
-            if buffer2(idx).obj_ind > 0 and buffer2(idx).obj_ind <= ubound(objdata) then
-                mapdata(map, x, y).objinfo.objindex = buffer2(idx).obj_ind
-                mapdata(map, x, y).objinfo.amount = buffer2(idx).obj_cant
-            else
-                mapdata(map, x, y).objinfo.objindex = 0
-                mapdata(map, x, y).objinfo.amount = 0
-            end if
-            
-            idx = idx + 1
-        next x
-    next y
-
-    close #1
-    close #2
-    mapinfo(map).name = getvar(c$, "mapa" & map, "name")
-    mapinfo(map).music = getvar(c$, "mapa" & map, "musicnum")
-    mapinfo(map).magiasinefecto = val(getvar(c$, "mapa" & map, "magiasinefecto"))
-    mapinfo(map).noencriptarmp = val(getvar(c$, "mapa" & map, "noencriptarmp"))
-    mapinfo(map).startpos.map = val(readfield(1, getvar(c$, "mapa" & map, "startpos"), 45))
-    mapinfo(map).startpos.x = val(readfield(2, getvar(c$, "mapa" & map, "startpos"), 45))
-    mapinfo(map).startpos.y = val(readfield(3, getvar(c$, "mapa" & map, "startpos"), 45))
-    if val(getvar(c$, "mapa" & map, "pk")) = 0 then
-          mapinfo(map).pk = true
-    else
-          mapinfo(map).pk = false
-    end if
-    mapinfo(map).restringir = getvar(c$, "mapa" & map, "restringir")
-    mapinfo(map).backup = val(getvar(c$, "mapa" & map, "backup"))
-    mapinfo(map).terreno = getvar(c$, "mapa" & map, "terreno")
-    mapinfo(map).zona = getvar(c$, "mapa" & map, "zona")
-    
-    frmcargando.cargar.value = frmcargando.cargar.value + 1
-    
-    doevents
-next map
-
-frmstat.visible = false
-
-exit sub
-
-man:
-    msgbox ("error durante la carga de mapas.")
-    call logerror(date & " " & err.description & " " & err.helpcontext & " " & err.helpfile & " " & err.source)
-
-  
-
-end sub
-
 sub cargarbackup()
 
-'call logtarea("sub cargarbackup")
-
 if frmmain.visible then frmmain.txstatus.caption = "cargando backup."
 
 dim map as integer
-dim loopc as integer
-dim x as integer
-dim y as integer
-dim dummyint as integer
 dim tempint as integer
-dim saveas as string
+dim tfilename as string
 dim npcfile as string
-dim porc as long
-dim filename as string
-dim c$
-    
+
 on error goto man
-
- 
-nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
-frmcargando.cargar.min = 0
-frmcargando.cargar.max = nummaps
-frmcargando.cargar.value = 0
-
-mappath = getvar(datpath & "map.dat", "init", "mappath")
-
-redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
-redim mapinfo(1 to nummaps) as mapinfo
-  
-for map = 1 to nummaps
     
-    filename = app.path & "\worldbackup\map" & map & ".map"
+    nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
+    call initareas
     
-    if fileexist(filename, vbnormal) then
-        open app.path & "\worldbackup\map" & map & ".map" for binary as #1
-        open app.path & "\worldbackup\map" & map & ".inf" for binary as #2
-        c$ = app.path & "\worldbackup\map" & map & ".dat"
-    else
-        open app.path & mappath & "mapa" & map & ".map" for binary as #1
-        open app.path & mappath & "mapa" & map & ".inf" for binary as #2
-        c$ = app.path & mappath & "mapa" & map & ".dat"
-    end if
+    frmcargando.cargar.min = 0
+    frmcargando.cargar.max = nummaps
+    frmcargando.cargar.value = 0
     
-        seek #1, 1
-        seek #2, 1
-        'map header
-        get #1, , mapinfo(map).mapversion
-        get #1, , micabecera
-        get #1, , tempint
-        get #1, , tempint
-        get #1, , tempint
-        get #1, , tempint
-        'inf header
-        get #2, , tempint
-        get #2, , tempint
-        get #2, , tempint
-        get #2, , tempint
-        get #2, , tempint
-        'load arrays
-        'doevents
-        for y = yminmapsize to ymaxmapsize
-            for x = xminmapsize to xmaxmapsize
-                    '.dat file
-                    get #1, , mapdata(map, x, y).blocked
-                    
-                    'get grh number
-                    for loopc = 1 to 4
-                        get #1, , mapdata(map, x, y).graphic(loopc)
-                    next loopc
-                    
-                    'space holder for future expansion
-                    get #1, , mapdata(map, x, y).trigger
-                    get #1, , tempint
-                    
-                                        
-                    '.inf file
-                    get #2, , mapdata(map, x, y).tileexit.map
-                    get #2, , mapdata(map, x, y).tileexit.x
-                    get #2, , mapdata(map, x, y).tileexit.y
-                    
-                    'get and make npc
-                    get #2, , mapdata(map, x, y).npcindex
-                    if mapdata(map, x, y).npcindex > 0 then
-                        mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-                        'si el npc debe hacer respawn en la pos
-                        'original la guardamos
-                        
-                        if npclist(mapdata(map, x, y).npcindex).numero > 499 then
-                            npcfile = datpath & "npcs-hostiles.dat"
-                        else
-                            npcfile = datpath & "npcs.dat"
-                        end if
-                        
-                        dim fl as byte
-                        fl = val(getvar(npcfile, "npc" & npclist(mapdata(map, x, y).npcindex).numero, "posorig"))
-                        if fl = 1 then
-                            npclist(mapdata(map, x, y).npcindex).orig.map = map
-                            npclist(mapdata(map, x, y).npcindex).orig.x = x
-                            npclist(mapdata(map, x, y).npcindex).orig.y = y
-                        else
-                            npclist(mapdata(map, x, y).npcindex).orig.map = 0
-                            npclist(mapdata(map, x, y).npcindex).orig.x = 0
-                            npclist(mapdata(map, x, y).npcindex).orig.y = 0
-                        end if
+    mappath = getvar(datpath & "map.dat", "init", "mappath")
+    
+    
+    redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
+    redim mapinfo(1 to nummaps) as mapinfo
+      
+    for map = 1 to nummaps
         
-                        npclist(mapdata(map, x, y).npcindex).pos.map = map
-                        npclist(mapdata(map, x, y).npcindex).pos.x = x
-                        npclist(mapdata(map, x, y).npcindex).pos.y = y
-                        
-                        
-                        'si existe el backup lo cargamos
-                        if npclist(mapdata(map, x, y).npcindex).flags.backup = 1 then
-                                'cargamos el nuevo del backup
-                                call cargarnpcbackup(mapdata(map, x, y).npcindex, npclist(mapdata(map, x, y).npcindex).numero)
-                                
-                        end if
-                        
-                        call makenpcchar(tonone, 0, 0, mapdata(map, x, y).npcindex, map, x, y)
-                    end if
-
-                    'get and make object
-                    get #2, , mapdata(map, x, y).objinfo.objindex
-                    get #2, , mapdata(map, x, y).objinfo.amount
+        if val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "backup")) <> 0 then
+            tfilename = app.path & "\worldbackup\mapa" & map
+        else
+            tfilename = app.path & mappath & "mapa" & map
+        end if
         
-                    'space holder for future expansion (objects, ect.
-                    get #2, , dummyint
-                    get #2, , dummyint
-            next x
-        next y
-        close #1
-        close #2
-          mapinfo(map).name = getvar(c$, "mapa" & map, "name")
-          mapinfo(map).music = getvar(c$, "mapa" & map, "musicnum")
-          mapinfo(map).magiasinefecto = val(getvar(c$, "mapa" & map, "magiasinefecto"))
-          mapinfo(map).noencriptarmp = val(getvar(c$, "mapa" & map, "noencriptarmp"))
-          mapinfo(map).startpos.map = val(readfield(1, getvar(c$, "mapa" & map, "startpos"), 45))
-          mapinfo(map).startpos.x = val(readfield(2, getvar(c$, "mapa" & map, "startpos"), 45))
-          mapinfo(map).startpos.y = val(readfield(3, getvar(c$, "mapa" & map, "startpos"), 45))
-          if val(getvar(c$, "mapa" & map, "pk")) = 0 then
-                mapinfo(map).pk = true
-          else
-                mapinfo(map).pk = false
-          end if
-          mapinfo(map).restringir = getvar(c$, "mapa" & map, "restringir")
-          mapinfo(map).backup = val(getvar(c$, "mapa" & map, "backup"))
-          mapinfo(map).terreno = getvar(c$, "mapa" & map, "terreno")
-          mapinfo(map).zona = getvar(c$, "mapa" & map, "zona")
-          
-          frmcargando.cargar.value = frmcargando.cargar.value + 1
-          
-          doevents
-next map
-
-frmstat.visible = false
+        call cargarmapa(map, tfilename)
+        
+        frmcargando.cargar.value = frmcargando.cargar.value + 1
+        doevents
+    next map
 
 exit sub
 
 man:
-    msgbox ("error durante la carga de mapas.")
+    msgbox ("error durante la carga de mapas, el mapa " & map & " contiene errores")
     call logerror(date & " " & err.description & " " & err.helpcontext & " " & err.helpfile & " " & err.source)
-
-  
-
+ 
 end sub
 
 sub loadmapdata()
 
-
-'call logtarea("sub loadmapdata")
-
-if frmmain.visible then frmmain.txstatus.caption = "cargando mapas."
+if frmmain.visible then frmmain.txstatus.caption = "cargando mapas..."
 
 dim map as integer
-dim loopc as integer
-dim x as integer
-dim y as integer
-dim dummyint as integer
 dim tempint as integer
+dim tfilename as string
 dim npcfile as string
 
 on error goto man
-
-nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
-
-frmcargando.cargar.min = 0
-frmcargando.cargar.max = nummaps
-frmcargando.cargar.value = 0
-
-mappath = getvar(datpath & "map.dat", "init", "mappath")
-
-redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
-redim mapinfo(1 to nummaps) as mapinfo
-  
-for map = 1 to nummaps
-    doevents
+    
+    nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
+    call initareas
+    
+    frmcargando.cargar.min = 0
+    frmcargando.cargar.max = nummaps
+    frmcargando.cargar.value = 0
+    
+    mappath = getvar(datpath & "map.dat", "init", "mappath")
     
     
-    open app.path & mappath & "mapa" & map & ".map" for binary as #1
-    seek #1, 1
-    
-    'inf
-    open app.path & mappath & "mapa" & map & ".inf" for binary as #2
-    seek #2, 1
-    
-     'map header
-    get #1, , mapinfo(map).mapversion
-    get #1, , micabecera
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
-
-    'inf header
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
-    get #2, , tempint
+    redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
+    redim mapinfo(1 to nummaps) as mapinfo
+      
+    for map = 1 to nummaps
         
-    for y = yminmapsize to ymaxmapsize
-        for x = xminmapsize to xmaxmapsize
-            '.dat file
-            get #1, , mapdata(map, x, y).blocked
-            
-            for loopc = 1 to 4
-                get #1, , mapdata(map, x, y).graphic(loopc)
-            next loopc
-            
-            get #1, , mapdata(map, x, y).trigger
-            get #1, , tempint
-            
-                                
-            '.inf file
-            get #2, , mapdata(map, x, y).tileexit.map
-            get #2, , mapdata(map, x, y).tileexit.x
-            get #2, , mapdata(map, x, y).tileexit.y
-            
-            'get and make npc
-            get #2, , mapdata(map, x, y).npcindex
-            if mapdata(map, x, y).npcindex > 0 then
-                
-                if mapdata(map, x, y).npcindex > 499 then
-                        npcfile = datpath & "npcs-hostiles.dat"
-                else
-                        npcfile = datpath & "npcs.dat"
-                end if
-                
-                'si el npc debe hacer respawn en la pos
-                'original la guardamos
-                if val(getvar(npcfile, "npc" & mapdata(map, x, y).npcindex, "posorig")) = 1 then
-                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-                    npclist(mapdata(map, x, y).npcindex).orig.map = map
-                    npclist(mapdata(map, x, y).npcindex).orig.x = x
-                    npclist(mapdata(map, x, y).npcindex).orig.y = y
-                else
-                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-                end if
-                
-                npclist(mapdata(map, x, y).npcindex).pos.map = map
-                npclist(mapdata(map, x, y).npcindex).pos.x = x
-                npclist(mapdata(map, x, y).npcindex).pos.y = y
-                
-                call makenpcchar(tonone, 0, 0, mapdata(map, x, y).npcindex, map, x, y)
-            end if
-
-            'get and make object
-            get #2, , mapdata(map, x, y).objinfo.objindex
-            get #2, , mapdata(map, x, y).objinfo.amount
-
-            'space holder for future expansion (objects, ect.
-            get #2, , dummyint
-            get #2, , dummyint
+        tfilename = app.path & mappath & "mapa" & map
+        call cargarmapa(map, tfilename)
         
-        next x
-    next y
-
-   
-    close #1
-    close #2
-
-  
-    mapinfo(map).name = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "name")
-    mapinfo(map).music = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "musicnum")
-    mapinfo(map).startpos.map = val(readfield(1, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-    mapinfo(map).startpos.x = val(readfield(2, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-    mapinfo(map).startpos.y = val(readfield(3, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-    mapinfo(map).magiasinefecto = val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "magiasinefecto"))
-    mapinfo(map).noencriptarmp = val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "noencriptarmp"))
-    
-    if val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "pk")) = 0 then
-        mapinfo(map).pk = true
-    else
-        mapinfo(map).pk = false
-    end if
-    
-    
-    mapinfo(map).terreno = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "terreno")
-
-    mapinfo(map).zona = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "zona")
-    
-    mapinfo(map).restringir = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "restringir")
-    
-    mapinfo(map).backup = val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "backup"))
-
-    frmcargando.cargar.value = frmcargando.cargar.value + 1
-next map
-
+        frmcargando.cargar.value = frmcargando.cargar.value + 1
+        doevents
+    next map
 
 exit sub
 
@@ -2156,60 +1046,146 @@ man:
     msgbox ("error durante la carga de mapas, el mapa " & map & " contiene errores")
     call logerror(date & " " & err.description & " " & err.helpcontext & " " & err.helpfile & " " & err.source)
 
-    
 end sub
 
-'sub loadmapdata_nuevo()
-'
-'
-''call logtarea("sub loadmapdata")
-'
-'if frmmain.visible then frmmain.txstatus.caption = "cargando mapas."
-'
-'dim map as integer
-'dim loopc as integer
-'dim x as integer
-'dim y as integer
-'dim dummyint as integer
-'dim tempint as integer
-'dim npcfile as string
-'
-'dim archmap as string, archinf as string
-'
-'on error goto man
-'
-'nummaps = val(getvar(datpath & "map.dat", "init", "nummaps"))
-'
-'frmcargando.cargar.min = 0
-'frmcargando.cargar.max = nummaps
-'frmcargando.cargar.value = 0
-'
-'mappath = getvar(datpath & "map.dat", "init", "mappath")
-'
-'redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
-'redim mapinfo(1 to nummaps) as mapinfo
-'
-'for map = 1 to nummaps
-'    doevents
-'
-'    archmap = app.path & mappath & "mapa" & map & ".map"
-'    archinf = app.path & mappath & "mapa" & map & ".inf"
-'
-'    call cargarunmapa(map, archmap, archinf)
-'
-'    frmcargando.cargar.value = frmcargando.cargar.value + 1
-'next map
-'
-'
-'exit sub
-'
-'man:
-'    msgbox ("error durante la carga de mapas, el mapa " & map & " contiene errores")
-'    call logerror(date & " " & err.description & " " & err.helpcontext & " " & err.helpfile & " " & err.source)
-'
-'
-'end sub
+public sub cargarmapa(byval map as long, byval mapfl as string)
+on error goto errh
+    dim freefilemap as long
+    dim freefileinf as long
+    dim y as long
+    dim x as long
+    dim byflags as byte
+    dim npcfile as string
+    dim tempint as integer
+      
+    freefilemap = freefile
+    
+    open mapfl & ".map" for binary as #freefilemap
+    seek freefilemap, 1
+    
+    freefileinf = freefile
+    
+    'inf
+    open mapfl & ".inf" for binary as #freefileinf
+    seek freefileinf, 1
 
+    'map header
+    get #freefilemap, , mapinfo(map).mapversion
+    get #freefilemap, , micabecera
+    get #freefilemap, , tempint
+    get #freefilemap, , tempint
+    get #freefilemap, , tempint
+    get #freefilemap, , tempint
+    
+    'inf header
+    get #freefileinf, , tempint
+    get #freefileinf, , tempint
+    get #freefileinf, , tempint
+    get #freefileinf, , tempint
+    get #freefileinf, , tempint
+
+    for y = yminmapsize to ymaxmapsize
+        for x = xminmapsize to xmaxmapsize
+            
+            '.dat file
+            get freefilemap, , byflags
+
+            if byflags and 1 then
+                mapdata(map, x, y).blocked = 1
+            end if
+            
+            get freefilemap, , mapdata(map, x, y).graphic(1)
+            
+            'layer 2 used?
+            if byflags and 2 then get freefilemap, , mapdata(map, x, y).graphic(2)
+            
+            'layer 3 used?
+            if byflags and 4 then get freefilemap, , mapdata(map, x, y).graphic(3)
+            
+            'layer 4 used?
+            if byflags and 8 then get freefilemap, , mapdata(map, x, y).graphic(4)
+            
+            'trigger used?
+            if byflags and 16 then
+                'enums are 4 byte long in vb, so we make sure we only read 2
+                get freefilemap, , tempint
+                mapdata(map, x, y).trigger = tempint
+            end if
+            
+            get freefileinf, , byflags
+            
+            if byflags and 1 then
+                get freefileinf, , mapdata(map, x, y).tileexit.map
+                get freefileinf, , mapdata(map, x, y).tileexit.x
+                get freefileinf, , mapdata(map, x, y).tileexit.y
+            end if
+            
+            if byflags and 2 then
+                'get and make npc
+                get freefileinf, , mapdata(map, x, y).npcindex
+                
+                if mapdata(map, x, y).npcindex > 0 then
+                    if mapdata(map, x, y).npcindex > 499 then
+                        npcfile = datpath & "npcs-hostiles.dat"
+                    else
+                        npcfile = datpath & "npcs.dat"
+                    end if
+
+                    'si el npc debe hacer respawn en la pos
+                    'original la guardamos
+                    if val(getvar(npcfile, "npc" & mapdata(map, x, y).npcindex, "posorig")) = 1 then
+                        mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
+                        npclist(mapdata(map, x, y).npcindex).orig.map = map
+                        npclist(mapdata(map, x, y).npcindex).orig.x = x
+                        npclist(mapdata(map, x, y).npcindex).orig.y = y
+                    else
+                        mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
+                    end if
+                            
+                    npclist(mapdata(map, x, y).npcindex).pos.map = map
+                    npclist(mapdata(map, x, y).npcindex).pos.x = x
+                    npclist(mapdata(map, x, y).npcindex).pos.y = y
+                            
+                    call makenpcchar(sendtarget.tomap, 0, 0, mapdata(map, x, y).npcindex, 1, 1, 1)
+                end if
+            end if
+            
+            if byflags and 4 then
+                'get and make object
+                get freefileinf, , mapdata(map, x, y).objinfo.objindex
+                get freefileinf, , mapdata(map, x, y).objinfo.amount
+            end if
+        next x
+    next y
+    
+    
+    close freefilemap
+    close freefileinf
+    
+    mapinfo(map).name = getvar(mapfl & ".dat", "mapa" & map, "name")
+    mapinfo(map).music = getvar(mapfl & ".dat", "mapa" & map, "musicnum")
+    mapinfo(map).startpos.map = val(readfield(1, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
+    mapinfo(map).startpos.x = val(readfield(2, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
+    mapinfo(map).startpos.y = val(readfield(3, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
+    mapinfo(map).magiasinefecto = val(getvar(mapfl & ".dat", "mapa" & map, "magiasinefecto"))
+    mapinfo(map).noencriptarmp = val(getvar(mapfl & ".dat", "mapa" & map, "noencriptarmp"))
+    
+    if val(getvar(mapfl & ".dat", "mapa" & map, "pk")) = 0 then
+        mapinfo(map).pk = true
+    else
+        mapinfo(map).pk = false
+    end if
+    
+    
+    mapinfo(map).terreno = getvar(mapfl & ".dat", "mapa" & map, "terreno")
+    mapinfo(map).zona = getvar(mapfl & ".dat", "mapa" & map, "zona")
+    mapinfo(map).restringir = getvar(mapfl & ".dat", "mapa" & map, "restringir")
+    mapinfo(map).backup = val(getvar(mapfl & ".dat", "mapa" & map, "backup"))
+exit sub
+
+errh:
+    call logerror("error cargando mapa: " & map & "." & err.description)
+end sub
 
 sub loadsini()
 
@@ -2247,8 +1223,6 @@ ultimaversion = getvar(inipath & "server.ini", "init", "version")
 puedecrearpersonajes = val(getvar(inipath & "server.ini", "init", "puedecrearpersonajes"))
 camaralenta = val(getvar(inipath & "server.ini", "init", "camaralenta"))
 serversologms = val(getvar(inipath & "server.ini", "init", "serversologms"))
-usandosistemapadrinos = val(getvar(inipath & "server.ini", "init", "usandosistemapadrinos"))
-cantidadporpadrino = val(getvar(inipath & "server.ini", "init", "cantidadporpadrino"))
 
 armaduraimperial1 = val(getvar(inipath & "server.ini", "init", "armaduraimperial1"))
 armaduraimperial2 = val(getvar(inipath & "server.ini", "init", "armaduraimperial2"))
@@ -2282,13 +1256,6 @@ mapa_pretoriano = val(getvar(inipath & "server.ini", "init", "mapapretoriano"))
 clientscommandsqueue = val(getvar(inipath & "server.ini", "init", "clientscommandsqueue"))
 entesting = val(getvar(inipath & "server.ini", "init", "testing"))
 encriptarprotocoloscriticos = val(getvar(inipath & "server.ini", "init", "encriptar"))
-
-
-'if clientscommandsqueue <> 0 then
-'        frmmain.cmdexec.enabled = true
-'else
-'        frmmain.cmdexec.enabled = false
-'end if
 
 'start pos
 startpos.map = val(readfield(1, getvar(inipath & "server.ini", "init", "startpos"), 45))
@@ -2383,12 +1350,6 @@ if maxusers = 0 then
     redim userlist(1 to maxusers) as user
 end if
 
-#if (usarquesocket = 1) then
-'busqueda eficiente :d
-'redim preserve wsapisockchache(1 to maxusers + 10)
-'wsapisockchachecant = 0
-#end if
-
 nix.map = getvar(datpath & "ciudades.dat", "nix", "mapa")
 nix.x = getvar(datpath & "ciudades.dat", "nix", "x")
 nix.y = getvar(datpath & "ciudades.dat", "nix", "y")
@@ -2405,12 +1366,14 @@ lindos.map = getvar(datpath & "ciudades.dat", "lindos", "mapa")
 lindos.x = getvar(datpath & "ciudades.dat", "lindos", "x")
 lindos.y = getvar(datpath & "ciudades.dat", "lindos", "y")
 
+
 call md5scarga
 
 call consultapopular.loaddata
 
-
-
+#if seguridadalkon then
+encriptacion.stringvalidacion = encriptacion.armarstringvalidacion
+#end if
 
 end sub
 
@@ -2451,7 +1414,7 @@ end if
 if fileexist(userfile, vbnormal) then
        if userlist(userindex).flags.muerto = 1 then
         olduserhead = userlist(userindex).char.head
-        userlist(userindex).char.head = val(getvar(userfile, "init", "head"))
+        userlist(userindex).char.head = cstr(getvar(userfile, "init", "head"))
        end if
 '       kill userfile
 end if
@@ -2459,70 +1422,53 @@ end if
 dim loopc as integer
 
 
-call writevar(userfile, "flags", "muerto", val(userlist(userindex).flags.muerto))
-call writevar(userfile, "flags", "escondido", val(userlist(userindex).flags.escondido))
-call writevar(userfile, "flags", "hambre", val(userlist(userindex).flags.hambre))
-call writevar(userfile, "flags", "sed", val(userlist(userindex).flags.sed))
-call writevar(userfile, "flags", "desnudo", val(userlist(userindex).flags.desnudo))
-call writevar(userfile, "flags", "ban", val(userlist(userindex).flags.ban))
-call writevar(userfile, "flags", "navegando", val(userlist(userindex).flags.navegando))
+call writevar(userfile, "flags", "muerto", cstr(userlist(userindex).flags.muerto))
+call writevar(userfile, "flags", "escondido", cstr(userlist(userindex).flags.escondido))
+call writevar(userfile, "flags", "hambre", cstr(userlist(userindex).flags.hambre))
+call writevar(userfile, "flags", "sed", cstr(userlist(userindex).flags.sed))
+call writevar(userfile, "flags", "desnudo", cstr(userlist(userindex).flags.desnudo))
+call writevar(userfile, "flags", "ban", cstr(userlist(userindex).flags.ban))
+call writevar(userfile, "flags", "navegando", cstr(userlist(userindex).flags.navegando))
 
-call writevar(userfile, "flags", "envenenado", val(userlist(userindex).flags.envenenado))
-call writevar(userfile, "flags", "paralizado", val(userlist(userindex).flags.paralizado))
+call writevar(userfile, "flags", "envenenado", cstr(userlist(userindex).flags.envenenado))
+call writevar(userfile, "flags", "paralizado", cstr(userlist(userindex).flags.paralizado))
 
-call writevar(userfile, "consejo", "pertenece", userlist(userindex).flags.pertalcons)
-call writevar(userfile, "consejo", "pertenececaos", userlist(userindex).flags.pertalconscaos)
+call writevar(userfile, "consejo", "pertenece", cstr(userlist(userindex).flags.pertalcons))
+call writevar(userfile, "consejo", "pertenececaos", cstr(userlist(userindex).flags.pertalconscaos))
 
 
-call writevar(userfile, "counters", "pena", val(userlist(userindex).counters.pena))
+call writevar(userfile, "counters", "pena", cstr(userlist(userindex).counters.pena))
 
-call writevar(userfile, "facciones", "ejercitoreal", val(userlist(userindex).faccion.armadareal))
-call writevar(userfile, "facciones", "ejercitocaos", val(userlist(userindex).faccion.fuerzascaos))
-call writevar(userfile, "facciones", "ciudmatados", val(userlist(userindex).faccion.ciudadanosmatados))
-call writevar(userfile, "facciones", "crimmatados", val(userlist(userindex).faccion.criminalesmatados))
-call writevar(userfile, "facciones", "rarcaos", val(userlist(userindex).faccion.recibioarmaduracaos))
-call writevar(userfile, "facciones", "rarreal", val(userlist(userindex).faccion.recibioarmadurareal))
-call writevar(userfile, "facciones", "rexcaos", val(userlist(userindex).faccion.recibioexpinicialcaos))
-call writevar(userfile, "facciones", "rexreal", val(userlist(userindex).faccion.recibioexpinicialreal))
-call writevar(userfile, "facciones", "reccaos", val(userlist(userindex).faccion.recompensascaos))
-call writevar(userfile, "facciones", "recreal", val(userlist(userindex).faccion.recompensasreal))
-call writevar(userfile, "facciones", "reenlistadas", val(userlist(userindex).faccion.reenlistadas))
-
-call writevar(userfile, "guild", "esguildleader", val(userlist(userindex).guildinfo.esguildleader))
-call writevar(userfile, "guild", "echadas", val(userlist(userindex).guildinfo.echadas))
-call writevar(userfile, "guild", "solicitudes", val(userlist(userindex).guildinfo.solicitudes))
-call writevar(userfile, "guild", "solicitudesrechazadas", val(userlist(userindex).guildinfo.solicitudesrechazadas))
-call writevar(userfile, "guild", "vecesfueguildleader", val(userlist(userindex).guildinfo.vecesfueguildleader))
-call writevar(userfile, "guild", "yavoto", val(userlist(userindex).guildinfo.yavoto))
-call writevar(userfile, "guild", "fundoclan", val(userlist(userindex).guildinfo.fundoclan))
-
-call writevar(userfile, "guild", "guildname", userlist(userindex).guildinfo.guildname)
-call writevar(userfile, "guild", "clanfundado", userlist(userindex).guildinfo.clanfundado)
-call writevar(userfile, "guild", "clanesparticipo", str(userlist(userindex).guildinfo.clanesparticipo))
-call writevar(userfile, "guild", "guildpts", str(userlist(userindex).guildinfo.guildpoints))
+call writevar(userfile, "facciones", "ejercitoreal", cstr(userlist(userindex).faccion.armadareal))
+call writevar(userfile, "facciones", "ejercitocaos", cstr(userlist(userindex).faccion.fuerzascaos))
+call writevar(userfile, "facciones", "ciudmatados", cstr(userlist(userindex).faccion.ciudadanosmatados))
+call writevar(userfile, "facciones", "crimmatados", cstr(userlist(userindex).faccion.criminalesmatados))
+call writevar(userfile, "facciones", "rarcaos", cstr(userlist(userindex).faccion.recibioarmaduracaos))
+call writevar(userfile, "facciones", "rarreal", cstr(userlist(userindex).faccion.recibioarmadurareal))
+call writevar(userfile, "facciones", "rexcaos", cstr(userlist(userindex).faccion.recibioexpinicialcaos))
+call writevar(userfile, "facciones", "rexreal", cstr(userlist(userindex).faccion.recibioexpinicialreal))
+call writevar(userfile, "facciones", "reccaos", cstr(userlist(userindex).faccion.recompensascaos))
+call writevar(userfile, "facciones", "recreal", cstr(userlist(userindex).faccion.recompensasreal))
+call writevar(userfile, "facciones", "reenlistadas", cstr(userlist(userindex).faccion.reenlistadas))
 
 '�fueron modificados los atributos del usuario?
 if not userlist(userindex).flags.tomopocion then
     for loopc = 1 to ubound(userlist(userindex).stats.useratributos)
-        call writevar(userfile, "atributos", "at" & loopc, val(userlist(userindex).stats.useratributos(loopc)))
+        call writevar(userfile, "atributos", "at" & loopc, cstr(userlist(userindex).stats.useratributos(loopc)))
     next
 else
     for loopc = 1 to ubound(userlist(userindex).stats.useratributos)
         'userlist(userindex).stats.useratributos(loopc) = userlist(userindex).stats.useratributosbackup(loopc)
-        call writevar(userfile, "atributos", "at" & loopc, val(userlist(userindex).stats.useratributosbackup(loopc)))
+        call writevar(userfile, "atributos", "at" & loopc, cstr(userlist(userindex).stats.useratributosbackup(loopc)))
     next
 end if
 
 for loopc = 1 to ubound(userlist(userindex).stats.userskills)
-    call writevar(userfile, "skills", "sk" & loopc, val(userlist(userindex).stats.userskills(loopc)))
+    call writevar(userfile, "skills", "sk" & loopc, cstr(userlist(userindex).stats.userskills(loopc)))
 next
 
 
 call writevar(userfile, "contacto", "email", userlist(userindex).email)
-
-'barrin 3/10/03
-'escribimos los valores del char... �apadrin� ya? �cu�ntos?
-call writevar(userfile, "contacto", "apadrinados", str(userlist(userindex).apadrinados))
 
 call writevar(userfile, "init", "genero", userlist(userindex).genero)
 call writevar(userfile, "init", "raza", userlist(userindex).raza)
@@ -2531,58 +1477,58 @@ call writevar(userfile, "init", "clase", userlist(userindex).clase)
 call writevar(userfile, "init", "password", userlist(userindex).password)
 call writevar(userfile, "init", "desc", userlist(userindex).desc)
 
-call writevar(userfile, "init", "heading", str(userlist(userindex).char.heading))
+call writevar(userfile, "init", "heading", cstr(userlist(userindex).char.heading))
 
-call writevar(userfile, "init", "head", str(userlist(userindex).origchar.head))
+call writevar(userfile, "init", "head", cstr(userlist(userindex).origchar.head))
 
 if userlist(userindex).flags.muerto = 0 then
-    call writevar(userfile, "init", "body", str(userlist(userindex).char.body))
+    call writevar(userfile, "init", "body", cstr(userlist(userindex).char.body))
 end if
 
-call writevar(userfile, "init", "arma", str(userlist(userindex).char.weaponanim))
-call writevar(userfile, "init", "escudo", str(userlist(userindex).char.shieldanim))
-call writevar(userfile, "init", "casco", str(userlist(userindex).char.cascoanim))
+call writevar(userfile, "init", "arma", cstr(userlist(userindex).char.weaponanim))
+call writevar(userfile, "init", "escudo", cstr(userlist(userindex).char.shieldanim))
+call writevar(userfile, "init", "casco", cstr(userlist(userindex).char.cascoanim))
 
 call writevar(userfile, "init", "lastip", userlist(userindex).ip)
 call writevar(userfile, "init", "position", userlist(userindex).pos.map & "-" & userlist(userindex).pos.x & "-" & userlist(userindex).pos.y)
 
 
-call writevar(userfile, "stats", "gld", str(userlist(userindex).stats.gld))
-call writevar(userfile, "stats", "banco", str(userlist(userindex).stats.banco))
+call writevar(userfile, "stats", "gld", cstr(userlist(userindex).stats.gld))
+call writevar(userfile, "stats", "banco", cstr(userlist(userindex).stats.banco))
 
-call writevar(userfile, "stats", "met", str(userlist(userindex).stats.met))
-call writevar(userfile, "stats", "maxhp", str(userlist(userindex).stats.maxhp))
-call writevar(userfile, "stats", "minhp", str(userlist(userindex).stats.minhp))
+call writevar(userfile, "stats", "met", cstr(userlist(userindex).stats.met))
+call writevar(userfile, "stats", "maxhp", cstr(userlist(userindex).stats.maxhp))
+call writevar(userfile, "stats", "minhp", cstr(userlist(userindex).stats.minhp))
 
-call writevar(userfile, "stats", "fit", str(userlist(userindex).stats.fit))
-call writevar(userfile, "stats", "maxsta", str(userlist(userindex).stats.maxsta))
-call writevar(userfile, "stats", "minsta", str(userlist(userindex).stats.minsta))
+call writevar(userfile, "stats", "fit", cstr(userlist(userindex).stats.fit))
+call writevar(userfile, "stats", "maxsta", cstr(userlist(userindex).stats.maxsta))
+call writevar(userfile, "stats", "minsta", cstr(userlist(userindex).stats.minsta))
 
-call writevar(userfile, "stats", "maxman", str(userlist(userindex).stats.maxman))
-call writevar(userfile, "stats", "minman", str(userlist(userindex).stats.minman))
+call writevar(userfile, "stats", "maxman", cstr(userlist(userindex).stats.maxman))
+call writevar(userfile, "stats", "minman", cstr(userlist(userindex).stats.minman))
 
-call writevar(userfile, "stats", "maxhit", str(userlist(userindex).stats.maxhit))
-call writevar(userfile, "stats", "minhit", str(userlist(userindex).stats.minhit))
+call writevar(userfile, "stats", "maxhit", cstr(userlist(userindex).stats.maxhit))
+call writevar(userfile, "stats", "minhit", cstr(userlist(userindex).stats.minhit))
 
-call writevar(userfile, "stats", "maxagu", str(userlist(userindex).stats.maxagu))
-call writevar(userfile, "stats", "minagu", str(userlist(userindex).stats.minagu))
+call writevar(userfile, "stats", "maxagu", cstr(userlist(userindex).stats.maxagu))
+call writevar(userfile, "stats", "minagu", cstr(userlist(userindex).stats.minagu))
 
-call writevar(userfile, "stats", "maxham", str(userlist(userindex).stats.maxham))
-call writevar(userfile, "stats", "minham", str(userlist(userindex).stats.minham))
+call writevar(userfile, "stats", "maxham", cstr(userlist(userindex).stats.maxham))
+call writevar(userfile, "stats", "minham", cstr(userlist(userindex).stats.minham))
 
-call writevar(userfile, "stats", "skillptslibres", str(userlist(userindex).stats.skillpts))
+call writevar(userfile, "stats", "skillptslibres", cstr(userlist(userindex).stats.skillpts))
   
-call writevar(userfile, "stats", "exp", str(userlist(userindex).stats.exp))
-call writevar(userfile, "stats", "elv", str(userlist(userindex).stats.elv))
+call writevar(userfile, "stats", "exp", cstr(userlist(userindex).stats.exp))
+call writevar(userfile, "stats", "elv", cstr(userlist(userindex).stats.elv))
 
 
 
 
 
-call writevar(userfile, "stats", "elu", str(userlist(userindex).stats.elu))
-call writevar(userfile, "muertes", "usermuertes", val(userlist(userindex).stats.usuariosmatados))
-call writevar(userfile, "muertes", "crimmuertes", val(userlist(userindex).stats.criminalesmatados))
-call writevar(userfile, "muertes", "npcsmuertes", val(userlist(userindex).stats.npcsmuertos))
+call writevar(userfile, "stats", "elu", cstr(userlist(userindex).stats.elu))
+call writevar(userfile, "muertes", "usermuertes", cstr(userlist(userindex).stats.usuariosmatados))
+call writevar(userfile, "muertes", "crimmuertes", cstr(userlist(userindex).stats.criminalesmatados))
+call writevar(userfile, "muertes", "npcsmuertes", cstr(userlist(userindex).stats.npcsmuertos))
   
 '[kevin]----------------------------------------------------------------------------
 '*******************************************************************************************
@@ -2681,12 +1627,7 @@ criminal = (l < 0)
 
 end function
 
-
-
-
 sub backupnpc(npcindex as integer)
-
-'call logtarea("sub backupnpc npcindex:" & npcindex)
 
 dim npcnumero as integer
 dim npcfile as string
@@ -2752,18 +1693,15 @@ end sub
 
 sub cargarnpcbackup(npcindex as integer, byval npcnumber as integer)
 
-'call logtarea("sub cargarnpcbackup npcindex:" & npcindex & " npcnumber:" & npcnumber)
-
 'status
 if frmmain.visible then frmmain.txstatus.caption = "cargando backup npc"
-
 
 dim npcfile as string
 
 if npcnumber > 499 then
-        npcfile = datpath & "bknpcs-hostiles.dat"
+    npcfile = datpath & "bknpcs-hostiles.dat"
 else
-        npcfile = datpath & "bknpcs.dat"
+    npcfile = datpath & "bknpcs.dat"
 end if
 
 npclist(npcindex).numero = npcnumber
@@ -2792,7 +1730,6 @@ npclist(npcindex).stats.maxhit = val(getvar(npcfile, "npc" & npcnumber, "maxhit"
 npclist(npcindex).stats.minhit = val(getvar(npcfile, "npc" & npcnumber, "minhit"))
 npclist(npcindex).stats.def = val(getvar(npcfile, "npc" & npcnumber, "def"))
 npclist(npcindex).stats.alineacion = val(getvar(npcfile, "npc" & npcnumber, "alineacion"))
-npclist(npcindex).stats.impactrate = val(getvar(npcfile, "npc" & npcnumber, "impactrate"))
 
 
 dim loopc as integer
@@ -2830,8 +1767,8 @@ end sub
 
 sub logban(byval bannedindex as integer, byval userindex as integer, byval motivo as string)
 
-call writevar(app.path & "\logs\" & "bandetail.dat", userlist(bannedindex).name, "bannedby", userlist(userindex).name)
-call writevar(app.path & "\logs\" & "bandetail.dat", userlist(bannedindex).name, "reason", motivo)
+call writevar(app.path & "\logs\" & "bandetail.log", userlist(bannedindex).name, "bannedby", userlist(userindex).name)
+call writevar(app.path & "\logs\" & "bandetail.log", userlist(bannedindex).name, "reason", motivo)
 
 'log interno del servidor, lo usa para hacer un unban general de toda la gente banned
 dim mifile as integer
@@ -2873,131 +1810,10 @@ close #mifile
 
 end sub
 
-
-
-'public sub cargarunmapa(map as integer, archmap as string, archinf as string)
-'dim dm as long
-'dim tm as tilemap, ti as tileinf
-'dim x as integer, y as integer
-'dim loopc as integer
-'dim npcfile as string
-'
-'    dm = mapcargamapa(archmap, archinf)
-'    if dm = 0 then
-'        debug.print "kk " & map
-'    end if
-'
-'    for y = yminmapsize to ymaxmapsize
-'        for x = xminmapsize to xmaxmapsize
-'            call mapleemapa(dm, tm, ti)
-'
-'            '.dat file
-'            'get #1, , mapdata(map, x, y).blocked
-'            mapdata(map, x, y).blocked = tm.bloqueado
-'
-''            for loopc = 1 to 4
-''                'get #1, , mapdata(map, x, y).graphic(loopc)
-''                mapdata(map, x, y).graphic(loopc) = tm.grafs(loopc)
-''                if tm.grafs(loopc) <> 0 then
-''                    tm.grafs(loopc) = tm.grafs(loopc)
-''                end if
-''            next loopc
-'            mapdata(map, x, y).graphic(1) = tm.grafs1
-'            mapdata(map, x, y).graphic(2) = tm.grafs2
-'            mapdata(map, x, y).graphic(3) = tm.grafs3
-'            mapdata(map, x, y).graphic(4) = tm.grafs4
-'
-'            'get #1, , mapdata(map, x, y).trigger
-'            'get #1, , tempint
-'            mapdata(map, x, y).trigger = tm.trigger
-'            if tm.trigger <> 0 then
-'                tm.trigger = tm.trigger
-'            end if
-'
-'            '.inf file
-'            'get #2, , mapdata(map, x, y).tileexit.map
-'            'get #2, , mapdata(map, x, y).tileexit.x
-'            'get #2, , mapdata(map, x, y).tileexit.y
-'
-'            mapdata(map, x, y).tileexit.map = ti.dest_mapa
-'            mapdata(map, x, y).tileexit.x = ti.dest_x
-'            mapdata(map, x, y).tileexit.y = ti.dest_y
-'
-'            'get and make npc
-'            'get #2, , mapdata(map, x, y).npcindex
-'            mapdata(map, x, y).npcindex = ti.npc
-'
-'            if mapdata(map, x, y).npcindex > 0 then
-'
-'                if mapdata(map, x, y).npcindex > 499 then
-'                        npcfile = datpath & "npcs-hostiles.dat"
-'                else
-'                        npcfile = datpath & "npcs.dat"
-'                end if
-'
-'                'si el npc debe hacer respawn en la pos
-'                'original la guardamos
-'                if val(getvar(npcfile, "npc" & mapdata(map, x, y).npcindex, "posorig")) = 1 then
-'                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-'                    npclist(mapdata(map, x, y).npcindex).orig.map = map
-'                    npclist(mapdata(map, x, y).npcindex).orig.x = x
-'                    npclist(mapdata(map, x, y).npcindex).orig.y = y
-'                else
-'                    mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
-'                end if
-'
-'                npclist(mapdata(map, x, y).npcindex).pos.map = map
-'                npclist(mapdata(map, x, y).npcindex).pos.x = x
-'                npclist(mapdata(map, x, y).npcindex).pos.y = y
-'
-'                call makenpcchar(tonone, 0, 0, mapdata(map, x, y).npcindex, map, x, y)
-'            end if
-'
-'            'get and make object
-'            'get #2, , mapdata(map, x, y).objinfo.objindex
-'            'get #2, , mapdata(map, x, y).objinfo.amount
-'            mapdata(map, x, y).objinfo.objindex = ti.obj_ind
-'            mapdata(map, x, y).objinfo.amount = ti.obj_cant
-'
-'            'space holder for future expansion (objects, ect.
-'            'get #2, , dummyint
-'            'get #2, , dummyint
-'
-'        next x
-'    next y
-'
-'    call mapcierramapa(dm)
-'    ''close #1
-'    ''close #2
-'
-'
-'    mapinfo(map).name = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "name")
-'    mapinfo(map).music = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "musicnum")
-'    mapinfo(map).startpos.map = val(readfield(1, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-'    mapinfo(map).startpos.x = val(readfield(2, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-'    mapinfo(map).startpos.y = val(readfield(3, getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "startpos"), 45))
-'
-'    if val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "pk")) = 0 then
-'        mapinfo(map).pk = true
-'    else
-'        mapinfo(map).pk = false
-'    end if
-'
-'
-'    mapinfo(map).terreno = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "terreno")
-'
-'    mapinfo(map).zona = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "zona")
-'
-'    mapinfo(map).restringir = getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "restringir")
-'
-'    mapinfo(map).backup = val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "backup"))
-'
-'end sub
-
 public sub cargaapuestas()
 
-apuestas.ganancias = val(getvar(datpath & "apuestas.dat", "main", "ganancias"))
-apuestas.perdidas = val(getvar(datpath & "apuestas.dat", "main", "perdidas"))
-apuestas.jugadas = val(getvar(datpath & "apuestas.dat", "main", "jugadas"))
+    apuestas.ganancias = val(getvar(datpath & "apuestas.dat", "main", "ganancias"))
+    apuestas.perdidas = val(getvar(datpath & "apuestas.dat", "main", "perdidas"))
+    apuestas.jugadas = val(getvar(datpath & "apuestas.dat", "main", "jugadas"))
 
 end sub

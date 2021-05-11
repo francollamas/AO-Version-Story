@@ -1,7 +1,11 @@
 attribute vb_name = "mod_dx"
-'argentum online 0.11.2
+'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -29,79 +33,19 @@ attribute vb_name = "mod_dx"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-option explicit
 
-public const numsoundbuffers = 20
+option explicit
 
 public directx as new directx7
 public directdraw as directdraw7
-public directsound as directsound
 
 public primarysurface as directdrawsurface7
 public primaryclipper as directdrawclipper
 public secundaryclipper as directdrawclipper
 public backbuffersurface as directdrawsurface7
 
-'public surfacedb() as directdrawsurface7
-
-'### 08/04/03 ###
-#if (usardinamico = 1) then
-    public surfacedb as new cbmpman
-#else
-    public surfacedb as new cbmpmannodyn
-#end if
-
-public perf as directmusicperformance
-public seg as directmusicsegment
-public segstate as directmusicsegmentstate
-public loader as directmusicloader
-
 public oldresheight as long, oldreswidth as long
 public bnoreschange as boolean
-
-public lastsoundbufferused as integer
-public dsbuffers(1 to numsoundbuffers) as directsoundbuffer
-
-public ddsd2 as ddsurfacedesc2
-public ddsd4 as ddsurfacedesc2
-public ddsd5 as ddsurfacedesc2
-public ddsalphapicture as directdrawsurface7
-public ddsspotlight as directdrawsurface7
-
-
-private sub iniciardirectsound()
-err.clear
-on error goto fin
-    set directsound = directx.directsoundcreate("")
-    if err then
-        msgbox "error iniciando directsound"
-        end
-    end if
-    
-    lastsoundbufferused = 1
-    '<----------------direct music--------------->
-    set perf = directx.directmusicperformancecreate()
-    call perf.init(nothing, 0)
-    perf.setport -1, 80
-    call perf.setmasterautodownload(true)
-    '<------------------------------------------->
-    exit sub
-fin:
-
-logerror "error al iniciar iniciardirectsound, asegurese de tener bien configurada la placa de sonido."
-
-musica = 1
-fx = 1
-
-end sub
-
-private sub liberardirectsound()
-dim cloop as integer
-for cloop = 1 to numsoundbuffers
-    set dsbuffers(cloop) = nothing
-next cloop
-set directsound = nothing
-end sub
 
 private sub iniciardxobject(dx as directx7)
 
@@ -141,12 +85,6 @@ call addtorichtextbox(frmcargando.status, "hecho", , , , 1, , false)
 call addtorichtextbox(frmcargando.status, "iniciando directdraw....", 0, 0, 0, 0, 0, true)
 call iniciarddobject(directdraw)
 call addtorichtextbox(frmcargando.status, "hecho", , , , 1, , false)
-
-if musica = 0 or fx = 0 then
-    call addtorichtextbox(frmcargando.status, "iniciando directsound....", 0, 0, 0, 0, 0, true)
-    call iniciardirectsound
-    call addtorichtextbox(frmcargando.status, "hecho", , , , 1, , false)
-end if
 
 call addtorichtextbox(frmcargando.status, "analizando y preparando la placa de video....", 0, 0, 0, 0, 0, true)
 
@@ -197,21 +135,7 @@ set primarysurface = nothing
 set primaryclipper = nothing
 set backbuffersurface = nothing
 
-liberardirectsound
-
-call surfacedb.borrartodo
-
 set directdraw = nothing
-
-for loopc = 1 to numsoundbuffers
-    set dsbuffers(loopc) = nothing
-next loopc
-
-
-set loader = nothing
-set perf = nothing
-set seg = nothing
-set directsound = nothing
 
 set directx = nothing
 exit sub

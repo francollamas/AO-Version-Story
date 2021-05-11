@@ -33,7 +33,7 @@ begin vb.form frmguildbrief
       width           =   1335
    end
    begin vb.commandbutton aliado 
-      caption         =   "declarar aliado"
+      caption         =   "ofrecer alianza"
       height          =   375
       left            =   3120
       mouseicon       =   "frmguildbrief.frx":0152
@@ -113,7 +113,7 @@ begin vb.form frmguildbrief
       height          =   2415
       left            =   120
       tabindex        =   9
-      top             =   2880
+      top             =   2970
       width           =   7215
       begin vb.label codex 
          height          =   255
@@ -166,7 +166,7 @@ begin vb.form frmguildbrief
       begin vb.label codex 
          height          =   255
          index           =   1
-         left            =   240
+         left            =   210
          tabindex        =   11
          top             =   600
          width           =   6735
@@ -191,11 +191,19 @@ begin vb.form frmguildbrief
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   2775
+      height          =   2940
       left            =   120
       tabindex        =   0
-      top             =   120
+      top             =   -15
       width           =   7215
+      begin vb.label antifaccion 
+         caption         =   "puntos antifaccion:"
+         height          =   255
+         left            =   120
+         tabindex        =   27
+         top             =   2640
+         width           =   6975
+      end
       begin vb.label aliados 
          caption         =   "clanes aliados:"
          height          =   255
@@ -212,8 +220,8 @@ begin vb.form frmguildbrief
          top             =   2160
          width           =   6975
       end
-      begin vb.label oro 
-         caption         =   "oro:"
+      begin vb.label lblalineacion 
+         caption         =   "alineacion:"
          height          =   255
          left            =   120
          tabindex        =   8
@@ -221,7 +229,7 @@ begin vb.form frmguildbrief
          width           =   6975
       end
       begin vb.label eleccion 
-         caption         =   "dias para proxima eleccion de lider:"
+         caption         =   "elecciones:"
          height          =   255
          left            =   120
          tabindex        =   7
@@ -286,6 +294,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -312,6 +324,9 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+option explicit
+
 public esleader as boolean
 
 
@@ -334,31 +349,35 @@ lider.caption = "lider:" & readfield(4, buffer, asc("�"))
 web.caption = "web site:" & readfield(5, buffer, asc("�"))
 miembros.caption = "miembros:" & readfield(6, buffer, asc("�"))
 eleccion.caption = "dias para proxima eleccion de lider:" & readfield(7, buffer, asc("�"))
-oro.caption = "oro:" & readfield(8, buffer, asc("�"))
+'oro.caption = "oro:" & readfield(8, buffer, asc("�"))
+lblalineacion.caption = "alineaci�n: " & readfield(8, buffer, asc("�"))
 enemigos.caption = "clanes enemigos:" & readfield(9, buffer, asc("�"))
 aliados.caption = "clanes aliados:" & readfield(10, buffer, asc("�"))
+antifaccion.caption = "puntos antifaccion: " & readfield(11, buffer, asc("�"))
 
-dim t%, k%
-k% = val(readfield(11, buffer, asc("�")))
+dim t as long
 
-for t% = 1 to k%
-    codex(t% - 1).caption = readfield(11 + t%, buffer, asc("�"))
-next t%
+for t = 1 to 8
+    codex(t - 1).caption = readfield(11 + t, buffer, asc("�"))
+next t
 
+dim des as string
 
-dim des$
+des = readfield(20, buffer, asc("�"))
+desc.text = replace(des, "�", vbcrlf)
 
-des$ = readfield(11 + t%, buffer, asc("�"))
-
-desc = replace(des$, "�", vbcrlf)
-
-me.show vbmodeless, frmmain
+me.show vbmodal, frmmain
 
 end sub
 
 private sub aliado_click()
-call senddata("decaliad" & right(nombre, len(nombre) - 7))
-unload me
+frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
+frmcommet.t = alianza
+frmcommet.caption = "ingrese propuesta de alianza"
+call frmcommet.show(vbmodal, frmguildbrief)
+
+'call senddata("ofrecali" & right(nombre, len(nombre) - 7))
+'unload me
 end sub
 
 private sub command1_click()
@@ -368,16 +387,19 @@ end sub
 private sub command2_click()
 
 call frmguildsol.recievesolicitud(right$(nombre, len(nombre) - 7))
-call frmguildsol.show(vbmodeless, frmguildbrief)
+call frmguildsol.show(vbmodal, frmguildbrief)
 'unload me
 
 end sub
 
 private sub command3_click()
 frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
-call frmcommet.show(vbmodeless, frmguildbrief)
+frmcommet.t = paz
+frmcommet.caption = "ingrese propuesta de paz"
+call frmcommet.show(vbmodal, frmguildbrief)
 'unload me
 end sub
+
 
 private sub guerra_click()
 call senddata("decguerr" & right(nombre.caption, len(nombre.caption) - 7))

@@ -1,6 +1,5 @@
 attribute vb_name = "queue"
-
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -30,12 +29,14 @@ attribute vb_name = "queue"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+option explicit
+
 public type tvertice
     x as integer
     y as integer
 end type
 
-private const maxelem = 1000
+private const maxelem as integer = 1000
 
 private m_array() as tvertice
 private m_lastelem as integer

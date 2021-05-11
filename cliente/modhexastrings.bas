@@ -1,7 +1,10 @@
 attribute vb_name = "modhexastrings"
-'argentum online 0.11.2
+'argentum online 0.9.0.4
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -29,6 +32,10 @@ attribute vb_name = "modhexastrings"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+'modulo realizado por gonzalo larralde(cdt) <gonzalolarralde@yahoo.com.ar>
+'para la conversion a caracteres de cadenas md5 y de
+'semi encriptaci�n de cadenas por ascii table offset
+
 option explicit
 
 public function hexmd52asc(byval md5 as string) as string
@@ -38,15 +45,15 @@ public function hexmd52asc(byval md5 as string) as string
     if len(md5) mod 2 = 1 then md5 = "0" & md5
     
     for i = 1 to len(md5) \ 2
-        l = mid(md5, (2 * i) - 1, 2)
-        hexmd52asc = hexmd52asc & chr(hexhex2dec(l))
+        l = mid$(md5, (2 * i) - 1, 2)
+        hexmd52asc = hexmd52asc & chr$(hexhex2dec(l))
     next i
 end function
 
 public function hexhex2dec(byval hex as string) as long
     dim i as integer, l as string
     for i = 1 to len(hex)
-        l = mid(hex, i, 1)
+        l = mid$(hex, i, 1)
         select case l
             case "a": l = 10
             case "b": l = 11
@@ -63,7 +70,7 @@ end function
 public function txtoffset(byval text as string, byval off as integer) as string
     dim i as integer, l as string
     for i = 1 to len(text)
-        l = mid(text, i, 1)
-        txtoffset = txtoffset & chr((asc(l) + off) mod 256)
+        l = mid$(text, i, 1)
+        txtoffset = txtoffset & chr$((asc(l) + off) mod 256)
     next i
 end function

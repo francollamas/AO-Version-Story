@@ -1,5 +1,5 @@
 attribute vb_name = "invusuario"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ attribute vb_name = "invusuario"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
 
 public function tieneobjetosrobables(byval userindex as integer) as boolean
@@ -45,8 +44,8 @@ dim objindex as integer
 for i = 1 to max_inventory_slots
     objindex = userlist(userindex).invent.object(i).objindex
     if objindex > 0 then
-            if (objdata(objindex).objtype <> objtype_llaves and _
-                objdata(objindex).objtype <> objtype_barcos) then
+            if (objdata(objindex).objtype <> eobjtype.otllaves and _
+                objdata(objindex).objtype <> eobjtype.otbarcos) then
                   tieneobjetosrobables = true
                   exit function
             end if
@@ -173,14 +172,15 @@ if (cantidad > 0) and (cantidad <= userlist(userindex).stats.gld) then
         dim loops as integer
         
         'seguridad alkon
-        if cantidad > 49999 then
+        if cantidad > 39999 then
             dim j as integer
             dim k as integer
             dim m as integer
             dim cercanos as string
-            for j = userlist(userindex).pos.x - 5 to userlist(userindex).pos.x + 5
-                for k = userlist(userindex).pos.y - 5 to userlist(userindex).pos.y + 5
-                    if legalpos(m, j, k, true) then
+            m = userlist(userindex).pos.map
+            for j = userlist(userindex).pos.x - 10 to userlist(userindex).pos.x + 10
+                for k = userlist(userindex).pos.y - 10 to userlist(userindex).pos.y + 10
+                    if inmapbounds(m, j, k) then
                         if mapdata(m, j, k).userindex > 0 then
                             cercanos = cercanos & userlist(mapdata(m, j, k).userindex).name & ","
                         end if
@@ -205,7 +205,7 @@ if (cantidad > 0) and (cantidad <= userlist(userindex).stats.gld) then
 
             miobj.objindex = ioro
             
-            if userlist(userindex).flags.privilegios > 0 then call loggm(userlist(userindex).name, "tiro cantidad:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name, false)
+            if userlist(userindex).flags.privilegios > playertype.user then call loggm(userlist(userindex).name, "tiro cantidad:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name, false)
             
             call tiraritemalpiso(userlist(userindex).pos, miobj)
             
@@ -289,31 +289,35 @@ if num > 0 then
   if num > userlist(userindex).invent.object(slot).amount then num = userlist(userindex).invent.object(slot).amount
   
   'check objeto en el suelo
-  if mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex = 0 then
+  if mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex = 0 or mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex = userlist(userindex).invent.object(slot).objindex then
         if userlist(userindex).invent.object(slot).equipped = 1 then call desequipar(userindex, slot)
         obj.objindex = userlist(userindex).invent.object(slot).objindex
         
 '        if objdata(obj.objindex).newbie = 1 and esnewbie(userindex) then
-'            call senddata(toindex, userindex, 0, "||no podes tirar el objeto." & fonttype_info)
+'            call senddata(sendtarget.toindex, userindex, 0, "||no podes tirar el objeto." & fonttype_info)
 '            exit sub
 '        end if
         
+        if num + mapdata(userlist(userindex).pos.map, x, y).objinfo.amount > max_inventory_objs then
+            num = max_inventory_objs - mapdata(userlist(userindex).pos.map, x, y).objinfo.amount
+        end if
+        
         obj.amount = num
         
-        call makeobj(tomap, 0, map, obj, map, x, y)
+        call makeobj(sendtarget.tomap, 0, map, obj, map, x, y)
         call quitaruserinvitem(userindex, slot, num)
         call updateuserinv(false, userindex, slot)
         
-        if objdata(obj.objindex).objtype = objtype_barcos then
-            call senddata(toindex, userindex, 0, "||��atencion!! �acabas de tirar tu barca!" & fonttype_talk)
+        if objdata(obj.objindex).objtype = eobjtype.otbarcos then
+            call senddata(sendtarget.toindex, userindex, 0, "||��atencion!! �acabas de tirar tu barca!" & fonttype_talk)
         end if
         if objdata(obj.objindex).caos = 1 or objdata(obj.objindex).real = 1 then
-            call senddata(toindex, userindex, 0, "||�atencion!! ��acabas de tirar tu armadura faccionaria!!" & fonttype_talk)
+            call senddata(sendtarget.toindex, userindex, 0, "||�atencion!! ��acabas de tirar tu armadura faccionaria!!" & fonttype_talk)
         end if
         
-        if userlist(userindex).flags.privilegios > 0 then call loggm(userlist(userindex).name, "tiro cantidad:" & num & " objeto:" & objdata(obj.objindex).name, false)
+        if userlist(userindex).flags.privilegios > playertype.user then call loggm(userlist(userindex).name, "tiro cantidad:" & num & " objeto:" & objdata(obj.objindex).name, false)
   else
-    call senddata(toindex, userindex, 0, "||no hay espacio en el piso." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "||no hay espacio en el piso." & fonttype_info)
   end if
     
 end if
@@ -327,7 +331,12 @@ mapdata(map, x, y).objinfo.amount = mapdata(map, x, y).objinfo.amount - num
 if mapdata(map, x, y).objinfo.amount <= 0 then
     mapdata(map, x, y).objinfo.objindex = 0
     mapdata(map, x, y).objinfo.amount = 0
-    call senddata(sndroute, sndindex, sndmap, "bo" & x & "," & y)
+    
+    if sndroute = sendtarget.tomap then
+        call sendtoareabypos(map, x, y, "bo" & x & "," & y)
+   else
+        call senddata(sndroute, sndindex, sndmap, "bo" & x & "," & y)
+    end if
 end if
 
 end sub
@@ -335,9 +344,18 @@ end sub
 sub makeobj(byval sndroute as byte, byval sndindex as integer, byval sndmap as integer, obj as obj, map as integer, byval x as integer, byval y as integer)
 
 if obj.objindex > 0 and obj.objindex <= ubound(objdata) then
-'crea un objeto
-    mapdata(map, x, y).objinfo = obj
-    call senddata(sndroute, sndindex, sndmap, "ho" & objdata(obj.objindex).grhindex & "," & x & "," & y)
+
+    if mapdata(map, x, y).objinfo.objindex = obj.objindex then
+        mapdata(map, x, y).objinfo.amount = mapdata(map, x, y).objinfo.amount + obj.amount
+    else
+        mapdata(map, x, y).objinfo = obj
+        
+        if sndroute = sendtarget.tomap then
+            call modareas.sendtoareabypos(map, x, y, "ho" & objdata(obj.objindex).grhindex & "," & x & "," & y)
+        else
+            call senddata(sndroute, sndindex, sndmap, "ho" & objdata(obj.objindex).grhindex & "," & x & "," & y)
+        end if
+    end if
 end if
 
 end sub
@@ -367,7 +385,7 @@ if slot > max_inventory_slots then
    do until userlist(userindex).invent.object(slot).objindex = 0
        slot = slot + 1
        if slot > max_inventory_slots then
-           call senddata(toindex, userindex, 0, "||no podes cargar mas objetos." & fonttype_fight)
+           call senddata(sendtarget.toindex, userindex, 0, "||no podes cargar mas objetos." & fonttype_fight)
            meteritemeninventario = false
            exit function
        end if
@@ -415,16 +433,16 @@ if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(user
         miobj.objindex = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
         
         if not meteritemeninventario(userindex, miobj) then
-            call senddata(toindex, userindex, 0, "||no puedo cargar mas objetos." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||no puedo cargar mas objetos." & fonttype_info)
         else
             'quitamos el objeto
-            call eraseobj(tomap, 0, userlist(userindex).pos.map, mapdata(userlist(userindex).pos.map, x, y).objinfo.amount, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
-            if userlist(userindex).flags.privilegios > 0 then call loggm(userlist(userindex).name, "agarro:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name, false)
+            call eraseobj(sendtarget.tomap, 0, userlist(userindex).pos.map, mapdata(userlist(userindex).pos.map, x, y).objinfo.amount, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
+            if userlist(userindex).flags.privilegios > playertype.user then call loggm(userlist(userindex).name, "agarro:" & miobj.amount & " objeto:" & objdata(miobj.objindex).name, false)
         end if
         
     end if
 else
-    call senddata(toindex, userindex, 0, "||no hay nada aqui." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "||no hay nada aqui." & fonttype_info)
 end if
 
 end sub
@@ -443,65 +461,56 @@ end if
 obj = objdata(userlist(userindex).invent.object(slot).objindex)
 
 select case obj.objtype
-
-
-    case objtype_weapon
-
+    case eobjtype.otweapon
         userlist(userindex).invent.object(slot).equipped = 0
         userlist(userindex).invent.weaponeqpobjindex = 0
         userlist(userindex).invent.weaponeqpslot = 0
         if not userlist(userindex).flags.mimetizado = 1 then
             userlist(userindex).char.weaponanim = ningunarma
-            call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
         end if
-    case objtype_flechas
     
+    case eobjtype.otflechas
         userlist(userindex).invent.object(slot).equipped = 0
         userlist(userindex).invent.municioneqpobjindex = 0
         userlist(userindex).invent.municioneqpslot = 0
     
-    case objtype_herramientas
-    
+    case eobjtype.otherramientas
         userlist(userindex).invent.object(slot).equipped = 0
         userlist(userindex).invent.herramientaeqpobjindex = 0
         userlist(userindex).invent.herramientaeqpslot = 0
     
-    case objtype_armour
-        
-        select case obj.subtipo
-        
-            case objtype_armadura
-                userlist(userindex).invent.object(slot).equipped = 0
-                userlist(userindex).invent.armoureqpobjindex = 0
-                userlist(userindex).invent.armoureqpslot = 0
-                call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
-                call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                
-            case objtype_casco
-                userlist(userindex).invent.object(slot).equipped = 0
-                userlist(userindex).invent.cascoeqpobjindex = 0
-                userlist(userindex).invent.cascoeqpslot = 0
-                if not userlist(userindex).flags.mimetizado = 1 then
-                    userlist(userindex).char.cascoanim = ninguncasco
-                    call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                end if
-            case objtype_escudo
-                userlist(userindex).invent.object(slot).equipped = 0
-                userlist(userindex).invent.escudoeqpobjindex = 0
-                userlist(userindex).invent.escudoeqpslot = 0
-                if not userlist(userindex).flags.mimetizado = 1 then
-                    userlist(userindex).char.shieldanim = ningunescudo
-                    call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                end if
-        end select
-        
+    case eobjtype.otarmadura
+        userlist(userindex).invent.object(slot).equipped = 0
+        userlist(userindex).invent.armoureqpobjindex = 0
+        userlist(userindex).invent.armoureqpslot = 0
+        call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
+        call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            
+    case eobjtype.otcasco
+        userlist(userindex).invent.object(slot).equipped = 0
+        userlist(userindex).invent.cascoeqpobjindex = 0
+        userlist(userindex).invent.cascoeqpslot = 0
+        if not userlist(userindex).flags.mimetizado = 1 then
+            userlist(userindex).char.cascoanim = ninguncasco
+            call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+        end if
     
+    case eobjtype.otescudo
+        userlist(userindex).invent.object(slot).equipped = 0
+        userlist(userindex).invent.escudoeqpobjindex = 0
+        userlist(userindex).invent.escudoeqpslot = 0
+        if not userlist(userindex).flags.mimetizado = 1 then
+            userlist(userindex).char.shieldanim = ningunescudo
+            call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+        end if
 end select
 
 call senduserstatsbox(userindex)
 call updateuserinv(false, userindex, slot)
 
 end sub
+
 function sexopuedeusaritem(byval userindex as integer, byval objindex as integer) as boolean
 on error goto errhandler
 
@@ -523,13 +532,13 @@ function faccionpuedeusaritem(byval userindex as integer, byval objindex as inte
 
 if objdata(objindex).real = 1 then
     if not criminal(userindex) then
-        faccionpuedeusaritem = userlist(userindex).faccion.armadareal = 1
+        faccionpuedeusaritem = (userlist(userindex).faccion.armadareal = 1)
     else
         faccionpuedeusaritem = false
     end if
 elseif objdata(objindex).caos = 1 then
     if criminal(userindex) then
-        faccionpuedeusaritem = userlist(userindex).faccion.fuerzascaos = 1
+        faccionpuedeusaritem = (userlist(userindex).faccion.fuerzascaos = 1)
     else
         faccionpuedeusaritem = false
     end if
@@ -550,12 +559,12 @@ objindex = userlist(userindex).invent.object(slot).objindex
 obj = objdata(objindex)
 
 if obj.newbie = 1 and not esnewbie(userindex) then
-     call senddata(toindex, userindex, 0, "||solo los newbies pueden usar este objeto." & fonttype_info)
+     call senddata(sendtarget.toindex, userindex, 0, "||solo los newbies pueden usar este objeto." & fonttype_info)
      exit sub
 end if
         
 select case obj.objtype
-    case objtype_weapon
+    case eobjtype.otweapon
        if clasepuedeusaritem(userindex, objindex) and _
           faccionpuedeusaritem(userindex, objindex) then
                 'si esta equipado lo quita
@@ -567,7 +576,7 @@ select case obj.objtype
                         userlist(userindex).charmimetizado.weaponanim = ningunarma
                     else
                         userlist(userindex).char.weaponanim = ningunarma
-                        call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                        call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
                     end if
                     exit sub
                 end if
@@ -582,18 +591,19 @@ select case obj.objtype
                 userlist(userindex).invent.weaponeqpslot = slot
                 
                 'sonido
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_sacararma)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_sacararma)
         
                 if userlist(userindex).flags.mimetizado = 1 then
                     userlist(userindex).charmimetizado.weaponanim = obj.weaponanim
                 else
                     userlist(userindex).char.weaponanim = obj.weaponanim
-                    call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                    call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
                 end if
        else
-            call senddata(toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
        end if
-    case objtype_herramientas
+    
+    case eobjtype.otherramientas
        if clasepuedeusaritem(userindex, objindex) and _
           faccionpuedeusaritem(userindex, objindex) then
                 'si esta equipado lo quita
@@ -613,9 +623,10 @@ select case obj.objtype
                 userlist(userindex).invent.herramientaeqpslot = slot
                 
        else
-            call senddata(toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
        end if
-    case objtype_flechas
+    
+    case eobjtype.otflechas
        if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
           faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
                 
@@ -636,130 +647,127 @@ select case obj.objtype
                 userlist(userindex).invent.municioneqpslot = slot
                 
        else
-            call senddata(toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
        end if
     
-    case objtype_armour
-         
-         if userlist(userindex).flags.navegando = 1 then exit sub
-         
-         select case obj.subtipo
-         
-            case objtype_armadura
-                'nos aseguramos que puede usarla
-                if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-                   sexopuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-                   checkrazausaropa(userindex, userlist(userindex).invent.object(slot).objindex) and _
-                   faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-                   
-                   'si esta equipado lo quita
-                    if userlist(userindex).invent.object(slot).equipped then
-                        call desequipar(userindex, slot)
-                        call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
-                        if not userlist(userindex).flags.mimetizado = 1 then
-                            call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                        end if
-                        exit sub
-                    end if
+    case eobjtype.otarmadura
+        if userlist(userindex).flags.navegando = 1 then exit sub
+        'nos aseguramos que puede usarla
+        if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
+           sexopuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
+           checkrazausaropa(userindex, userlist(userindex).invent.object(slot).objindex) and _
+           faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
+           
+           'si esta equipado lo quita
+            if userlist(userindex).invent.object(slot).equipped then
+                call desequipar(userindex, slot)
+                call darcuerpodesnudo(userindex, userlist(userindex).flags.mimetizado = 1)
+                if not userlist(userindex).flags.mimetizado = 1 then
+                    call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                end if
+                exit sub
+            end if
+    
+            'quita el anterior
+            if userlist(userindex).invent.armoureqpobjindex > 0 then
+                call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+            end if
+    
+            'lo equipa
+            userlist(userindex).invent.object(slot).equipped = 1
+            userlist(userindex).invent.armoureqpobjindex = userlist(userindex).invent.object(slot).objindex
+            userlist(userindex).invent.armoureqpslot = slot
+                
+            if userlist(userindex).flags.mimetizado = 1 then
+                userlist(userindex).charmimetizado.body = obj.ropaje
+            else
+                userlist(userindex).char.body = obj.ropaje
+                call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            end if
+            userlist(userindex).flags.desnudo = 0
             
-                    'quita el anterior
-                    if userlist(userindex).invent.armoureqpobjindex > 0 then
-                        call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
-                    end if
-            
-                    'lo equipa
-                    userlist(userindex).invent.object(slot).equipped = 1
-                    userlist(userindex).invent.armoureqpobjindex = userlist(userindex).invent.object(slot).objindex
-                    userlist(userindex).invent.armoureqpslot = slot
-                        
-                    if userlist(userindex).flags.mimetizado = 1 then
-                        userlist(userindex).charmimetizado.body = obj.ropaje
-                    else
-                        userlist(userindex).char.body = obj.ropaje
-                        call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                    end if
-                    userlist(userindex).flags.desnudo = 0
-                    
 
+        else
+            call senddata(sendtarget.toindex, userindex, 0, "||tu clase,genero o raza no puede usar este objeto." & fonttype_info)
+        end if
+    
+    case eobjtype.otcasco
+        if userlist(userindex).flags.navegando = 1 then exit sub
+        if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
+            'si esta equipado lo quita
+            if userlist(userindex).invent.object(slot).equipped then
+                call desequipar(userindex, slot)
+                if userlist(userindex).flags.mimetizado = 1 then
+                    userlist(userindex).charmimetizado.cascoanim = ninguncasco
                 else
-                    call senddata(toindex, userindex, 0, "||tu clase,genero o raza no puede usar este objeto." & fonttype_info)
+                    userlist(userindex).char.cascoanim = ninguncasco
+                    call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
                 end if
-            case objtype_casco
-                if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-                    'si esta equipado lo quita
-                    if userlist(userindex).invent.object(slot).equipped then
-                        call desequipar(userindex, slot)
-                        if userlist(userindex).flags.mimetizado = 1 then
-                            userlist(userindex).charmimetizado.cascoanim = ninguncasco
-                        else
-                            userlist(userindex).char.cascoanim = ninguncasco
-                            call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                        end if
-                        exit sub
-                    end if
+                exit sub
+            end if
+    
+            'quita el anterior
+            if userlist(userindex).invent.cascoeqpobjindex > 0 then
+                call desequipar(userindex, userlist(userindex).invent.cascoeqpslot)
+            end if
+    
+            'lo equipa
             
-                    'quita el anterior
-                    if userlist(userindex).invent.cascoeqpobjindex > 0 then
-                        call desequipar(userindex, userlist(userindex).invent.cascoeqpslot)
-                    end if
-            
-                    'lo equipa
-                    
-                    userlist(userindex).invent.object(slot).equipped = 1
-                    userlist(userindex).invent.cascoeqpobjindex = userlist(userindex).invent.object(slot).objindex
-                    userlist(userindex).invent.cascoeqpslot = slot
-                    if userlist(userindex).flags.mimetizado = 1 then
-                        userlist(userindex).charmimetizado.cascoanim = obj.cascoanim
-                    else
-                        userlist(userindex).char.cascoanim = obj.cascoanim
-                        call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                    end if
-                else
-                    call senddata(toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
-                end if
-            case objtype_escudo
-                if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
-                    faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
-       
-                    'si esta equipado lo quita
-                    if userlist(userindex).invent.object(slot).equipped then
-                        call desequipar(userindex, slot)
-                        if userlist(userindex).flags.mimetizado = 1 then
-                            userlist(userindex).charmimetizado.shieldanim = ningunescudo
-                        else
-                            userlist(userindex).char.shieldanim = ningunescudo
-                            call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                        end if
-                        exit sub
-                    end if
-            
-                    'quita el anterior
-                    if userlist(userindex).invent.escudoeqpobjindex > 0 then
-                        call desequipar(userindex, userlist(userindex).invent.escudoeqpslot)
-                    end if
-            
-                    'lo equipa
-                    
-                    userlist(userindex).invent.object(slot).equipped = 1
-                    userlist(userindex).invent.escudoeqpobjindex = userlist(userindex).invent.object(slot).objindex
-                    userlist(userindex).invent.escudoeqpslot = slot
-                    
-                    if userlist(userindex).flags.mimetizado = 1 then
-                        userlist(userindex).charmimetizado.shieldanim = obj.shieldanim
-                    else
-                        userlist(userindex).char.shieldanim = obj.shieldanim
-                        
-                        call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-                    end if
-                else
-                    call senddata(toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
-                end if
-        end select
+            userlist(userindex).invent.object(slot).equipped = 1
+            userlist(userindex).invent.cascoeqpobjindex = userlist(userindex).invent.object(slot).objindex
+            userlist(userindex).invent.cascoeqpslot = slot
+            if userlist(userindex).flags.mimetizado = 1 then
+                userlist(userindex).charmimetizado.cascoanim = obj.cascoanim
+            else
+                userlist(userindex).char.cascoanim = obj.cascoanim
+                call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            end if
+        else
+            call senddata(sendtarget.toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
+        end if
+    
+    case eobjtype.otescudo
+        if userlist(userindex).flags.navegando = 1 then exit sub
+         if clasepuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) and _
+             faccionpuedeusaritem(userindex, userlist(userindex).invent.object(slot).objindex) then
+
+             'si esta equipado lo quita
+             if userlist(userindex).invent.object(slot).equipped then
+                 call desequipar(userindex, slot)
+                 if userlist(userindex).flags.mimetizado = 1 then
+                     userlist(userindex).charmimetizado.shieldanim = ningunescudo
+                 else
+                     userlist(userindex).char.shieldanim = ningunescudo
+                     call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+                 end if
+                 exit sub
+             end if
+     
+             'quita el anterior
+             if userlist(userindex).invent.escudoeqpobjindex > 0 then
+                 call desequipar(userindex, userlist(userindex).invent.escudoeqpslot)
+             end if
+     
+             'lo equipa
+             
+             userlist(userindex).invent.object(slot).equipped = 1
+             userlist(userindex).invent.escudoeqpobjindex = userlist(userindex).invent.object(slot).objindex
+             userlist(userindex).invent.escudoeqpslot = slot
+             
+             if userlist(userindex).flags.mimetizado = 1 then
+                 userlist(userindex).charmimetizado.shieldanim = obj.shieldanim
+             else
+                 userlist(userindex).char.shieldanim = obj.shieldanim
+                 
+                 call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+             end if
+         else
+             call senddata(sendtarget.toindex, userindex, 0, "||tu clase no puede usar este objeto." & fonttype_info)
+         end if
 end select
 
 'actualiza
-call updateuserinv(true, userindex, 0)
-
+call updateuserinv(false, userindex, slot)
 
 exit sub
 errhandler:
@@ -798,25 +806,20 @@ if userlist(userindex).invent.object(slot).amount = 0 then exit sub
 obj = objdata(userlist(userindex).invent.object(slot).objindex)
 
 if obj.newbie = 1 and not esnewbie(userindex) then
-    call senddata(toindex, userindex, 0, "||solo los newbies pueden usar estos objetos." & fonttype_info)
+    call senddata(sendtarget.toindex, userindex, 0, "||solo los newbies pueden usar estos objetos." & fonttype_info)
     exit sub
 end if
 
-if obj.objtype = objtype_weapon then
-    'lo mas probable es q sea un cazador
-    if ucase$(userlist(userindex).clase) = "cazador" then
-        if not intervalopermiteusararcos(userindex) then exit sub
-    '2da oportunidad
-    elseif ucase$(userlist(userindex).clase = "guerrero") then
-        if not intervalopermiteusararcos(userindex) then exit sub
+if obj.objtype = eobjtype.otweapon then
+    if obj.proyectil = 1 then
+        'valido para evitar el flood pero no bloqueo. el bloqueo se hace en wlc con proyectiles.
+        if not intervalopermiteusararcos(userindex, false) then exit sub
     else
-    'y bue, mala suerte hubo q comparar los 3
+        'dagas
         if not intervalopermiteusar(userindex) then exit sub
     end if
 else
-    if not intervalopermiteusar(userindex) then
-        exit sub
-    end if
+    if not intervalopermiteusar(userindex) then exit sub
 end if
 
 objindex = userlist(userindex).invent.object(slot).objindex
@@ -824,30 +827,34 @@ userlist(userindex).flags.targetobjinvindex = objindex
 userlist(userindex).flags.targetobjinvslot = slot
 
 select case obj.objtype
-
-    case objtype_useonce
+    case eobjtype.otuseonce
         if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
             exit sub
         end if
 
         'usa el item
-        call addtovar(userlist(userindex).stats.minham, obj.minham, userlist(userindex).stats.maxham)
+        userlist(userindex).stats.minham = userlist(userindex).stats.minham + obj.minham
+        if userlist(userindex).stats.minham > userlist(userindex).stats.maxham then _
+            userlist(userindex).stats.minham = userlist(userindex).stats.maxham
         userlist(userindex).flags.hambre = 0
         call enviarhambreysed(userindex)
         'sonido
-        senddata topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_comida
+        
+        if objindex = e_objetoscriticos.manzana or objindex = e_objetoscriticos.manzana2 or objindex = e_objetoscriticos.manzananewbie then
+            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, userlist(userindex).pos.map, e_soundindex.morfar_manzana)
+        else
+            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, userlist(userindex).pos.map, e_soundindex.sound_comida)
+        end if
         
         'quitamos del inv el item
         call quitaruserinvitem(userindex, slot, 1)
         
         call updateuserinv(false, userindex, slot)
 
-            
-    case objtype_guita
-    
+    case eobjtype.otguita
         if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
             exit sub
         end if
         
@@ -859,46 +866,34 @@ select case obj.objtype
         call updateuserinv(false, userindex, slot)
         call senduserstatsbox(userindex)
         
-    case objtype_weapon
-        
+    case eobjtype.otweapon
         if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
         end if
-
-    
-        if objdata(objindex).proyectil = 1 then
-            
-            call senddata(toindex, userindex, 0, "t01" & proyectiles)
-
-           
-        else
         
+        if objdata(objindex).proyectil = 1 then
+            call senddata(sendtarget.toindex, userindex, 0, "t01" & proyectiles)
+        else
             if userlist(userindex).flags.targetobj = 0 then exit sub
             
-            targobj = objdata(userlist(userindex).flags.targetobj)
             '�el target-objeto es le�a?
-            if targobj.objtype = objtype_le�a then
-                    if userlist(userindex).invent.object(slot).objindex = daga then
-                        call tratardehacerfogata(userlist(userindex).flags.targetobjmap _
-                             , userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy, userindex)
-                    
-                    else
-             
-                    end if
+            if userlist(userindex).flags.targetobj = le�a then
+                if userlist(userindex).invent.object(slot).objindex = daga then
+                    call tratardehacerfogata(userlist(userindex).flags.targetobjmap, _
+                         userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy, userindex)
+                end if
             end if
-            
         end if
-    case objtype_pociones
     
+    case eobjtype.otpociones
         if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
             exit sub
         end if
         
-'        if userlist(userindex).flags.puedeatacar = 0 then
         if not intervalopermiteatacar(userindex, false) then
-            call senddata(toindex, userindex, 0, "||��debes esperar unos momentos para tomar otra pocion!!" & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��debes esperar unos momentos para tomar otra pocion!!" & fonttype_info)
             exit sub
         end if
         
@@ -911,87 +906,95 @@ select case obj.objtype
                 userlist(userindex).flags.duracionefecto = obj.duracionefecto
         
                 'usa el item
-                call addtovar(userlist(userindex).stats.useratributos(agilidad), randomnumber(obj.minmodificador, obj.maxmodificador), maxatributos)
-                if userlist(userindex).stats.useratributos(agilidad) > 2 * userlist(userindex).stats.useratributosbackup(agilidad) then userlist(userindex).stats.useratributos(agilidad) = 2 * userlist(userindex).stats.useratributosbackup(agilidad)
+                userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + randomnumber(obj.minmodificador, obj.maxmodificador)
+                if userlist(userindex).stats.useratributos(eatributos.agilidad) > maxatributos then _
+                    userlist(userindex).stats.useratributos(eatributos.agilidad) = maxatributos
+                if userlist(userindex).stats.useratributos(eatributos.agilidad) > 2 * userlist(userindex).stats.useratributosbackup(agilidad) then userlist(userindex).stats.useratributos(eatributos.agilidad) = 2 * userlist(userindex).stats.useratributosbackup(agilidad)
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
         
             case 2 'modif la fuerza
                 userlist(userindex).flags.duracionefecto = obj.duracionefecto
         
                 'usa el item
-                call addtovar(userlist(userindex).stats.useratributos(fuerza), randomnumber(obj.minmodificador, obj.maxmodificador), maxatributos)
-                if userlist(userindex).stats.useratributos(fuerza) > 2 * userlist(userindex).stats.useratributosbackup(fuerza) then userlist(userindex).stats.useratributos(fuerza) = 2 * userlist(userindex).stats.useratributosbackup(fuerza)
+                userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) + randomnumber(obj.minmodificador, obj.maxmodificador)
+                if userlist(userindex).stats.useratributos(eatributos.fuerza) > maxatributos then _
+                    userlist(userindex).stats.useratributos(eatributos.fuerza) = maxatributos
+                if userlist(userindex).stats.useratributos(eatributos.fuerza) > 2 * userlist(userindex).stats.useratributosbackup(fuerza) then userlist(userindex).stats.useratributos(eatributos.fuerza) = 2 * userlist(userindex).stats.useratributosbackup(fuerza)
                 
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
                 
             case 3 'pocion roja, restaura hp
                 'usa el item
-                addtovar userlist(userindex).stats.minhp, randomnumber(obj.minmodificador, obj.maxmodificador), userlist(userindex).stats.maxhp
+                userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + randomnumber(obj.minmodificador, obj.maxmodificador)
+                if userlist(userindex).stats.minhp > userlist(userindex).stats.maxhp then _
+                    userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
             
             case 4 'pocion azul, restaura mana
                 'usa el item
-                call addtovar(userlist(userindex).stats.minman, porcentaje(userlist(userindex).stats.maxman, 5), userlist(userindex).stats.maxman)
+                userlist(userindex).stats.minman = userlist(userindex).stats.minman + porcentaje(userlist(userindex).stats.maxman, 5)
+                if userlist(userindex).stats.minman > userlist(userindex).stats.maxman then _
+                    userlist(userindex).stats.minman = userlist(userindex).stats.maxman
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
                 
             case 5 ' pocion violeta
                 if userlist(userindex).flags.envenenado = 1 then
                     userlist(userindex).flags.envenenado = 0
-                    call senddata(toindex, userindex, 0, "||te has curado del envenenamiento." & fonttype_info)
+                    call senddata(sendtarget.toindex, userindex, 0, "||te has curado del envenenamiento." & fonttype_info)
                 end if
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+                call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
             case 6  ' pocion negra
-                if userlist(userindex).flags.privilegios = 0 then
+                if userlist(userindex).flags.privilegios = playertype.user then
                     call quitaruserinvitem(userindex, slot, 1)
                     call userdie(userindex)
-                    call senddata(toindex, userindex, 0, "||sientes un gran mareo y pierdes el conocimiento." & fonttype_fight)
+                    call senddata(sendtarget.toindex, userindex, 0, "||sientes un gran mareo y pierdes el conocimiento." & fonttype_fight)
                 end if
        end select
        call senduserstatsbox(userindex)
        call updateuserinv(false, userindex, slot)
 
-     case objtype_bebida
-    
+     case eobjtype.otbebidas
         if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
             exit sub
         end if
-        addtovar userlist(userindex).stats.minagu, obj.minsed, userlist(userindex).stats.maxagu
+        userlist(userindex).stats.minagu = userlist(userindex).stats.minagu + obj.minsed
+        if userlist(userindex).stats.minagu > userlist(userindex).stats.maxagu then _
+            userlist(userindex).stats.minagu = userlist(userindex).stats.maxagu
         userlist(userindex).flags.sed = 0
         call enviarhambreysed(userindex)
         
         'quitamos del inv el item
         call quitaruserinvitem(userindex, slot, 1)
         
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
+        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & snd_beber)
         
         call updateuserinv(false, userindex, slot)
     
-    case objtype_llaves
-        
+    case eobjtype.otllaves
         if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
             exit sub
         end if
         
         if userlist(userindex).flags.targetobj = 0 then exit sub
         targobj = objdata(userlist(userindex).flags.targetobj)
         '�el objeto clickeado es una puerta?
-        if targobj.objtype = objtype_puertas then
+        if targobj.objtype = eobjtype.otpuertas then
             '�esta cerrada?
             if targobj.cerrada = 1 then
                   '�cerrada con llave?
@@ -1001,38 +1004,38 @@ select case obj.objtype
                         mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex _
                         = objdata(mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex).indexcerrada
                         userlist(userindex).flags.targetobj = mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex
-                        call senddata(toindex, userindex, 0, "||has abierto la puerta." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||has abierto la puerta." & fonttype_info)
                         exit sub
                      else
-                        call senddata(toindex, userindex, 0, "||la llave no sirve." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||la llave no sirve." & fonttype_info)
                         exit sub
                      end if
                   else
                      if targobj.clave = obj.clave then
                         mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex _
                         = objdata(mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex).indexcerradallave
-                        call senddata(toindex, userindex, 0, "||has cerrado con llave la puerta." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||has cerrado con llave la puerta." & fonttype_info)
                         userlist(userindex).flags.targetobj = mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex
                         exit sub
                      else
-                        call senddata(toindex, userindex, 0, "||la llave no sirve." & fonttype_info)
+                        call senddata(sendtarget.toindex, userindex, 0, "||la llave no sirve." & fonttype_info)
                         exit sub
                      end if
                   end if
             else
-                  call senddata(toindex, userindex, 0, "||no esta cerrada." & fonttype_info)
+                  call senddata(sendtarget.toindex, userindex, 0, "||no esta cerrada." & fonttype_info)
                   exit sub
             end if
             
         end if
     
-        case objtype_botellavacia
+        case eobjtype.otbotellavacia
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
             end if
             if not hayagua(userlist(userindex).pos.map, userlist(userindex).flags.targetx, userlist(userindex).flags.targety) then
-                call senddata(toindex, userindex, 0, "||no hay agua all�." & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||no hay agua all�." & fonttype_info)
                 exit sub
             end if
             miobj.amount = 1
@@ -1044,12 +1047,14 @@ select case obj.objtype
             
             call updateuserinv(false, userindex, slot)
     
-        case objtype_botellallena
+        case eobjtype.otbotellallena
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
             end if
-            addtovar userlist(userindex).stats.minagu, obj.minsed, userlist(userindex).stats.maxagu
+            userlist(userindex).stats.minagu = userlist(userindex).stats.minagu + obj.minsed
+            if userlist(userindex).stats.minagu > userlist(userindex).stats.maxagu then _
+                userlist(userindex).stats.minagu = userlist(userindex).stats.maxagu
             userlist(userindex).flags.sed = 0
             call enviarhambreysed(userindex)
             miobj.amount = 1
@@ -1060,42 +1065,43 @@ select case obj.objtype
             end if
             
             
-        case objtype_herramientas
-            
+        case eobjtype.otherramientas
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
             end if
             if not userlist(userindex).stats.minsta > 0 then
-                call senddata(toindex, userindex, 0, "||estas muy cansado" & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||estas muy cansado" & fonttype_info)
                 exit sub
             end if
             
             if userlist(userindex).invent.object(slot).equipped = 0 then
-                call senddata(toindex, userindex, 0, "||antes de usar la herramienta deberias equipartela." & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||antes de usar la herramienta deberias equipartela." & fonttype_info)
                 exit sub
             end if
             
-            call addtovar(userlist(userindex).reputacion.pleberep, vlproleta, maxrep)
+            userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+            if userlist(userindex).reputacion.pleberep > maxrep then _
+                userlist(userindex).reputacion.pleberep = maxrep
             
             select case objindex
-                case objtype_ca�a, red_pesca
-                    call senddata(toindex, userindex, 0, "t01" & pesca)
+                case ca�a_pesca, red_pesca
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & pesca)
                 case hacha_le�ador
-                    call senddata(toindex, userindex, 0, "t01" & talar)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & talar)
                 case piquete_minero
-                    call senddata(toindex, userindex, 0, "t01" & mineria)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & mineria)
                 case martillo_herrero
-                    call senddata(toindex, userindex, 0, "t01" & herreria)
+                    call senddata(sendtarget.toindex, userindex, 0, "t01" & herreria)
                 case serrucho_carpintero
                     call enivarobjconstruibles(userindex)
-                    call senddata(toindex, userindex, 0, "sfc")
+                    call senddata(sendtarget.toindex, userindex, 0, "sfc")
 
             end select
         
-        case objtype_pergaminos
+        case eobjtype.otpergaminos
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
             end if
             
@@ -1104,30 +1110,29 @@ select case obj.objtype
                 call agregarhechizo(userindex, slot)
                 
                 call updateuserinv(false, userindex, slot)
-
             else
-               call senddata(toindex, userindex, 0, "||estas demasiado hambriento y sediento." & fonttype_info)
+               call senddata(sendtarget.toindex, userindex, 0, "||estas demasiado hambriento y sediento." & fonttype_info)
             end if
        
-       case objtype_minerales
+       case eobjtype.otminerales
            if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
            end if
-           call senddata(toindex, userindex, 0, "t01" & fundirmetal)
+           call senddata(sendtarget.toindex, userindex, 0, "t01" & fundirmetal)
        
-       case objtype_instrumentos
+       case eobjtype.otinstrumentos
             if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
                 exit sub
             end if
-            call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & obj.snd1)
+            call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & obj.snd1)
        
-       case objtype_barcos
+       case eobjtype.otbarcos
     'verifica si esta aproximado al agua antes de permitirle navegar
         if userlist(userindex).stats.elv < 25 then
             if ucase$(userlist(userindex).clase) <> "pescador" and ucase$(userlist(userindex).clase) <> "pirata" then
-                call senddata(toindex, userindex, 0, "||para recorrer los mares debes ser nivel 25 o superior." & fonttype_info)
+                call senddata(sendtarget.toindex, userindex, 0, "||para recorrer los mares debes ser nivel 25 o superior." & fonttype_info)
                 exit sub
             end if
         end if
@@ -1139,7 +1144,7 @@ select case obj.objtype
             or userlist(userindex).flags.navegando = 1 then
            call donavega(userindex, obj, slot)
         else
-            call senddata(toindex, userindex, 0, "||�debes aproximarte al agua para usar el barco!" & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||�debes aproximarte al agua para usar el barco!" & fonttype_info)
         end if
            
 end select
@@ -1155,8 +1160,8 @@ sub enivararmasconstruibles(byval userindex as integer)
 dim i as integer, cad$
 
 for i = 1 to ubound(armasherrero)
-    if objdata(armasherrero(i)).skherreria <= userlist(userindex).stats.userskills(herreria) \ modherreria(userlist(userindex).clase) then
-        if objdata(armasherrero(i)).objtype = objtype_weapon then
+    if objdata(armasherrero(i)).skherreria <= userlist(userindex).stats.userskills(eskill.herreria) \ modherreria(userlist(userindex).clase) then
+        if objdata(armasherrero(i)).objtype = eobjtype.otweapon then
         '[dng!]
             cad$ = cad$ & objdata(armasherrero(i)).name & " (" & objdata(armasherrero(i)).lingh & "-" & objdata(armasherrero(i)).lingp & "-" & objdata(armasherrero(i)).lingo & ")" & "," & armasherrero(i) & ","
         '[/dng!]
@@ -1166,7 +1171,7 @@ for i = 1 to ubound(armasherrero)
     end if
 next i
 
-call senddata(toindex, userindex, 0, "lah" & cad$)
+call senddata(sendtarget.toindex, userindex, 0, "lah" & cad$)
 
 end sub
  
@@ -1175,11 +1180,11 @@ sub enivarobjconstruibles(byval userindex as integer)
 dim i as integer, cad$
 
 for i = 1 to ubound(objcarpintero)
-    if objdata(objcarpintero(i)).skcarpinteria <= userlist(userindex).stats.userskills(carpinteria) / modcarpinteria(userlist(userindex).clase) then _
+    if objdata(objcarpintero(i)).skcarpinteria <= userlist(userindex).stats.userskills(eskill.carpinteria) / modcarpinteria(userlist(userindex).clase) then _
         cad$ = cad$ & objdata(objcarpintero(i)).name & " (" & objdata(objcarpintero(i)).madera & ")" & "," & objcarpintero(i) & ","
 next i
 
-call senddata(toindex, userindex, 0, "obr" & cad$)
+call senddata(sendtarget.toindex, userindex, 0, "obr" & cad$)
 
 end sub
 
@@ -1188,14 +1193,14 @@ sub enivararmadurasconstruibles(byval userindex as integer)
 dim i as integer, cad$
 
 for i = 1 to ubound(armadurasherrero)
-    if objdata(armadurasherrero(i)).skherreria <= userlist(userindex).stats.userskills(herreria) / modherreria(userlist(userindex).clase) then
+    if objdata(armadurasherrero(i)).skherreria <= userlist(userindex).stats.userskills(eskill.herreria) / modherreria(userlist(userindex).clase) then
         '[dng!]
         cad$ = cad$ & objdata(armadurasherrero(i)).name & " (" & objdata(armadurasherrero(i)).lingh & "-" & objdata(armadurasherrero(i)).lingp & "-" & objdata(armadurasherrero(i)).lingo & ")" & "," & armadurasherrero(i) & ","
         '[/dng!]
     end if
 next i
 
-call senddata(toindex, userindex, 0, "lar" & cad$)
+call senddata(sendtarget.toindex, userindex, 0, "lar" & cad$)
 
 end sub
 
@@ -1216,41 +1221,38 @@ public function itemsecae(byval index as integer) as boolean
 
 itemsecae = (objdata(index).real <> 1 or objdata(index).nosecae = 0) and _
             (objdata(index).caos <> 1 or objdata(index).nosecae = 0) and _
-            objdata(index).objtype <> objtype_llaves and _
-            objdata(index).objtype <> objtype_barcos and _
+            objdata(index).objtype <> eobjtype.otllaves and _
+            objdata(index).objtype <> eobjtype.otbarcos and _
             objdata(index).nosecae = 0
 
 
 end function
 
 sub tirartodoslositems(byval userindex as integer)
-
-'call logtarea("sub tirartodoslositems")
-
-dim i as byte
-dim nuevapos as worldpos
-dim miobj as obj
-dim itemindex as integer
-
-for i = 1 to max_inventory_slots
-
-  itemindex = userlist(userindex).invent.object(i).objindex
-  if itemindex > 0 then
-         if itemsecae(itemindex) then
+    dim i as byte
+    dim nuevapos as worldpos
+    dim miobj as obj
+    dim itemindex as integer
+    
+    for i = 1 to max_inventory_slots
+        itemindex = userlist(userindex).invent.object(i).objindex
+        if itemindex > 0 then
+             if itemsecae(itemindex) then
                 nuevapos.x = 0
                 nuevapos.y = 0
-                tilelibre userlist(userindex).pos, nuevapos
+                
+                'creo el obj
+                miobj.amount = userlist(userindex).invent.object(i).amount
+                miobj.objindex = itemindex
+                
+                tilelibre userlist(userindex).pos, nuevapos, miobj
                 if nuevapos.x <> 0 and nuevapos.y <> 0 then
-                    if mapdata(nuevapos.map, nuevapos.x, nuevapos.y).objinfo.objindex = 0 then call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+                    call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
                 end if
-         end if
-         
-  end if
-  
-next i
-
+             end if
+        end if
+    next i
 end sub
-
 
 function itemnewbie(byval itemindex as integer) as boolean
 
@@ -1267,21 +1269,22 @@ dim itemindex as integer
 if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
 
 for i = 1 to max_inventory_slots
-  itemindex = userlist(userindex).invent.object(i).objindex
-  if itemindex > 0 then
-         if itemsecae(itemindex) and not itemnewbie(itemindex) then
-                nuevapos.x = 0
-                nuevapos.y = 0
-                tilelibre userlist(userindex).pos, nuevapos
-                if nuevapos.x <> 0 and nuevapos.y <> 0 then
-                    if mapdata(nuevapos.map, nuevapos.x, nuevapos.y).objinfo.objindex = 0 then call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
-                end if
-         end if
-         
-  end if
+    itemindex = userlist(userindex).invent.object(i).objindex
+    if itemindex > 0 then
+        if itemsecae(itemindex) and not itemnewbie(itemindex) then
+            nuevapos.x = 0
+            nuevapos.y = 0
+            
+            'creo miobj
+            miobj.amount = userlist(userindex).invent.object(i).objindex
+            miobj.objindex = itemindex
+            
+            tilelibre userlist(userindex).pos, nuevapos, miobj
+            if nuevapos.x <> 0 and nuevapos.y <> 0 then
+                if mapdata(nuevapos.map, nuevapos.x, nuevapos.y).objinfo.objindex = 0 then call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+            end if
+        end if
+    end if
 next i
 
 end sub
-
-
-

@@ -11,7 +11,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -40,34 +40,32 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
-
 option explicit
 
 private const maximopersonajesporip = 15
 private m_coleccion as new collection
 
 public function maxpersonajes(sip as string) as boolean
-dim i as integer
+    dim i as long
 
-for i = 1 to m_coleccion.count
+    for i = 1 to m_coleccion.count
         if m_coleccion.item(i).ip = sip then
             m_coleccion.item(i).personajescreados = m_coleccion.item(i).personajescreados + 1
             maxpersonajes = (m_coleccion.item(i).personajescreados > maximopersonajesporip)
             if maxpersonajes then m_coleccion.item(i).personajescreados = 16
             exit function
         end if
-        
-next
+    next i
 
-           dim oip as new useripadress
-           oip.ip = sip
-           oip.personajescreados = 1
-           m_coleccion.add oip
-           maxpersonajes = false
-           exit function
- 
+#if seguridadalkon then
+    dim oip as new useripadress
+    oip.ip = sip
+    oip.personajescreados = 1
+    m_coleccion.add oip
+#end if
 
+    maxpersonajes = false
+    exit function
 end function
 
 public function vaciarcoleccion()

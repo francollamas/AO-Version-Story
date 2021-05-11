@@ -1,5 +1,5 @@
 attribute vb_name = "admin"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ attribute vb_name = "admin"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 
 option explicit
 
@@ -118,18 +117,15 @@ public function versionesactuales(byval v1 as integer, byval v2 as integer, byva
 dim rv as boolean
 dim i as integer
 dim f as string
-f = app.path & "\autoupdater\versiones.ini"
 
-rv = val(getvar(f, "actuales", "graficos")) = v1
-rv = rv and val(getvar(f, "actuales", "wavs")) = v2
-rv = rv and val(getvar(f, "actuales", "midis")) = v3
-rv = rv and val(getvar(f, "actuales", "init")) = v4
-rv = rv and val(getvar(f, "actuales", "mapas")) = v5
-rv = rv and val(getvar(f, "actuales", "aoexe")) = v6
-rv = rv and val(getvar(f, "actuales", "extras")) = v7
+rv = val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "graficos")) = v1
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "wavs")) = v2
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "midis")) = v3
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "init")) = v4
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "mapas")) = v5
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "aoexe")) = v6
+rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "extras")) = v7
 versionesactuales = rv
-
-
 
 end function
 
@@ -177,7 +173,11 @@ on error resume next
 dim loopx as integer
 dim porc as long
 
-call senddata(toall, 0, 0, "||servidor> iniciando worldsave" & fonttype_server)
+call senddata(sendtarget.toall, 0, 0, "||servidor> iniciando worldsave" & fonttype_server)
+
+#if seguridadalkon then
+    encriptacion.stringvalidacion = encriptacion.armarstringvalidacion
+#end if
 
 call respawnorigposnpcs 'respawn de los guardias en las pos originales
 
@@ -196,7 +196,7 @@ for loopx = 1 to nummaps
     
     if mapinfo(loopx).backup = 1 then
     
-            call savemapdata(loopx)
+            call grabarmapa(loopx, app.path & "\worldbackup\mapa" & loopx)
             frmstat.progressbar1.value = frmstat.progressbar1.value + 1
     end if
 
@@ -213,7 +213,7 @@ for loopx = 1 to lastnpc
     end if
 next
 
-call senddata(toall, 0, 0, "||servidor> worldsave ha conclu�do" & fonttype_server)
+call senddata(sendtarget.toall, 0, 0, "||servidor> worldsave ha conclu�do" & fonttype_server)
 
 end sub
 
@@ -229,7 +229,7 @@ for i = 1 to lastuser
                 if userlist(i).counters.pena < 1 then
                     userlist(i).counters.pena = 0
                     call warpuserchar(i, libertad.map, libertad.x, libertad.y, true)
-                    call senddata(toindex, i, 0, "||has sido liberado!" & fonttype_info)
+                    call senddata(sendtarget.toindex, i, 0, "||has sido liberado!" & fonttype_info)
                 end if
                 
         end if
@@ -247,9 +247,9 @@ public sub encarcelar(byval userindex as integer, byval minutos as long, optiona
         call warpuserchar(userindex, prision.map, prision.x, prision.y, true)
         
         if gmname = "" then
-            call senddata(toindex, userindex, 0, "||has sido encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||has sido encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
         else
-            call senddata(toindex, userindex, 0, "||" & gmname & " te ha encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
+            call senddata(sendtarget.toindex, userindex, 0, "||" & gmname & " te ha encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
         end if
         
 end sub
@@ -264,8 +264,7 @@ end sub
 
 public function bancheck(byval name as string) as boolean
 
-bancheck = (val(getvar(app.path & "\charfile\" & name & ".chr", "flags", "ban")) = 1) 'or _
-(val(getvar(app.path & "\charfile\" & name & ".chr", "flags", "adminban")) = 1)
+bancheck = (val(getvar(app.path & "\charfile\" & name & ".chr", "flags", "ban")) = 1)
 
 end function
 
@@ -310,7 +309,7 @@ if md5clientesactivado = 1 then
     redim md5s(val(getvar(inipath & "server.ini", "md5hush", "md5aceptados")))
     for loopc = 0 to ubound(md5s)
         md5s(loopc) = getvar(inipath & "server.ini", "md5hush", "md5aceptado" & (loopc + 1))
-        md5s(loopc) = txtoffset(hexmd52asc(md5s(loopc)), 53)
+        md5s(loopc) = txtoffset(hexmd52asc(md5s(loopc)), 55)
     next loopc
 end if
 

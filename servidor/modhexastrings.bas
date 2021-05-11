@@ -1,6 +1,9 @@
 attribute vb_name = "modhexastrings"
-'argentum online 0.11.20
+'argentum online 0.9.0.4
+'
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -28,8 +31,6 @@ attribute vb_name = "modhexastrings"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
-
 
 'modulo realizado por gonzalo larralde(cdt) <gonzalolarralde@yahoo.com.ar>
 'para la conversion a caracteres de cadenas md5 y de

@@ -510,7 +510,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -539,8 +539,6 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
-
 
 option explicit
 
@@ -670,11 +668,11 @@ private sub command21_click()
 
 if enpausa = false then
     enpausa = true
-    call senddata(toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, 0, "bkw")
     command21.caption = "reanudar el servidor"
 else
     enpausa = false
-    call senddata(toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, 0, "bkw")
     command21.caption = "pausar el servidor"
 end if
 
@@ -700,9 +698,6 @@ if msgbox("esta seguro que desea hacer worldsave, guardar pjs y cerrar ?", vbyes
     'guardar pjs
     call guardarusuarios
     
-    'guilds
-    call saveguildsdb
-
     'chauuu
     unload frmmain
 end if

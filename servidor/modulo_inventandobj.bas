@@ -1,5 +1,5 @@
 attribute vb_name = "invnpc"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@ attribute vb_name = "invnpc"
 'pablo ignacio m�rquez
 
 
-
 option explicit
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -49,10 +48,10 @@ on error goto errhandler
     dim nuevapos as worldpos
     nuevapos.x = 0
     nuevapos.y = 0
-    call tilelibre(pos, nuevapos)
+    call tilelibre(pos, nuevapos, obj)
     if nuevapos.x <> 0 and nuevapos.y <> 0 then
-          call makeobj(tomap, 0, pos.map, _
-          obj, pos.map, nuevapos.x, nuevapos.y)
+          call makeobj(sendtarget.tomap, 0, pos.map, _
+                obj, pos.map, nuevapos.x, nuevapos.y)
           tiraritemalpiso = nuevapos
     end if
 
@@ -106,6 +105,7 @@ on error resume next
 
 dim ln as string, npcfile as string
 dim i as integer
+
 if npclist(npcindex).numero > 499 then
     npcfile = datpath & "npcs-hostiles.dat"
 else
@@ -121,7 +121,7 @@ for i = 1 to max_inventory_slots
 next
                    
 encontrarcant = 50
-                   
+
 end function
 
 sub resetnpcinv(byval npcindex as integer)
@@ -190,7 +190,6 @@ sub cargarinvent(byval npcindex as integer)
 'vuelve a cargar el inventario del npc npcindex
 dim loopc as integer
 dim ln as string
-
 dim npcfile as string
 
 if npclist(npcindex).numero > 499 then

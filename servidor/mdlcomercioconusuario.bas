@@ -1,42 +1,12 @@
 attribute vb_name = "mdlcomercioconusuario"
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
-'
-'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
-'
-'this program is distributed in the hope that it will be useful,
-'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
-'
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
-
-
 'modulo para comerciar con otro usuario
 'por alejo (alejandro santos)
 '
 '
 '[alejo]
-private const max_oro_logueable = 90000
 option explicit
+
+private const max_oro_logueable as long = 90000
 
 public type tcomerciousuario
     destusu as integer 'el otro usuario
@@ -62,19 +32,19 @@ if userlist(origen).comusu.destusu = destino and _
     'actualiza el inventario del usuario
     call updateuserinv(true, origen, 0)
     'decirle al origen que abra la ventanita.
-    call senddata(toindex, origen, 0, "initcomusu")
+    call senddata(sendtarget.toindex, origen, 0, "initcomusu")
     userlist(origen).flags.comerciando = true
 
     'actualiza el inventario del usuario
     call updateuserinv(true, destino, 0)
     'decirle al origen que abra la ventanita.
-    call senddata(toindex, destino, 0, "initcomusu")
+    call senddata(sendtarget.toindex, destino, 0, "initcomusu")
     userlist(destino).flags.comerciando = true
 
     'call enviarobjetotransaccion(origen)
 else
     'es el primero que comercia ?
-    call senddata(toindex, destino, 0, "||" & userlist(origen).name & " desea comerciar. si deseas aceptar, escribe /comerciar." & fonttype_talk)
+    call senddata(sendtarget.toindex, destino, 0, "||" & userlist(origen).name & " desea comerciar. si deseas aceptar, escribe /comerciar." & fonttype_talk)
     userlist(destino).flags.targetuser = origen
     
 end if
@@ -86,7 +56,6 @@ end sub
 
 'envia a aquien el objeto del otro
 public sub enviarobjetotransaccion(byval aquien as integer)
-'dim object as userobj
 dim objind as integer
 dim objcant as long
 
@@ -94,28 +63,17 @@ dim objcant as long
 '         de no poder comerciar con mas de 32k de oro.
 '         ahora si funciona!!!
 
-'object.amount = userlist(userlist(aquien).comusu.destusu).comusu.cant
 objcant = userlist(userlist(aquien).comusu.destusu).comusu.cant
 if userlist(userlist(aquien).comusu.destusu).comusu.objeto = flagoro then
-    'object.objindex = ioro
     objind = ioro
 else
-    'object.objindex = userlist(userlist(aquien).comusu.destusu).invent.object(userlist(userlist(aquien).comusu.destusu).comusu.objeto).objindex
     objind = userlist(userlist(aquien).comusu.destusu).invent.object(userlist(userlist(aquien).comusu.destusu).comusu.objeto).objindex
 end if
 
 if objcant <= 0 or objind <= 0 then exit sub
 
-'if object.objindex > 0 and object.amount > 0 then
-'    call senddata(toindex, aquien, 0, "comusuinv" & 1 & "," & object.objindex & "," & objdata(object.objindex).name & "," & object.amount & "," & object.equipped & "," & objdata(object.objindex).grhindex & "," _
-'    & objdata(object.objindex).objtype & "," _
-'    & objdata(object.objindex).maxhit & "," _
-'    & objdata(object.objindex).minhit & "," _
-'    & objdata(object.objindex).maxdef & "," _
-'    & objdata(object.objindex).valor \ 3)
-'end if
 if objind > 0 and objcant > 0 then
-    call senddata(toindex, aquien, 0, "comusuinv" & 1 & "," & objind & "," & objdata(objind).name & "," & objcant & "," & 0 & "," & objdata(objind).grhindex & "," _
+    call senddata(sendtarget.toindex, aquien, 0, "comusuinv" & 1 & "," & objind & "," & objdata(objind).name & "," & objcant & "," & 0 & "," & objdata(objind).grhindex & "," _
     & objdata(objind).objtype & "," _
     & objdata(objind).maxhit & "," _
     & objdata(objind).minhit & "," _
@@ -128,7 +86,7 @@ end sub
 public sub fincomerciarusu(byval userindex as integer)
 with userlist(userindex)
     if .comusu.destusu > 0 then
-        call senddata(toindex, userindex, 0, "fincomusuok")
+        call senddata(sendtarget.toindex, userindex, 0, "fincomusuok")
     end if
     
     .comusu.acepto = false
@@ -178,45 +136,35 @@ userlist(userindex).comusu.acepto = true
 terminarahora = false
 
 if userlist(userlist(userindex).comusu.destusu).comusu.acepto = false then
-    call senddata(toindex, userindex, 0, "||el otro usuario aun no ha aceptado tu oferta." & fonttype_talk)
+    call senddata(sendtarget.toindex, userindex, 0, "||el otro usuario aun no ha aceptado tu oferta." & fonttype_talk)
     exit sub
 end if
 
-'[alejo]: creo haber podido erradicar el bug de
-'         no poder comerciar con mas de 32k de oro.
-'         las lineas comentadas en los siguientes
-'         2 grandes bloques if (4 lineas) son las
-'         que originaban el problema.
-
 if userlist(userindex).comusu.objeto = flagoro then
-    'obj1.amount = userlist(userindex).comusu.cant
     obj1.objindex = ioro
-    'if obj1.amount > userlist(userindex).stats.gld then
     if userlist(userindex).comusu.cant > userlist(userindex).stats.gld then
-        call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+        call senddata(sendtarget.toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
         terminarahora = true
     end if
 else
     obj1.amount = userlist(userindex).comusu.cant
     obj1.objindex = userlist(userindex).invent.object(userlist(userindex).comusu.objeto).objindex
     if obj1.amount > userlist(userindex).invent.object(userlist(userindex).comusu.objeto).amount then
-        call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+        call senddata(sendtarget.toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
         terminarahora = true
     end if
 end if
 if userlist(otrouserindex).comusu.objeto = flagoro then
-    'obj2.amount = userlist(otrouserindex).comusu.cant
     obj2.objindex = ioro
-    'if obj2.amount > userlist(otrouserindex).stats.gld then
     if userlist(otrouserindex).comusu.cant > userlist(otrouserindex).stats.gld then
-        call senddata(toindex, otrouserindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+        call senddata(sendtarget.toindex, otrouserindex, 0, "||no tienes esa cantidad." & fonttype_talk)
         terminarahora = true
     end if
 else
     obj2.amount = userlist(otrouserindex).comusu.cant
     obj2.objindex = userlist(otrouserindex).invent.object(userlist(otrouserindex).comusu.objeto).objindex
     if obj2.amount > userlist(otrouserindex).invent.object(userlist(otrouserindex).comusu.objeto).amount then
-        call senddata(toindex, otrouserindex, 0, "||no tienes esa cantidad." & fonttype_talk)
+        call senddata(sendtarget.toindex, otrouserindex, 0, "||no tienes esa cantidad." & fonttype_talk)
         terminarahora = true
     end if
 end if

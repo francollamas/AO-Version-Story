@@ -864,6 +864,10 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
+'copyright (c) 2002 otto perez
+'copyright (c) 2002 aaron perkins
+'copyright (c) 2002 mat�as fernando peque�o
+'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -890,6 +894,7 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 option explicit
 
 public skillpoints as byte
@@ -902,11 +907,6 @@ end if
 
 if usersexo = "" then
     msgbox "seleccione el sexo del personaje."
-    exit function
-end if
-
-if userclase = "" then
-    msgbox "seleccione la clase del personaje."
     exit function
 end if
 
@@ -940,7 +940,7 @@ end function
 
 private sub boton_click(index as integer)
 
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 select case index
     case 0
@@ -955,8 +955,8 @@ select case index
         
         username = txtnombre.text
         
-        if right(username, 1) = " " then
-                username = rtrim(username)
+        if right$(username, 1) = " " then
+                username = rtrim$(username)
                 msgbox "nombre invalido, se han removido los espacios al final del nombre"
         end if
         
@@ -973,18 +973,13 @@ select case index
         userhogar = lsthogar.list(lsthogar.listindex)
         
         'barrin 3/10/03
-        if checkdata() and usandosistemapadrinos = 1 then
-            frmpasswd.show vbmodal, me
-        elseif checkdata() and usandosistemapadrinos = 0 then
+        if checkdata() then
             frmpasswdsinpadrinos.show vbmodal, me
         end if
         
     case 1
-        if musica = 0 then
-            curmidi = dirmidi & "2.mid"
-            loopmidi = 1
-            call cargarmidi(curmidi)
-            call play_midi
+        if musica then
+            call audio.playmidi("2.mid")
         end if
         
         frmconnect.fondo.picture = loadpicture(app.path & "\graficos\conectar.jpg")
@@ -992,7 +987,7 @@ select case index
         
         
     case 2
-        call playwaveds(snd_dice)
+        call audio.playwave(snd_dice)
         call tirardados
       
 end select
@@ -1029,7 +1024,7 @@ private sub tirardados()
 end sub
 
 private sub command1_click(index as integer)
-call playwaveds(snd_click)
+call audio.playwave(snd_click)
 
 dim indice
 if index mod 2 = 0 then
@@ -1069,7 +1064,6 @@ lstprofesion.listindex = 1
 image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
 call tirardados
 end sub
-
 
 private sub lstprofesion_click()
 on error resume next

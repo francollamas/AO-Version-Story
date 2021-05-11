@@ -1,5 +1,5 @@
 attribute vb_name = "pathfinding"
-'argentum online 0.11.20
+'argentum online 0.9.0.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,8 +28,6 @@ attribute vb_name = "pathfinding"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
-
 
 '#######################################################
 'pathfinding module
@@ -83,10 +81,10 @@ attribute vb_name = "pathfinding"
 
 option explicit
 
-private const rows = 100
-private const colums = 100
-private const maxint = 1000
-private const walkable = 0
+private const rows as integer = 100
+private const colums as integer = 100
+private const maxint as integer = 1000
+private const walkable as integer = 0
 
 private type tintermidiatework
     known as boolean
