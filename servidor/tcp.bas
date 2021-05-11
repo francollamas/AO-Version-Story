@@ -1,5 +1,5 @@
 attribute vb_name = "tcp"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,9 @@ attribute vb_name = "tcp"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
+
 option explicit
 
 'buffer en bytes de cada socket
@@ -51,8 +54,16 @@ public const tonpcarea = 8 'todos los users en el area de un user determinado
 public const toguildmembers = 9
 public const toadmins = 10
 public const topcareabutindex = 11
+public const toadminsareabutconsejeros = 12
 
-#if not (usarapi = 1) then
+public const toconsejo = 14
+public const toclanarea = 15
+public const toconsejocaos = 16
+public const torolesmasters = 17
+public const todeadarea = 18
+
+
+#if usarquesocket = 0 then
 ' general constants used with most of the controls
 public const invalid_handle = -1
 public const control_errignore = 0
@@ -179,66 +190,93 @@ public const wsano_address = 2500
 
 public function gencrc(byval key as long, byval sddata as string) as long
 
+gencrc = 1
+
+
 end function
-
-
 
 sub darcuerpoycabeza(userbody as integer, userhead as integer, raza as string, gen as string)
 
 select case gen
    case "hombre"
         select case raza
-        
                 case "humano"
-                    userhead = cint(randomnumber(1, 11))
-                    if userhead > 11 then userhead = 11
+                    userhead = cint(randomnumber(1, 30))
+                    if userhead > 30 then userhead = 22
                     userbody = 1
                 case "elfo"
-                    userhead = cint(randomnumber(1, 4)) + 100
-                    if userhead > 104 then userhead = 104
+                    userhead = cint(randomnumber(1, 12)) + 100
+                    if userhead > 112 then userhead = 104
                     userbody = 2
                 case "elfo oscuro"
-                    userhead = cint(randomnumber(1, 3)) + 200
-                    if userhead > 203 then userhead = 203
+                    userhead = cint(randomnumber(1, 9)) + 200
+                    if userhead > 209 then userhead = 203
                     userbody = 3
                 case "enano"
-                    userhead = randomnumber(1, 1) + 300
-                    if userhead > 301 then userhead = 301
+                    userhead = randomnumber(1, 5) + 300
+                    if userhead > 305 then userhead = 304
                     userbody = 52
                 case "gnomo"
-                    userhead = randomnumber(1, 1) + 400
-                    if userhead > 401 then userhead = 401
+                    userhead = randomnumber(1, 6) + 400
+                    if userhead > 406 then userhead = 404
                     userbody = 52
                 case else
                     userhead = 1
                     userbody = 1
-            
         end select
    case "mujer"
         select case raza
                 case "humano"
-                    userhead = cint(randomnumber(1, 3)) + 69
-                    if userhead > 72 then userhead = 72
+                    userhead = cint(randomnumber(1, 7)) + 69
+                    if userhead > 76 then userhead = 74
                     userbody = 1
                 case "elfo"
-                    userhead = cint(randomnumber(1, 3)) + 169
-                    if userhead > 172 then userhead = 172
+                    userhead = cint(randomnumber(1, 7)) + 166
+                    if userhead > 177 then userhead = 172
                     userbody = 2
                 case "elfo oscuro"
-                    userhead = cint(randomnumber(1, 3)) + 269
-                    if userhead > 272 then userhead = 272
+                    userhead = cint(randomnumber(1, 11)) + 269
+                    if userhead > 280 then userhead = 275
                     userbody = 3
                 case "gnomo"
-                    userhead = randomnumber(1, 2) + 469
-                    if userhead > 471 then userhead = 471
+                    userhead = randomnumber(1, 5) + 469
+                    if userhead > 474 then userhead = 472
                     userbody = 52
                 case "enano"
-                    userhead = 370
+                    userhead = randomnumber(1, 3) + 369
+                    if userhead > 372 then userhead = 372
                     userbody = 52
                 case else
                     userhead = 70
                     userbody = 1
         end select
+
+        
+        'select case raza
+                
+        '        case "humano"
+        '            userhead = cint(randomnumber(1, 5)) + 69
+        '            if userhead > 74 then userhead = 74
+        '            userbody = 1
+        '        case "elfo"
+        '            userhead = cint(randomnumber(1, 3)) + 169
+        '            if userhead > 172 then userhead = 172
+        '            userbody = 2
+        '        case "elfo oscuro"
+        '            userhead = cint(randomnumber(1, 6)) + 269
+        '            if userhead > 275 then userhead = 275
+        '            userbody = 3
+        '        case "gnomo"
+        '            userhead = randomnumber(1, 3) + 469
+        '            if userhead > 472 then userhead = 472
+        '            userbody = 52
+        '        case "enano"
+        '            userhead = 370
+        '            userbody = 52
+        '        case else
+        '            userhead = 70
+        '            userbody = 1
+        'end select
 end select
 
    
@@ -303,7 +341,10 @@ function validateatrib(byval userindex as integer) as boolean
 dim loopc as integer
 
 for loopc = 1 to numatributos
-    if userlist(userindex).stats.useratributos(loopc) > 18 or userlist(userindex).stats.useratributos(loopc) < 1 then exit function
+    if userlist(userindex).stats.useratributos(loopc) > 18 or userlist(userindex).stats.useratributos(loopc) < 1 then
+        validateatrib = false
+        exit function
+    end if
 next loopc
 
 validateatrib = true
@@ -323,16 +364,17 @@ next loopc
 
 validateskills = true
     
-
 end function
 
+'barrin 3/3/03
+'agregu� padrinoname y padrino password como opcionales, que se les da un valor siempre y cuando el servidor est� usando el sistema
 sub connectnewuser(userindex as integer, name as string, password as string, body as integer, head as integer, userraza as string, usersexo as string, userclase as string, _
 ua1 as string, ua2 as string, ua3 as string, ua4 as string, ua5 as string, _
 us1 as string, us2 as string, us3 as string, us4 as string, us5 as string, _
 us6 as string, us7 as string, us8 as string, us9 as string, us10 as string, _
 us11 as string, us12 as string, us13 as string, us14 as string, us15 as string, _
 us16 as string, us17 as string, us18 as string, us19 as string, us20 as string, _
-us21 as string, useremail as string, hogar as string)
+us21 as string, useremail as string, hogar as string, optional padrinoname as string, optional padrinopassword as string)
 
 if not nombrepermitido(name) then
     call senddata(toindex, userindex, 0, "errlos nombres de los personajes deben pertencer a la fantasia, el nombre indicado es invalido.")
@@ -352,6 +394,45 @@ if fileexist(charpath & ucase$(name) & ".chr", vbnormal) = true then
     call senddata(toindex, userindex, 0, "errya existe el personaje.")
     exit sub
 end if
+
+'barrin 29/9/03
+'ahora para poder crear un personaje se necesita un padrino, o sea una referencia de un personaje ya creado
+'siempre que se haya definido eso
+if usandosistemapadrinos = 1 then
+                                        
+    if fileexist(charpath & ucase$(padrinoname) & ".chr", vbnormal) = false then
+        call senddata(toindex, userindex, 0, "errel personaje padrino no existe.")
+        exit sub
+    end if
+
+    if ucase$(padrinopassword) <> ucase$(getvar(charpath & ucase$(padrinoname) & ".chr", "init", "password")) then
+        call senddata(toindex, userindex, 0, "errpassword del padrino incorrecto.")
+        exit sub
+    end if
+
+    if bancheck(padrinoname) then
+        call senddata(toindex, userindex, 0, "errel personaje a padrinar se encuentra baneado.")
+        exit sub
+    end if
+
+    if ucase$(getvar(charpath & ucase$(padrinoname) & ".chr", "stats", "elv")) < 20 then
+        call senddata(toindex, userindex, 0, "errel personaje a padrinar debe ser nivel 20 o mayor.")
+        exit sub
+    end if
+    
+    dim padrinos as integer
+    padrinos = val(getvar(charpath & ucase$(padrinoname) & ".chr", "contacto", "apadrinados"))
+        
+    if padrinos >= cantidadporpadrino then
+        call senddata(toindex, userindex, 0, "errel personaje a padrinar ya ha llegado al l�mite de apadrinamiento.")
+        exit sub
+    end if
+    
+    call writevar(charpath & ucase$(padrinoname) & ".chr", "contacto", "apadrinados", str(padrinos + 1))
+    
+end if
+
+'[barrin]
 
 userlist(userindex).flags.muerto = 0
 userlist(userindex).flags.escondido = 0
@@ -375,11 +456,11 @@ userlist(userindex).genero = usersexo
 userlist(userindex).email = useremail
 userlist(userindex).hogar = hogar
 
-'userlist(userindex).stats.useratributos(fuerza) = abs(cint(ua1))
-'userlist(userindex).stats.useratributos(inteligencia) = abs(cint(ua2))
-'userlist(userindex).stats.useratributos(agilidad) = abs(cint(ua3))
-'userlist(userindex).stats.useratributos(carisma) = abs(cint(ua4))
-'userlist(userindex).stats.useratributos(constitucion) = abs(cint(ua5))
+''''''''userlist(userindex).stats.useratributos(fuerza) = abs(cint(ua1))
+''''''''userlist(userindex).stats.useratributos(inteligencia) = abs(cint(ua2))
+''''''''userlist(userindex).stats.useratributos(agilidad) = abs(cint(ua3))
+''''''''userlist(userindex).stats.useratributos(carisma) = abs(cint(ua4))
+''''''''userlist(userindex).stats.useratributos(constitucion) = abs(cint(ua5))
 
 
 '%%%%%%%%%%%%% prevenir hackeo de los atributos %%%%%%%%%%%%%
@@ -391,27 +472,29 @@ end if
 
 select case ucase$(userraza)
     case "humano"
-        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) + 2
+        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) + 1
         userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) + 1
         userlist(userindex).stats.useratributos(constitucion) = userlist(userindex).stats.useratributos(constitucion) + 2
-        userlist(userindex).stats.useratributos(inteligencia) = userlist(userindex).stats.useratributos(inteligencia) + 1
     case "elfo"
-        userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) + 2
+        userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) + 4
         userlist(userindex).stats.useratributos(inteligencia) = userlist(userindex).stats.useratributos(inteligencia) + 2
         userlist(userindex).stats.useratributos(carisma) = userlist(userindex).stats.useratributos(carisma) + 2
     case "elfo oscuro"
-        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) + 1
+        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) + 2
         userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) + 2
         userlist(userindex).stats.useratributos(inteligencia) = userlist(userindex).stats.useratributos(inteligencia) + 2
-        userlist(userindex).stats.useratributos(carisma) = userlist(userindex).stats.useratributos(carisma) + 2
+        userlist(userindex).stats.useratributos(carisma) = userlist(userindex).stats.useratributos(carisma) - 3
     case "enano"
         userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) + 3
         userlist(userindex).stats.useratributos(constitucion) = userlist(userindex).stats.useratributos(constitucion) + 3
         userlist(userindex).stats.useratributos(inteligencia) = userlist(userindex).stats.useratributos(inteligencia) - 6
+        userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) - 1
+        userlist(userindex).stats.useratributos(carisma) = userlist(userindex).stats.useratributos(carisma) - 2
     case "gnomo"
-        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) - 5
+        userlist(userindex).stats.useratributos(fuerza) = userlist(userindex).stats.useratributos(fuerza) - 4
         userlist(userindex).stats.useratributos(inteligencia) = userlist(userindex).stats.useratributos(inteligencia) + 3
         userlist(userindex).stats.useratributos(agilidad) = userlist(userindex).stats.useratributos(agilidad) + 3
+        userlist(userindex).stats.useratributos(carisma) = userlist(userindex).stats.useratributos(carisma) + 1
 end select
 
 
@@ -574,6 +657,112 @@ call connectuser(userindex, name, password)
   
 end sub
 
+#if usarquesocket = 1 or usarquesocket = 2 then
+
+sub closesocket(byval userindex as integer, optional byval cerrarlo as boolean = true)
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+dim loopc as integer
+
+'call logtarea("close socket")
+
+'#if usarquesocket = 0 or usarquesocket = 2 then
+on error goto errhandler
+'#end if
+    
+    if userindex = lastuser then
+        do until userlist(lastuser).flags.userlogged
+            lastuser = lastuser - 1
+            if lastuser < 1 then exit do
+        loop
+    end if
+    
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+    call ados.restarconexion(userlist(userindex).ip)
+    
+
+    if userlist(userindex).connid <> -1 then
+        call closesocketsl(userindex)
+    end if
+    
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+    if userlist(userindex).flags.userlogged then
+            if numusers > 0 then numusers = numusers - 1
+            call closeuser(userindex)
+            
+            call estadisticasweb.informar(cantidad_online, numusers)
+    else
+            call resetuserslot(userindex)
+    end if
+    
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+'    #if usarquesocket = 1 then
+'
+'    if userlist(userindex).connid <> -1 then
+'        call closesocketsl(userindex)
+'    end if
+'
+'    #elseif usarquesocket = 0 then
+'
+'    'frmmain.socket2(userindex).d i s c o n n e c t   no usar
+'    frmmain.socket2(userindex).cleanup
+'    unload frmmain.socket2(userindex)
+'
+'    #elseif usarquesocket = 2 then
+'
+'    if userlist(userindex).connid <> -1 then
+'        call closesocketsl(userindex)
+'    end if
+'
+'    #end if
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+    
+    userlist(userindex).connid = -1
+    userlist(userindex).connidvalida = false
+    userlist(userindex).numeropaquetespormilisec = 0
+            
+exit sub
+
+errhandler:
+    userlist(userindex).connid = -1
+    userlist(userindex).connidvalida = false
+    userlist(userindex).numeropaquetespormilisec = 0
+'    unload frmmain.socket2(userindex) ojooooooooooooooooo
+'    if numusers > 0 then numusers = numusers - 1
+    call resetuserslot(userindex)
+    
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+    #if usarquesocket = 1 then
+    if userlist(userindex).connid <> -1 then
+        call closesocketsl(userindex)
+'        call apiclosesocket(userlist(userindex).connid)
+    end if
+    #end if
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+    
+end sub
+
+#elseif usarquesocket = 0 then
+
 sub closesocket(byval userindex as integer)
 '<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
 '<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
@@ -581,113 +770,345 @@ sub closesocket(byval userindex as integer)
 
 'call logtarea("close socket")
 
-#if not (usarapi = 1) then
 on error goto errhandler
-#end if
 
-    
-    call ados.restarconexion(userlist(userindex).ip)
-    
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+
+    call ados.restarconexion(frmmain.socket2(userindex).peeraddress)
+
+    userlist(userindex).connid = -1
+'    gameinputmaparray(userindex) = -1
+    userlist(userindex).numeropaquetespormilisec = 0
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+    if userindex = lastuser and lastuser > 1 then
+        do until userlist(lastuser).flags.userlogged
+            lastuser = lastuser - 1
+            if lastuser <= 1 then exit do
+        loop
+    end if
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
     if userlist(userindex).flags.userlogged then
             if numusers <> 0 then numusers = numusers - 1
             call closeuser(userindex)
-            
-            call estadisticasweb.informar(cantidad_online, numusers)
+    end if
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+    frmmain.socket2(userindex).cleanup
+'    frmmain.socket2(userindex).di    s  c o       n nect
+    unload frmmain.socket2(userindex)
+    call resetuserslot(userindex)
+
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+exit sub
+
+errhandler:
+    userlist(userindex).connid = -1
+'    gameinputmaparray(userindex) = -1
+    userlist(userindex).numeropaquetespormilisec = 0
+'    unload frmmain.socket2(userindex) ojooooooooooooooooo
+'    if numusers > 0 then numusers = numusers - 1
+    call resetuserslot(userindex)
+
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+
+end sub
+
+
+
+
+
+
+
+#elseif usarquesocket = 3 then
+
+sub closesocket(byval userindex as integer, optional byval cerrarlo as boolean = true)
+
+on error goto errhandler
+
+dim nurestados as boolean
+dim connectionid as long
+
+
+    nurestados = false
+    connectionid = userlist(userindex).connid
+    
+    'call logindex(userindex, "******> sub closesocket. connid: " & connectionid & " cerrarlo: " & cerrarlo)
+    
+    call ados.restarconexion(userlist(userindex).ip)
+    
+    userlist(userindex).connid = -1 'inabilitamos operaciones en socket
+    userlist(userindex).numeropaquetespormilisec = 0
+
+    if userindex = lastuser and lastuser > 1 then
+        do
+            lastuser = lastuser - 1
+            if lastuser <= 1 then exit do
+        loop while userlist(lastuser).connid = -1
+    end if
+
+    if userlist(userindex).flags.userlogged then
+            if numusers <> 0 then numusers = numusers - 1
+            nurestados = true
+            call closeuser(userindex)
     end if
     
-    #if usarapi then
+    call resetuserslot(userindex)
     
-    if userlist(userindex).connid <> -1 then
-        call apiclosesocket(userlist(userindex).connid)
+    'limpiada la userlist... reseteo el socket, si me lo piden
+    'me lo piden desde: cerrada intecional del servidor (casi todas
+    'las llamadas a closesocket del codigo)
+    'no me lo piden desde: disconnect remoto (el on_close del control
+    'de alejo realiza la desconexion automaticamente). esto puede pasar
+    'por ejemplo, si el cliente cierra el ao.
+    if cerrarlo then call frmmain.tcpserv.cerrarsocket(connectionid)
+
+exit sub
+
+errhandler:
+    userlist(userindex).numeropaquetespormilisec = 0
+    call logerror("closesocketerr: " & err.description & " ui:" & userindex)
+    if not nurestados then
+        if userlist(userindex).flags.userlogged then
+            if numusers > 0 then
+                numusers = numusers - 1
+            end if
+            call logerror("cerre sin grabar a: " & userlist(userindex).name)
+        end if
     end if
-    
-    #else
-    
+    call logerror("el usuario no guardado tenia connid " & connectionid & ". socket no liberado.")
+    call resetuserslot(userindex)
+
+end sub
+
+
+#end if
+
+'[alejo-21-5]: cierra un socket sin limpiar el slot
+sub closesocketsl(byval userindex as integer)
+debug.print "closesocketsl"
+
+#if usarquesocket = 1 then
+
+if userlist(userindex).connid <> -1 and userlist(userindex).connidvalida then
+    call borraslotsock(userlist(userindex).connid)
+'    call wsaasyncselect(userlist(userindex).connid, hwndmsg, byval 1025, byval (fd_close))
+'    call apiclosesocket(userlist(userindex).connid)
+    call wsapiclosesocket(userlist(userindex).connid)
+    userlist(userindex).connidvalida = false
+end if
+
+#elseif usarquesocket = 0 then
+
+if userlist(userindex).connid <> -1 and userlist(userindex).connidvalida then
     'frmmain.socket2(userindex).disconnect
     frmmain.socket2(userindex).cleanup
     unload frmmain.socket2(userindex)
-    
-    #end if
-    
-    userlist(userindex).connid = -1
-    userlist(userindex).numeropaquetespormilisec = 0
-            
-    call resetuserslot(userindex)
+    userlist(userindex).connidvalida = false
+end if
 
-exit sub
+#elseif usarquesocket = 2 then
 
-errhandler:
-    userlist(userindex).connid = -1
-    userlist(userindex).numeropaquetespormilisec = 0
-'    unload frmmain.socket2(userindex) ojooooooooooooooooo
-'    if numusers > 0 then numusers = numusers - 1
-    call resetuserslot(userindex)
-    
-    #if usarapi then
-    if userlist(userindex).connid <> -1 then
-        call apiclosesocket(userlist(userindex).connid)
-    end if
-    #end if
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-    
+if userlist(userindex).connid <> -1 and userlist(userindex).connidvalida then
+    call frmmain.serv.cerrarsocket(userlist(userindex).connid)
+    userlist(userindex).connidvalida = false
+end if
+
+#end if
 end sub
 
+'sub closesocket_nueva(byval userindex as integer)
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'
+''call logtarea("close socket")
+'
+'on error goto errhandler
+'
+'
+'
+'    call ados.restarconexion(frmmain.socket2(userindex).peeraddress)
+'
+'    'userlist(userindex).connid = -1
+'    'userlist(userindex).numeropaquetespormilisec = 0
+'
+'    if userlist(userindex).flags.userlogged then
+'        if numusers <> 0 then numusers = numusers - 1
+'        call closeuser(userindex)
+'        userlist(userindex).connid = -1: userlist(userindex).numeropaquetespormilisec = 0
+'        frmmain.socket2(userindex).disconnect
+'        frmmain.socket2(userindex).cleanup
+'        'unload frmmain.socket2(userindex)
+'        call resetuserslot(userindex)
+'        'call cerrar_usuario(userindex)
+'    else
+'        userlist(userindex).connid = -1
+'        userlist(userindex).numeropaquetespormilisec = 0
+'
+'        frmmain.socket2(userindex).disconnect
+'        frmmain.socket2(userindex).cleanup
+'        call resetuserslot(userindex)
+'        'unload frmmain.socket2(userindex)
+'    end if
+'
+'exit sub
+'
+'errhandler:
+'    userlist(userindex).connid = -1
+'    userlist(userindex).numeropaquetespormilisec = 0
+''    unload frmmain.socket2(userindex) ojooooooooooooooooo
+''    if numusers > 0 then numusers = numusers - 1
+'    call resetuserslot(userindex)
+'
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+''<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+'
+'end sub
 
-sub closesocket_nueva(byval userindex as integer)
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
+public function enviardatosaslot(byval userindex as integer, datos as string) as long
+'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
 
-'call logtarea("close socket")
+'tcpesstats.bytesenviados = tcpesstats.bytesenviados + len(datos)
 
-on error goto errhandler
-    
+#if usarquesocket = 1 then '**********************************************
+on error goto err
 
-    
-    call ados.restarconexion(frmmain.socket2(userindex).peeraddress)
-    
-    'userlist(userindex).connid = -1
-    'userlist(userindex).numeropaquetespormilisec = 0
-            
-    if userlist(userindex).flags.userlogged then
-        if numusers <> 0 then numusers = numusers - 1
-        call closeuser(userindex)
-        userlist(userindex).connid = -1: userlist(userindex).numeropaquetespormilisec = 0
-        frmmain.socket2(userindex).disconnect
-        frmmain.socket2(userindex).cleanup
-        'unload frmmain.socket2(userindex)
-        call resetuserslot(userindex)
-        'call cerrar_usuario(userindex)
-    else
-        userlist(userindex).connid = -1
-        userlist(userindex).numeropaquetespormilisec = 0
-        
-        frmmain.socket2(userindex).disconnect
-        frmmain.socket2(userindex).cleanup
-        call resetuserslot(userindex)
-        'unload frmmain.socket2(userindex)
+dim ret as long
+
+if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: inicio. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida)
+
+ret = wsapienviar(userindex, datos)
+
+if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: inicio. acabo de enviar userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida & " ret=" & ret)
+
+if ret <> 0 and ret <> wsaewouldblock then
+    if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: entro a manejo de error. <> wsaewouldblock, <>0. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida)
+    call closesocketsl(userindex)
+    if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: luego de closesocket. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida)
+    call cerrar_usuario(userindex)
+    if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: luego de cerrar_usuario. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida)
+end if
+enviardatosaslot = ret
+exit function
+
+err:
+    if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: err handler. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida & " err: " & err.description)
+
+#elseif usarquesocket = 0 then '**********************************************
+
+dim encolar as boolean
+encolar = false
+
+enviardatosaslot = 0
+
+'dim fr as integer
+'fr = freefile
+'open "c:\log.txt" for append as #fr
+'print #fr, datos
+'close #fr
+'call frmmain.socket2(userindex).write(datos, len(datos))
+
+'if frmmain.socket2(userindex).iswritable and userlist(userindex).sockpuedoenviar then
+if userlist(userindex).colasalida.count <= 0 then
+    if frmmain.socket2(userindex).write(datos, len(datos)) < 0 then
+        if frmmain.socket2(userindex).lasterror = wsaewouldblock then
+            userlist(userindex).sockpuedoenviar = false
+            encolar = true
+        else
+            call cerrar_usuario(userindex)
+        end if
+'    else
+'        debug.print userindex & ": " & datos
     end if
+else
+    encolar = true
+end if
 
-exit sub
+if encolar then
+    debug.print "encolando..."
+    userlist(userindex).colasalida.add datos
+end if
 
-errhandler:
-    userlist(userindex).connid = -1
-    userlist(userindex).numeropaquetespormilisec = 0
-'    unload frmmain.socket2(userindex) ojooooooooooooooooo
-'    if numusers > 0 then numusers = numusers - 1
-    call resetuserslot(userindex)
-    
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-'<<<<<<<<<<<<<<<<<< no tocar >>>>>>>>>>>>>>>>>>>>>>
-    
-end sub
+#elseif usarquesocket = 2 then '**********************************************
 
+dim encolar as boolean
+dim ret as long
+encolar = false
 
-sub senddata(sndroute as byte, sndindex as integer, sndmap as integer, snddata as string)
+'//
+'// valores de retorno:
+'//                     0: todo ok
+'//                     1: wsaewouldblock
+'//                     2: error critico
+'//
+if userlist(userindex).colasalida.count <= 0 then
+    ret = frmmain.serv.enviar(userlist(userindex).connid, datos, len(datos))
+    if ret = 1 then
+        encolar = true
+    elseif ret = 2 then
+        call closesocketsl(userindex)
+        call cerrar_usuario(userindex)
+    end if
+else
+    encolar = true
+end if
 
+if encolar then
+    debug.print "encolando..."
+    userlist(userindex).colasalida.add datos
+end if
+
+#elseif usarquesocket = 3 then
+dim rv as long
+'al carajo, esto encola solo!!! che, me aprobar� los
+'parciales tambi�n?, este control hace todo solo!!!!
+on error goto errorhandler
+    if userlist(userindex).connid = -1 then
+        call logerror("tcp::enviardatosaslot, se intento enviar datos a un userindex con connid=-1")
+        exit function
+    end if
+    rv = frmmain.tcpserv.enviar(userlist(userindex).connid, datos, len(datos))
+    'if instr(1, datos, "val", vbtextcompare) > 0 or instr(1, datos, "log", vbtextcompare) > 0 or instr(1, datos, "fino", vbtextcompare) > 0 or instr(1, datos, "err", vbtextcompare) > 0 then
+        'call logindex(userindex, "senddata. connid: " & userlist(userindex).connid & " datos: " & datos)
+    'end if
+    select case rv
+        'case 1  'error critico, se viene el on_close
+        case 2  'socket invalido.
+            'intentemos cerrarlo?
+            call closesocket(userindex, true)
+        'case 3  'wsaewouldblock. solo si encolar=false en el control
+            'aca hariamos manejo de encoladas, pero el server se encarga solo :d
+    end select
+
+exit function
+errorhandler:
+    call logerror("tcp::enviardatosaslot. ui/connid/datos: " & userindex & "/" & userlist(userindex).connid & "/" & datos)
+#end if '**********************************************
+
+end function
+
+sub senddata(byval sndroute as byte, byval sndindex as integer, byval sndmap as integer, byval snddata as string)
 
 on error resume next
 
@@ -711,14 +1132,10 @@ select case sndroute
         
     case toadmins
         for loopc = 1 to lastuser
-            if userlist(loopc).connid > -1 then
-               if esdios(userlist(loopc).name) or essemidios(userlist(loopc).name) then
-                        'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
-                        #if usarapi then
-                        call wsapienviar(loopc, snddata)
-                        #else
-                        frmmain.socket2(loopc).write snddata, len(snddata)
-                        #end if
+            if userlist(loopc).connid <> -1 then
+'               if esdios(userlist(loopc).name) or essemidios(userlist(loopc).name) then
+                if userlist(loopc).flags.privilegios > 0 then
+                    call enviardatosaslot(loopc, snddata)
                end if
             end if
         next loopc
@@ -726,15 +1143,16 @@ select case sndroute
         
     case toall
         for loopc = 1 to lastuser
-            if userlist(loopc).connid > -1 then
+            if userlist(loopc).connid <> -1 then
                 if userlist(loopc).flags.userlogged then 'esta logeado como usuario?
                     'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
                     'frmmain.socket2(loopc).write snddata, len(snddata)
-                    #if usarapi then
-                    call wsapienviar(loopc, snddata)
-                    #else
-                    frmmain.socket2(loopc).write snddata, len(snddata)
-                    #end if
+'                    #if usarapi then
+'                    call wsapienviar(loopc, snddata)
+'                    #else
+'                    frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #end if
+                    call enviardatosaslot(loopc, snddata)
                 end if
             end if
         next loopc
@@ -742,15 +1160,16 @@ select case sndroute
     
     case toallbutindex
         for loopc = 1 to lastuser
-            if (userlist(loopc).connid > -1) and (loopc <> sndindex) then
+            if (userlist(loopc).connid <> -1) and (loopc <> sndindex) then
                 if userlist(loopc).flags.userlogged then 'esta logeado como usuario?
                     'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
                     'frmmain.socket2(loopc).write snddata, len(snddata)
-                    #if usarapi then
-                    call wsapienviar(loopc, snddata)
-                    #else
-                    frmmain.socket2(loopc).write snddata, len(snddata)
-                    #end if
+'                    #if usarapi then
+'                    call wsapienviar(loopc, snddata)
+'                    #else
+'                    frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #end if
+                    call enviardatosaslot(loopc, snddata)
                 end if
             end if
         next loopc
@@ -758,16 +1177,17 @@ select case sndroute
     
     case tomap
         for loopc = 1 to lastuser
-            if (userlist(loopc).connid > -1) then
+            if (userlist(loopc).connid <> -1) then
                 if userlist(loopc).flags.userlogged then
                     if userlist(loopc).pos.map = sndmap then
                         'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
                         'frmmain.socket2(loopc).write snddata, len(snddata)
-                        #if usarapi then
-                        call wsapienviar(loopc, snddata)
-                        #else
-                        frmmain.socket2(loopc).write snddata, len(snddata)
-                        #end if
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                        call enviardatosaslot(loopc, snddata)
                     end if
                 end if
             end if
@@ -776,15 +1196,16 @@ select case sndroute
       
     case tomapbutindex
         for loopc = 1 to lastuser
-            if (userlist(loopc).connid > -1) and loopc <> sndindex then
+            if (userlist(loopc).connid <> -1) and loopc <> sndindex then
                 if userlist(loopc).pos.map = sndmap then
                     'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
                     'frmmain.socket2(loopc).write snddata, len(snddata)
-                        #if usarapi then
-                        call wsapienviar(loopc, snddata)
-                        #else
-                        frmmain.socket2(loopc).write snddata, len(snddata)
-                        #end if
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                    call enviardatosaslot(loopc, snddata)
                 end if
             end if
         next loopc
@@ -792,14 +1213,15 @@ select case sndroute
             
     case toguildmembers
         for loopc = 1 to lastuser
-            if (userlist(loopc).connid > -1) then
+            if (userlist(loopc).connid <> -1) then
                 if userlist(sndindex).guildinfo.guildname = userlist(loopc).guildinfo.guildname then
                         'frmmain.socket2(loopc).write snddata, len(snddata)
-                        #if usarapi then
-                        call wsapienviar(loopc, snddata)
-                        #else
-                        frmmain.socket2(loopc).write snddata, len(snddata)
-                        #end if
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                        call enviardatosaslot(loopc, snddata)
                 end if
             end if
         next loopc
@@ -810,14 +1232,308 @@ select case sndroute
             for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
                if inmapbounds(sndmap, x, y) then
                     if mapdata(sndmap, x, y).userindex > 0 then
-                       if userlist(mapdata(sndmap, x, y).userindex).connid > -1 then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
                             'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
                             'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #if usarapi then
-                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
-                            #else
-                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #end if
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+
+
+    case todeadarea
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if mapdata(sndmap, x, y).userindex > 0 then
+                        if userlist(mapdata(sndmap, x, y).userindex).flags.muerto = 1 or userlist(mapdata(sndmap, x, y).userindex).flags.privilegios >= 1 then
+                           if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                                'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
+                                'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+    '                            #if usarapi then
+    '                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+    '                            #else
+    '                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+    '                            #end if
+                                call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                           end if
+                        end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+
+
+    '[alejo-18-5]
+    case topcareabutindex
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if (mapdata(sndmap, x, y).userindex > 0) and (mapdata(sndmap, x, y).userindex <> sndindex) then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
+                            'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+       
+    case toclanarea
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if (mapdata(sndmap, x, y).userindex > 0) then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
+                            'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            if (userlist(mapdata(sndmap, x, y).userindex).guildinfo.guildname = userlist(sndindex).guildinfo.guildname) then
+                                call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                            end if
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+
+
+
+    '[cdt 17-02-2004]
+    case toadminsareabutconsejeros
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if (mapdata(sndmap, x, y).userindex > 0) and (mapdata(sndmap, x, y).userindex <> sndindex) then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            if userlist(mapdata(sndmap, x, y).userindex).flags.privilegios > 1 then
+                                call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                            end if
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+    '[/cdt]
+
+    case tonpcarea
+        for y = npclist(sndindex).pos.y - minyborder + 1 to npclist(sndindex).pos.y + minyborder - 1
+            for x = npclist(sndindex).pos.x - minxborder + 1 to npclist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if mapdata(sndmap, x, y).userindex > 0 then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
+                            'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, snddata)
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+
+    case toindex
+        if userlist(sndindex).connid <> -1 then
+             'call addtovar(userlist(sndindex).bytestransmitidossvr, lenb(snddata), 100000)
+             'frmmain.socket2(sndindex).write snddata, len(snddata)
+'             #if usarapi then
+'             call wsapienviar(sndindex, snddata)
+'             #else
+'             frmmain.socket2(sndindex).write snddata, len(snddata)
+'             #end if
+            call enviardatosaslot(sndindex, snddata)
+             exit sub
+        end if
+    case toconsejo
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) then
+                if userlist(loopc).flags.pertalcons > 0 then
+                    call enviardatosaslot(loopc, snddata)
+                end if
+            end if
+        next loopc
+        exit sub
+    case toconsejocaos
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) then
+                if userlist(loopc).flags.pertalconscaos > 0 then
+                    call enviardatosaslot(loopc, snddata)
+                end if
+            end if
+        next loopc
+        exit sub
+    case torolesmasters
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) then
+                if userlist(loopc).flags.esrolesmaster then
+                    call enviardatosaslot(loopc, snddata)
+                end if
+            end if
+        next loopc
+        exit sub
+    end select
+
+end sub
+
+sub sendcrypteddata(byval sndroute as byte, byval sndindex as integer, byval sndmap as integer, byval snddata as string)
+'no puse un optional parameter en senddata porque no estoy seguro
+'como afecta la performance un parametro opcional
+'prefiero 1k mas de exe que arriesgar performance
+on error resume next
+
+dim loopc as integer
+dim x as integer
+dim y as integer
+dim aux$
+dim dec$
+dim nfile as integer
+dim ret as long
+
+
+select case sndroute
+
+
+    case tonone
+        exit sub
+        
+    case toadmins
+        for loopc = 1 to lastuser
+            if userlist(loopc).connid <> -1 then
+'               if esdios(userlist(loopc).name) or essemidios(userlist(loopc).name) then
+                if userlist(loopc).flags.privilegios > 0 then
+                    call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+               end if
+            end if
+        next loopc
+        exit sub
+        
+    case toall
+        for loopc = 1 to lastuser
+            if userlist(loopc).connid <> -1 then
+                if userlist(loopc).flags.userlogged then 'esta logeado como usuario?
+                    'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
+                    'frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #if usarapi then
+'                    call wsapienviar(loopc, snddata)
+'                    #else
+'                    frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #end if
+                    call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+                end if
+            end if
+        next loopc
+        exit sub
+    
+    case toallbutindex
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) and (loopc <> sndindex) then
+                if userlist(loopc).flags.userlogged then 'esta logeado como usuario?
+                    'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
+                    'frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #if usarapi then
+'                    call wsapienviar(loopc, snddata)
+'                    #else
+'                    frmmain.socket2(loopc).write snddata, len(snddata)
+'                    #end if
+                    call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+                end if
+            end if
+        next loopc
+        exit sub
+    
+    case tomap
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) then
+                if userlist(loopc).flags.userlogged then
+                    if userlist(loopc).pos.map = sndmap then
+                        'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
+                        'frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                        call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+                    end if
+                end if
+            end if
+        next loopc
+        exit sub
+      
+    case tomapbutindex
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) and loopc <> sndindex then
+                if userlist(loopc).pos.map = sndmap then
+                    'call addtovar(userlist(loopc).bytestransmitidossvr, lenb(snddata), 100000)
+                    'frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                    call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+                end if
+            end if
+        next loopc
+        exit sub
+            
+    case toguildmembers
+        for loopc = 1 to lastuser
+            if (userlist(loopc).connid <> -1) then
+                if userlist(sndindex).guildinfo.guildname = userlist(loopc).guildinfo.guildname then
+                        'frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #if usarapi then
+'                        call wsapienviar(loopc, snddata)
+'                        #else
+'                        frmmain.socket2(loopc).write snddata, len(snddata)
+'                        #end if
+                        call enviardatosaslot(loopc, protocrypt(snddata, loopc) & endc)
+                end if
+            end if
+        next loopc
+        exit sub
+    
+    case topcarea
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if mapdata(sndmap, x, y).userindex > 0 then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
+                            'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, protocrypt(snddata, mapdata(sndmap, x, y).userindex) & endc)
                        end if
                     end if
                end if
@@ -831,14 +1547,15 @@ select case sndroute
             for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
                if inmapbounds(sndmap, x, y) then
                     if (mapdata(sndmap, x, y).userindex > 0) and (mapdata(sndmap, x, y).userindex <> sndindex) then
-                       if userlist(mapdata(sndmap, x, y).userindex).connid > -1 then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
                             'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
                             'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #if usarapi then
-                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
-                            #else
-                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #end if
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, protocrypt(snddata, mapdata(sndmap, x, y).userindex) & endc)
                        end if
                     end if
                end if
@@ -846,19 +1563,38 @@ select case sndroute
         next y
         exit sub
 
+    '[cdt 17-02-2004]
+    case toadminsareabutconsejeros
+        for y = userlist(sndindex).pos.y - minyborder + 1 to userlist(sndindex).pos.y + minyborder - 1
+            for x = userlist(sndindex).pos.x - minxborder + 1 to userlist(sndindex).pos.x + minxborder - 1
+               if inmapbounds(sndmap, x, y) then
+                    if (mapdata(sndmap, x, y).userindex > 0) and (mapdata(sndmap, x, y).userindex <> sndindex) then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
+                            if userlist(mapdata(sndmap, x, y).userindex).flags.privilegios > 1 then
+                                call enviardatosaslot(mapdata(sndmap, x, y).userindex, protocrypt(snddata, mapdata(sndmap, x, y).userindex) & endc)
+                            end if
+                       end if
+                    end if
+               end if
+            next x
+        next y
+        exit sub
+    '[/cdt]
+
     case tonpcarea
         for y = npclist(sndindex).pos.y - minyborder + 1 to npclist(sndindex).pos.y + minyborder - 1
             for x = npclist(sndindex).pos.x - minxborder + 1 to npclist(sndindex).pos.x + minxborder - 1
                if inmapbounds(sndmap, x, y) then
                     if mapdata(sndmap, x, y).userindex > 0 then
-                       if userlist(mapdata(sndmap, x, y).userindex).connid > -1 then
+                       if userlist(mapdata(sndmap, x, y).userindex).connid <> -1 then
                             'call addtovar(userlist(mapdata(sndmap, x, y).userindex).bytestransmitidossvr, lenb(snddata), 100000)
                             'frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #if usarapi then
-                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
-                            #else
-                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
-                            #end if
+'                            #if usarapi then
+'                            call wsapienviar(mapdata(sndmap, x, y).userindex, snddata)
+'                            #else
+'                            frmmain.socket2(mapdata(sndmap, x, y).userindex).write snddata, len(snddata)
+'                            #end if
+                            call enviardatosaslot(mapdata(sndmap, x, y).userindex, protocrypt(snddata, mapdata(sndmap, x, y).userindex) & endc)
                        end if
                     end if
                end if
@@ -867,20 +1603,23 @@ select case sndroute
         exit sub
 
     case toindex
-        if userlist(sndindex).connid > -1 then
+        if userlist(sndindex).connid <> -1 then
              'call addtovar(userlist(sndindex).bytestransmitidossvr, lenb(snddata), 100000)
              'frmmain.socket2(sndindex).write snddata, len(snddata)
-             #if usarapi then
-             call wsapienviar(sndindex, snddata)
-             #else
-             frmmain.socket2(sndindex).write snddata, len(snddata)
-             #end if
+'             #if usarapi then
+'             call wsapienviar(sndindex, snddata)
+'             #else
+'             frmmain.socket2(sndindex).write snddata, len(snddata)
+'             #end if
+             call enviardatosaslot(sndindex, protocrypt(snddata, sndindex) & endc)
              exit sub
         end if
-
+    exit sub
 end select
 
 end sub
+
+
 function estapcarea(index as integer, index2 as integer) as boolean
 
 
@@ -984,12 +1723,6 @@ if allowmultilogins = 0 then
     end if
 end if
 
-'�ya esta conectado el personaje?
-if checkforsamename(userindex, name) = true then
-    call senddata(toindex, userindex, 0, "errperdon, un usuario con el mismo nombre se h� logoeado.")
-    call closesocket(userindex)
-    exit sub
-end if
 
 '�existe el personaje?
 if fileexist(charpath & ucase$(name) & ".chr", vbnormal) = false then
@@ -1006,10 +1739,25 @@ if ucase$(password) <> ucase$(getvar(charpath & ucase$(name) & ".chr", "init", "
     exit sub
 end if
 
+'�ya esta conectado el personaje?
+if checkforsamename(userindex, name) = true then
+    if userlist(nameindex(name)).counters.saliendo then
+        call senddata(toindex, userindex, 0, "errel usuario est� saliendo.")
+    else
+        call senddata(toindex, userindex, 0, "errperdon, un usuario con el mismo nombre se h� logoeado.")
+    end if
+    call closesocket(userindex)
+    exit sub
+end if
+
 'cargamos los datos del personaje
 call loaduserinit(userindex, charpath & ucase$(name) & ".chr")
 call loaduserstats(userindex, charpath & ucase$(name) & ".chr")
 'call corregirskills(userindex)
+
+
+
+
 
 if not validatechr(userindex) then
     call senddata(toindex, userindex, 0, "errerror en el personaje.")
@@ -1037,7 +1785,19 @@ if userlist(userindex).flags.navegando = 1 then
 end if
 
 
-if userlist(userindex).flags.paralizado then call senddata(toindex, userindex, 0, "paradok")
+if userlist(userindex).flags.paralizado then
+    if encriptarprotocoloscriticos then
+        call sendcrypteddata(toindex, userindex, 0, "paradok")
+    else
+        call senddata(toindex, userindex, 0, "paradok")
+    end if
+end if
+
+'feo, esto tiene que ser parche cliente
+if userlist(userindex).flags.estupidez = 0 then call senddata(toindex, userindex, 0, "nestup")
+'
+
+
 
 'posicion de comienzo
 if userlist(userindex).pos.map = 0 then
@@ -1054,9 +1814,33 @@ if userlist(userindex).pos.map = 0 then
         userlist(userindex).pos = ullathorpe
     end if
 else
+
+   ''telefrag
+    if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex <> 0 then
+        ''si estaba en comercio seguro...
+        if userlist(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex).comusu.destusu > 0 then
+            if userlist(userlist(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex).comusu.destusu).flags.userlogged then
+                call fincomerciarusu(userlist(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex).comusu.destusu)
+                call senddata(toindex, userlist(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex).comusu.destusu, 0, "||comercio cancelado. el otro usuario se ha desconectado." & fonttype_talk)
+            end if
+            if userlist(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex).flags.userlogged then
+                call fincomerciarusu(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex)
+                call senddata(toindex, mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex, 0, "erralguien se ha conectado donde te encontrabas, por favor recon�ctate...")
+            end if
+        end if
+        call closesocket(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex)
+    end if
    
-   if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex <> 0 then call closesocket(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex)
    
+    if userlist(userindex).flags.muerto = 1 then
+        call empollando(userindex)
+    end if
+end if
+
+if not mapavalido(userlist(userindex).pos.map) then
+    call senddata(toindex, userindex, 0, "errel pj se encuenta en un mapa invalido.")
+    call closesocket(userindex)
+    exit sub
 end if
 
 'nombre de sistema
@@ -1070,7 +1854,14 @@ call senddata(toindex, userindex, 0, "iu" & userindex) 'enviamos el user index
 call senddata(toindex, userindex, 0, "cm" & userlist(userindex).pos.map & "," & mapinfo(userlist(userindex).pos.map).mapversion) 'carga el mapa
 call senddata(toindex, userindex, 0, "tm" & mapinfo(userlist(userindex).pos.map).music)
 
-if lloviendo then call senddata(toindex, userindex, 0, "llu")
+
+''[el oso]: traigo esto aca arriba para darle el ip!
+set userlist(userindex).guildref = fetchguild(userlist(userindex).guildinfo.guildname)
+userlist(userindex).counters.idlecount = 0
+'crea  el personaje del usuario
+call makeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
+call senddata(toindex, userindex, 0, "ip" & userlist(userindex).char.charindex)
+''[/el oso]
 
 call updateusermap(userindex)
 call senduserstatsbox(userindex)
@@ -1080,16 +1871,30 @@ call sendmotd(userindex)
 
 if haciendobk then
     call senddata(toindex, userindex, 0, "bkw")
-    call senddata(toindex, userindex, 0, "||por favor espera algunos segundo, worldsave esta ejecutandose." & fonttype_info)
+    call senddata(toindex, userindex, 0, "||servidor> por favor espera algunos segundos, worldsave esta ejecutandose." & fonttype_server)
+end if
+
+if enpausa then
+    call senddata(toindex, userindex, 0, "bkw")
+    call senddata(toindex, userindex, 0, "||servidor> lo sentimos mucho pero el servidor se encuentra actualmente detenido. intenta ingresar m�s tarde." & fonttype_server)
+end if
+
+if entesting and userlist(userindex).stats.elv >= 18 then
+    call senddata(toindex, userindex, 0, "errservidor en testing por unos minutos, conectese con pjs de nivel menor a 18. no se conecte con pjs que puedan resultar importantes por ahora pues pueden arruinarse.")
+    call closesocket(userindex)
+    exit sub
 end if
 
 'actualiza el num de usuarios
-if userindex > lastuser then lastuser = userindex
-
+'de aca en adelante graba el charfile, ojo!
 numusers = numusers + 1
-call estadisticasweb.informar(cantidad_online, numusers)
-
 userlist(userindex).flags.userlogged = true
+
+'usado para borrar pjs
+call writevar(charpath & userlist(userindex).name & ".chr", "init", "logged", "1")
+
+
+call estadisticasweb.informar(cantidad_online, numusers)
 
 mapinfo(userlist(userindex).pos.map).numusers = mapinfo(userlist(userindex).pos.map).numusers + 1
 
@@ -1108,7 +1913,11 @@ if numusers > recordusuarios then
     call estadisticasweb.informar(record_usuarios, recordusuarios)
 end if
 
-if esdios(name) then
+userlist(userindex).flags.esrolesmaster = esrolesmaster(name)
+if esadmin(name) then
+    userlist(userindex).flags.privilegios = 4
+    call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip, false)
+elseif esdios(name) then
     userlist(userindex).flags.privilegios = 3
     call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip, false)
 elseif essemidios(name) then
@@ -1120,10 +1929,6 @@ elseif esconsejero(name) then
 else
     userlist(userindex).flags.privilegios = 0
 end if
-
-set userlist(userindex).guildref = fetchguild(userlist(userindex).guildinfo.guildname)
-
-userlist(userindex).counters.idlecount = 0
 
 if userlist(userindex).nromacotas > 0 then
     dim i as integer
@@ -1144,16 +1949,36 @@ end if
 
 if userlist(userindex).flags.navegando = 1 then call senddata(toindex, userindex, 0, "naveg")
 
-userlist(userindex).flags.seguro = true
+if criminal(userindex) then
+    'call senddata(toindex, userindex, 0, "||miembro de las fuerzas del caos > seguro desactivado <" & fonttype_fight)
+    call senddata(toindex, userindex, 0, "segoff")
+    userlist(userindex).flags.seguro = false
+else
+    userlist(userindex).flags.seguro = true
+    call senddata(toindex, userindex, 0, "segon")
+end if
 
-'crea  el personaje del usuario
-call makeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
-call senddata(toindex, userindex, 0, "ip" & userlist(userindex).char.charindex)
+if serversologms > 0 then
+    if userlist(userindex).flags.privilegios < serversologms then
+        call senddata(toindex, userindex, 0, "errservidor restringido a administradores de jerarquia mayor o igual a: " & serversologms & ". por favor intente en unos momentos.")
+        call closesocket(userindex)
+        exit sub
+    end if
+end if
+
 call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxwarp & "," & 0)
+
 call senddata(toindex, userindex, 0, "logged")
+
 
 call sendguildnews(userindex)
 
+if userlist(userindex).flags.noactualizado then
+    call senddata(toindex, userindex, 0, "reau")
+end if
+
+
+if lloviendo then call senddata(toindex, userindex, 0, "llu")
 
 call mostrarnumusers
 
@@ -1190,7 +2015,7 @@ userlist(userindex).faccion.recibioexpinicialcaos = 0
 userlist(userindex).faccion.recibioexpinicialreal = 0
 userlist(userindex).faccion.recompensascaos = 0
 userlist(userindex).faccion.recompensasreal = 0
-
+userlist(userindex).faccion.reenlistadas = 0
 end sub
 
 sub resetcontadores(byval userindex as integer)
@@ -1210,6 +2035,11 @@ userlist(userindex).counters.pena = 0
 userlist(userindex).counters.piquetec = 0
 userlist(userindex).counters.stacounter = 0
 userlist(userindex).counters.veneno = 0
+
+userlist(userindex).counters.timerlanzarspell = 0
+userlist(userindex).counters.timerpuedeatacar = 0
+userlist(userindex).counters.timerpuedetrabajar = 0
+userlist(userindex).counters.timerusar = 0
 
 end sub
 
@@ -1234,6 +2064,7 @@ userlist(userindex).name = ""
 userlist(userindex).modname = ""
 userlist(userindex).password = ""
 userlist(userindex).desc = ""
+userlist(userindex).descrm = ""
 userlist(userindex).pos.map = 0
 userlist(userindex).pos.x = 0
 userlist(userindex).pos.y = 0
@@ -1244,6 +2075,9 @@ userlist(userindex).email = ""
 userlist(userindex).genero = ""
 userlist(userindex).hogar = ""
 userlist(userindex).raza = ""
+
+'barrin 3/03/03
+userlist(userindex).apadrinados = 0
 
 userlist(userindex).randkey = 0
 userlist(userindex).prevcrc = 0
@@ -1257,6 +2091,7 @@ userlist(userindex).stats.def = 0
 userlist(userindex).stats.criminalesmatados = 0
 userlist(userindex).stats.npcsmuertos = 0
 userlist(userindex).stats.usuariosmatados = 0
+userlist(userindex).stats.fit = 0
 
 end sub
 
@@ -1322,13 +2157,33 @@ userlist(userindex).flags.bendicion = 0
 userlist(userindex).flags.meditando = 0
 userlist(userindex).flags.privilegios = 0
 userlist(userindex).flags.puedemoverse = 0
-userlist(userindex).flags.puedelanzarspell = 0
 userlist(userindex).stats.skillpts = 0
 userlist(userindex).flags.oldbody = 0
 userlist(userindex).flags.oldhead = 0
 userlist(userindex).flags.admininvisible = 0
 userlist(userindex).flags.valcode = 0
 userlist(userindex).flags.hechizo = 0
+
+userlist(userindex).flags.timeswalk = 0
+userlist(userindex).flags.startwalk = 0
+userlist(userindex).flags.countsh = 0
+userlist(userindex).flags.trabajando = false
+
+
+userlist(userindex).empocont = 0
+userlist(userindex).flags.estaempo = 0
+userlist(userindex).flags.pertalcons = 0
+userlist(userindex).flags.pertalconscaos = 0
+
+
+userlist(userindex).flags.silenciado = 0
+
+
+
+userlist(userindex).partyindex = 0
+userlist(userindex).partysolicitud = 0
+
+
 
 end sub
 
@@ -1364,13 +2219,32 @@ next
 userlist(userindex).bancoinvent.nroitems = 0
 end sub
 
+public sub limpiarcomercioseguro(byval userindex as integer)
+with userlist(userindex).comusu
+    if .destusu > 0 then
+        call fincomerciarusu(.destusu)
+        call fincomerciarusu(userindex)
+    end if
+end with
+
+end sub
+
 sub resetuserslot(byval userindex as integer)
+
+dim usrtmp as user
+userlist(userindex) = usrtmp
 
 set userlist(userindex).commandsbuffer = nothing
 set userlist(userindex).guildref = nothing
 
+set userlist(userindex).colasalida = nothing
+userlist(userindex).sockpuedoenviar = false
+userlist(userindex).connidvalida = false
+userlist(userindex).connid = -1
+
 userlist(userindex).anticuelgue = 0
 
+call limpiarcomercioseguro(userindex)
 call resetfacciones(userindex)
 call resetcontadores(userindex)
 call resetcharinfo(userindex)
@@ -1386,6 +2260,7 @@ call resetuserbanco(userindex)
 'userlist(userindex).numeropaquetespormilisec = 0
 'userlist(userindex).bytestransmitidosuser = 0
 'userlist(userindex).bytestransmitidossvr = 0
+
 
 
 
@@ -1417,6 +2292,7 @@ if an > 0 then
       npclist(an).hostile = npclist(an).flags.oldhostil
       npclist(an).flags.attackedby = ""
 end if
+userlist(userindex).flags.atacadopornpc = 0
 
 map = userlist(userindex).pos.map
 x = userlist(userindex).pos.x
@@ -1436,8 +2312,15 @@ userlist(userindex).counters.saliendo = false
 'le devolvemos el body y head originales
 if userlist(userindex).flags.admininvisible = 1 then call doadmininvisible(userindex)
 
+'si esta en party le devolvemos la experiencia
+if userlist(userindex).partyindex > 0 then call mdparty.salirdeparty(userindex)
+
 ' grabamos el personaje del usuario
 call saveuser(userindex, charpath & name & ".chr")
+
+'usado para borrar pjs
+call writevar(charpath & userlist(userindex).name & ".chr", "init", "logged", "0")
+
 
 'quitar el dialogo
 if mapinfo(map).numusers > 0 then
@@ -1457,12 +2340,12 @@ for i = 1 to maxmascotas
     end if
 next i
 
-if userindex = lastuser then
-    do until userlist(lastuser).flags.userlogged
-        lastuser = lastuser - 1
-        if lastuser < 1 then exit do
-    loop
-end if
+'if userindex = lastuser then
+'    do until userlist(lastuser).flags.userlogged
+'        lastuser = lastuser - 1
+'        if lastuser < 1 then exit do
+'    loop
+'end if
   
 'if numusers <> 0 then
 '    numusers = numusers - 1
@@ -1498,14 +2381,31 @@ end sub
 
 sub handledata(byval userindex as integer, byval rdata as string)
 
+'
+' atencion: cambios importantes en handledata.
+' =========
+'
+'           la funcion se encuentra dividida en 2,
+'           una parte controla los comandos que
+'           empiezan con "/" y la otra los comanos
+'           que no. (basado en la idea de barrin)
+'
+
+
 call logtarea("sub handledata :" & rdata & " " & userlist(userindex).name)
 
+'nunca jamas remover o comentar esta linea !!!
+'nunca jamas remover o comentar esta linea !!!
+'nunca jamas remover o comentar esta linea !!!
 on error goto errorhandler:
+'nunca jamas remover o comentar esta linea !!!
+'nunca jamas remover o comentar esta linea !!!
+'nunca jamas remover o comentar esta linea !!!
+'
+'ah, no me queres hacer caso ? entonces
+'atenete a las consecuencias!!
+'
 
-
-
-
-dim snddata as string
 dim cadenaoriginal as string
 
 dim loopc as integer
@@ -1532,10 +2432,15 @@ dim wpaux as worldpos
 dim mifile as integer
 dim x as integer
 dim y as integer
-dim climd5 as string
+dim dummyint as integer
+dim t() as string
+dim i as integer
 
+dim snddata as string
+dim climd5 as string
 dim clientcrc as string
 dim serversidecrc as long
+dim idlecountbackup as long
 
 cadenaoriginal = rdata
 
@@ -1547,34 +2452,24 @@ end if
 
 if left$(rdata, 13) = "givemevalcode" then
    '<<<<<<<<<<< modulo privado de cada implementacion >>>>>>
-   userlist(userindex).flags.valcode = cint(randomnumber(20000, 32000))
-   userlist(userindex).randkey = clng(randomnumber(0, 99999))
-   userlist(userindex).prevcrc = userlist(userindex).randkey
-   userlist(userindex).packetnumber = 100
    '<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    call senddata(toindex, userindex, 0, "val" & userlist(userindex).randkey & "," & userlist(userindex).flags.valcode)
+   call enviarconfigserver(userindex) 'padrinos, creacion pjs,
    exit sub
-elseif userlist(userindex).flags.userlogged = false and left(rdata, 12) = "clienteviejo" then
-    dim elmsg as string, lalong as string
-    elmsg = "errla version del cliente que usas es obsoleta. si deseas conectarte a este servidor, entra a www.argentum-online.com.ar y alli podr�s enterarte como hacer."
-    if len(elmsg) > 255 then elmsg = left(elmsg, 255)
-    lalong = chr(0) & chr(len(elmsg))
-    call senddata(toindex, userindex, 0, lalong & elmsg)
-    call closesocket(userindex)
-    exit sub
 else
    '<<<<<<<<<<< modulo privado de cada implementacion >>>>>>
-   'clientcrc = readfield(2, rdata, 126)
-   clientcrc = right(rdata, len(rdata) - instrrev(rdata, chr(126)))
-   tstr = left$(rdata, len(rdata) - len(clientcrc) - 1)
-   'serversidecrc = gencrc(userlist(userindex).prevcrc, tstr)
-   'if clng(clientcrc) <> serversidecrc then call closesocket(userindex): debug.print "err crc"
-   userlist(userindex).prevcrc = serversidecrc
-   rdata = tstr
-   tstr = ""
+   if false then
+        call logerror("crc error userindex: " & userindex & " rdata: " & rdata)
+        call closesocket(userindex, true)
+        debug.print "err crc " & tstr
+   end if
+   'saco el firulete del crc (cada uno debe utilizar su tecnica)
+   rdata = mid$(rdata, 1, instrrev(rdata, "~") - 1)
+   
    '<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 end if
 
+idlecountbackup = userlist(userindex).counters.idlecount
 userlist(userindex).counters.idlecount = 0
    
    if not userlist(userindex).flags.userlogged then
@@ -1582,10 +2477,10 @@ userlist(userindex).counters.idlecount = 0
         select case left$(rdata, 6)
             case "ologin"
                 rdata = right$(rdata, len(rdata) - 6)
-                climd5 = right$(rdata, 16)
-                rdata = left$(rdata, len(rdata) - 16)
+                climd5 = right$(readfield(4, rdata, asc(",")), 16)
+                'rdata = left$(rdata, len(rdata) - 16)
                 if not md5ok(climd5) then
-                    call senddata(toindex, userindex, 0, "errel cliente est� da�ado, por favor descarguelo nuevamente desde el sitio.")
+                    call senddata(toindex, userindex, 0, "errel cliente est� da�ado, por favor descarguelo nuevamente desde www.argentumonline.com.ar")
                     exit sub
                 end if
                 ver = readfield(3, rdata, 44)
@@ -1594,28 +2489,39 @@ userlist(userindex).counters.idlecount = 0
                     
                     if not asciivalidos(tname) then
                         call senddata(toindex, userindex, 0, "errnombre invalido.")
+                        call closesocket(userindex, true)
                         exit sub
                     end if
                     
                     if not personajeexiste(tname) then
                         call senddata(toindex, userindex, 0, "errel personaje no existe.")
+                        call closesocket(userindex, true)
                         exit sub
                     end if
-                    
+
                     if not bancheck(tname) then
-                        
-                        if (userlist(userindex).flags.valcode = 0) or (validarloginmsg(userlist(userindex).flags.valcode) <> cint(val(readfield(4, rdata, 44)))) then
+
+                        if (false) then
                               call loghackattemp("ip:" & userlist(userindex).ip & " intento crear un bot.")
                               call closesocket(userindex)
                               exit sub
                         end if
+
+                        userlist(userindex).flags.noactualizado = false
+                        'userlist(userindex).flags.noactualizado = not versionesactuales(val(readfield(5, rdata, 44)), val(readfield(6, rdata, 44)), val(readfield(7, rdata, 44)), val(readfield(8, rdata, 44)), val(readfield(9, rdata, 44)), val(readfield(10, rdata, 44)), val(readfield(11, rdata, 44)))
+                        'if userlist(userindex).flags.noactualizado then
+                        'atencion aca se manejan las auto actualizacoines
+                        if false then
+                            call senddata(toindex, userindex, 0, "errexisten actualizaciones pendientes. ejecute el programa autoupdateclient.exe ubicado en la carpeta del ao para actualizar el juego")
+                            call closesocket(userindex)
+                        end if
+                        
                         dim pass11 as string
                         pass11 = readfield(2, rdata, 44)
                         call connectuser(userindex, tname, pass11)
                     else
-                        call senddata(toindex, userindex, 0, "errse te ha prohibido la entrada a argentum debido a tu mal comportamiento.")
+                        call senddata(toindex, userindex, 0, "errse te ha prohibido la entrada a argentum debido a tu mal comportamiento. consulta en aocp.alkon.com.ar/est para ver el motivo de la prohibici�n.")
                     end if
-                    
                 else
                      call senddata(toindex, userindex, 0, "erresta version del juego es obsoleta, la version correcta es " & ultimaversion & ". la misma se encuentra disponible en nuestra pagina.")
                      'call closesocket(userindex)
@@ -1623,56 +2529,88 @@ userlist(userindex).counters.idlecount = 0
                 end if
                 exit sub
             case "tirdad"
-                userlist(userindex).stats.useratributos(1) = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-                userlist(userindex).stats.useratributos(2) = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-                userlist(userindex).stats.useratributos(3) = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-                userlist(userindex).stats.useratributos(4) = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-                userlist(userindex).stats.useratributos(5) = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-
-                call senddata(toindex, userindex, 0, "dados" & userlist(userindex).stats.useratributos(1) & "," & userlist(userindex).stats.useratributos(2) & "," & userlist(userindex).stats.useratributos(3) & "," & userlist(userindex).stats.useratributos(4) & "," & userlist(userindex).stats.useratributos(5))
+            
+                userlist(userindex).stats.useratributos(1) = int(randomnumber(3, 6) + randomnumber(3, 6) + randomnumber(1, 6))
+                userlist(userindex).stats.useratributos(2) = int(randomnumber(3, 6) + randomnumber(3, 6) + randomnumber(1, 6))
+                userlist(userindex).stats.useratributos(3) = int(randomnumber(6, 6) + randomnumber(3, 6) + randomnumber(3, 6))
+                userlist(userindex).stats.useratributos(4) = int(randomnumber(3, 6) + randomnumber(3, 6) + randomnumber(1, 6))
+                userlist(userindex).stats.useratributos(5) = int(randomnumber(6, 6) + randomnumber(3, 6) + randomnumber(3, 6))
+                
+                'barrin 3/10/03
+                'cuando se tiran los dados, el servidor manda un 0 o un 1 dependiendo de si usamos o no el sistema de padrinos
+                'as�, el cliente sabr� si abrir el frmpasswd con textboxes extra para poner el nombre y pass del padrino o no
+                call senddata(toindex, userindex, 0, "dados" & userlist(userindex).stats.useratributos(1) & "," & userlist(userindex).stats.useratributos(2) & "," & userlist(userindex).stats.useratributos(3) & "," & userlist(userindex).stats.useratributos(4) & "," & userlist(userindex).stats.useratributos(5) & "," & usandosistemapadrinos)
                 
                 exit sub
 
             case "nlogin"
-            
+                
                 if puedecrearpersonajes = 0 then
-                        call senddata(toindex, userindex, 0, "errno se pueden crear mas personajes en este servidor.")
-                        call closesocket(userindex)
-                        exit sub
+                    call senddata(toindex, userindex, 0, "errla creacion de personajes en este servidor se ha deshabilitado.")
+                    call closesocket(userindex)
+                    exit sub
                 end if
                 
+                if serversologms > 0 then
+                    call senddata(toindex, userindex, 0, "errservidor restringido a administradores. consulte la p�gina oficial o el foro oficial para mas informaci�n.")
+                    call closesocket(userindex)
+                    exit sub
+                end if
+
                 if aclon.maxpersonajes(userlist(userindex).ip) then
-                        call senddata(toindex, userindex, 0, "errhas creado demasiados personajes.")
-                        call closesocket(userindex)
-                        exit sub
+                    call senddata(toindex, userindex, 0, "errhas creado demasiados personajes.")
+                    call closesocket(userindex)
+                    exit sub
                 end if
-                
+                                
                 rdata = right$(rdata, len(rdata) - 6)
                 climd5 = right$(rdata, 16)
                 rdata = left$(rdata, len(rdata) - 16)
+                
                 if not md5ok(climd5) then
-                    call senddata(toindex, userindex, 0, "errel cliente est� da�ado, por favor descarguelo nuevamente desde el sitio.")
+                    call senddata(toindex, userindex, 0, "errel cliente est� da�ado o es antiguo, por favor desc�rguelo nuevamente desde el sitio http://ao.alkon.com.ar")
                     exit sub
                 end if
+
 '                if not validinputnp(rdata) then exit sub
                 
                 ver = readfield(5, rdata, 44)
                 if versionok(ver) then
                      dim miinteger as integer
-                     miinteger = cint(val(readfield(37, rdata, 44)))
-                     
-                     if (userlist(userindex).flags.valcode = 0) or (validarloginmsg(userlist(userindex).flags.valcode) <> cint(val(readfield(37, rdata, 44)))) then
-                         call loghackattemp("ip:" & userlist(userindex).ip & " intento crear un bot.")
+                     if usandosistemapadrinos = 1 then
+                        miinteger = cint(val(readfield(46, rdata, 44)))
+                     else
+                        miinteger = cint(val(readfield(44, rdata, 44)))
+                     end if
+                        
+                     'validacion sobre loginmessage y valcode (privada!)
+                     if false then
+                         call senddata(toindex, userindex, 0, "errpara poder continuar con la creaci�n del personaje, debe utilizar el cliente proporcionado en ao.alkon.com.ar")
+                         'call loghackattemp("ip:" & userlist(userindex).ip & " intento crear un bot.")
                          call closesocket(userindex)
                          exit sub
                      end if
                      
-                     call connectnewuser(userindex, readfield(1, rdata, 44), readfield(2, rdata, 44), val(readfield(3, rdata, 44)), readfield(4, rdata, 44), readfield(6, rdata, 44), readfield(7, rdata, 44), _
-                     readfield(8, rdata, 44), readfield(9, rdata, 44), readfield(10, rdata, 44), readfield(11, rdata, 44), readfield(12, rdata, 44), readfield(13, rdata, 44), _
-                     readfield(14, rdata, 44), readfield(15, rdata, 44), readfield(16, rdata, 44), readfield(17, rdata, 44), readfield(18, rdata, 44), readfield(19, rdata, 44), _
-                     readfield(20, rdata, 44), readfield(21, rdata, 44), readfield(22, rdata, 44), readfield(23, rdata, 44), readfield(24, rdata, 44), readfield(25, rdata, 44), _
-                     readfield(26, rdata, 44), readfield(27, rdata, 44), readfield(28, rdata, 44), readfield(29, rdata, 44), readfield(30, rdata, 44), readfield(31, rdata, 44), _
-                     readfield(32, rdata, 44), readfield(33, rdata, 44), readfield(34, rdata, 44), readfield(35, rdata, 44), readfield(36, rdata, 44))
+                     'barrin 3/10/03
+                     'a partir de si usamos el sistema o no, tratamos de conectar al nuevo pjta
+                     if usandosistemapadrinos = 1 then
+                        call connectnewuser(userindex, readfield(1, rdata, 44), readfield(2, rdata, 44), val(readfield(3, rdata, 44)), readfield(4, rdata, 44), readfield(6, rdata, 44), readfield(7, rdata, 44), _
+                        readfield(8, rdata, 44), readfield(9, rdata, 44), readfield(10, rdata, 44), readfield(11, rdata, 44), readfield(12, rdata, 44), readfield(13, rdata, 44), _
+                        readfield(14, rdata, 44), readfield(15, rdata, 44), readfield(16, rdata, 44), readfield(17, rdata, 44), readfield(18, rdata, 44), readfield(19, rdata, 44), _
+                        readfield(20, rdata, 44), readfield(21, rdata, 44), readfield(22, rdata, 44), readfield(23, rdata, 44), readfield(24, rdata, 44), readfield(25, rdata, 44), _
+                        readfield(26, rdata, 44), readfield(27, rdata, 44), readfield(28, rdata, 44), readfield(29, rdata, 44), readfield(30, rdata, 44), readfield(31, rdata, 44), _
+                        readfield(32, rdata, 44), readfield(33, rdata, 44), readfield(34, rdata, 44), readfield(35, rdata, 44), readfield(36, rdata, 44), readfield(37, rdata, 44), readfield(38, rdata, 44))
+                     else
+                        userlist(userindex).flags.noactualizado = not versionesactuales(val(readfield(37, rdata, 44)), val(readfield(38, rdata, 44)), val(readfield(39, rdata, 44)), val(readfield(40, rdata, 44)), val(readfield(41, rdata, 44)), val(readfield(42, rdata, 44)), val(readfield(43, rdata, 44)))
+                        
+                        call connectnewuser(userindex, readfield(1, rdata, 44), readfield(2, rdata, 44), val(readfield(3, rdata, 44)), readfield(4, rdata, 44), readfield(6, rdata, 44), readfield(7, rdata, 44), _
+                        readfield(8, rdata, 44), readfield(9, rdata, 44), readfield(10, rdata, 44), readfield(11, rdata, 44), readfield(12, rdata, 44), readfield(13, rdata, 44), _
+                        readfield(14, rdata, 44), readfield(15, rdata, 44), readfield(16, rdata, 44), readfield(17, rdata, 44), readfield(18, rdata, 44), readfield(19, rdata, 44), _
+                        readfield(20, rdata, 44), readfield(21, rdata, 44), readfield(22, rdata, 44), readfield(23, rdata, 44), readfield(24, rdata, 44), readfield(25, rdata, 44), _
+                        readfield(26, rdata, 44), readfield(27, rdata, 44), readfield(28, rdata, 44), readfield(29, rdata, 44), readfield(30, rdata, 44), readfield(31, rdata, 44), _
+                        readfield(32, rdata, 44), readfield(33, rdata, 44), readfield(34, rdata, 44), readfield(35, rdata, 44), readfield(36, rdata, 44))
+                     end if
+                
                 else
                      call senddata(toindex, userindex, 0, "!!esta version del juego es obsoleta, la version correcta es " & ultimaversion & ". la misma se encuentra disponible en nuestra pagina.")
                      exit sub
@@ -1680,1544 +2618,81 @@ userlist(userindex).counters.idlecount = 0
                 
                 exit sub
         end select
-    end if
     
-select case left$(rdata, 4)
-    case "borr" ' <<< borra personajes
-       on error goto exiterr1
-        rdata = right$(rdata, len(rdata) - 4)
-        if (userlist(userindex).flags.valcode = 0) or (validarloginmsg(userlist(userindex).flags.valcode) <> cint(val(readfield(3, rdata, 44)))) then
-                      call loghackattemp("ip:" & userlist(userindex).ip & " intento borrar un personaje.")
-                      call closesocket(userindex)
-                      exit sub
-        end if
-        arg1 = readfield(1, rdata, 44)
-        
-        if not asciivalidos(arg1) then exit sub
-        
-        '�existe el personaje?
-        if not fileexist(charpath & ucase$(arg1) & ".chr", vbnormal) then
-            call closesocket(userindex)
-            exit sub
-        end if
-
-        '�es el passwd valido?
-        if ucase$(readfield(2, rdata, 44)) <> ucase$(getvar(charpath & ucase$(arg1) & ".chr", "init", "password")) then
-            call closesocket(userindex)
-            exit sub
-        end if
-
-        'if fileexist(charpath & ucase$(arg1) & ".chr", vbnormal) then
-            dim rt$
-            rt$ = app.path & "\chrbackup\" & ucase$(arg1) & ".bak"
-            if fileexist(rt$, vbnormal) then kill rt$
-            name charpath & ucase$(arg1) & ".chr" as rt$
-            call senddata(toindex, userindex, 0, "borrok")
-            exit sub
+    select case left$(rdata, 4)
+        case "borr" ' <<< borra personajes
+           on error goto exiterr1
+            rdata = right$(rdata, len(rdata) - 4)
+            if (userlist(userindex).flags.valcode = 0) or (validarloginmsg(userlist(userindex).flags.valcode) <> cint(val(readfield(3, rdata, 44)))) then
+                          call loghackattemp("ip:" & userlist(userindex).ip & " intento borrar un personaje.")
+                          call closesocket(userindex)
+                          exit sub
+            end if
+            arg1 = readfield(1, rdata, 44)
+            
+            if not asciivalidos(arg1) then exit sub
+            
+            '�existe el personaje?
+            if not fileexist(charpath & ucase$(arg1) & ".chr", vbnormal) then
+                call closesocket(userindex)
+                exit sub
+            end if
+    
+            '�es el passwd valido?
+            if ucase$(readfield(2, rdata, 44)) <> ucase$(getvar(charpath & ucase$(arg1) & ".chr", "init", "password")) then
+                call closesocket(userindex)
+                exit sub
+            end if
+    
+            'if fileexist(charpath & ucase$(arg1) & ".chr", vbnormal) then
+                dim rt$
+                rt$ = app.path & "\chrbackup\" & ucase$(arg1) & ".bak"
+                if fileexist(rt$, vbnormal) then kill rt$
+                name charpath & ucase$(arg1) & ".chr" as rt$
+                call senddata(toindex, userindex, 0, "borrok")
+                exit sub
 exiterr1:
-    call logerror(err.description & " " & rdata)
-    exit sub
-        'end if
-end select
+        call logerror(err.description & " " & rdata)
+        exit sub
+            'end if
+    end select
 
 '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 'si no esta logeado y envia un comando diferente a los
 'de arriba cerramos la conexion.
 '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-if not userlist(userindex).flags.userlogged then
+'if not userlist(userindex).flags.userlogged then
     call loghackattemp("mesaje enviado sin logearse:" & rdata)
 '    call frmmain.socket2(userindex).disconnect
     call closesocket(userindex)
     exit sub
-end if
+'end if
   
+end if ' if not user logged
 
 
-select case ucase$(left$(rdata, 1))
-    case ";" 'hablar
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
-            exit sub
-        end if
-        rdata = right$(rdata, len(rdata) - 1)
-        if instr(rdata, "�") then
-            exit sub
-        end if
+dim procesado as boolean
+
+' bien ahora solo procesamos los comandos que no empiezan
+' con "/".
+if left(rdata, 1) <> "/" then
     
-        '[consejeros]
-        if userlist(userindex).flags.privilegios = 1 then
-            call loggm(userlist(userindex).name, "dijo: " & rdata, true)
-        end if
-        
-        ind = userlist(userindex).char.charindex
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & rdata & "�" & str(ind))
-        exit sub
-    case "-" 'gritar
-        if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
-                exit sub
-        end if
-        rdata = right$(rdata, len(rdata) - 1)
-        if instr(rdata, "�") then
-            exit sub
-        end if
-        '[consejeros]
-        if userlist(userindex).flags.privilegios = 1 then
-            call loggm(userlist(userindex).name, "grito: " & rdata, true)
-        end if
+    call handledata_1(userindex, rdata, procesado)
+    if procesado then exit sub
+    
+' bien hasta aca fueron los comandos que no empezaban con
+' "/". ahora adivin� que sigue :)
+else
+    
+    call handledata_2(userindex, rdata, procesado)
+    if procesado then exit sub
 
-        ind = userlist(userindex).char.charindex
-        call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbred & "�" & rdata & "�" & str(ind))
-        exit sub
-    case "\" 'susurrar al oido
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. " & fonttype_info)
-            exit sub
-        end if
-        rdata = right$(rdata, len(rdata) - 1)
-        tname = readfield(1, rdata, 32)
-        tindex = nameindex(tname)
-        if tindex <> 0 then
-            if len(rdata) <> len(tname) then
-                tmessage = right$(rdata, len(rdata) - (1 + len(tname)))
-            else
-                tmessage = " "
-            end if
-            if not estapcarea(userindex, tindex) then
-                call senddata(toindex, userindex, 0, "||estas muy lejos del usuario." & fonttype_info)
-                exit sub
-            end if
-            ind = userlist(userindex).char.charindex
-            if instr(tmessage, "�") then
-                exit sub
-            end if
-            
-            '[consejeros]
-            if userlist(userindex).flags.privilegios = 1 then
-                call loggm(userlist(userindex).name, "le dijo a '" & userlist(tindex).name & "' " & tmessage, true)
-            end if
-
-            call senddata(toindex, userindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
-            call senddata(toindex, tindex, userlist(userindex).pos.map, "||" & vbblue & "�" & tmessage & "�" & str(ind))
-            exit sub
-        end if
-        call senddata(toindex, userindex, 0, "||usuario inexistente. " & fonttype_info)
-        exit sub
-    case "m" 'moverse
-        
-        rdata = right$(rdata, len(rdata) - 1)
-        
-        if not userlist(userindex).flags.descansar and not userlist(userindex).flags.meditando _
-           and userlist(userindex).flags.paralizado = 0 then
-              call moveuserchar(userindex, val(rdata))
-        elseif userlist(userindex).flags.descansar then
-          userlist(userindex).flags.descansar = false
-          call senddata(toindex, userindex, 0, "dok")
-          call senddata(toindex, userindex, 0, "||has dejado de descansar." & fonttype_info)
-          call moveuserchar(userindex, val(rdata))
-        elseif userlist(userindex).flags.meditando then
-          userlist(userindex).flags.meditando = false
-          call senddata(toindex, userindex, 0, "medok")
-          call senddata(toindex, userindex, 0, "||dejas de meditar." & fonttype_info)
-          userlist(userindex).char.fx = 0
-          userlist(userindex).char.loops = 0
-          call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & 0 & "," & 0)
-          call moveuserchar(userindex, val(rdata))
-        else
-          call senddata(toindex, userindex, 0, "||no podes moverte porque estas paralizado." & fonttype_info)
-        end if
-        
-        if userlist(userindex).flags.oculto = 1 then
-            
-            if ucase$(userlist(userindex).clase) <> "ladron" then
-                call senddata(toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
-                userlist(userindex).flags.oculto = 0
-                userlist(userindex).flags.invisible = 0
-                call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-            end if
-            
-        end if
-
-        exit sub
-end select
-
-select case ucase$(rdata)
-    case "rpu" 'pedido de actualizacion de la posicion
-        call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
-        exit sub
-    case "at"
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��no podes atacar a nadie porque estas muerto!!. " & fonttype_info)
-            exit sub
-        end if
-        '[consejeros]
-        if userlist(userindex).flags.privilegios = 1 then
-            call senddata(toindex, userindex, 0, "||no puedes atacar a nadie. " & fonttype_info)
-            exit sub
-        end if
-        if not userlist(userindex).flags.modocombate then
-            call senddata(toindex, userindex, 0, "||no estas en modo de combate, presiona la tecla ""c"" para pasar al modo combate. " & fonttype_info)
-        else
-            if userlist(userindex).invent.weaponeqpobjindex > 0 then
-                if objdata(userlist(userindex).invent.weaponeqpobjindex).proyectil = 1 then
-                            call senddata(toindex, userindex, 0, "||no pod�s usar asi esta arma." & fonttype_info)
-                            exit sub
-                end if
-            end if
-            call usuarioataca(userindex)
-        end if
-        exit sub
-    case "ag"
-        if userlist(userindex).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��estas muerto!! los muertos no pueden tomar objetos. " & fonttype_info)
-                exit sub
-        end if
-        '[consejeros]
-        if userlist(userindex).flags.privilegios = 1 then
-                call senddata(toindex, userindex, 0, "||no puedes tomar ningun objeto. " & fonttype_info)
-                exit sub
-        end if
-        call getobj(userindex)
-        exit sub
-    case "tab" 'entrar o salir modo combate
-        if userlist(userindex).flags.modocombate then
-            call senddata(toindex, userindex, 0, "||has salido del modo de combate. " & fonttype_info)
-        else
-            call senddata(toindex, userindex, 0, "||has pasado al modo de combate. " & fonttype_info)
-        end if
-        userlist(userindex).flags.modocombate = not userlist(userindex).flags.modocombate
-        exit sub
-    case "seg" 'activa / desactiva el seguro
-        if userlist(userindex).flags.seguro then
-              call senddata(toindex, userindex, 0, "||has desactivado el seguro. " & fonttype_info)
-        else
-              call senddata(toindex, userindex, 0, "||has activado el seguro. " & fonttype_info)
-        end if
-        userlist(userindex).flags.seguro = not userlist(userindex).flags.seguro
-        exit sub
-    case "actualizar"
-        call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
-        exit sub
-    case "/online"
-        for loopc = 1 to lastuser
-            if (userlist(loopc).name <> "") then
-                tstr = tstr & userlist(loopc).name & ", "
-            end if
-        next loopc
-        tstr = left$(tstr, len(tstr) - 2)
-        call senddata(toindex, userindex, 0, "||" & tstr & fonttype_info)
-        call senddata(toindex, userindex, 0, "||n�mero de usuarios: " & numusers & fonttype_info)
-        exit sub
-    case "/salir"
-        'call senddata(toindex, userindex, 0, "finok")
-        cerrar_usuario (userindex)
-        exit sub
-    case "/fundarclan"
-        if userlist(userindex).guildinfo.fundoclan = 1 then
-            call senddata(toindex, userindex, 0, "||ya has fundado un clan, solo se puede fundar uno por personaje." & fonttype_info)
-            exit sub
-        end if
-        if cancreateguild(userindex) then
-            call senddata(toindex, userindex, 0, "showfun" & fonttype_info)
-        end if
-        exit sub
-    case "glinfo"
-        if userlist(userindex).guildinfo.esguildleader = 1 then
-                    call sendguildleaderinfo(userindex)
-        else
-                    call sendguildslist(userindex)
-        end if
-        exit sub
-    case "/balance"
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        'se asegura que el target es un npc
-        if userlist(userindex).flags.targetnpc = 0 then
-              call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-              exit sub
-        end if
-        if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 3 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos del vendedor." & fonttype_info)
-                  exit sub
-        end if
-        if npclist(userlist(userindex).flags.targetnpc).npctype <> npctype_banquero _
-        or userlist(userindex).flags.muerto = 1 then exit sub
-        if fileexist(charpath & ucase$(userlist(userindex).name) & ".chr", vbnormal) = false then
-              call senddata(toindex, userindex, 0, "!!el personaje no existe, cree uno nuevo.")
-              closesocket (userindex)
-              exit sub
-        end if
-        call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "tenes " & userlist(userindex).stats.banco & " monedas de oro en tu cuenta." & "�" & npclist(userlist(userindex).flags.targetnpc).char.charindex & fonttype_info)
-        exit sub
-    case "/quieto" ' << comando a mascotas
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                      call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                      exit sub
-         end if
-         'se asegura que el target es un npc
-         if userlist(userindex).flags.targetnpc = 0 then
-                  call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-                  exit sub
-         end if
-         if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 10 then
-                      call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                      exit sub
-         end if
-         if npclist(userlist(userindex).flags.targetnpc).maestrouser <> _
-            userindex then exit sub
-         npclist(userlist(userindex).flags.targetnpc).movement = estatico
-         call expresar(userlist(userindex).flags.targetnpc, userindex)
-         exit sub
-    case "/acompa�ar"
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        'se asegura que el target es un npc
-        if userlist(userindex).flags.targetnpc = 0 then
-              call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-              exit sub
-        end if
-        if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 10 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                  exit sub
-        end if
-        if npclist(userlist(userindex).flags.targetnpc).maestrouser <> _
-          userindex then exit sub
-        call followamo(userlist(userindex).flags.targetnpc)
-        call expresar(userlist(userindex).flags.targetnpc, userindex)
-        exit sub
-    case "/entrenar"
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        'se asegura que el target es un npc
-        if userlist(userindex).flags.targetnpc = 0 then
-              call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-              exit sub
-        end if
-        if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 10 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                  exit sub
-        end if
-        if npclist(userlist(userindex).flags.targetnpc).npctype <> npctype_entrenador then exit sub
-        call enviarlistacriaturas(userindex, userlist(userindex).flags.targetnpc)
-        exit sub
-    case "/descansar"
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
-            exit sub
-        end if
-        if hayobjarea(userlist(userindex).pos, fogata) then
-                call senddata(toindex, userindex, 0, "dok")
-                if not userlist(userindex).flags.descansar then
-                    call senddata(toindex, userindex, 0, "||te acomodas junto a la fogata y comenzas a descansar." & fonttype_info)
-                else
-                    call senddata(toindex, userindex, 0, "||te levantas." & fonttype_info)
-                end if
-                userlist(userindex).flags.descansar = not userlist(userindex).flags.descansar
-        else
-                if userlist(userindex).flags.descansar then
-                    call senddata(toindex, userindex, 0, "||te levantas." & fonttype_info)
-                    
-                    userlist(userindex).flags.descansar = false
-                    call senddata(toindex, userindex, 0, "dok")
-                    exit sub
-                end if
-                call senddata(toindex, userindex, 0, "||no hay ninguna fogata junto a la cual descansar." & fonttype_info)
-        end if
-        exit sub
-    case "/meditar"
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
-            exit sub
-        end if
-        call senddata(toindex, userindex, 0, "medok")
-        if not userlist(userindex).flags.meditando then
-           call senddata(toindex, userindex, 0, "||comenzas a meditar." & fonttype_info)
-        else
-           call senddata(toindex, userindex, 0, "||dejas de meditar." & fonttype_info)
-        end if
-        userlist(userindex).flags.meditando = not userlist(userindex).flags.meditando
-        if userlist(userindex).flags.meditando then
-            userlist(userindex).char.loops = loopadeternum
-            if userlist(userindex).stats.elv < 15 then
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxmeditarchico & "," & loopadeternum)
-                userlist(userindex).char.fx = fxmeditarchico
-            elseif userlist(userindex).stats.elv < 30 then
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxmeditarmediano & "," & loopadeternum)
-                userlist(userindex).char.fx = fxmeditarmediano
-            else
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & fxmeditargrande & "," & loopadeternum)
-                userlist(userindex).char.fx = fxmeditargrande
-            end if
-        else
-            userlist(userindex).char.fx = 0
-            userlist(userindex).char.loops = 0
-            call senddata(topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & 0 & "," & 0)
-        end if
-        exit sub
-    case "/resucitar"
-       'se asegura que el target es un npc
-       if userlist(userindex).flags.targetnpc = 0 then
-           call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-           exit sub
-       end if
-       if npclist(userlist(userindex).flags.targetnpc).npctype <> 1 _
-       or userlist(userindex).flags.muerto <> 1 then exit sub
-       if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 10 then
-           call senddata(toindex, userindex, 0, "||el sacerdote no puede resucitarte debido a que estas demasiado lejos." & fonttype_info)
-           exit sub
-       end if
-       if fileexist(charpath & ucase$(userlist(userindex).name) & ".chr", vbnormal) = false then
-           call senddata(toindex, userindex, 0, "!!el personaje no existe, cree uno nuevo.")
-           closesocket (userindex)
-           exit sub
-       end if
-       call revivirusuario(userindex)
-       call senddata(toindex, userindex, 0, "||��h�s sido resucitado!!" & fonttype_info)
-       exit sub
-    case "/curar"
-       'se asegura que el target es un npc
-       if userlist(userindex).flags.targetnpc = 0 then
-           call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-           exit sub
-       end if
-       if npclist(userlist(userindex).flags.targetnpc).npctype <> 1 _
-       or userlist(userindex).flags.muerto <> 0 then exit sub
-       if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 10 then
-           call senddata(toindex, userindex, 0, "||el sacerdote no puede curarte debido a que estas demasiado lejos." & fonttype_info)
-           exit sub
-       end if
-       userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
-       call senduserstatsbox(val(userindex))
-       call senddata(toindex, userindex, 0, "||��h�s sido curado!!" & fonttype_info)
-       exit sub
-    case "/ayuda"
-       call sendhelp(userindex)
-       exit sub
-     case "/est"
-        call senduserstatstxt(userindex, userindex)
-        exit sub
-    case "atri"
-        call enviaratrib(userindex)
-        exit sub
-    case "fama"
-        call enviarfama(userindex)
-        exit sub
-    case "eski"
-        call enviarskills(userindex)
-        exit sub
-    case "/comerciar"
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        if userlist(userindex).flags.privilegios = 1 then
-            exit sub
-        end if
-        '�el target es un npc valido?
-        if userlist(userindex).flags.targetnpc > 0 then
-              '�el npc puede comerciar?
-              if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
-                 if len(npclist(userlist(userindex).flags.targetnpc).desc) > 0 then call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                 exit sub
-              end if
-              if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 3 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos del vendedor." & fonttype_info)
-                  exit sub
-              end if
-              'iniciamos la rutina pa' comerciar.
-              call iniciarcomercionpc(userindex)
-         '[alejo]
-#if false = true then
-        elseif userlist(userindex).flags.targetuser > 0 then
-            'comercio con otro usuario
-            'puede comerciar ?
-            if userlist(userlist(userindex).flags.targetuser).flags.muerto = 1 then
-                call senddata(toindex, userindex, 0, "||��no puedes comerciar con los muertos!!" & fonttype_info)
-                exit sub
-            end if
-            'soy yo ?
-            if userlist(userindex).flags.targetuser = userindex then
-                call senddata(toindex, userindex, 0, "||no puedes comerciar con vos mismo..." & fonttype_info)
-                exit sub
-            end if
-            'ta muy lejos ?
-            if distancia(userlist(userlist(userindex).flags.targetuser).pos, userlist(userindex).pos) > 3 then
-                call senddata(toindex, userindex, 0, "||estas demasiado lejos del usuario." & fonttype_info)
-                exit sub
-            end if
-            'ya ta comerciando ? es con migo o con otro ?
-            if userlist(userlist(userindex).flags.targetuser).flags.comerciando = true and _
-                userlist(userlist(userindex).flags.targetuser).comusu.destusu <> userindex then
-                call senddata(toindex, userindex, 0, "||no puedes comerciar con el usuario en este momento." & fonttype_info)
-                exit sub
-            end if
-            'inicializa unas variables...
-            userlist(userindex).comusu.destusu = userlist(userindex).flags.targetuser
-            userlist(userindex).comusu.cant = 0
-            userlist(userindex).comusu.objeto = 0
-            userlist(userindex).comusu.acepto = false
-            
-            'rutina para comerciar con otro usuario
-            call iniciarcomercioconusuario(userindex, userlist(userindex).flags.targetuser)
-#end if
-        else
-            call senddata(toindex, userindex, 0, "||primero hace click izquierdo sobre el personaje." & fonttype_info)
-        end if
-        exit sub
-    '[/alejo]
-    '[kevin]------------------------------------------
-    case "/boveda"
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        '�el target es un npc valido?
-        if userlist(userindex).flags.targetnpc > 0 then
-              if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 3 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos del vendedor." & fonttype_info)
-                  exit sub
-              end if
-              if npclist(userlist(userindex).flags.targetnpc).npctype = 4 then
-                call iniciardeposito(userindex)
-              else
-                exit sub
-              end if
-        else
-          call senddata(toindex, userindex, 0, "||primero hace click izquierdo sobre el personaje." & fonttype_info)
-        end if
-        exit sub
-    '[/kevin]------------------------------------
-    '[alejo]
-    case "fincom"
-        'user sale del modo comercio
-        userlist(userindex).flags.comerciando = false
-        call senddata(toindex, userindex, 0, "fincomok")
-        exit sub
-        case "fincomusu"
-        'sale modo comercio usuario
-        if userlist(userindex).comusu.destusu > 0 and _
-            userlist(userlist(userindex).comusu.destusu).comusu.destusu = userindex then
-            call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha dejado de comerciar con vos." & fonttype_talk)
-            call fincomerciarusu(userlist(userindex).comusu.destusu)
-        end if
-        
-        call fincomerciarusu(userindex)
-        exit sub
-    '[kevin]---------------------------------------
-    '******************************************************
-    case "finban"
-        'user sale del modo banco
-        userlist(userindex).flags.comerciando = false
-        call senddata(toindex, userindex, 0, "finbanok")
-        exit sub
-    '-------------------------------------------------------
-    '[/kevin]**************************************
-    case "comusuok"
-        'aceptar el cambio
-        call aceptarcomerciousu(userindex)
-        exit sub
-    case "comusuno"
-        'rechazar el cambio
-        if userlist(userindex).comusu.destusu > 0 then
-            call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha rechazado tu oferta." & fonttype_talk)
-            call fincomerciarusu(userlist(userindex).comusu.destusu)
-        end if
-        call senddata(toindex, userindex, 0, "||has rechazado la oferta del otro usuario." & fonttype_talk)
-        call fincomerciarusu(userindex)
-        exit sub
-    '[/alejo]
-
-    case "/enlistar"
-        'se asegura que el target es un npc
-       if userlist(userindex).flags.targetnpc = 0 then
-           call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-           exit sub
-       end if
-       
-       if npclist(userlist(userindex).flags.targetnpc).npctype <> 5 _
-       or userlist(userindex).flags.muerto <> 0 then exit sub
-       
-       if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 4 then
-           call senddata(toindex, userindex, 0, "||el sacerdote no puede curarte debido a que estas demasiado lejos." & fonttype_info)
-           exit sub
-       end if
-       
-       if npclist(userlist(userindex).flags.targetnpc).flags.faccion = 0 then
-              call enlistararmadareal(userindex)
-       else
-              call enlistarcaos(userindex)
-       end if
-       
-       exit sub
-    case "/informacion"
-       'se asegura que el target es un npc
-       if userlist(userindex).flags.targetnpc = 0 then
-           call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-           exit sub
-       end if
-       
-       if npclist(userlist(userindex).flags.targetnpc).npctype <> 5 _
-       or userlist(userindex).flags.muerto <> 0 then exit sub
-       
-       if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 4 then
-           call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-           exit sub
-       end if
-       
-       if npclist(userlist(userindex).flags.targetnpc).flags.faccion = 0 then
-            if userlist(userindex).faccion.armadareal = 0 then
-                call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no perteneces a las tropas reales!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                exit sub
-            end if
-            call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "tu deber es combatir criminales, cada 100 criminales que derrotes te dare una recompensa." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-       else
-            if userlist(userindex).faccion.fuerzascaos = 0 then
-                call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no perteneces a las fuerzas del caos!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                exit sub
-            end if
-            call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "tu deber es sembrar el caos y la desesperanza, cada 100 ciudadanos que derrotes te dare una recompensa." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-       end if
-       exit sub
-    case "/recompensa"
-       'se asegura que el target es un npc
-       if userlist(userindex).flags.targetnpc = 0 then
-           call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-           exit sub
-       end if
-       if npclist(userlist(userindex).flags.targetnpc).npctype <> 5 _
-       or userlist(userindex).flags.muerto <> 0 then exit sub
-       if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 4 then
-           call senddata(toindex, userindex, 0, "||el sacerdote no puede curarte debido a que estas demasiado lejos." & fonttype_info)
-           exit sub
-       end if
-       if npclist(userlist(userindex).flags.targetnpc).flags.faccion = 0 then
-            if userlist(userindex).faccion.armadareal = 0 then
-                call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no perteneces a las tropas reales!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                exit sub
-            end if
-            call recompensaarmadareal(userindex)
-       else
-            if userlist(userindex).faccion.fuerzascaos = 0 then
-                call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no perteneces a las fuerzas del caos!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                exit sub
-            end if
-            call recompensacaos(userindex)
-       end if
-       exit sub
-end select
+end if ' "/"
 
 
-select case ucase$(left$(rdata, 2))
-'    case "/z"
-'        dim pos as worldpos, pos2 as worldpos
-'        dim o as obj
-'
-'        for loopc = 1 to 100
-'            pos = userlist(userindex).pos
-'            o.amount = 1
-'            o.objindex = ioro
-'            'exit for
-'            call tiraroro(100000, userindex)
-'            'call tilelibre(pos, pos2)
-'            'if pos2.x = 0 or pos2.y = 0 then exit for
-'
-'            'call makeobj(tomap, 0, userlist(userindex).pos.map, o, pos2.map, pos2.x, pos2.y)
-'        next loopc
-'
-'        exit sub
-    case "ti" 'tirar item
-            if userlist(userindex).flags.navegando = 1 or _
-               userlist(userindex).flags.muerto = 1 or _
-               userlist(userindex).flags.privilegios = 1 then exit sub
-               '[consejeros]
-            
-            rdata = right$(rdata, len(rdata) - 2)
-            arg1 = readfield(1, rdata, 44)
-            arg2 = readfield(2, rdata, 44)
-            if val(arg1) = flagoro then
-                call tiraroro(val(arg2), userindex)
-                call senduserstatsbox(userindex)
-                exit sub
-            else
-                if val(arg1) <= max_inventory_slots and val(arg1) > 0 then
-                    if userlist(userindex).invent.object(val(arg1)).objindex = 0 then
-                            exit sub
-                    end if
-                    call dropobj(userindex, val(arg1), val(arg2), userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
-                else
-                    exit sub
-                end if
-            end if
-            exit sub
-    case "lh" ' lanzar hechizo
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
-            exit sub
-        end if
-        rdata = right$(rdata, len(rdata) - 2)
-        userlist(userindex).flags.hechizo = val(rdata)
-        exit sub
-    case "lc" 'click izquierdo
-        rdata = right$(rdata, len(rdata) - 2)
-        arg1 = readfield(1, rdata, 44)
-        arg2 = readfield(2, rdata, 44)
-        if not numeric(arg1) or not numeric(arg2) then exit sub
-        x = cint(arg1)
-        y = cint(arg2)
-        call lookattile(userindex, userlist(userindex).pos.map, x, y)
-        exit sub
-    case "rc" 'click derecho
-        rdata = right$(rdata, len(rdata) - 2)
-        arg1 = readfield(1, rdata, 44)
-        arg2 = readfield(2, rdata, 44)
-        if not numeric(arg1) or not numeric(arg2) then exit sub
-        x = cint(arg1)
-        y = cint(arg2)
-        call accion(userindex, userlist(userindex).pos.map, x, y)
-        exit sub
-    case "uk"
-        if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!!." & fonttype_info)
-            exit sub
-        end if
-
-        rdata = right$(rdata, len(rdata) - 2)
-        select case val(rdata)
-            case robar
-                call senddata(toindex, userindex, 0, "t01" & robar)
-            case magia
-                call senddata(toindex, userindex, 0, "t01" & magia)
-            case domar
-                call senddata(toindex, userindex, 0, "t01" & domar)
-            case ocultarse
-                
-                if userlist(userindex).flags.navegando = 1 then
-                      call senddata(toindex, userindex, 0, "||no podes ocultarte si estas navegando." & fonttype_info)
-                      exit sub
-                end if
-                
-                if userlist(userindex).flags.oculto = 1 then
-                      call senddata(toindex, userindex, 0, "||ya estas oculto." & fonttype_info)
-                      exit sub
-                end if
-                
-                call doocultarse(userindex)
-        end select
-        exit sub
-end select
-
-'mensaje del servidor a gms - lo ubico aqui para que no se confunda con /gm [gonzalo]
-if ucase$(left$(rdata, 6)) = "/gmsg " and userlist(userindex).flags.privilegios > 0 then
-    rdata = right$(rdata, len(rdata) - 6)
-    call loggm(userlist(userindex).name, "mensaje a gms:" & rdata, (userlist(userindex).flags.privilegios = 1))
-    if rdata <> "" then
-        call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & "> " & rdata & "~255~255~255~0~1")
-    end if
-    exit sub
+if userlist(userindex).flags.privilegios = 0 then
+    userlist(userindex).counters.idlecount = idlecountbackup
 end if
-
-select case ucase$(left$(rdata, 3))
-    case "/gm"
-        if not ayuda.existe(userlist(userindex).name) then
-            call senddata(toindex, userindex, 0, "||el mensaje ha sido entregado, ahora solo debes esperar que se desocupe algun gm." & fonttype_info)
-            call ayuda.push(rdata, userlist(userindex).name)
-        else
-            call ayuda.quitar(userlist(userindex).name)
-            call ayuda.push(rdata, userlist(userindex).name)
-            call senddata(toindex, userindex, 0, "||ya habias mandado un mensaje, tu mensaje ha sido movido al final de la cola de mensajes." & fonttype_info)
-        end if
-        exit sub
-    case "usa"
-        rdata = right$(rdata, len(rdata) - 3)
-        if val(rdata) <= max_inventory_slots and val(rdata) > 0 then
-            if userlist(userindex).invent.object(val(rdata)).objindex = 0 then exit sub
-        else
-            exit sub
-        end if
-        call useinvitem(userindex, val(rdata))
-        exit sub
-    case "cns" ' construye herreria
-        rdata = right$(rdata, len(rdata) - 3)
-        x = cint(rdata)
-        if x < 1 then exit sub
-        if objdata(x).skherreria = 0 then exit sub
-        call herreroconstruiritem(userindex, x)
-        exit sub
-    case "cnc" ' construye carpinteria
-        rdata = right$(rdata, len(rdata) - 3)
-        x = cint(rdata)
-        if x < 1 or objdata(x).skcarpinteria = 0 then exit sub
-        call carpinteroconstruiritem(userindex, x)
-        exit sub
-    case "wlc" 'click izquierdo en modo trabajo
-        rdata = right$(rdata, len(rdata) - 3)
-        arg1 = readfield(1, rdata, 44)
-        arg2 = readfield(2, rdata, 44)
-        arg3 = readfield(3, rdata, 44)
-        if arg3 = "" or arg2 = "" or arg1 = "" then exit sub
-        if not numeric(arg1) or not numeric(arg2) or not numeric(arg3) then exit sub
-        
-        x = cint(arg1)
-        y = cint(arg2)
-        tlong = cint(arg3)
-        
-        if userlist(userindex).flags.muerto = 1 or _
-           userlist(userindex).flags.descansar or _
-           userlist(userindex).flags.meditando or _
-           not inmapbounds(userlist(userindex).pos.map, x, y) then exit sub
-                          
-        if not inrangovision(userindex, x, y) then
-            call senddata(toindex, userindex, 0, "pu" & userlist(userindex).pos.x & "," & userlist(userindex).pos.y)
-            exit sub
-        end if
-        
-        select case tlong
-        
-        case proyectiles
-            dim tu as integer, tn as integer
-            'nos aseguramos que este usando un arma de proyectiles
-            if userlist(userindex).invent.weaponeqpobjindex = 0 then exit sub
-            
-            if objdata(userlist(userindex).invent.weaponeqpobjindex).proyectil <> 1 then exit sub
-             
-            if userlist(userindex).invent.municioneqpobjindex = 0 then
-                    call senddata(toindex, userindex, 0, "||no tenes municiones." & fonttype_info)
-                    exit sub
-            end if
-             
-            'quitamos stamina
-            if userlist(userindex).stats.minsta >= 10 then
-                 call quitarsta(userindex, randomnumber(1, 10))
-            else
-                 call senddata(toindex, userindex, 0, "||estas muy cansado para luchar." & fonttype_info)
-                 exit sub
-            end if
-             
-            call lookattile(userindex, userlist(userindex).pos.map, arg1, arg2)
-            
-            tu = userlist(userindex).flags.targetuser
-            tn = userlist(userindex).flags.targetnpc
-            
-            
-            if tn > 0 then
-                if npclist(tn).attackable = 0 then exit sub
-            else
-                if tu = 0 then exit sub
-            end if
-            
-            if tn > 0 then call usuarioatacanpc(userindex, tn)
-                
-            if tu > 0 then
-                if userlist(userindex).flags.seguro then
-                        if not criminal(tu) then
-                                call senddata(toindex, userindex, 0, "||no podes atacar ciudadanos, para hacerlo debes desactivar el seguro apretando la tecla s" & fonttype_fight)
-                                exit sub
-                        end if
-                end if
-
-                call usuarioatacausuario(userindex, tu)
-            end if
-            
-            dim dummyint as integer
-            dummyint = userlist(userindex).invent.municioneqpslot
-            call quitaruserinvitem(userindex, userlist(userindex).invent.municioneqpslot, 1)
-            if dummyint < 1 or dummyint > max_inventory_slots then exit sub
-            if userlist(userindex).invent.object(dummyint).amount > 0 then
-                userlist(userindex).invent.object(dummyint).equipped = 1
-                userlist(userindex).invent.municioneqpslot = dummyint
-                userlist(userindex).invent.municioneqpobjindex = userlist(userindex).invent.object(dummyint).objindex
-                call updateuserinv(false, userindex, userlist(userindex).invent.municioneqpslot)
-            else
-                call updateuserinv(false, userindex, dummyint)
-                userlist(userindex).invent.municioneqpslot = 0
-                userlist(userindex).invent.municioneqpobjindex = 0
-            end if
-            
-        case magia
-            if userlist(userindex).flags.puedelanzarspell = 0 then exit sub
-            '[consejeros]
-            if userlist(userindex).flags.privilegios = 1 then exit sub
-            
-            call lookattile(userindex, userlist(userindex).pos.map, x, y)
-            
-            if userlist(userindex).flags.hechizo > 0 then
-                call lanzarhechizo(userlist(userindex).flags.hechizo, userindex)
-                userlist(userindex).flags.puedelanzarspell = 0
-                userlist(userindex).flags.hechizo = 0
-            else
-                call senddata(toindex, userindex, 0, "||�primero selecciona el hechizo que quieres lanzar!" & fonttype_info)
-            end if
-        case pesca
-                  
-            if userlist(userindex).invent.herramientaeqpobjindex = 0 then exit sub
-            
-            if userlist(userindex).invent.herramientaeqpobjindex <> objtype_ca�a then
-                    call closesocket(userindex)
-                    exit sub
-            end if
-            
-            if userlist(userindex).flags.puedetrabajar = 0 then exit sub
-            
-            if hayagua(userlist(userindex).pos.map, x, y) then
-                call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_pescar)
-                call dopescar(userindex)
-            else
-                call senddata(toindex, userindex, 0, "||no hay agua donde pescar busca un lago, rio o mar." & fonttype_info)
-            end if
-            
-        case robar
-           if mapinfo(userlist(userindex).pos.map).pk then
-                if userlist(userindex).flags.puedetrabajar = 0 then exit sub
-                
-                call lookattile(userindex, userlist(userindex).pos.map, x, y)
-                
-                if userlist(userindex).flags.targetuser > 0 and userlist(userindex).flags.targetuser <> userindex then
-                   if userlist(userlist(userindex).flags.targetuser).flags.muerto = 0 then
-                        wpaux.map = userlist(userindex).pos.map
-                        wpaux.x = val(readfield(1, rdata, 44))
-                        wpaux.y = val(readfield(2, rdata, 44))
-                        if distancia(wpaux, userlist(userindex).pos) > 2 then
-                            call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                            exit sub
-                        end if
-                        '17/09/02
-                        'no aseguramos que el trigger le permite robar
-                        if mapdata(userlist(userlist(userindex).flags.targetuser).pos.map, userlist(userlist(userindex).flags.targetuser).pos.x, userlist(userlist(userindex).flags.targetuser).pos.y).trigger = 4 then
-                            call senddata(toindex, userindex, 0, "||no podes robar aqu�." & fonttype_warning)
-                            exit sub
-                        end if
-
-                        call dorobar(userindex, userlist(userindex).flags.targetuser)
-                   end if
-                else
-                    call senddata(toindex, userindex, 0, "||no a quien robarle!." & fonttype_info)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||�no podes robarle en zonas seguras!." & fonttype_info)
-            end if
-        case talar
-            
-            if userlist(userindex).flags.puedetrabajar = 0 then exit sub
-            
-            if userlist(userindex).invent.herramientaeqpobjindex = 0 then
-                call senddata(toindex, userindex, 0, "||deber�as equiparte el hacha." & fonttype_info)
-                exit sub
-            end if
-            
-            if userlist(userindex).invent.herramientaeqpobjindex <> hacha_le�ador then
-                    call closesocket(userindex)
-                    exit sub
-            end if
-            
-            auxind = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
-            if auxind > 0 then
-                wpaux.map = userlist(userindex).pos.map
-                wpaux.x = x
-                wpaux.y = y
-                if distancia(wpaux, userlist(userindex).pos) > 2 then
-                    call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                    exit sub
-                end if
-                '�hay un arbol donde clickeo?
-                if objdata(auxind).objtype = objtype_arboles then
-                    call senddata(topcarea, cint(userindex), userlist(userindex).pos.map, "tw" & sound_talar)
-                    call dotalar(userindex)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||no hay ningun arbol ahi." & fonttype_info)
-            end if
-        case mineria
-            
-            if userlist(userindex).flags.puedetrabajar = 0 then exit sub
-            
-            if userlist(userindex).invent.herramientaeqpobjindex = 0 then exit sub
-            
-            if userlist(userindex).invent.herramientaeqpobjindex <> piquete_minero then
-                    call closesocket(userindex)
-                    exit sub
-            end if
-            
-            call lookattile(userindex, userlist(userindex).pos.map, x, y)
-            
-            auxind = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
-            if auxind > 0 then
-                wpaux.map = userlist(userindex).pos.map
-                wpaux.x = x
-                wpaux.y = y
-                if distancia(wpaux, userlist(userindex).pos) > 2 then
-                    call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                    exit sub
-                end if
-                '�hay un yacimiento donde clickeo?
-                if objdata(auxind).objtype = objtype_yacimiento then
-                    call senddata(topcarea, userindex, userlist(userindex).pos.map, "tw" & sound_minero)
-                    call domineria(userindex)
-                else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||ahi no hay ningun yacimiento." & fonttype_info)
-            end if
-        case domar
-          'modificado 25/11/02
-          'optimizado y solucionado el bug de la doma de
-          'criaturas hostiles.
-          dim ci as integer
-          
-          call lookattile(userindex, userlist(userindex).pos.map, x, y)
-          ci = userlist(userindex).flags.targetnpc
-          
-          if ci > 0 then
-                   if npclist(ci).flags.domable > 0 then
-                        wpaux.map = userlist(userindex).pos.map
-                        wpaux.x = x
-                        wpaux.y = y
-                        if distancia(wpaux, npclist(userlist(userindex).flags.targetnpc).pos) > 2 then
-                              call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                              exit sub
-                        end if
-                        if npclist(ci).flags.attackedby <> "" then
-                              call senddata(toindex, userindex, 0, "||no pod�s domar una criatura que est� luchando con un jugador." & fonttype_info)
-                              exit sub
-                        end if
-                        call dodomar(userindex, ci)
-                    else
-                        call senddata(toindex, userindex, 0, "||no podes domar a esa criatura." & fonttype_info)
-                    end if
-          else
-                 call senddata(toindex, userindex, 0, "||no hay ninguna criatura alli!." & fonttype_info)
-          end if
-          
-        case fundirmetal
-            call lookattile(userindex, userlist(userindex).pos.map, x, y)
-            
-            if userlist(userindex).flags.targetobj > 0 then
-                if objdata(userlist(userindex).flags.targetobj).objtype = objtype_fragua then
-                    call fundirmineral(userindex)
-                else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||ahi no hay ninguna fragua." & fonttype_info)
-            end if
-            
-        case herreria
-            call lookattile(userindex, userlist(userindex).pos.map, x, y)
-            
-            if userlist(userindex).flags.targetobj > 0 then
-                if objdata(userlist(userindex).flags.targetobj).objtype = objtype_yunque then
-                    call enivararmasconstruibles(userindex)
-                    call enivararmadurasconstruibles(userindex)
-                    call senddata(toindex, userindex, 0, "sfh")
-                else
-                    call senddata(toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||ahi no hay ningun yunque." & fonttype_info)
-            end if
-            
-        end select
-        
-        userlist(userindex).flags.puedetrabajar = 0
-        exit sub
-    case "cig"
-        rdata = right$(rdata, len(rdata) - 3)
-        x = guilds.count
-        
-        if createguild(userlist(userindex).name, userlist(userindex).reputacion.promedio, userindex, rdata) then
-            if x = 0 then
-                call senddata(toindex, userindex, 0, "||felicidades has creado el primer clan de argentum!!!." & fonttype_info)
-            else
-                call senddata(toindex, userindex, 0, "||felicidades has creado el clan numero " & x + 1 & " de argentum!!!." & fonttype_info)
-            end if
-            call saveguildsdb
-        end if
-        
-        exit sub
-end select
-
-select case ucase$(left$(rdata, 4))
-    case "infs" 'informacion del hechizo
-            rdata = right$(rdata, len(rdata) - 4)
-            if val(rdata) > 0 and val(rdata) < maxuserhechizos + 1 then
-                dim h as integer
-                h = userlist(userindex).stats.userhechizos(val(rdata))
-                if h > 0 and h < numerohechizos + 1 then
-                    call senddata(toindex, userindex, 0, "||%%%%%%%%%%%% info del hechizo %%%%%%%%%%%%" & fonttype_info)
-                    call senddata(toindex, userindex, 0, "||nombre:" & hechizos(h).nombre & fonttype_info)
-                    call senddata(toindex, userindex, 0, "||descripcion:" & hechizos(h).desc & fonttype_info)
-                    call senddata(toindex, userindex, 0, "||skill requerido: " & hechizos(h).minskill & " de magia." & fonttype_info)
-                    call senddata(toindex, userindex, 0, "||mana necesario: " & hechizos(h).manarequerido & fonttype_info)
-                    call senddata(toindex, userindex, 0, "||%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" & fonttype_info)
-                end if
-            else
-                call senddata(toindex, userindex, 0, "||�primero selecciona el hechizo.!" & fonttype_info)
-            end if
-            exit sub
-   case "equi"
-            if userlist(userindex).flags.muerto = 1 then
-            call senddata(toindex, userindex, 0, "||��estas muerto!! solo podes usar items cuando estas vivo. " & fonttype_info)
-            exit sub
-            end if
-            rdata = right$(rdata, len(rdata) - 4)
-            if val(rdata) <= max_inventory_slots and val(rdata) > 0 then
-                 if userlist(userindex).invent.object(val(rdata)).objindex = 0 then exit sub
-            else
-                exit sub
-            end if
-            call equiparinvitem(userindex, val(rdata))
-            exit sub
-    case "chea" 'cambiar heading ;-)
-        rdata = right$(rdata, len(rdata) - 4)
-        if val(rdata) > 0 and val(rdata) < 5 then
-            userlist(userindex).char.heading = rdata
-            call changeuserchar(tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-        end if
-        exit sub
-    case "skse" 'modificar skills
-        dim i as integer
-        dim sumatoria as integer
-        dim incremento as integer
-        rdata = right$(rdata, len(rdata) - 4)
-        
-        'codigo para prevenir el hackeo de los skills
-        '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        for i = 1 to numskills
-            incremento = val(readfield(i, rdata, 44))
-            
-            if incremento < 0 then
-                'call senddata(toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
-                call loghackattemp(userlist(userindex).name & " ip:" & userlist(userindex).ip & " trato de hackear los skills.")
-                userlist(userindex).stats.skillpts = 0
-                call closesocket(userindex)
-                exit sub
-            end if
-            
-            sumatoria = sumatoria + incremento
-        next i
-        
-        if sumatoria > userlist(userindex).stats.skillpts then
-            'userlist(userindex).flags.administrativeban = 1
-            'call senddata(toall, 0, 0, "||los dioses han desterrado a " & userlist(userindex).name & fonttype_info)
-            call loghackattemp(userlist(userindex).name & " ip:" & userlist(userindex).ip & " trato de hackear los skills.")
-            call closesocket(userindex)
-            exit sub
-        end if
-        '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-        for i = 1 to numskills
-            incremento = val(readfield(i, rdata, 44))
-            userlist(userindex).stats.skillpts = userlist(userindex).stats.skillpts - incremento
-            userlist(userindex).stats.userskills(i) = userlist(userindex).stats.userskills(i) + incremento
-            if userlist(userindex).stats.userskills(i) > 100 then userlist(userindex).stats.userskills(i) = 100
-        next i
-        exit sub
-    case "entr" 'entrena hombre!
-        
-        if userlist(userindex).flags.targetnpc = 0 then exit sub
-        
-        if npclist(userlist(userindex).flags.targetnpc).npctype <> 3 then exit sub
-        
-        rdata = right$(rdata, len(rdata) - 4)
-        
-        if npclist(userlist(userindex).flags.targetnpc).mascotas < maxmascotasentrenador then
-            if val(rdata) > 0 and val(rdata) < npclist(userlist(userindex).flags.targetnpc).nrocriaturas + 1 then
-                    dim spawnednpc as integer
-                    spawnednpc = spawnnpc(npclist(userlist(userindex).flags.targetnpc).criaturas(val(rdata)).npcindex, npclist(userlist(userindex).flags.targetnpc).pos, true, false)
-                    if spawnednpc <= maxnpcs then
-                        npclist(spawnednpc).maestronpc = userlist(userindex).flags.targetnpc
-                        npclist(userlist(userindex).flags.targetnpc).mascotas = npclist(userlist(userindex).flags.targetnpc).mascotas + 1
-                    end if
-            end if
-        else
-            call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "no puedo traer mas criaturas, mata las existentes!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-        end if
-        
-        exit sub
-    case "comp"
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                   call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                   exit sub
-         end if
-         '�el target es un npc valido?
-         if userlist(userindex).flags.targetnpc > 0 then
-               '�el npc puede comerciar?
-               if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
-                   call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                   exit sub
-               end if
-         else
-           exit sub
-         end if
-         rdata = right$(rdata, len(rdata) - 5)
-         'user compra el item del slot rdata
-         call npcventaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)), userlist(userindex).flags.targetnpc)
-         exit sub
-    '[kevin]*********************************************************************
-    '------------------------------------------------------------------------------------
-    case "reti"
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                   call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                   exit sub
-         end if
-         '�el target es un npc valido?
-         if userlist(userindex).flags.targetnpc > 0 then
-               '�es el banquero?
-               if npclist(userlist(userindex).flags.targetnpc).npctype <> 4 then
-                   exit sub
-               end if
-         else
-           exit sub
-         end if
-         rdata = right(rdata, len(rdata) - 5)
-         'user retira el item del slot rdata
-         call userretiraitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
-         exit sub
-    '-----------------------------------------------------------------------------------
-    '[/kevin]****************************************************************************
-    case "vend"
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                   call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                   exit sub
-         end if
-         '�el target es un npc valido?
-         if userlist(userindex).flags.targetnpc > 0 then
-               '�el npc puede comerciar?
-               if npclist(userlist(userindex).flags.targetnpc).comercia = 0 then
-                   call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & fonttype_talk & "�" & "no tengo ningun interes en comerciar." & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
-                   exit sub
-               end if
-         else
-           exit sub
-         end if
-         rdata = right$(rdata, len(rdata) - 5)
-         'user compra el item del slot rdata
-         call npccompraitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
-         exit sub
-    '[kevin]-------------------------------------------------------------------------
-    '****************************************************************************************
-    case "depo"
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                   call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                   exit sub
-         end if
-         '�el target es un npc valido?
-         if userlist(userindex).flags.targetnpc > 0 then
-               '�el npc puede comerciar?
-               if npclist(userlist(userindex).flags.targetnpc).npctype <> 4 then
-                   exit sub
-               end if
-         else
-           exit sub
-         end if
-         rdata = right(rdata, len(rdata) - 5)
-         'user deposita el item del slot rdata
-         call userdepositaitem(userindex, val(readfield(1, rdata, 44)), val(readfield(2, rdata, 44)))
-         exit sub
-    '****************************************************************************************
-    '[/kevin]---------------------------------------------------------------------------------
-         
-end select
-
-select case ucase$(left$(rdata, 5))
-    case "demsg"
-        if userlist(userindex).flags.targetobj > 0 then
-        rdata = right$(rdata, len(rdata) - 5)
-        dim f as string, titu as string, msg as string, f2 as string
-        f = app.path & "\foros\"
-        f = f & ucase$(objdata(userlist(userindex).flags.targetobj).foroid) & ".for"
-        titu = readfield(1, rdata, 176)
-        msg = readfield(2, rdata, 176)
-        dim n2 as integer, loopme as integer
-        if fileexist(f, vbnormal) then
-            dim num as integer
-            num = val(getvar(f, "info", "cantmsg"))
-            if num > max_mensajes_foro then
-                for loopme = 1 to num
-                    kill app.path & "\foros\" & ucase$(objdata(userlist(userindex).flags.targetobj).foroid) & loopme & ".for"
-                next
-                kill app.path & "\foros\" & ucase$(objdata(userlist(userindex).flags.targetobj).foroid) & ".for"
-                num = 0
-            end if
-            n2 = freefile
-            f2 = left$(f, len(f) - 4)
-            f2 = f2 & num + 1 & ".for"
-            open f2 for output as n2
-            print #n2, titu
-            print #n2, msg
-            call writevar(f, "info", "cantmsg", num + 1)
-        else
-            n2 = freefile
-            f2 = left$(f, len(f) - 4)
-            f2 = f2 & "1" & ".for"
-            open f2 for output as n2
-            print #n2, titu
-            print #n2, msg
-            call writevar(f, "info", "cantmsg", 1)
-        end if
-        close #n2
-        end if
-        exit sub
-    case "/bug "
-        n = freefile
-        open app.path & "\bugs\bugs.log" for append shared as n
-        print #n,
-        print #n,
-        print #n, "########################################################################"
-        print #n, "########################################################################"
-        print #n, "usuario:" & userlist(userindex).name & "  fecha:" & date & "    hora:" & time
-        print #n, "########################################################################"
-        print #n, "bug:"
-        print #n, right$(rdata, len(rdata) - 5)
-        print #n, "########################################################################"
-        print #n, "########################################################################"
-        print #n,
-        print #n,
-        close #n
-        exit sub
-end select
-
-
-select case ucase$(left$(rdata, 6))
-    case "/desc "
-        rdata = right$(rdata, len(rdata) - 6)
-        if not asciivalidos(rdata) then
-            call senddata(toindex, userindex, 0, "||la descripcion tiene caracteres invalidos." & fonttype_info)
-            exit sub
-        end if
-        userlist(userindex).desc = rdata
-        call senddata(toindex, userindex, 0, "||la descripcion a cambiado." & fonttype_info)
-        exit sub
-    case "descod" 'informacion del hechizo
-            rdata = right$(rdata, len(rdata) - 6)
-            call updatecodexanddesc(rdata, userindex)
-            exit sub
-    case "/voto "
-            rdata = right$(rdata, len(rdata) - 6)
-            call computevote(userindex, rdata)
-            exit sub
-            
- end select
-
-'[alejo]
-select case ucase$(left$(rdata, 7))
-case "ofrecer"
-        rdata = right$(rdata, len(rdata) - 7)
-        arg1 = readfield(1, rdata, asc(","))
-        arg2 = readfield(2, rdata, asc(","))
-
-        if val(arg1) <= 0 or val(arg2) <= 0 then
-            exit sub
-        end if
-        if userlist(userlist(userindex).comusu.destusu).flags.userlogged = false then
-            'sigue vivo el usuario ?
-            call fincomerciarusu(userindex)
-            exit sub
-        else
-            'esta vivo ?
-            if userlist(userlist(userindex).comusu.destusu).flags.muerto = 1 then
-                call fincomerciarusu(userindex)
-                exit sub
-            end if
-            '//tiene la cantidad que ofrece ??//'
-            if val(arg1) = flagoro then
-                'oro
-                if val(arg2) > userlist(userindex).stats.gld then
-                    call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
-                    exit sub
-                end if
-            else
-                'inventario
-                if val(arg2) > userlist(userindex).invent.object(val(arg1)).amount then
-                    call senddata(toindex, userindex, 0, "||no tienes esa cantidad." & fonttype_talk)
-                    exit sub
-                end if
-            end if
-            '[consejeros]
-            if userlist(userindex).comusu.objeto > 0 then
-                call senddata(toindex, userindex, 0, "||no puedes cambiar tu oferta." & fonttype_talk)
-                exit sub
-            end if
-            userlist(userindex).comusu.objeto = val(arg1)
-            userlist(userindex).comusu.cant = val(arg2)
-            if userlist(userlist(userindex).comusu.destusu).comusu.destusu <> userindex then
-                call fincomerciarusu(userindex)
-                exit sub
-            else
-                '[corregido]
-                if userlist(userlist(userindex).comusu.destusu).comusu.acepto = true then
-                    'no no no vos te estas pasando de listo...
-                    userlist(userlist(userindex).comusu.destusu).comusu.acepto = false
-                    call senddata(toindex, userlist(userindex).comusu.destusu, 0, "||" & userlist(userindex).name & " ha cambiado su oferta." & fonttype_talk)
-                end if
-                '[/corregido]
-                'es la ofrenda de respuesta :)
-                call enviarobjetotransaccion(userlist(userindex).comusu.destusu)
-            end if
-        end if
-        exit sub
-end select
-'[/alejo]
-
-select case ucase$(left$(rdata, 8))
-    case "aceppeat"
-        rdata = right$(rdata, len(rdata) - 8)
-        call acceptpeaceoffer(userindex, rdata)
-        exit sub
-    case "peaceoff"
-        rdata = right$(rdata, len(rdata) - 8)
-        call recievepeaceoffer(userindex, rdata)
-        exit sub
-    case "peacedet"
-        rdata = right$(rdata, len(rdata) - 8)
-        call sendpeacerequest(userindex, rdata)
-        exit sub
-    case "envcomen"
-        rdata = right$(rdata, len(rdata) - 8)
-        call sendpeticion(userindex, rdata)
-        exit sub
-    case "envpropp"
-        call sendpeacepropositions(userindex)
-        exit sub
-    case "decguerr"
-        rdata = right$(rdata, len(rdata) - 8)
-        call declarewar(userindex, rdata)
-        exit sub
-    case "decaliad"
-        rdata = right$(rdata, len(rdata) - 8)
-        call declareallie(userindex, rdata)
-        exit sub
-    case "newwebsi"
-        rdata = right$(rdata, len(rdata) - 8)
-        call setnewurl(userindex, rdata)
-        exit sub
-    case "aceptari"
-        rdata = right$(rdata, len(rdata) - 8)
-        call acceptclanmember(userindex, rdata)
-        exit sub
-    case "rechazar"
-        rdata = right$(rdata, len(rdata) - 8)
-        call denyrequest(userindex, rdata)
-        exit sub
-    case "echarcla"
-        rdata = right$(rdata, len(rdata) - 8)
-        call eacharmember(userindex, rdata)
-        exit sub
-    case "/passwd "
-        rdata = right$(rdata, len(rdata) - 8)
-        if len(rdata) < 6 then
-             call senddata(toindex, userindex, 0, "||el password debe tener al menos 6 caracteres." & fonttype_info)
-        else
-             call senddata(toindex, userindex, 0, "||el password ha sido cambiado." & fonttype_info)
-             userlist(userindex).password = rdata
-        end if
-        exit sub
-    case "actgnews"
-        rdata = right$(rdata, len(rdata) - 8)
-        call updateguildnews(rdata, userindex)
-        exit sub
-    case "1hrinfo<"
-        rdata = right$(rdata, len(rdata) - 8)
-        call sendcharinfo(rdata, userindex)
-        exit sub
-end select
-
-
-select case ucase$(left$(rdata, 9))
-    case "solicitud"
-         rdata = right$(rdata, len(rdata) - 9)
-         call solicitudingresoclan(userindex, rdata)
-         exit sub
-    case "/retirar " 'retira oro en el banco
-         '�esta el user muerto? si es asi no puede comerciar
-         if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-         end if
-         'se asegura que el target es un npc
-         if userlist(userindex).flags.targetnpc = 0 then
-              call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-              exit sub
-         end if
-         rdata = right$(rdata, len(rdata) - 9)
-         if npclist(userlist(userindex).flags.targetnpc).npctype <> npctype_banquero _
-         or userlist(userindex).flags.muerto = 1 then exit sub
-         if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 10 then
-              call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-              exit sub
-         end if
-         if fileexist(charpath & ucase$(userlist(userindex).name) & ".chr", vbnormal) = false then
-              call senddata(toindex, userindex, 0, "!!el personaje no existe, cree uno nuevo.")
-              closesocket (userindex)
-              exit sub
-         end if
-         if val(rdata) > 0 and val(rdata) <= userlist(userindex).stats.banco then
-              userlist(userindex).stats.banco = userlist(userindex).stats.banco - val(rdata)
-              userlist(userindex).stats.gld = userlist(userindex).stats.gld + val(rdata)
-              call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "tenes " & userlist(userindex).stats.banco & " monedas de oro en tu cuenta." & "�" & npclist(userlist(userindex).flags.targetnpc).char.charindex & fonttype_info)
-         else
-              call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & " no tenes esa cantidad." & "�" & npclist(userlist(userindex).flags.targetnpc).char.charindex & fonttype_info)
-         end if
-         call senduserstatsbox(val(userindex))
-         exit sub
-end select
-
-
-select case ucase$(left$(rdata, 11))
-    case "/depositar " 'depositar oro en el banco
-        '�esta el user muerto? si es asi no puede comerciar
-        if userlist(userindex).flags.muerto = 1 then
-                  call senddata(toindex, userindex, 0, "||��estas muerto!!" & fonttype_info)
-                  exit sub
-        end if
-        'se asegura que el target es un npc
-        if userlist(userindex).flags.targetnpc = 0 then
-              call senddata(toindex, userindex, 0, "||primero tenes que seleccionar un personaje, hace click izquierdo sobre el." & fonttype_info)
-              exit sub
-        end if
-        if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 10 then
-                  call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-                  exit sub
-        end if
-        rdata = right$(rdata, len(rdata) - 11)
-        if npclist(userlist(userindex).flags.targetnpc).npctype <> npctype_banquero _
-        or userlist(userindex).flags.muerto = 1 then exit sub
-        if distancia(userlist(userindex).pos, npclist(userlist(userindex).flags.targetnpc).pos) > 10 then
-              call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
-              exit sub
-        end if
-        if clng(val(rdata)) > 0 and clng(val(rdata)) <= userlist(userindex).stats.gld then
-              userlist(userindex).stats.banco = userlist(userindex).stats.banco + val(rdata)
-              userlist(userindex).stats.gld = userlist(userindex).stats.gld - val(rdata)
-              call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "tenes " & userlist(userindex).stats.banco & " monedas de oro en tu cuenta." & "�" & npclist(userlist(userindex).flags.targetnpc).char.charindex & fonttype_info)
-        else
-              call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & " no tenes esa cantidad." & "�" & npclist(userlist(userindex).flags.targetnpc).char.charindex & fonttype_info)
-        end if
-        call senduserstatsbox(val(userindex))
-        exit sub
-  case "clandetails"
-        rdata = right$(rdata, len(rdata) - 11)
-        call sendguilddetails(userindex, rdata)
-        exit sub
-end select
-
-
 
 '>>>>>>>>>>>>>>>>>>>>>> solo administradores <<<<<<<<<<<<<<<<<<<
  if userlist(userindex).flags.privilegios = 0 then exit sub
@@ -3250,22 +2725,55 @@ if ucase$(left$(rdata, 7)) = "/donde " then
         call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
         exit sub
     end if
+    if userlist(tindex).flags.privilegios = 3 then exit sub
     call senddata(toindex, userindex, 0, "||ubicacion  " & userlist(tindex).name & ": " & userlist(tindex).pos.map & ", " & userlist(tindex).pos.x & ", " & userlist(tindex).pos.y & "." & fonttype_info)
-    call loggm(userlist(userindex).name, "/donde", (userlist(userindex).flags.privilegios = 1))
+    call loggm(userlist(userindex).name, "/donde " & userlist(tindex).name, (userlist(userindex).flags.privilegios = 1))
     exit sub
 end if
 
 'nro de enemigos
+'if ucase$(left$(rdata, 6)) = "/nene " then
+'    rdata = right$(rdata, len(rdata) - 6)
+'    if mapavalido(val(rdata)) then
+'        call senddata(toindex, userindex, 0, "nene" & npchostiles(val(rdata)))
+'        call loggm(userlist(userindex).name, "numero enemigos en mapa " & rdata, (userlist(userindex).flags.privilegios = 1))
+'    end if
+'    exit sub
+'end if
+
 if ucase$(left$(rdata, 6)) = "/nene " then
     rdata = right$(rdata, len(rdata) - 6)
+
     if mapavalido(val(rdata)) then
-        call senddata(toindex, userindex, 0, "nene" & npchostiles(val(rdata)))
-        call loggm(userlist(userindex).name, "numero enemigos en mapa " & rdata, (userlist(userindex).flags.privilegios = 1))
+        dim npcindex as integer
+            dim conts as string
+
+
+            conts = ""
+        for npcindex = 1 to lastnpc
+
+        '�esta vivo?
+        if npclist(npcindex).flags.npcactive _
+                and npclist(npcindex).pos.map = val(rdata) _
+                    and npclist(npcindex).hostile = 1 and _
+                        npclist(npcindex).stats.alineacion = 2 then
+                       conts = conts & npclist(npcindex).name & ", "
+
+        end if
+
+        next npcindex
+                if conts <> "" then
+                    conts = left(conts, len(conts) - 2)
+                else
+                    conts = "no hay npcs"
+                end if
+                call senddata(toindex, userindex, 0, "||npcs en mapa: " & conts & fonttype_info)
+                call loggm(userlist(userindex).name, "numero enemigos en mapa " & rdata, (userlist(userindex).flags.privilegios = 1))
     end if
     exit sub
 end if
 
-'[consejeros] '[consejeros] '[consejeros] '[consejeros]
+
 
 if ucase$(rdata) = "/teleploc" then
     call warpuserchar(userindex, userlist(userindex).flags.targetmap, userlist(userindex).flags.targetx, userlist(userindex).flags.targety, true)
@@ -3300,6 +2808,28 @@ if ucase$(left$(rdata, 7)) = "/telep " then
     call loggm(userlist(userindex).name, "transporto a " & userlist(tindex).name & " hacia " & "mapa" & mapa & " x:" & x & " y:" & y, (userlist(userindex).flags.privilegios = 1))
     exit sub
 end if
+
+if ucase$(left$(rdata, 11)) = "/silenciar " then
+    rdata = right$(rdata, len(rdata) - 11)
+    tindex = nameindex(rdata)
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
+        exit sub
+    end if
+    if userlist(tindex).flags.silenciado = 0 then
+        userlist(tindex).flags.silenciado = 1
+        call senddata(toindex, userindex, 0, "||usuario silenciado." & fonttype_info)
+        call senddata(toindex, tindex, 0, "!!estimado usuario, ud ha sido silenciado por los administradores. sus denuncias ser�n ignoradas por el servidor de aqu� en mas. utilice /gm ayuda para contactar un administrador.")
+        call loggm(userlist(userindex).name, "/silenciar " & userlist(tindex).name, (userlist(userindex).flags.privilegios = 1))
+    else
+        userlist(tindex).flags.silenciado = 0
+        call senddata(toindex, userindex, 0, "||usuario des silenciado." & fonttype_info)
+        call loggm(userlist(userindex).name, "/dessilenciar " & userlist(tindex).name, (userlist(userindex).flags.privilegios = 1))
+    end if
+    exit sub
+end if
+
+
 
 if ucase$(left$(rdata, 9)) = "/show sos" then
     dim m as string
@@ -3342,6 +2872,128 @@ if ucase$(rdata) = "/invisible" then
     exit sub
 end if
 
+if ucase$(rdata) = "/panelgm" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call senddata(toindex, userindex, 0, "abpanel")
+    exit sub
+end if
+
+if ucase$(rdata) = "listusu" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    tstr = "listusu"
+    for loopc = 1 to lastuser
+        if (userlist(loopc).name <> "") and userlist(loopc).flags.privilegios = 0 then
+            tstr = tstr & userlist(loopc).name & ","
+        end if
+    next loopc
+    if len(tstr) > 7 then
+        tstr = left$(tstr, len(tstr) - 2)
+    end if
+    call senddata(toindex, userindex, 0, tstr)
+    exit sub
+end if
+
+'[barrin 30-11-03]
+if ucase$(rdata) = "/trabajando" then
+        if userlist(userindex).flags.esrolesmaster then exit sub
+        for loopc = 1 to lastuser
+            if (userlist(loopc).name <> "") and userlist(loopc).flags.trabajando = true then
+                tstr = tstr & userlist(loopc).name & ", "
+            end if
+        next loopc
+        tstr = left$(tstr, len(tstr) - 2)
+        call senddata(toindex, userindex, 0, "||usuarios trabajando: " & tstr & fonttype_info)
+        exit sub
+end if
+'[/barrin 30-11-03]
+
+
+if ucase$(left$(rdata, 8)) = "/carcel " then
+    '/carcel nick@motivo@<tiempo>
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    
+    rdata = right$(rdata, len(rdata) - 8)
+    
+    name = readfield(1, rdata, asc("@"))
+    tstr = readfield(2, rdata, asc("@"))
+    if (not isnumeric(readfield(3, rdata, asc("@")))) or name = "" or tstr = "" then
+        call senddata(toindex, userindex, 0, "||utilice /carcel nick@motivo@tiempo" & fonttype_info)
+        exit sub
+    end if
+    i = val(readfield(3, rdata, asc("@")))
+    
+    tindex = nameindex(name)
+    
+    'if ucase$(name) = "reeves" then exit sub
+    
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||el usuario no esta online." & fonttype_info)
+        exit sub
+    end if
+    
+    if userlist(tindex).flags.privilegios > 0 then
+        call senddata(toindex, userindex, 0, "||no podes encarcelar a administradores." & fonttype_info)
+        exit sub
+    end if
+    
+    if i > 60 then
+        call senddata(toindex, userindex, 0, "||no podes encarcelar por mas de 60 minutos." & fonttype_info)
+        exit sub
+    end if
+    
+    name = replace(name, "\", "")
+    name = replace(name, "/", "")
+    
+    if fileexist(charpath & name & ".chr", vbnormal) then
+        tint = val(getvar(charpath & name & ".chr", "penas", "cant"))
+        call writevar(charpath & name & ".chr", "penas", "cant", tint + 1)
+        call writevar(charpath & name & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": carcel " & i & "m, motivo: " & lcase$(tstr) & " " & date & " " & time)
+    end if
+    
+    call encarcelar(tindex, i, userlist(userindex).name)
+    call loggm(userlist(userindex).name, " encarcelo a " & name, userlist(userindex).flags.privilegios = 1)
+    exit sub
+end if
+
+if ucase$(left$(rdata, 13)) = "/advertencia " then
+    '/carcel nick@motivo
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    
+    rdata = right$(rdata, len(rdata) - 13)
+    
+    name = readfield(1, rdata, asc("@"))
+    tstr = readfield(2, rdata, asc("@"))
+    if name = "" or tstr = "" then
+        call senddata(toindex, userindex, 0, "||utilice /advertencia nick@motivo" & fonttype_info)
+        exit sub
+    end if
+    
+    tindex = nameindex(name)
+    
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||el usuario no esta online." & fonttype_info)
+        exit sub
+    end if
+    
+    if userlist(tindex).flags.privilegios > 0 then
+        call senddata(toindex, userindex, 0, "||no podes advertir a administradores." & fonttype_info)
+        exit sub
+    end if
+    
+    name = replace(name, "\", "")
+    name = replace(name, "/", "")
+    
+    if fileexist(charpath & name & ".chr", vbnormal) then
+        tint = val(getvar(charpath & name & ".chr", "penas", "cant"))
+        call writevar(charpath & name & ".chr", "penas", "cant", tint + 1)
+        call writevar(charpath & name & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": advertencia por: " & lcase$(tstr) & " " & date & " " & time)
+    end if
+    
+    call loggm(userlist(userindex).name, " advirtio a " & name, userlist(userindex).flags.privilegios = 1)
+    exit sub
+end if
+
+
 
 '<<<<<<<<<<<<<<<<<< semidioses <<<<<<<<<<<<<<<<<<<<<<<<
 '<<<<<<<<<<<<<<<<<< semidioses <<<<<<<<<<<<<<<<<<<<<<<<
@@ -3350,7 +3002,6 @@ if userlist(userindex).flags.privilegios < 2 then
     exit sub
 end if
 
-'info de user
 if ucase$(left$(rdata, 6)) = "/info " then
     call loggm(userlist(userindex).name, rdata, false)
     
@@ -3359,11 +3010,47 @@ if ucase$(left$(rdata, 6)) = "/info " then
     tindex = nameindex(rdata)
     
     if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
+        call senddata(toindex, userindex, 0, "||usuario offline, buscando en charfile." & fonttype_info)
+        senduserstatstxtoff userindex, rdata
+        'muy dificil :p
+        'senduserstatstxtfromchar userindex, tindex
+    else
+        if userlist(tindex).flags.privilegios = 3 then exit sub
+        senduserstatstxt userindex, tindex
+    end if
+
+    exit sub
+end if
+
+'ministats del user
+    if ucase$(left$(rdata, 6)) = "/stat " then
+        if userlist(userindex).flags.esrolesmaster then exit sub
+        call loggm(userlist(userindex).name, rdata, false)
+        
+        rdata = right$(rdata, len(rdata) - 6)
+        
+        tindex = nameindex(rdata)
+        
+        if tindex <= 0 then
+            call senddata(toindex, userindex, 0, "||usuario offline. leyendo charfile... " & fonttype_info)
+            senduserministatstxtfromchar userindex, tindex
+        else
+            senduserministatstxt userindex, tindex
+        end if
+    
         exit sub
     end if
 
-    senduserstatstxt userindex, tindex
+
+if ucase$(left$(rdata, 5)) = "/bal " then
+rdata = right$(rdata, len(rdata) - 5)
+tindex = nameindex(rdata)
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||usuario offline. leyendo charfile... " & fonttype_talk)
+        senduserorotxtfromchar userindex, rdata
+    else
+        call senddata(toindex, userindex, 0, "|| el usuario " & rdata & " tiene " & userlist(tindex).stats.banco & " en el banco" & fonttype_talk)
+    end if
     exit sub
 end if
 
@@ -3376,11 +3063,30 @@ if ucase$(left$(rdata, 5)) = "/inv " then
     tindex = nameindex(rdata)
     
     if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
-        exit sub
+        call senddata(toindex, userindex, 0, "||usuario offline. leyendo del charfile..." & fonttype_talk)
+        senduserinvtxtfromchar userindex, rdata
+    else
+        senduserinvtxt userindex, tindex
     end if
 
-    senduserinvtxt userindex, tindex
+    exit sub
+end if
+
+'inv del user
+if ucase$(left$(rdata, 5)) = "/bov " then
+    call loggm(userlist(userindex).name, rdata, false)
+    
+    rdata = right$(rdata, len(rdata) - 5)
+    
+    tindex = nameindex(rdata)
+    
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||usuario offline. leyendo charfile... " & fonttype_talk)
+        senduserbovedatxtfromchar userindex, rdata
+    else
+        senduserbovedatxt userindex, tindex
+    end if
+
     exit sub
 end if
 
@@ -3393,7 +3099,13 @@ if ucase$(left$(rdata, 8)) = "/skills " then
     tindex = nameindex(rdata)
     
     if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
+        call replace(rdata, "\", " ")
+        call replace(rdata, "/", " ")
+        
+        for tint = 1 to numskills
+            call senddata(toindex, userindex, 0, "|| char>" & skillsnames(tint) & " = " & getvar(charpath & rdata & ".chr", "skills", "sk" & tint) & fonttype_info)
+        next tint
+            call senddata(toindex, userindex, 0, "|| char> libres:" & getvar(charpath & rdata & ".chr", "stats", "skillptslibres") & fonttype_info)
         exit sub
     end if
 
@@ -3438,40 +3150,22 @@ if ucase$(rdata) = "/onlinegm" then
         exit sub
 end if
 
-if ucase$(left$(rdata, 8)) = "/carcel " then
-    
-    rdata = right$(rdata, len(rdata) - 8)
-    
-    name = readfield(1, rdata, 32)
-    i = val(readfield(1, rdata, 32))
-    name = right$(rdata, len(rdata) - (len(name) + 1))
-    
-    tindex = nameindex(name)
-    
-'    if ucase$(name) = "morgolock" then exit sub
-    
-    if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||el usuario no esta online." & fonttype_info)
+'barrin 30/9/03
+if ucase$(rdata) = "/onlinemap" then
+        for loopc = 1 to lastuser
+            if (userlist(loopc).name <> "") and userlist(loopc).pos.map = userlist(userindex).pos.map then
+                tstr = tstr & userlist(loopc).name & ", "
+            end if
+        next loopc
+        tstr = left$(tstr, len(tstr) - 2)
+        call senddata(toindex, userindex, 0, "||usuarios en el mapa: " & tstr & fonttype_info)
         exit sub
-    end if
-    
-    if userlist(tindex).flags.privilegios > userlist(userindex).flags.privilegios then
-        call senddata(toindex, userindex, 0, "||no podes encarcelar a alguien con jerarquia mayor a la tuya." & fonttype_info)
-        exit sub
-    end if
-    
-    if i > 30 then
-        call senddata(toindex, userindex, 0, "||no podes encarcelar por mas de 30 minutos." & fonttype_info)
-        exit sub
-    end if
-    
-    call encarcelar(tindex, i, userlist(userindex).name)
-    
-    exit sub
 end if
+
 
 'perdon
 if ucase$(left$(rdata, 7)) = "/perdon" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     rdata = right$(rdata, len(rdata) - 8)
     tindex = nameindex(rdata)
     if tindex > 0 then
@@ -3508,49 +3202,132 @@ if ucase$(left$(rdata, 7)) = "/echar " then
     exit sub
 end if
 
+if ucase$(left$(rdata, 10)) = "/ejecutar " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 10)
+    tindex = nameindex(rdata)
+    if userlist(tindex).flags.privilegios > 0 then
+        call senddata(toindex, userindex, 0, "||est�s loco?? como vas a pi�atear un gm!!!! :@" & fonttype_info)
+        exit sub
+    end if
+    if tindex > 0 then
+        call userdie(tindex)
+        call senddata(toall, 0, 0, "||" & userlist(userindex).name & " ha ejecutado a " & userlist(tindex).name & fonttype_ejecucion)
+        call loggm(userlist(userindex).name, " ejecuto a " & userlist(tindex).name, false)
+    else
+        call senddata(toindex, userindex, 0, "||no est� online" & fonttype_info)
+    end if
+exit sub
+end if
 
 if ucase$(left$(rdata, 5)) = "/ban " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     rdata = right$(rdata, len(rdata) - 5)
-    tindex = nameindex(readfield(2, rdata, asc("@")))
-    name = readfield(1, rdata, asc("@"))
+    tstr = readfield(2, rdata, asc("@")) ' nick
+    tindex = nameindex(tstr)
+    name = readfield(1, rdata, asc("@")) ' motivo
     
-    if ucase$(rdata) = "morgolock" then exit sub
+    if ucase$(rdata) = "reeves" then exit sub
+    
+    
+    ' crawling chaos, underground
+    ' cult has summed, twisted sound
+    
+    ' drain you out of your sanity
+    ' face the thing that sould not be!
     
     if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||el usuario no esta online." & fonttype_info)
-        exit sub
+        call senddata(toindex, userindex, 0, "||el usuario no esta online." & fonttype_talk)
+        
+        if fileexist(charpath & tstr & ".chr", vbnormal) then
+            tlong = userdarprivilegiolevel(tstr)
+            
+            if tlong > userlist(userindex).flags.privilegios then
+                call senddata(toindex, userindex, 0, "||no podes banear a al alguien de mayor jerarquia." & fonttype_info)
+                exit sub
+            end if
+            
+            if getvar(charpath & tstr & ".chr", "flags", "ban") <> "0" then
+                call senddata(toindex, userindex, 0, "||el personaje ya se encuentra baneado." & fonttype_info)
+                exit sub
+            end if
+            
+            call logbanfromname(tstr, userindex, name)
+            call senddata(toadmins, 0, 0, "||servidor> " & userlist(userindex).name & " ha baneado a " & tstr & "." & fonttype_server)
+            
+            'ponemos el flag de ban a 1
+            call writevar(charpath & tstr & ".chr", "flags", "ban", "1")
+            'ponemos la pena
+            tint = val(getvar(charpath & tstr & ".chr", "penas", "cant"))
+            call writevar(charpath & tstr & ".chr", "penas", "cant", tint + 1)
+            call writevar(charpath & tstr & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": ban por " & lcase$(name) & " " & date & " " & time)
+            
+            if tlong > 0 then
+                    userlist(userindex).flags.ban = 1
+                    call closesocket(userindex)
+                    call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & " banned by the server por bannear un administrador." & fonttype_fight)
+            end if
+
+            call loggm(userlist(userindex).name, "ban a " & tstr, false)
+        else
+            call senddata(toindex, userindex, 0, "||el pj " & tstr & " no existe." & fonttype_info)
+        end if
+    else
+        if userlist(tindex).flags.privilegios > userlist(userindex).flags.privilegios then
+            call senddata(toindex, userindex, 0, "||no podes banear a al alguien de mayor jerarquia." & fonttype_info)
+            exit sub
+        end if
+        
+        call logban(tindex, userindex, name)
+        call senddata(toadmins, 0, 0, "||servidor> " & userlist(userindex).name & " ha baneado a " & userlist(tindex).name & "." & fonttype_server)
+        
+        'ponemos el flag de ban a 1
+        userlist(tindex).flags.ban = 1
+        
+        if userlist(tindex).flags.privilegios > 0 then
+                userlist(userindex).flags.ban = 1
+                call closesocket(userindex)
+                call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & " banned by the server por bannear un administrador." & fonttype_fight)
+        end if
+        
+        call loggm(userlist(userindex).name, "ban a " & userlist(tindex).name, false)
+        
+        'ponemos el flag de ban a 1
+        call writevar(charpath & tstr & ".chr", "flags", "ban", "1")
+        'ponemos la pena
+        tint = val(getvar(charpath & tstr & ".chr", "penas", "cant"))
+        call writevar(charpath & tstr & ".chr", "penas", "cant", tint + 1)
+        call writevar(charpath & tstr & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": ban por " & lcase$(name) & " " & date & " " & time)
+        
+        call closesocket(tindex)
     end if
-    
-    if userlist(tindex).flags.privilegios > userlist(userindex).flags.privilegios then
-        call senddata(toindex, userindex, 0, "||no podes banear a al alguien de mayor jerarquia." & fonttype_info)
-        exit sub
-    end if
-    
-    call logban(tindex, userindex, name)
-    
-    call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & " echo a " & userlist(tindex).name & "." & fonttype_fight)
-    call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & " banned a " & userlist(tindex).name & "." & fonttype_fight)
-    
-    'ponemos el flag de ban a 1
-    userlist(tindex).flags.ban = 1
-    
-    if userlist(tindex).flags.privilegios > 0 then
-            userlist(userindex).flags.ban = 1
-            call closesocket(userindex)
-            call senddata(toadmins, 0, 0, "||" & userlist(userindex).name & " banned by the server por bannear un administrador." & fonttype_fight)
-    end if
-    
-    call loggm(userlist(userindex).name, "echo a " & userlist(tindex).name, false)
-    call loggm(userlist(userindex).name, "ban a " & userlist(tindex).name, false)
-    call closesocket(tindex)
+
     exit sub
 end if
 
 if ucase$(left$(rdata, 7)) = "/unban " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     rdata = right$(rdata, len(rdata) - 7)
+    
+    rdata = replace(rdata, "\", "")
+    rdata = replace(rdata, "/", "")
+    
+    if not fileexist(charpath & rdata & ".chr", vbnormal) then
+        call senddata(toindex, userindex, 0, "||charfile inexistente (no use +)" & fonttype_info)
+        exit sub
+    end if
+    
     call unban(rdata)
+    
+    'penas
+    i = val(getvar(charpath & rdata & ".chr", "penas", "cant"))
+    call writevar(charpath & rdata & ".chr", "penas", "cant", i + 1)
+    call writevar(charpath & rdata & ".chr", "penas", "p" & i + 1, lcase$(userlist(userindex).name) & ": unban. " & date & " " & time)
+    
     call loggm(userlist(userindex).name, "/unban a " & rdata, false)
     call senddata(toindex, userindex, 0, "||" & rdata & " unbanned." & fonttype_info)
+    
+
     exit sub
 end if
 
@@ -3600,6 +3377,7 @@ end if
 
 'resetea el inventario
 if ucase$(rdata) = "/resetinv" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     rdata = right$(rdata, len(rdata) - 9)
     if userlist(userindex).flags.targetnpc = 0 then exit sub
     call resetnpcinv(userlist(userindex).flags.targetnpc)
@@ -3609,6 +3387,7 @@ end if
 
 '/clean
 if ucase$(rdata) = "/limpiar" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     call limpiarmundo
     exit sub
 end if
@@ -3624,24 +3403,304 @@ if ucase$(left$(rdata, 6)) = "/rmsg " then
 end if
 
 'ip del nick
-if ucase$(left$(rdata, 8)) = "/ipnick " then
-    rdata = right$(rdata, len(rdata) - 8)
+if ucase$(left$(rdata, 9)) = "/nick2ip " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 9)
     tindex = nameindex(ucase$(rdata))
+    call loggm(userlist(userindex).name, "nick2ip solicito la ip de " & rdata, userlist(userindex).flags.privilegios = 1)
     if tindex > 0 then
-       call senddata(toindex, userindex, 0, "||el ip de " & rdata & " es " & userlist(tindex).ip & fonttype_info)
+        if (userlist(userindex).flags.privilegios > 0 and userlist(tindex).flags.privilegios = 0) or (userlist(userindex).flags.privilegios = 3) then
+            call senddata(toindex, userindex, 0, "||el ip de " & rdata & " es " & userlist(tindex).ip & fonttype_info)
+        else
+            call senddata(toindex, userindex, 0, "||no tienes los privilegios necesarios" & fonttype_info)
+        end if
+    else
+       call senddata(toindex, userindex, 0, "||no hay ningun personaje con ese nick" & fonttype_info)
     end if
+    exit sub
+end if
+ 
+'ip del nick
+if ucase$(left$(rdata, 9)) = "/ip2nick " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 9)
+
+    if instr(rdata, ".") < 1 then
+        tint = nameindex(rdata)
+        if tint < 1 then
+            call senddata(toindex, userindex, 0, "||pj offline" & fonttype_info)
+            exit sub
+        end if
+        rdata = userlist(tint).ip
+    end if
+    tstr = vbnullstring
+    call loggm(userlist(userindex).name, "ip2nick solicito los nicks de ip " & rdata, userlist(userindex).flags.privilegios = 1)
+    for loopc = 1 to lastuser
+        if userlist(loopc).ip = rdata and userlist(loopc).name <> "" and userlist(loopc).flags.userlogged then
+            if (userlist(userindex).flags.privilegios > 0 and userlist(loopc).flags.privilegios = 0) or (userlist(userindex).flags.privilegios = 3) then
+                tstr = tstr & userlist(loopc).name & ", "
+            end if
+        end if
+    next loopc
+    
+    call senddata(toindex, userindex, 0, "||los personajes con ip " & rdata & " son: " & tstr & fonttype_info)
     exit sub
 end if
 
-'ip del nick
-if ucase$(left$(rdata, 8)) = "/nickip " then
+
+if ucase$(left$(rdata, 8)) = "/onclan " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     rdata = right$(rdata, len(rdata) - 8)
-    tindex = ip_index(rdata)
-    if tindex > 0 then
-       call senddata(toindex, userindex, 0, "||el nick del ip " & rdata & " es " & userlist(tindex).name & fonttype_info)
+        for loopc = 1 to lastuser
+            if userlist(loopc).flags.userlogged then
+                if ucase(userlist(loopc).guildinfo.guildname) = ucase(rdata) then
+                    tstr = tstr & userlist(loopc).name & ", "
+                end if
+            end if
+        next loopc
+        call senddata(toindex, userindex, 0, "||clan " & ucase(rdata) & ": " & tstr & fonttype_guildmsg)
+     exit sub
+end if
+
+
+'crear teleport
+if ucase(left(rdata, 4)) = "/ct " then
+    if not userlist(userindex).flags.esrolesmaster and userlist(userindex).flags.privilegios < 3 then exit sub
+    '/ct mapa_dest x_dest y_dest
+    rdata = right(rdata, len(rdata) - 4)
+    call loggm(userlist(userindex).name, "/ct: " & rdata, false)
+    mapa = readfield(1, rdata, 32)
+    x = readfield(2, rdata, 32)
+    y = readfield(3, rdata, 32)
+    
+    if mapavalido(mapa) = false or inmapbounds(mapa, x, y) = false then
+        exit sub
     end if
+    if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).objinfo.objindex > 0 then
+        exit sub
+    end if
+    if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.map > 0 then
+        exit sub
+    end if
+    
+    if mapdata(mapa, x, y).objinfo.objindex > 0 then
+        call senddata(toindex, userindex, mapa, "||hay un objeto en el piso en ese lugar" & fonttype_info)
+        exit sub
+    end if
+    
+    dim et as obj
+    et.amount = 1
+    et.objindex = 378
+    
+    call makeobj(tomap, 0, userlist(userindex).pos.map, et, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1)
+    
+    et.amount = 1
+    et.objindex = 651
+    
+    call makeobj(tomap, 0, mapa, et, mapa, x, y)
+    
+    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.map = mapa
+    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.x = x
+    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.y = y
+    
     exit sub
 end if
+
+'destruir teleport
+'toma el ultimo click
+if ucase(left(rdata, 3)) = "/dt" then
+    '/dt
+    if not userlist(userindex).flags.esrolesmaster and userlist(userindex).flags.privilegios < 3 then exit sub
+    call loggm(userlist(userindex).name, "/dt", false)
+    
+    mapa = userlist(userindex).flags.targetmap
+    x = userlist(userindex).flags.targetx
+    y = userlist(userindex).flags.targety
+    
+    if objdata(mapdata(mapa, x, y).objinfo.objindex).objtype = objtype_teleport and _
+        mapdata(mapa, x, y).tileexit.map > 0 then
+        call eraseobj(tomap, 0, mapa, mapdata(mapa, x, y).objinfo.amount, mapa, x, y)
+        call eraseobj(tomap, 0, mapdata(mapa, x, y).tileexit.map, 1, mapdata(mapa, x, y).tileexit.map, mapdata(mapa, x, y).tileexit.x, mapdata(mapa, x, y).tileexit.y)
+        mapdata(mapa, x, y).tileexit.map = 0
+        mapdata(mapa, x, y).tileexit.x = 0
+        mapdata(mapa, x, y).tileexit.y = 0
+    end if
+    
+    exit sub
+end if
+
+
+if ucase$(rdata) = "/lluvia" then
+    call loggm(userlist(userindex).name, rdata, false)
+    lloviendo = not lloviendo
+    call senddata(toall, 0, 0, "llu")
+    exit sub
+end if
+
+
+if ucase(left(rdata, 9)) = "/setdesc " then
+    if not userlist(userindex).flags.esrolesmaster and userlist(userindex).flags.privilegios < 3 then exit sub
+    rdata = right$(rdata, len(rdata) - 9)
+    dummyint = userlist(userindex).flags.targetuser
+    if dummyint > 0 then
+        userlist(dummyint).descrm = rdata
+    else
+        call senddata(toindex, userindex, 0, "||haz click sobre un personaje antes!" & fonttype_info)
+    end if
+    exit sub
+    
+end if
+
+
+
+'modifica caracter
+if ucase$(left$(rdata, 5)) = "/mod " then
+    if not userlist(userindex).flags.esrolesmaster and userlist(userindex).flags.privilegios < 3 then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right$(rdata, len(rdata) - 5)
+    tstr = readfield(1, rdata, 32)
+    tindex = nameindex(tstr)
+    arg1 = readfield(2, rdata, 32)
+    arg2 = readfield(3, rdata, 32)
+    arg3 = readfield(4, rdata, 32)
+    arg4 = readfield(5, rdata, 32)
+    
+    select case ucase$(arg1)
+'        case "nick"
+'            t = split(rdata, " ", 3)
+'            if ubound(t) = 2 then
+'                call cambiarnick(userindex, tindex, t(2))
+'            end if
+        case "oro" '/mod yo oro 95000
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            if val(arg2) < 5000000 then
+                userlist(tindex).stats.gld = val(arg2)
+                call senduserstatsbox(tindex)
+            else
+                call senddata(toindex, userindex, 0, "||no esta permitido utilizar valores mayores. su comando ha quedado en los logs del juego." & fonttype_info)
+                exit sub
+            end if
+        case "exp" '/mod yo exp 9995000
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            if val(arg2) < 15995001 then
+                if userlist(tindex).stats.exp + val(arg2) > _
+                   userlist(tindex).stats.elu then
+                   dim resto
+                   resto = val(arg2) - userlist(tindex).stats.elu
+                   userlist(tindex).stats.exp = userlist(tindex).stats.exp + userlist(tindex).stats.elu
+                   call checkuserlevel(tindex)
+                   userlist(tindex).stats.exp = userlist(tindex).stats.exp + resto
+                else
+                   userlist(tindex).stats.exp = val(arg2)
+                end if
+                call senduserstatsbox(tindex)
+            else
+                call senddata(toindex, userindex, 0, "||no esta permitido utilizar valores mayores a mucho. su comando ha quedado en los logs del juego." & fonttype_info)
+                exit sub
+            end if
+        case "body"
+            if tindex <= 0 then
+                call writevar(charpath & replace$(readfield(1, rdata, 32), "+", " ") & ".chr", "init", "head", arg2)
+                call senddata(toindex, userindex, 0, "||charfile alterado:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            call changeuserchar(tomap, 0, userlist(tindex).pos.map, tindex, val(arg2), userlist(tindex).char.head, userlist(tindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            exit sub
+        case "head"
+            if tindex <= 0 then
+                call writevar(charpath & replace$(readfield(1, rdata, 32), "+", " ") & ".chr", "init", "body", arg2)
+                call senddata(toindex, userindex, 0, "||charfile alterado:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            call changeuserchar(tomap, 0, userlist(tindex).pos.map, tindex, userlist(tindex).char.body, val(arg2), userlist(tindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+            exit sub
+        case "cri"
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            userlist(tindex).faccion.criminalesmatados = val(arg2)
+            exit sub
+        case "ciu"
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            userlist(tindex).faccion.ciudadanosmatados = val(arg2)
+            exit sub
+        case "level"
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            userlist(tindex).stats.elv = val(arg2)
+            exit sub
+        case "clase"
+            if tindex <= 0 then
+                call senddata(toindex, userindex, 0, "||usuario offline:" & tstr & fonttype_info)
+                exit sub
+            end if
+            
+            if userlist(userindex).flags.esrolesmaster then exit sub
+            userlist(tindex).clase = ucase$(arg2)
+    '[dng]
+        case "skills"
+            for loopc = 1 to numskills
+                if ucase$(replace$(skillsnames(loopc), " ", "+")) = ucase$(arg2) then n = loopc
+            next loopc
+
+
+            if n = 0 then
+                call senddata(toindex, 0, 0, "|| skill inexistente!" & fonttype_info)
+                exit sub
+            end if
+
+            if tindex = 0 then
+                call writevar(charpath & replace$(readfield(1, rdata, 32), "+", " ") & ".chr", "skills", "sk" & n, arg3)
+                call senddata(toindex, userindex, 0, "||charfile alterado:" & tstr & fonttype_info)
+            else
+                userlist(tindex).stats.userskills(n) = val(arg3)
+            end if
+        exit sub
+        
+        case "skillslibres"
+            
+            if tindex = 0 then
+                call writevar(charpath & replace$(readfield(1, rdata, 32), "+", " ") & ".chr", "stats", "skillptslibres", arg2)
+                call senddata(toindex, userindex, 0, "||charfile alterado:" & tstr & fonttype_info)
+            
+            else
+                userlist(tindex).stats.skillpts = val(arg2)
+            end if
+        exit sub
+    '[/dng]
+        case else
+            call senddata(toindex, userindex, 0, "||comando no permitido." & fonttype_info)
+            exit sub
+        end select
+
+    exit sub
+end if
+
+
 
 
 
@@ -3652,8 +3711,214 @@ if userlist(userindex).flags.privilegios < 3 then
     exit sub
 end if
 
+'[el oso extended]
+
+
+
+
+'[/el oso]
+
+
+'[barrin 30-11-03]
+'quita todos los objetos del area
+if ucase$(rdata) = "/massdest" then
+    for y = userlist(userindex).pos.y - minyborder + 1 to userlist(userindex).pos.y + minyborder - 1
+            for x = userlist(userindex).pos.x - minxborder + 1 to userlist(userindex).pos.x + minxborder - 1
+                if x > 0 and y > 0 and x < 101 and y < 101 then _
+                    if mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex > 0 then _
+                    if itemnoesdemapa(mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex) then call eraseobj(tomap, userindex, userlist(userindex).pos.map, 10000, userlist(userindex).pos.map, x, y)
+            next x
+    next y
+    call loggm(userlist(userindex).name, "/massdest", (userlist(userindex).flags.privilegios = 1))
+    exit sub
+end if
+'[/barrin 30-11-03]
+
+
+'[yb]
+if ucase$(left$(rdata, 12)) = "/aceptconse " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 12)
+    tindex = nameindex(rdata)
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||usuario offline" & fonttype_info)
+    else
+        call senddata(toall, 0, 0, "||" & rdata & " fue aceptado en el honorable consejo real de banderbill." & fonttype_consejo)
+        userlist(tindex).flags.pertalcons = 1
+        call warpuserchar(tindex, userlist(tindex).pos.map, userlist(tindex).pos.x, userlist(tindex).pos.y, false)
+    end if
+    exit sub
+end if
+
+if ucase$(left$(rdata, 16)) = "/aceptconsecaos " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 16)
+    tindex = nameindex(rdata)
+    if tindex <= 0 then
+        call senddata(toindex, userindex, 0, "||usuario offline" & fonttype_info)
+    else
+        call senddata(toall, 0, 0, "||" & rdata & " fue aceptado en el consejo de la legi�n oscura." & fonttype_consejocaos)
+        userlist(tindex).flags.pertalconscaos = 1
+        call warpuserchar(tindex, userlist(tindex).pos.map, userlist(tindex).pos.x, userlist(tindex).pos.y, false)
+    end if
+    exit sub
+end if
+
+
+
+if left$(ucase$(rdata), 5) = "/piso" then
+    for x = 5 to 95
+        for y = 5 to 95
+            tindex = mapdata(userlist(userindex).pos.map, x, y).objinfo.objindex
+            if tindex > 0 then
+                if objdata(tindex).objtype <> 4 then
+                    call senddata(toindex, userindex, 0, "||(" & x & "," & y & ") " & objdata(tindex).name & fonttype_info)
+                end if
+            end if
+        next y
+    next x
+    exit sub
+end if
+
+if ucase$(left$(rdata, 11)) = "/kickconse " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 11)
+    tindex = nameindex(rdata)
+    if tindex <= 0 then
+        if fileexist(charpath & rdata & ".chr") then
+            call senddata(toindex, userindex, 0, "||usuario offline, echando de los consejos" & fonttype_info)
+            call writevar(charpath & ucase(rdata) & ".chr", "consejo", "pertenece", 0)
+            call writevar(charpath & ucase(rdata) & ".chr", "consejo", "pertenececaos", 0)
+        else
+            call senddata(toindex, userindex, 0, "||no se encuentra el charfile " & charpath & rdata & ".chr" & fonttype_info)
+            exit sub
+        end if
+    else
+        if userlist(tindex).flags.pertalcons > 0 then
+            call senddata(toindex, tindex, 0, "||has sido echado en el consejo de banderbill" & fonttype_talk & endc)
+            userlist(tindex).flags.pertalcons = 0
+            call warpuserchar(tindex, userlist(tindex).pos.map, userlist(tindex).pos.x, userlist(tindex).pos.y)
+            call senddata(toall, 0, 0, "||" & rdata & " fue expulsado del consejo de banderbill" & fonttype_consejo)
+        end if
+        if userlist(tindex).flags.pertalconscaos > 0 then
+            call senddata(toindex, tindex, 0, "||has sido echado en el consejo de la legi�n oscura" & fonttype_talk & endc)
+            userlist(tindex).flags.pertalconscaos = 0
+            call warpuserchar(tindex, userlist(tindex).pos.map, userlist(tindex).pos.x, userlist(tindex).pos.y)
+            call senddata(toall, 0, 0, "||" & rdata & " fue expulsado del consejo de la legi�n oscura" & fonttype_consejocaos)
+        end if
+    end if
+    exit sub
+end if
+'[/yb]
+
+
+
+if ucase(left(rdata, 8)) = "/trigger" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    
+    rdata = trim(right(rdata, len(rdata) - 8))
+    mapa = userlist(userindex).pos.map
+    x = userlist(userindex).pos.x
+    y = userlist(userindex).pos.y
+    if rdata <> "" then
+        tint = mapdata(mapa, x, y).trigger
+        mapdata(mapa, x, y).trigger = val(rdata)
+    end if
+    call senddata(toindex, userindex, 0, "||trigger " & mapdata(mapa, x, y).trigger & " en mapa " & mapa & " " & x & ", " & y & fonttype_info)
+    exit sub
+end if
+
+
+
+if ucase(rdata) = "/baniplist" then
+   
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    tstr = "||"
+    for loopc = 1 to banips.count
+        tstr = tstr & banips.item(loopc) & ", "
+    next loopc
+    tstr = tstr & fonttype_info
+    call senddata(toindex, userindex, 0, tstr)
+    exit sub
+end if
+
+if ucase(rdata) = "/banipreload" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call banipguardar
+    call banipcargar
+    exit sub
+end if
+
+if ucase(left(rdata, 14)) = "/miembrosclan " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = trim(right(rdata, len(rdata) - 9))
+    if not fileexist(app.path & "\guilds\" & rdata & "-members.mem") then
+        call senddata(toindex, userindex, 0, "|| no existe el clan: " & rdata & fonttype_info)
+        exit sub
+    end if
+    
+    call loggm(userlist(userindex).name, "miembrosclan a " & rdata, false)
+
+    tint = val(getvar(app.path & "\guilds\" & rdata & "-members" & ".mem", "init", "nromembers"))
+    
+    for i = 1 to tint
+        tstr = getvar(app.path & "\guilds\" & rdata & "-members" & ".mem", "members", "member" & i)
+        'tstr es la victima
+        call senddata(toindex, userindex, 0, "||" & tstr & "<" & rdata & ">." & fonttype_info)
+    next i
+
+    exit sub
+end if
+
+
+
+if ucase(left(rdata, 9)) = "/banclan " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = trim(right(rdata, len(rdata) - 9))
+    if not fileexist(app.path & "\guilds\" & rdata & "-members.mem") then
+        call senddata(toindex, userindex, 0, "|| no existe el clan: " & rdata & fonttype_info)
+        exit sub
+    end if
+    
+    call senddata(toall, 0, 0, "|| " & userlist(userindex).name & " banned al clan " & ucase$(rdata) & fonttype_fight)
+    
+    'baneamos a los miembros
+    call loggm(userlist(userindex).name, "banclan a " & rdata, false)
+
+    tint = val(getvar(app.path & "\guilds\" & rdata & "-members" & ".mem", "init", "nromembers"))
+    
+    for i = 1 to tint
+        tstr = getvar(app.path & "\guilds\" & rdata & "-members" & ".mem", "members", "member" & i)
+        'tstr es la victima
+        call ban(tstr, "administracion del servidor", "clan banned")
+        tindex = nameindex(tstr)
+        if tindex > 0 then
+            'esta online
+            userlist(tindex).flags.ban = 1
+            call closesocket(tindex)
+        end if
+        
+        call senddata(toall, 0, 0, "||   " & tstr & "<" & rdata & "> ha sido expulsado del servidor." & fonttype_fight)
+
+        'ponemos el flag de ban a 1
+        call writevar(charpath & tstr & ".chr", "flags", "ban", "1")
+
+        'ponemos la pena
+        n = val(getvar(charpath & tstr & ".chr", "penas", "cant"))
+        call writevar(charpath & tstr & ".chr", "penas", "cant", n + 1)
+        call writevar(charpath & tstr & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": ban al clan: " & rdata & " " & date & " " & time)
+
+    next i
+
+    exit sub
+end if
+
+
 'ban x ip
-if ucase(left(rdata, 6)) = "/banip" then
+if ucase(left(rdata, 7)) = "/banip " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     dim banip as string, xnick as boolean
     
     rdata = right(rdata, len(rdata) - 7)
@@ -3669,15 +3934,12 @@ if ucase(left(rdata, 6)) = "/banip" then
         banip = userlist(tindex).ip
     end if
     
-    'se fija si esta baneada
-    for loopc = 1 to banips.count
-        if banips.item(loopc) = banip then
-            call senddata(toindex, userindex, 0, "||la ip " & banip & " ya se encuentra en la lista de bans." & fonttype_info)
-            exit sub
-        end if
-    next loopc
+    if banipbuscar(banip) > 0 then
+        call senddata(toindex, userindex, 0, "||la ip " & banip & " ya se encuentra en la lista de bans." & fonttype_info)
+        exit sub
+    end if
     
-    banips.add banip
+    call banipagrega(banip)
     call senddata(toadmins, userindex, 0, "||" & userlist(userindex).name & " baneo la ip " & banip & fonttype_fight)
     
     if xnick = true then
@@ -3698,33 +3960,38 @@ if ucase(left(rdata, 6)) = "/banip" then
 end if
 
 'desbanea una ip
-if ucase(left(rdata, 8)) = "/unbanip" then
+if ucase(left(rdata, 9)) = "/unbanip " then
     
+    if userlist(userindex).flags.esrolesmaster then exit sub
     
     rdata = right(rdata, len(rdata) - 9)
     call loggm(userlist(userindex).name, "/unbanip " & rdata, false)
     
-    for loopc = 1 to banips.count
-        if banips.item(loopc) = rdata then
-            banips.remove loopc
-            call senddata(toindex, userindex, 0, "||la ip " & banip & " se ha quitado de la lista de bans." & fonttype_info)
-            exit sub
-        end if
-    next loopc
+'    for loopc = 1 to banips.count
+'        if banips.item(loopc) = rdata then
+'            banips.remove loopc
+'            call senddata(toindex, userindex, 0, "||la ip " & banip & " se ha quitado de la lista de bans." & fonttype_info)
+'            exit sub
+'        end if
+'    next loopc
+'
+'    call senddata(toindex, userindex, 0, "||la ip " & rdata & " no se encuentra en la lista de bans." & fonttype_info)
     
-    call senddata(toindex, userindex, 0, "||la ip " & rdata & " no se encuentra en la lista de bans." & fonttype_info)
+    if banipquita(rdata) then
+        call senddata(toindex, userindex, 0, "||la ip """ & rdata & """ se ha quitado de la lista de bans." & fonttype_info)
+    else
+        call senddata(toindex, userindex, 0, "||la ip """ & rdata & """ no se encuentra en la lista de bans." & fonttype_info)
+    end if
     
     exit sub
 end if
 
-'crear teleport
-if ucase(left(rdata, 3)) = "/ct" then
-    '/ct mapa_dest x_dest y_dest
-    rdata = right(rdata, len(rdata) - 4)
-    call loggm(userlist(userindex).name, "/ct: " & rdata, false)
-    mapa = readfield(1, rdata, 32)
-    x = readfield(2, rdata, 32)
-    y = readfield(3, rdata, 32)
+
+
+'crear item
+if ucase(left(rdata, 4)) = "/ci " then
+    rdata = right$(rdata, len(rdata) - 4)
+    call loggm(userlist(userindex).name, "/ci: " & rdata, false)
     
     if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).objinfo.objindex > 0 then
         exit sub
@@ -3732,42 +3999,22 @@ if ucase(left(rdata, 3)) = "/ct" then
     if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.map > 0 then
         exit sub
     end if
-    if mapavalido(mapa) = false or inmapbounds(mapa, x, y) = false then
+    if val(rdata) < 1 or val(rdata) > numobjdatas then
         exit sub
     end if
     
-    dim et as obj
-    et.amount = 1
-    et.objindex = 378
+    dim objeto as obj
     
-    call makeobj(tomap, 0, userlist(userindex).pos.map, et, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1)
-    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.map = mapa
-    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.x = x
-    mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1).tileexit.y = y
+    call senddata(toindex, userindex, 0, "||atencion: fueron creados ***100*** items!, tire y /dest los que no necesite!!" & fonttype_guild)
+    
+    objeto.amount = 100
+    objeto.objindex = val(rdata)
+    
+    call makeobj(tomap, 0, userlist(userindex).pos.map, objeto, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y - 1)
     
     exit sub
 end if
 
-'destruir teleport
-'toma el ultimo click
-if ucase(left(rdata, 3)) = "/dt" then
-    '/dt
-    call loggm(userlist(userindex).name, "/dt", false)
-    
-    mapa = userlist(userindex).flags.targetmap
-    x = userlist(userindex).flags.targetx
-    y = userlist(userindex).flags.targety
-    
-    if objdata(mapdata(mapa, x, y).objinfo.objindex).objtype = objtype_teleport and _
-        mapdata(mapa, x, y).tileexit.map > 0 then
-        call eraseobj(tomap, 0, mapa, mapdata(mapa, x, y).objinfo.amount, mapa, x, y)
-        mapdata(mapa, x, y).tileexit.map = 0
-        mapdata(mapa, x, y).tileexit.x = 0
-        mapdata(mapa, x, y).tileexit.y = 0
-    end if
-    
-    exit sub
-end if
 
 'destruir
 if ucase$(left$(rdata, 5)) = "/dest" then
@@ -3776,6 +4023,77 @@ if ucase$(left$(rdata, 5)) = "/dest" then
     call eraseobj(tomap, userindex, userlist(userindex).pos.map, 10000, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
     exit sub
 end if
+
+if ucase$(left$(rdata, 8)) = "/nocaos " then
+    rdata = right$(rdata, len(rdata) - 8)
+    call loggm(userlist(userindex).name, "echo del caos a: " & rdata, false)
+
+    tindex = nameindex(rdata)
+    
+    if tindex > 0 then
+        userlist(tindex).faccion.fuerzascaos = 0
+        userlist(tindex).faccion.reenlistadas = 200
+        call senddata(toindex, userindex, 0, "|| " & rdata & " expulsado de las fuerzas del caos y prohibida la reenlistada" & fonttype_info)
+        call senddata(toindex, tindex, 0, "|| " & userlist(userindex).name & " te ha expulsado en forma definitiva de las fuerzas del caos." & fonttype_fight)
+    else
+        if fileexist(charpath & rdata & ".chr") then
+            call writevar(charpath & rdata & ".chr", "facciones", "ejercitocaos", 0)
+            call writevar(charpath & rdata & ".chr", "facciones", "reenlistadas", 200)
+            call writevar(charpath & rdata & ".chr", "facciones", "extra", "expulsado por " & userlist(userindex).name)
+            call senddata(toindex, userindex, 0, "|| " & rdata & " expulsado de las fuerzas del caos y prohibida la reenlistada" & fonttype_info)
+        else
+            call senddata(toindex, userindex, 0, "|| " & rdata & ".chr inexistente." & fonttype_info)
+        end if
+    end if
+    exit sub
+end if
+
+if ucase$(left$(rdata, 8)) = "/noreal " then
+    rdata = right$(rdata, len(rdata) - 8)
+    call loggm(userlist(userindex).name, "echo de la real a: " & rdata, false)
+
+    rdata = replace(rdata, "\", "")
+    rdata = replace(rdata, "/", "")
+
+    tindex = nameindex(rdata)
+
+    if tindex > 0 then
+        userlist(tindex).faccion.armadareal = 0
+        userlist(tindex).faccion.reenlistadas = 200
+        call senddata(toindex, userindex, 0, "|| " & rdata & " expulsado de las fuerzas reales y prohibida la reenlistada" & fonttype_info)
+        call senddata(toindex, tindex, 0, "|| " & userlist(userindex).name & " te ha expulsado en forma definitiva de las fuerzas reales." & fonttype_fight)
+    else
+        if fileexist(charpath & rdata & ".chr") then
+            call writevar(charpath & rdata & ".chr", "facciones", "ejercitoreal", 0)
+            call writevar(charpath & rdata & ".chr", "facciones", "reenlistadas", 200)
+            call writevar(charpath & rdata & ".chr", "facciones", "extra", "expulsado por " & userlist(userindex).name)
+            call senddata(toindex, userindex, 0, "|| " & rdata & " expulsado de las fuerzas reales y prohibida la reenlistada" & fonttype_info)
+        else
+            call senddata(toindex, userindex, 0, "|| " & rdata & ".chr inexistente." & fonttype_info)
+        end if
+    end if
+    exit sub
+end if
+
+if ucase$(left$(rdata, 11)) = "/forcemidi " then
+    rdata = right$(rdata, len(rdata) - 11)
+    if not isnumeric(rdata) then
+        exit sub
+    else
+        call senddata(toall, 0, 0, "|| " & userlist(userindex).name & " broadcast musica: " & rdata & fonttype_server)
+        call senddata(toall, 0, 0, "tm" & rdata)
+    end if
+end if
+
+if ucase$(left$(rdata, 10)) = "/forcewav " then
+    rdata = right$(rdata, len(rdata) - 10)
+    if not isnumeric(rdata) then
+        exit sub
+    else
+        call senddata(toall, 0, 0, "tw" & rdata)
+    end if
+end if
+
 
 'bloquear
 if ucase$(left$(rdata, 5)) = "/bloq" then
@@ -3812,8 +4130,65 @@ if ucase$(rdata) = "/masskill" then
     exit sub
 end if
 
+'ultima ip de un char
+if ucase(left(rdata, 8)) = "/lastip " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right(rdata, len(rdata) - 8)
+    
+    'no se si sea muy necesario, pero por si las dudas... ;)
+    rdata = replace(rdata, "\", "")
+    rdata = replace(rdata, "/", "")
+    
+    if fileexist(charpath & rdata & ".chr", vbnormal) then
+        call senddata(toindex, userindex, 0, "||la ultima ip de """ & rdata & """ fue : " & getvar(charpath & rdata & ".chr", "init", "lastip") & fonttype_info)
+    else
+        call senddata(toindex, userindex, 0, "||charfile """ & rdata & """ inexistente." & fonttype_info)
+    end if
+    exit sub
+end if
+
+
+
+
+
+'cambia el motd
+if ucase(rdata) = "/motdcambia" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    tstr = "zmotd"
+    for loopc = 1 to maxlines
+        tstr = tstr & motd(loopc).texto & vbcrlf
+    next loopc
+    if right(tstr, 2) = vbcrlf then tstr = left(tstr, len(tstr) - 2)
+    call senddata(toindex, userindex, 0, tstr)
+    exit sub
+end if
+
+if ucase(left(rdata, 5)) = "zmotd" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right(rdata, len(rdata) - 5)
+    t = split(rdata, vbcrlf)
+    
+    maxlines = ubound(t) - lbound(t) + 1
+    redim motd(1 to maxlines)
+    call writevar(app.path & "\dat\motd.ini", "init", "numlines", cstr(maxlines))
+    
+    n = lbound(t)
+    for loopc = 1 to maxlines
+        call writevar(app.path & "\dat\motd.ini", "motd", "line" & loopc, t(n))
+        motd(loopc).texto = t(n)
+        n = n + 1
+    next loopc
+    
+    exit sub
+end if
+
+
 'quita todos los npcs del area
 if ucase$(rdata) = "/limpiar" then
+        if userlist(userindex).flags.esrolesmaster then exit sub
         call limpiarmundo
         exit sub
 end if
@@ -3823,67 +4198,77 @@ if ucase$(left$(rdata, 6)) = "/smsg " then
     rdata = right$(rdata, len(rdata) - 6)
     call loggm(userlist(userindex).name, "mensaje de sistema:" & rdata, false)
     call senddata(toall, 0, 0, "!!" & rdata & endc)
-    
     exit sub
 end if
 
 'crear criatura, toma directamente el indice
 if ucase$(left$(rdata, 5)) = "/acc " then
    rdata = right$(rdata, len(rdata) - 5)
+   call loggm(userlist(userindex).name, "sumoneo a " & npclist(val(rdata)).name & " en mapa " & userlist(userindex).pos.map, (userlist(userindex).flags.privilegios = 1))
    call spawnnpc(val(rdata), userlist(userindex).pos, true, false)
    exit sub
 end if
 
 'crear criatura con respawn, toma directamente el indice
 if ucase$(left$(rdata, 6)) = "/racc " then
+ 
    rdata = right$(rdata, len(rdata) - 6)
+   call loggm(userlist(userindex).name, "sumoneo con respawn " & npclist(val(rdata)).name & " en mapa " & userlist(userindex).pos.map, (userlist(userindex).flags.privilegios = 1))
    call spawnnpc(val(rdata), userlist(userindex).pos, true, true)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ai1 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    armaduraimperial1 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ai2 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
-   armaduraimperial1 = val(rdata)
+   armaduraimperial2 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ai3 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    armaduraimperial3 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ai4 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    tunicamagoimperial = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ac1 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    armaduracaos1 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ac2 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    armaduracaos2 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ac3 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    armaduracaos3 = val(rdata)
    exit sub
 end if
 
 if ucase$(left$(rdata, 5)) = "/ac4 " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
    rdata = right$(rdata, len(rdata) - 5)
    tunicamagocaos = val(rdata)
    exit sub
@@ -3893,6 +4278,7 @@ end if
 
 'comando para depurar la navegacion
 if ucase$(rdata) = "/nave" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     if userlist(userindex).flags.navegando = 1 then
         userlist(userindex).flags.navegando = 0
     else
@@ -3901,12 +4287,27 @@ if ucase$(rdata) = "/nave" then
     exit sub
 end if
 
+if ucase$(rdata) = "/habilitar" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    if serversologms > 0 then
+        call senddata(toindex, userindex, 0, "||servidor habilitado para todos" & fonttype_info)
+        serversologms = 0
+    else
+        call senddata(toindex, userindex, 0, "||servidor restringido a administradores." & fonttype_info)
+        serversologms = 1
+    end if
+    exit sub
+end if
+
 'apagamos
 if ucase$(rdata) = "/apagar" then
-    if ucase$(userlist(userindex).name) <> "morgolock" then
-        call loggm(userlist(userindex).name, "���intento apagar el server!!!", false)
-        exit sub
-    end if
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call senddata(toall, userindex, 0, "||" & userlist(userindex).name & " intenta apagar el servidor!!!" & fonttype_fight)
+'    if ucase$(userlist(userindex).name) <> "alejolp" then
+'        call loggm(userlist(userindex).name, "���intento apagar el server!!!", false)
+'        exit sub
+'    end if
     'log
     mifile = freefile
     open app.path & "\logs\main.log" for append shared as #mifile
@@ -3916,8 +4317,26 @@ if ucase$(rdata) = "/apagar" then
     exit sub
 end if
 
+'reiniciamos
+'if ucase$(rdata) = "/reiniciar" then
+'    call loggm(userlist(userindex).name, rdata, false)
+'    if ucase$(userlist(userindex).name) <> "alejolp" then
+'        call loggm(userlist(userindex).name, "���intento apagar el server!!!", false)
+'        exit sub
+'    end if
+'    'log
+'    mifile = freefile
+'    open app.path & "\logs\main.log" for append shared as #mifile
+'    print #mifile, date & " " & time & " server reiniciado por " & userlist(userindex).name & ". "
+'    close #mifile
+'    reiniciarserver = 666
+'    exit sub
+'end if
+
 'condena
 if ucase$(left$(rdata, 7)) = "/conden" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     rdata = right$(rdata, len(rdata) - 8)
     tindex = nameindex(rdata)
     if tindex > 0 then call volvercriminal(tindex)
@@ -3925,6 +4344,8 @@ if ucase$(left$(rdata, 7)) = "/conden" then
 end if
 
 if ucase$(left$(rdata, 7)) = "/rajar " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     rdata = right$(rdata, len(rdata) - 7)
     tindex = nameindex(ucase$(rdata))
     if tindex > 0 then
@@ -3933,110 +4354,292 @@ if ucase$(left$(rdata, 7)) = "/rajar " then
     exit sub
 end if
 
-'modifica caracter
-if ucase$(left$(rdata, 5)) = "/mod " then
+if ucase$(left$(rdata, 11)) = "/rajarclan " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
     call loggm(userlist(userindex).name, rdata, false)
-    rdata = right$(rdata, len(rdata) - 5)
-    tindex = nameindex(readfield(1, rdata, 32))
-    arg1 = readfield(2, rdata, 32)
-    arg2 = readfield(3, rdata, 32)
-    arg3 = readfield(4, rdata, 32)
-    arg4 = readfield(5, rdata, 32)
-    if tindex <= 0 then
-        call senddata(toindex, userindex, 0, "||usuario offline." & fonttype_info)
+    rdata = right$(rdata, len(rdata) - 11)
+    tindex = nameindex(ucase$(rdata))
+    if tindex > 0 then
+        call eacharmember(tindex, userlist(userindex).name)
+        userlist(tindex).guildinfo.guildname = ""
+        userlist(tindex).guildinfo.esguildleader = 0
+    end if
+    exit sub
+end if
+
+'lst email
+if ucase$(left$(rdata, 11)) = "/lastemail " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    rdata = right$(rdata, len(rdata) - 11)
+    if fileexist(charpath & rdata & ".chr") then
+        tstr = getvar(charpath & rdata & ".chr", "contacto", "email")
+        call senddata(toindex, userindex, 0, "||last email de " & rdata & ":" & tstr & fonttype_info)
+    end if
+exit sub
+end if
+
+
+'altera password
+if ucase$(left$(rdata, 7)) = "/apass " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right$(rdata, len(rdata) - 7)
+    tstr = readfield(1, rdata, asc("@"))
+    if tstr = "" then
+        call senddata(toindex, userindex, 0, "||usar /apass <pjsinpass>@<pjconpass>" & fonttype_info)
+        exit sub
+    end if
+    tindex = nameindex(tstr)
+    if tindex > 0 then
+        call senddata(toindex, userindex, 0, "||el usuario a cambiarle el pass (" & tstr & ") esta online, no se puede si esta online" & fonttype_info)
+        exit sub
+    end if
+    arg1 = readfield(2, rdata, asc("@"))
+    if arg1 = "" then
+        call senddata(toindex, userindex, 0, "||usar /apass <pjsinpass> <pjconpass>" & fonttype_info)
+        exit sub
+    end if
+    if not fileexist(charpath & tstr & ".chr") or not fileexist(charpath & arg1 & ".chr") then
+        call senddata(toindex, userindex, 0, "||alguno de los pjs no existe " & tstr & "@" & arg1 & fonttype_info)
+    else
+        arg2 = getvar(charpath & arg1 & ".chr", "init", "password")
+        call writevar(charpath & tstr & ".chr", "init", "password", arg2)
+        call senddata(toindex, userindex, 0, "||password de " & tstr & " cambiado a: " & arg2 & fonttype_info)
+    end if
+exit sub
+end if
+
+'altera email
+if ucase$(left$(rdata, 8)) = "/aemail " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right$(rdata, len(rdata) - 8)
+    tstr = readfield(1, rdata, asc("-"))
+    if tstr = "" then
+        call senddata(toindex, userindex, 0, "||usar /aemail <pj>-<nuevomail>" & fonttype_info)
+        exit sub
+    end if
+    tindex = nameindex(tstr)
+    if tindex > 0 then
+        call senddata(toindex, userindex, 0, "||el usuario esta online, no se puede si esta online" & fonttype_info)
+        exit sub
+    end if
+    arg1 = readfield(2, rdata, asc("-"))
+    if arg1 = "" then
+        call senddata(toindex, userindex, 0, "||usar /aemail <pj>-<nuevomail>" & fonttype_info)
+        exit sub
+    end if
+    if not fileexist(charpath & tstr & ".chr") then
+        call senddata(toindex, userindex, 0, "||no existe el charfile " & charpath & tstr & ".chr" & fonttype_info)
+    else
+        call writevar(charpath & tstr & ".chr", "contacto", "email", arg1)
+        call senddata(toindex, userindex, 0, "||email de " & tstr & " cambiado a: " & arg1 & fonttype_info)
+    end if
+exit sub
+end if
+
+
+if ucase$(left$(rdata, 7)) = "/aname " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right$(rdata, len(rdata) - 7)
+    tstr = readfield(1, rdata, asc("@"))
+    arg1 = readfield(2, rdata, asc("@"))
+    
+    
+    if tstr = "" or arg1 = "" then
+        call senddata(toindex, userindex, 0, "||usar: /aname origen@destino" & fonttype_info)
         exit sub
     end if
     
-    select case ucase$(arg1)
+    tindex = nameindex(tstr)
+    if tindex > 0 then
+        call senddata(toindex, userindex, 0, "||el pj esta online, debe salir para el cambio" & fonttype_warning)
+        exit sub
+    end if
     
-        case "oro"
-            if val(arg2) < 95001 then
-                userlist(tindex).stats.gld = val(arg2)
-                call senduserstatsbox(tindex)
-            else
-                call senddata(toindex, userindex, 0, "||no esta permitido utilizar valores mayores a 95000. su comando ha quedado en los logs del juego." & fonttype_info)
-                exit sub
-            end if
-        case "exp"
-            if val(arg2) < 9995001 then
-                if userlist(tindex).stats.exp + val(arg2) > _
-                   userlist(tindex).stats.elu then
-                   dim resto
-                   resto = val(arg2) - userlist(tindex).stats.elu
-                   userlist(tindex).stats.exp = userlist(tindex).stats.exp + userlist(tindex).stats.elu
-                   call checkuserlevel(tindex)
-                   userlist(tindex).stats.exp = userlist(tindex).stats.exp + resto
-                else
-                   userlist(tindex).stats.exp = val(arg2)
-                end if
-                call senduserstatsbox(tindex)
-            else
-                call senddata(toindex, userindex, 0, "||no esta permitido utilizar valores mayores a 5000. su comando ha quedado en los logs del juego." & fonttype_info)
-                exit sub
-            end if
-   
-       
-        case "body"
-            call changeuserchar(tomap, 0, userlist(tindex).pos.map, tindex, val(arg2), userlist(tindex).char.head, userlist(tindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-            exit sub
-        case "head"
-            call changeuserchar(tomap, 0, userlist(tindex).pos.map, tindex, userlist(tindex).char.body, val(arg2), userlist(tindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-            exit sub
-        case "cri"
-            userlist(tindex).faccion.criminalesmatados = val(arg2)
-            exit sub
-        case "ciu"
-            userlist(tindex).faccion.ciudadanosmatados = val(arg2)
-            exit sub
-        case "level"
-            userlist(tindex).stats.elv = val(arg2)
-            exit sub
-        case else
-            call senddata(toindex, userindex, 0, "||comando no permitido." & fonttype_info)
-            exit sub
-    end select
-
+    if fileexist(charpath & ucase(tstr) & ".chr") = false then
+        call senddata(toindex, userindex, 0, "||el pj " & tstr & " es inexistente " & fonttype_info)
+        exit sub
+    end if
+    if fileexist(charpath & ucase(arg1) & ".chr") = false then
+        filecopy charpath & ucase(tstr) & ".chr", charpath & ucase(arg1) & ".chr"
+        call senddata(toindex, userindex, 0, "||transferencia exitosa" & fonttype_info)
+        call writevar(charpath & tstr & ".chr", "flags", "ban", "1")
+        'ponemos la pena
+        tint = val(getvar(charpath & tstr & ".chr", "penas", "cant"))
+        call writevar(charpath & tstr & ".chr", "penas", "cant", tint + 1)
+        call writevar(charpath & tstr & ".chr", "penas", "p" & tint + 1, lcase$(userlist(userindex).name) & ": ban por cambio de nick a " & ucase$(arg1) & " " & date & " " & time)
+    else
+        call senddata(toindex, userindex, 0, "||el nick solicitado ya existe" & fonttype_info)
+        exit sub
+    end if
     exit sub
 end if
 
 
+
+
 if ucase$(left$(rdata, 9)) = "/dobackup" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     call dobackup
     exit sub
 end if
 
+if ucase$(left$(rdata, 11)) = "/guardamapa" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call savemapdata(userlist(userindex).pos.map)
+    exit sub
+end if
+
+if ucase$(left$(rdata, 12)) = "/modmapinfo " then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    rdata = right(rdata, len(rdata) - 12)
+    select case ucase(readfield(1, rdata, 32))
+    case "pk"
+        tstr = readfield(2, rdata, 32)
+        if tstr <> "" then
+            mapinfo(userlist(userindex).pos.map).pk = iif(tstr = "0", true, false)
+        end if
+        call senddata(toindex, userindex, 0, "||mapa " & userlist(userindex).pos.map & " pk: " & mapinfo(userlist(userindex).pos.map).pk & fonttype_info)
+    case "backup"
+        tstr = readfield(2, rdata, 32)
+        if tstr <> "" then
+            mapinfo(userlist(userindex).pos.map).backup = cbyte(tstr)
+        end if
+        call senddata(toindex, userindex, 0, "||mapa " & userlist(userindex).pos.map & " backup: " & mapinfo(userlist(userindex).pos.map).backup & fonttype_info)
+    end select
+    exit sub
+end if
+
 if ucase$(left$(rdata, 7)) = "/grabar" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call mdparty.actualizaexperiencias
     call guardarusuarios
     exit sub
 end if
 
 if ucase$(left$(rdata, 11)) = "/borrar sos" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     call ayuda.reset
     exit sub
 end if
 
 if ucase$(left$(rdata, 9)) = "/show int" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     call frmmain.mnumostrar_click
     exit sub
 end if
 
-if ucase$(rdata) = "/lluvia" then
-    lloviendo = not lloviendo
-    call senddata(toall, 0, 0, "llu")
+
+if ucase(rdata) = "/noche" then
+    if (userlist(userindex).name <> "el oso") then exit sub
+    denoche = not denoche
+    for loopc = 1 to numusers
+        if userlist(userindex).flags.userlogged and userlist(userindex).connid > -1 then
+            call enviarnoche(loopc)
+        end if
+    next loopc
     exit sub
 end if
 
 if ucase$(rdata) = "/passday" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
     call dayelapsed
     exit sub
 end if
 
+if ucase(rdata) = "/echartodospjs" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call echarpjsnoprivilegiados
+    exit sub
+end if
 
+
+
+if ucase(rdata) = "/tcpesstats" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call senddata(toindex, userindex, 0, "||los datos estan en bytes." & fonttype_info)
+    with tcpesstats
+        call senddata(toindex, userindex, 0, "||in/s: " & .bytesrecibidosxseg & " out/s: " & .bytesenviadosxseg & fonttype_info)
+        call senddata(toindex, userindex, 0, "||in/s max: " & .bytesrecibidosxsegmax & " -> " & .bytesrecibidosxsegcuando & fonttype_info)
+        call senddata(toindex, userindex, 0, "||out/s max: " & .bytesenviadosxsegmax & " -> " & .bytesenviadosxsegcuando & fonttype_info)
+    end with
+    tstr = ""
+    tlong = 0
+    for loopc = 1 to lastuser
+        if userlist(loopc).flags.userlogged and userlist(loopc).connid >= 0 and userlist(loopc).connidvalida then
+            if userlist(loopc).colasalida.count > 0 then
+                tstr = tstr & userlist(loopc).name & " (" & userlist(loopc).colasalida.count & "), "
+                tlong = tlong + 1
+            end if
+        end if
+    next loopc
+    call senddata(toindex, userindex, 0, "||posibles pjs trabados: " & tlong & fonttype_info)
+    call senddata(toindex, userindex, 0, "||" & tstr & fonttype_info)
+    exit sub
+end if
+
+if ucase$(rdata) = "/reloadnpcs" then
+
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+
+    call descarganpcsdat
+    call carganpcsdat
+
+    call senddata(toindex, userindex, 0, "|| npcs.dat y npcshostiles.dat recargados." & fonttype_info)
+    exit sub
+end if
+
+if ucase$(rdata) = "/reloadsini" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call loadsini
+    exit sub
+end if
+
+if ucase$(rdata) = "/reloadhechizos" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call cargarhechizos
+    exit sub
+end if
+
+if ucase$(rdata) = "/reloadobj" then
+    if userlist(userindex).flags.esrolesmaster then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call loadobjdata
+    exit sub
+end if
+
+if ucase$(rdata) = "/reiniciar" then
+    if userlist(userindex).name <> "el oso" then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call reiniciarservidor(true)
+    exit sub
+end if
+
+if ucase$(rdata) = "/autoupdate" then
+    if userlist(userindex).name <> "el oso" then exit sub
+    call loggm(userlist(userindex).name, rdata, false)
+    call senddata(toindex, userindex, 0, "|| tid: " & cstr(reiniciarautoupdate()) & fonttype_info)
+    exit sub
+end if
 exit sub
-
 
 errorhandler:
  call logerror("handledata. cadori:" & cadenaoriginal & " nom:" & userlist(userindex).name & "ui:" & userindex & " n: " & err.number & " d: " & err.description)
+ 'resume
  'call closesocket(userindex)
  call cerrar_usuario(userindex)
  
@@ -4045,138 +4648,129 @@ errorhandler:
 end sub
 
 sub reloadsokcet()
+debug.print "reloadsocket"
 
 on error goto errhandler
+#if usarquesocket = 1 then
+
+    call logapisock("reloadsokcet() " & numusers & " " & lastuser & " " & maxusers)
+    
+    if numusers <= 0 then
+        call wsapireiniciarsockets
+    else
+'       call apiclosesocket(socklisten)
+'       socklisten = listenforconnect(puerto, hwndmsg, "")
+    end if
+
+#elseif usarquesocket = 0 then
 
     frmmain.socket1.cleanup
     call configlisteningsocket(frmmain.socket1, puerto)
+    
+#elseif usarquesocket = 2 then
 
+    
+
+#end if
 
 exit sub
 errhandler:
-    call logerror("error en checksocketstate," & err.description)
+    call logerror("error en checksocketstate " & err.number & ": " & err.description)
 
 end sub
 
+'sistema de padrinos, creacion de personajes,
+public sub enviarconfigserver(byval userindex as integer)
+call senddata(toindex, userindex, 0, "cose" & usandosistemapadrinos & "," & puedecrearpersonajes)
 
-
-public sub eventosockaccept(sockid as long)
-#if usarapi then
-'==========================================================
-'uso de la api de winsock
-'========================
-
-'call logapisock("eventosockaccept")
-
-if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "pedido de conexion socketid:" & sockid & vbcrlf
-
-'on error resume next
-    
-    dim newindex as integer
-    dim ret as long
-    dim tam as long, sa as sockaddr
-    dim nuevosock as long
-    dim i as long
-    
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "nextopenuser" & vbcrlf
-    
-    newindex = nextopenuser ' nuevo indice
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "userindex asignado " & newindex & vbcrlf
-    
-    if newindex <= maxusers then
-        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "cargando socket " & newindex & vbcrlf
-        '=============================================
-        'sockid es en este caso es el socket de escucha,
-        'a diferencia de socketwrench que es el nuevo
-        'socket de la nueva conn
-        
-        tam = sockaddr_size
-        
-        ret = accept(sockid, sa, tam)
-        if ret = invalid_socket then
-            call logcriticevent("error en accept() api")
-            exit sub
-        end if
-        nuevosock = ret
-        
-        userlist(newindex).ip = getascip(sa.sin_addr)
-        
-        'busca si esta banneada la ip
-        for i = 1 to banips.count
-            if banips.item(i) = userlist(newindex).ip then
-                call apiclosesocket(nuevosock)
-                exit sub
-            end if
-        next i
-        
-        call logapisock("eventosockaccept newindex: " & newindex & " nuevosock: " & nuevosock & " ip: " & userlist(newindex).ip)
-        '=============================================
-        if ados.maxconexiones(userlist(newindex).ip) then
-            userlist(newindex).connid = -1
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "user slot reseteado " & newindex & vbcrlf
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "socket unloaded" & newindex & vbcrlf
-            'call logcriticevent(userlist(newindex).ip & " intento crear mas de 3 conexiones.")
-            call ados.restarconexion(userlist(newindex).ip)
-            call apiclosesocket(nuevosock)
-            'exit sub
-        end if
-        
-        userlist(newindex).connid = nuevosock
-        set userlist(newindex).commandsbuffer = new ccolaarray
-
-        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & userlist(newindex).ip & " logged." & vbcrlf
-    else
-        call logcriticevent("no acepte conexion porque no tenia slots")
-    end if
-    
-#end if
 end sub
 
-public sub eventosockread(slot as integer, byref datos as string)
-#if usarapi then
+public sub enviarnoche(byval userindex as integer)
 
-dim t() as string
+call senddata(toindex, userindex, 0, "noc" & iif(denoche and (mapinfo(userlist(userindex).pos.map).zona = campo or mapinfo(userlist(userindex).pos.map).zona = ciudad), "1", "0"))
+call senddata(toindex, userindex, 0, "noc" & iif(denoche, "1", "0"))
+
+end sub
+
+public sub echarpjsnoprivilegiados()
 dim loopc as long
 
-userlist(slot).rdbuffer = userlist(slot).rdbuffer & datos
-
-if instr(1, userlist(slot).rdbuffer, chr(2)) > 0 then
-    userlist(slot).rdbuffer = "clienteviejo" & endc
-    debug.print "clienteviejo"
-end if
-
-t = split(userlist(slot).rdbuffer, endc)
-if ubound(t) > 0 then
-    userlist(slot).rdbuffer = t(ubound(t))
-    
-    for loopc = 0 to ubound(t) - 1
-        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        '%%% si esta opcion se activa soluciona %%%
-        '%%% el problema del speedhack          %%%
-        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        if clientscommandsqueue = 1 then
-            if t(loopc) <> "" then if not userlist(slot).commandsbuffer.push(t(loopc)) then call cerrar_usuario(slot)
-        
-        else ' sh tiebe efecto
-              if userlist(slot).connid <> -1 then
-                call handledata(slot, t(loopc))
-              else
-                exit sub
-              end if
+for loopc = 1 to lastuser
+    if userlist(loopc).flags.userlogged and userlist(loopc).connid >= 0 and userlist(loopc).connidvalida then
+        if userlist(loopc).flags.privilegios < 1 then
+            call closesocket(loopc)
         end if
-    next loopc
-end if
-
-#end if
-end sub
-
-public sub eventosockclose(slot as integer)
-#if usarapi then
-    if userlist(slot).flags.userlogged then
-        call cerrar_usuario(slot)
-    else
-        call closesocket(slot)
     end if
-#end if
+next loopc
+
 end sub
+
+'public sub wrchintentarenviardatosencolados(byval index as integer)
+'#if usarquesocket = 0 then
+'dim ret as integer, dale as boolean
+'
+'on local error goto hayerr
+'
+'do while (userlist(index).colasalida.count > 0)
+'    userlist(index).colasalida.remove 1
+'loop
+'exit sub
+'
+''if isobject(userlist(index).colasalida) then
+'    dale = (userlist(index).colasalida.count > 0)
+'    do while dale 'and frmmain.socket2(index).iswritable
+'        ret = frmmain.socket2(index).write(userlist(index).colasalida.item(1), len(userlist(index).colasalida.item(1)))
+'        if ret < 0 then
+'            dale = false
+'            if frmmain.socket2(index).lasterror <> wsaewouldblock then
+'                call closesocketsl(index)
+'                call cerrar_usuario(index)
+'            end if
+'        else
+'            userlist(index).colasalida.remove 1
+'            dale = (userlist(index).colasalida.count > 0)
+'            debug.print index & ": " & userlist(index).colasalida.item(1)
+'            debug.print "desencolado."
+'        end if
+''        dale = (ret >= 0)
+''        if dale then
+''            debug.print index & ": " & userlist(index).colasalida.item(1)
+''            debug.print "desencolado."
+''            userlist(index).colasalida.remove 1
+''        end if
+'    loop
+''end if
+'
+'exit sub
+'hayerr:
+'#end if
+'end sub
+'
+'public sub servintentarenviardatosencolados(byval userindex as integer)
+'#if usarquesocket = 2 then
+'
+'dim ret as integer, dale as boolean
+'
+'on local error goto hayerr
+'
+'dale = (userlist(userindex).colasalida.count > 0)
+'do while dale 'and frmmain.socket2(index).iswritable
+'    ret = frmmain.serv.enviar(userlist(userindex).connid, userlist(userindex).colasalida.item(1), len(userlist(userindex).colasalida.item(1)))
+'    if ret = 0 then 'todo ok
+'        userlist(userindex).colasalida.remove 1
+'        dale = (userlist(userindex).colasalida.count > 0)
+'    elseif ret = 1 then 'wsaewouldblock
+'        dale = false
+'    elseif ret = 2 then 'error critico
+'        call closesocketsl(userindex)
+'        call cerrar_usuario(userindex)
+'        dale = false
+'    end if
+'loop
+'
+'exit sub
+'hayerr:
+'
+'#end if
+'end sub
 

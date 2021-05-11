@@ -1,5 +1,5 @@
 attribute vb_name = "matematicas"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ attribute vb_name = "matematicas"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 
 option explicit
 
@@ -124,10 +125,13 @@ end function
 
 function randomnumber(byval lowerbound as variant, byval upperbound as variant) as single
 
-randomize timer
+'lo puse en sub main()
+'randomize timer
 
-randomnumber = (upperbound - lowerbound + 1) * rnd + lowerbound
-if randomnumber > upperbound then randomnumber = upperbound
+'randomnumber = (upperbound - lowerbound + 1) * rnd + lowerbound
+'if randomnumber > upperbound then randomnumber = upperbound
+
+randomnumber = int(rnd * (upperbound - lowerbound + 1)) + lowerbound
 
 end function
 

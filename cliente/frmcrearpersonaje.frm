@@ -864,10 +864,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -894,7 +890,6 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 option explicit
 
 public skillpoints as byte
@@ -977,7 +972,12 @@ select case index
         
         userhogar = lsthogar.list(lsthogar.listindex)
         
-        if checkdata() then frmpasswd.show vbmodal
+        'barrin 3/10/03
+        if checkdata() and usandosistemapadrinos = 1 then
+            frmpasswd.show vbmodal, me
+        elseif checkdata() and usandosistemapadrinos = 0 then
+            frmpasswdsinpadrinos.show vbmodal, me
+        end if
         
     case 1
         if musica = 0 then
@@ -1017,7 +1017,15 @@ private sub tirardados()
 'lbagilidad.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
 'lbcarisma.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
 'lbconstitucion.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-call senddata("tirdad")
+
+#if usarwrench = 1 then
+    if frmmain.socket1.connected then
+#else
+    if frmmain.winsock1.state = sckconnected then
+#end if
+        call senddata("tirdad")
+    end if
+
 end sub
 
 private sub command1_click(index as integer)

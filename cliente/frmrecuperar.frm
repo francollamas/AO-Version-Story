@@ -26,9 +26,10 @@ begin vb.form frmrecuperar
          strikethrough   =   0   'false
       endproperty
       height          =   300
-      left            =   360
+      left            =   345
       tabindex        =   3
       top             =   1830
+      visible         =   0   'false
       width           =   3750
    end
    begin vb.commandbutton command2 
@@ -43,7 +44,7 @@ begin vb.form frmrecuperar
          strikethrough   =   0   'false
       endproperty
       height          =   465
-      left            =   330
+      left            =   315
       mouseicon       =   "frmrecuperar.frx":0000
       mousepointer    =   99  'custom
       tabindex        =   5
@@ -68,6 +69,7 @@ begin vb.form frmrecuperar
       mousepointer    =   99  'custom
       tabindex        =   4
       top             =   2340
+      visible         =   0   'false
       width           =   1095
    end
    begin vb.textbox txtnombre 
@@ -85,7 +87,26 @@ begin vb.form frmrecuperar
       left            =   405
       tabindex        =   2
       top             =   1080
+      visible         =   0   'false
       width           =   3750
+   end
+   begin vb.label lblwhat 
+      caption         =   $"frmrecuperar.frx":02a4
+      beginproperty font 
+         name            =   "verdana"
+         size            =   11.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   1995
+      left            =   165
+      tabindex        =   7
+      top             =   645
+      width           =   4290
    end
    begin vb.label label3 
       alignment       =   2  'center
@@ -103,6 +124,7 @@ begin vb.form frmrecuperar
       left            =   375
       tabindex        =   6
       top             =   1560
+      visible         =   0   'false
       width           =   3735
    end
    begin vb.label label2 
@@ -121,11 +143,12 @@ begin vb.form frmrecuperar
       left            =   420
       tabindex        =   1
       top             =   810
+      visible         =   0   'false
       width           =   3735
    end
    begin vb.label label1 
       alignment       =   2  'center
-      caption         =   $"frmrecuperar.frx":02a4
+      caption         =   $"frmrecuperar.frx":033b
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -139,6 +162,7 @@ begin vb.form frmrecuperar
       left            =   60
       tabindex        =   0
       top             =   75
+      visible         =   0   'false
       width           =   4500
    end
 end
@@ -147,13 +171,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -185,10 +205,18 @@ attribute vb_exposed = false
 private sub command1_click()
 'ojo
 estadologin = recuperarpass
+me.mousepointer = 11
+
+#if usarwrench = 1 then
 frmmain.socket1.hostname = curserverip
+'frmmain.socket1.hostname = "127.0.0.1"
 frmmain.socket1.remoteport = curserverpasrecport
 frmmain.socket1.connect
-me.mousepointer = 11
+#else
+if frmmain.winsock1.state <> sckclosed then _
+    frmmain.winsock1.close
+frmmain.winsock1.connect curserverip, curserverpasrecport
+#end if
 end sub
 
 private sub command2_click()

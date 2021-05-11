@@ -258,7 +258,7 @@ begin vb.form frminterv
             left            =   60
             tabindex        =   25
             text            =   "0"
-            top             =   1140
+            top             =   1020
             width           =   930
          end
          begin vb.label label14 
@@ -276,7 +276,7 @@ begin vb.form frminterv
             height          =   195
             left            =   165
             tabindex        =   27
-            top             =   900
+            top             =   780
             width           =   540
          end
       end
@@ -610,7 +610,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -639,6 +639,7 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 
 
 public sub aplicarintervalos()

@@ -1,5 +1,5 @@
 attribute vb_name = "ai"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@ attribute vb_name = "ai"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
 option explicit
 
 public const estatico = 1
@@ -39,7 +41,9 @@ public const sigue_amo = 8
 public const npc_ataca_npc = 9
 public const npc_pathfinding = 10
 
-
+public const elementalfuego = 93
+public const elementaltierra = 94
+public const elementalagua = 92
 
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -53,7 +57,7 @@ public const npc_pathfinding = 10
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
-private sub guardiasai(byval npcindex as integer)
+private sub guardiasai(byval npcindex as integer, optional byval delcaos as boolean = false)
 dim npos as worldpos
 dim headingloop as byte
 dim theading as byte
@@ -63,25 +67,40 @@ dim ui as integer
 
 for headingloop = north to west
     npos = npclist(npcindex).pos
-    call headtopos(headingloop, npos)
-    if inmapbounds(npos.map, npos.x, npos.y) then
-        ui = mapdata(npos.map, npos.x, npos.y).userindex
-        if ui > 0 then
-              if userlist(ui).flags.muerto = 0 then
-                     '�es criminal?
-                     if criminal(ui) then
-                            call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
-                            call npcatacauser(npcindex, ui)
-                            exit sub
-                     elseif npclist(npcindex).flags.attackedby = userlist(ui).name _
-                               and not npclist(npcindex).flags.follow then
-                           call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
-                           call npcatacauser(npcindex, ui)
-                           exit sub
-                     end if
-              end if
+    if npclist(npcindex).flags.inmovilizado = 0 or headingloop = npclist(npcindex).char.heading then
+        call headtopos(headingloop, npos)
+        if inmapbounds(npos.map, npos.x, npos.y) then
+            ui = mapdata(npos.map, npos.x, npos.y).userindex
+            if ui > 0 then
+                  if userlist(ui).flags.muerto = 0 then
+                         '�es criminal?
+                         if not delcaos then
+                            if criminal(ui) then
+                                   call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                   call npcatacauser(npcindex, ui)
+                                   exit sub
+                            elseif npclist(npcindex).flags.attackedby = userlist(ui).name _
+                                      and not npclist(npcindex).flags.follow then
+                                  call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                  call npcatacauser(npcindex, ui)
+                                  exit sub
+                            end if
+                        else
+                            if not criminal(ui) then
+                                   call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                   call npcatacauser(npcindex, ui)
+                                   exit sub
+                            elseif npclist(npcindex).flags.attackedby = userlist(ui).name _
+                                      and not npclist(npcindex).flags.follow then
+                                  call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                  call npcatacauser(npcindex, ui)
+                                  exit sub
+                            end if
+                        end if
+                  end if
+            end if
         end if
-    end if
+    end if  'not inmovil
 next headingloop
 
 call restoreoldmovement(npcindex)
@@ -95,24 +114,39 @@ dim theading as byte
 dim y as integer
 dim x as integer
 dim ui as integer
+dim npci as integer
+dim atacopj as boolean
+
+atacopj = false
+
 for headingloop = north to west
     npos = npclist(npcindex).pos
-    call headtopos(headingloop, npos)
-    if inmapbounds(npos.map, npos.x, npos.y) then
-        ui = mapdata(npos.map, npos.x, npos.y).userindex
-        if ui > 0 then
-            if userlist(ui).flags.muerto = 0 then
-                if npclist(npcindex).flags.lanzaspells <> 0 then
-                    dim k as integer
-                    k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
-                    call npclanzaunspell(npcindex, ui)
+    if npclist(npcindex).flags.inmovilizado = 0 or npclist(npcindex).char.heading = headingloop then
+        call headtopos(headingloop, npos)
+        if inmapbounds(npos.map, npos.x, npos.y) then
+            ui = mapdata(npos.map, npos.x, npos.y).userindex
+            npci = mapdata(npos.map, npos.x, npos.y).npcindex
+            if ui > 0 and not atacopj then
+                if userlist(ui).flags.muerto = 0 then
+                    atacopj = true
+                    if npclist(npcindex).flags.lanzaspells <> 0 then
+                        dim k as integer
+                        k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
+                        call npclanzaunspell(npcindex, ui)
+                    end if
+                    call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                    call npcatacauser(npcindex, mapdata(npos.map, npos.x, npos.y).userindex)
+                    exit sub
                 end if
-                call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
-                call npcatacauser(npcindex, mapdata(npos.map, npos.x, npos.y).userindex)
-                exit sub
+            elseif npci > 0 then
+                    if npclist(npci).maestrouser > 0 and npclist(npci).flags.paralizado = 0 then
+                        call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                        call npcatacanpc(npcindex, npci, false)
+                        exit sub
+                    end if
             end if
         end if
-    end if
+    end if  'inmo
 next headingloop
 
 call restoreoldmovement(npcindex)
@@ -129,20 +163,22 @@ dim x as integer
 dim ui as integer
 for headingloop = north to west
     npos = npclist(npcindex).pos
-    call headtopos(headingloop, npos)
-    if inmapbounds(npos.map, npos.x, npos.y) then
-        ui = mapdata(npos.map, npos.x, npos.y).userindex
-        if ui > 0 then
-            if userlist(ui).name = npclist(npcindex).flags.attackedby then
-                if userlist(ui).flags.muerto = 0 then
-                        if npclist(npcindex).flags.lanzaspells > 0 then
-                          dim k as integer
-                          k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
-                          call npclanzaunspell(npcindex, ui)
-                        end if
-                        call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
-                        call npcatacauser(npcindex, ui)
-                        exit sub
+    if npclist(npcindex).flags.inmovilizado = 0 or npclist(npcindex).char.heading = headingloop then
+        call headtopos(headingloop, npos)
+        if inmapbounds(npos.map, npos.x, npos.y) then
+            ui = mapdata(npos.map, npos.x, npos.y).userindex
+            if ui > 0 then
+                if userlist(ui).name = npclist(npcindex).flags.attackedby then
+                    if userlist(ui).flags.muerto = 0 then
+                            if npclist(npcindex).flags.lanzaspells > 0 then
+                              dim k as integer
+                              k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
+                              call npclanzaunspell(npcindex, ui)
+                            end if
+                            call changenpcchar(tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                            call npcatacauser(npcindex, ui)
+                            exit sub
+                    end if
                 end if
             end if
         end if
@@ -160,21 +196,58 @@ dim theading as byte
 dim y as integer
 dim x as integer
 dim ui as integer
-for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
-    for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
-        if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
-               ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
-               if ui > 0 then
-                  if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
-                       if npclist(npcindex).flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
-                       theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
-                       call movenpcchar(npcindex, theading)
-                       exit sub
-                  end if
-               end if
-        end if
-    next x
-next y
+dim signons as integer
+dim signoeo as integer
+
+if npclist(npcindex).flags.inmovilizado = 1 then
+    select case npclist(npcindex).char.heading
+        case north
+            signons = -1
+            signoeo = 0
+        case east
+            signons = 0
+            signoeo = 1
+        case south
+            signons = 1
+            signoeo = 0
+        case west
+            signoeo = -1
+            signons = 0
+    end select
+    
+    for y = npclist(npcindex).pos.y to npclist(npcindex).pos.y + signons * 10 step iif(signons = 0, 1, signons)
+        for x = npclist(npcindex).pos.x to npclist(npcindex).pos.x + signoeo * 10 step iif(signoeo = 0, 1, signoeo)
+            
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+                   ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+                   if ui > 0 then
+                      if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                            if npclist(npcindex).flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
+                            exit sub
+                      end if
+                   end if
+            end if
+            
+        next x
+    next y
+    
+else
+    for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
+        for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+                   ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+                   if ui > 0 then
+                      if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                            if npclist(npcindex).flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
+                            theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
+                            call movenpcchar(npcindex, theading)
+                            exit sub
+                      end if
+                   end if
+            end if
+        next x
+    next y
+end if
 
 call restoreoldmovement(npcindex)
 
@@ -188,28 +261,80 @@ dim y as integer
 dim x as integer
 dim ui as integer
 
-for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
-    for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
-        if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
-            ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
-            if ui > 0 then
-                if userlist(ui).name = npclist(npcindex).flags.attackedby then
-                    if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
-                         if npclist(npcindex).flags.lanzaspells > 0 then
-                              dim k as integer
-                              k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
-                              call npclanzaunspell(npcindex, ui)
-                         end if
-                         theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
-                         call movenpcchar(npcindex, theading)
-                         exit sub
+dim signons as integer
+dim signoeo as integer
+
+if npclist(npcindex).flags.inmovilizado = 1 then
+    select case npclist(npcindex).char.heading
+        case north
+            signons = -1
+            signoeo = 0
+        case east
+            signons = 0
+            signoeo = 1
+        case south
+            signons = 1
+            signoeo = 0
+        case west
+            signoeo = -1
+            signons = 0
+    end select
+    
+    for y = npclist(npcindex).pos.y to npclist(npcindex).pos.y + signons * 10 step iif(signons = 0, 1, signons)
+        for x = npclist(npcindex).pos.x to npclist(npcindex).pos.x + signoeo * 10 step iif(signoeo = 0, 1, signoeo)
+
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+                ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+                if ui > 0 then
+                    if userlist(ui).name = npclist(npcindex).flags.attackedby then
+                        if npclist(npcindex).maestrouser > 0 then
+                            if not criminal(npclist(npcindex).maestrouser) and not criminal(ui) and (userlist(npclist(npcindex).maestrouser).flags.seguro or userlist(npclist(npcindex).maestrouser).faccion.armadareal = 1) then
+                                call senddata(toindex, npclist(npcindex).maestrouser, 0, "||la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado" & fonttype_info)
+                                npclist(npcindex).flags.attackedby = ""
+                                exit sub
+                            end if
+                        end if
+                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                             if npclist(npcindex).flags.lanzaspells > 0 then
+                                  call npclanzaunspell(npcindex, ui)
+                             end if
+                             exit sub
+                        end if
                     end if
                 end if
             end if
-        end if
-    next x
-next y
 
+        next x
+    next y
+else
+    for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
+        for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+                ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+                if ui > 0 then
+                    if userlist(ui).name = npclist(npcindex).flags.attackedby then
+                        if npclist(npcindex).maestrouser > 0 then
+                            if not criminal(npclist(npcindex).maestrouser) and not criminal(ui) and (userlist(npclist(npcindex).maestrouser).flags.seguro or userlist(npclist(npcindex).maestrouser).faccion.armadareal = 1) then
+                                call senddata(toindex, npclist(npcindex).maestrouser, 0, "||la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado" & fonttype_info)
+                                npclist(npcindex).flags.attackedby = ""
+                                call followamo(npcindex)
+                                exit sub
+                            end if
+                        end if
+                        if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                             if npclist(npcindex).flags.lanzaspells > 0 then
+                                  call npclanzaunspell(npcindex, ui)
+                             end if
+                             theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
+                             call movenpcchar(npcindex, theading)
+                             exit sub
+                        end if
+                    end if
+                end if
+            end if
+        next x
+    next y
+end if
 call restoreoldmovement(npcindex)
 
 end sub
@@ -224,8 +349,7 @@ end if
 
 end sub
 
-
-private sub persiguecriminal(byval npcindex as integer)
+private sub persigueciudadano(byval npcindex as integer)
 dim ui as integer
 dim npos as worldpos
 dim headingloop as byte
@@ -237,7 +361,7 @@ for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
         if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
            ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
            if ui > 0 then
-                if criminal(ui) then
+                if not criminal(ui) then
                    if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
                         if npclist(npcindex).flags.lanzaspells > 0 then
                               dim k as integer
@@ -254,6 +378,84 @@ for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
     next x
 next y
 
+call restoreoldmovement(npcindex)
+
+end sub
+
+
+private sub persiguecriminal(byval npcindex as integer)
+dim ui as integer
+dim npos as worldpos
+dim headingloop as byte
+dim theading as byte
+dim y as integer
+dim x as integer
+dim signons as integer
+dim signoeo as integer
+
+if npclist(npcindex).flags.inmovilizado = 1 then
+    select case npclist(npcindex).char.heading
+        case north
+            signons = -1
+            signoeo = 0
+        case east
+            signons = 0
+            signoeo = 1
+        case south
+            signons = 1
+            signoeo = 0
+        case west
+            signoeo = -1
+            signons = 0
+    end select
+    
+    for y = npclist(npcindex).pos.y to npclist(npcindex).pos.y + signons * 10 step iif(signons = 0, 1, signons)
+        for x = npclist(npcindex).pos.x to npclist(npcindex).pos.x + signoeo * 10 step iif(signoeo = 0, 1, signoeo)
+
+
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+               ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+               if ui > 0 then
+                    if criminal(ui) then
+                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                            if npclist(npcindex).flags.lanzaspells > 0 then
+'                                  dim k as integer
+'                                  k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
+                                  call npclanzaunspell(npcindex, ui)
+                            end if
+                            exit sub
+                       end if
+                    end if
+               end if
+            end if
+
+
+        next x
+    next y
+else
+    for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
+        for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+               ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
+               if ui > 0 then
+                    if criminal(ui) then
+                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 then
+                            if npclist(npcindex).flags.lanzaspells > 0 then
+                                  'dim k as integer
+                                  'k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
+                                  call npclanzaunspell(npcindex, ui)
+                            end if
+                            if npclist(npcindex).flags.inmovilizado = 1 then exit sub
+                            theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
+                            call movenpcchar(npcindex, theading)
+                            exit sub
+                       end if
+                    end if
+               end if
+            end if
+        next x
+    next y
+end if
 call restoreoldmovement(npcindex)
 
 end sub
@@ -297,23 +499,81 @@ dim y as integer
 dim x as integer
 dim ni as integer
 dim bnoesta as boolean
-for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
-    for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
-        if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
-           ni = mapdata(npclist(npcindex).pos.map, x, y).npcindex
-           if ni > 0 then
-                if npclist(npcindex).targetnpc = ni then
-                     bnoesta = true
-                     theading = finddirection(npclist(npcindex).pos, npclist(mapdata(npclist(npcindex).pos.map, x, y).npcindex).pos)
-                     call movenpcchar(npcindex, theading)
-                     call npcatacanpc(npcindex, ni)
-                     exit sub
-                end if
-           end if
-           
-        end if
-    next x
-next y
+
+dim signons as integer
+dim signoeo as integer
+
+if npclist(npcindex).flags.inmovilizado = 1 then
+    select case npclist(npcindex).char.heading
+        case north
+            signons = -1
+            signoeo = 0
+        case east
+            signons = 0
+            signoeo = 1
+        case south
+            signons = 1
+            signoeo = 0
+        case west
+            signoeo = -1
+            signons = 0
+    end select
+    
+    for y = npclist(npcindex).pos.y to npclist(npcindex).pos.y + signons * 10 step iif(signons = 0, 1, signons)
+        for x = npclist(npcindex).pos.x to npclist(npcindex).pos.x + signoeo * 10 step iif(signoeo = 0, 1, signoeo)
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+               ni = mapdata(npclist(npcindex).pos.map, x, y).npcindex
+               if ni > 0 then
+                    if npclist(npcindex).targetnpc = ni then
+                         bnoesta = true
+                         if npclist(npcindex).numero = elementalfuego then
+                             call npclanzaunspellsobrenpc(npcindex, ni)
+                             if npclist(ni).npctype = dragon then
+                                npclist(ni).canattack = 1
+                                call npclanzaunspellsobrenpc(ni, npcindex)
+                             end if
+                         else
+                            'aca verificamosss la distancia de ataque
+                            if distancia(npclist(npcindex).pos, npclist(ni).pos) <= 1 then
+                                call npcatacanpc(npcindex, ni)
+                            end if
+                         end if
+                         exit sub
+                    end if
+               end if
+            end if
+        next x
+    next y
+else
+    for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10
+        for x = npclist(npcindex).pos.x - 10 to npclist(npcindex).pos.x + 10
+            if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
+               ni = mapdata(npclist(npcindex).pos.map, x, y).npcindex
+               if ni > 0 then
+                    if npclist(npcindex).targetnpc = ni then
+                         bnoesta = true
+                         if npclist(npcindex).numero = elementalfuego then
+                             call npclanzaunspellsobrenpc(npcindex, ni)
+                             if npclist(ni).npctype = dragon then
+                                npclist(ni).canattack = 1
+                                call npclanzaunspellsobrenpc(ni, npcindex)
+                             end if
+                         else
+                            'aca verificamosss la distancia de ataque
+                            if distancia(npclist(npcindex).pos, npclist(ni).pos) <= 1 then
+                                call npcatacanpc(npcindex, ni)
+                            end if
+                         end if
+                         if npclist(npcindex).flags.inmovilizado = 1 then exit sub
+                         theading = finddirection(npclist(npcindex).pos, npclist(mapdata(npclist(npcindex).pos.map, x, y).npcindex).pos)
+                         call movenpcchar(npcindex, theading)
+                         exit sub
+                    end if
+               end if
+            end if
+        next x
+    next y
+end if
 
 if not bnoesta then
     if npclist(npcindex).maestrouser > 0 then
@@ -334,6 +594,8 @@ on error goto errorhandler
             '�es un guardia?
             if npclist(npcindex).npctype = npctype_guardias then
                     call guardiasai(npcindex)
+            elseif npclist(npcindex).npctype = npctype_guardiascaos then
+                    call guardiasai(npcindex, true)
             elseif npclist(npcindex).hostile and npclist(npcindex).stats.alineacion <> 0 then
                     call hostilmalvadoai(npcindex)
             elseif npclist(npcindex).hostile and npclist(npcindex).stats.alineacion = 0 then
@@ -345,16 +607,25 @@ on error goto errorhandler
             'call hostilbuenoai(npcindex)
         end if
         
+        
+        
+        
         '<<<<<<<<<<<movimiento>>>>>>>>>>>>>>>>
         select case npclist(npcindex).movement
             case mueve_al_azar
+                if npclist(npcindex).flags.inmovilizado = 1 then exit function
                 if npclist(npcindex).npctype = npctype_guardias then
                     if int(randomnumber(1, 12)) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(1, 4)))
                     end if
                     call persiguecriminal(npcindex)
-                else
+                elseif npclist(npcindex).npctype = npctype_guardiascaos then
                     if int(randomnumber(1, 12)) = 3 then
+                        call movenpcchar(npcindex, cbyte(randomnumber(1, 4)))
+                    end if
+                    call persigueciudadano(npcindex)
+                else
+                        if int(randomnumber(1, 12)) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(1, 4)))
                     end if
                 end if
@@ -368,6 +639,7 @@ on error goto errorhandler
             case guardias_atacan_criminales
                 call persiguecriminal(npcindex)
             case sigue_amo
+                if npclist(npcindex).flags.inmovilizado = 1 then exit function
                 call seguiramo(npcindex)
                 if int(randomnumber(1, 12)) = 3 then
                         call movenpcchar(npcindex, cbyte(randomnumber(1, 4)))
@@ -375,7 +647,7 @@ on error goto errorhandler
             case npc_ataca_npc
                 call ainpcatacanpc(npcindex)
             case npc_pathfinding
-                
+                if npclist(npcindex).flags.inmovilizado = 1 then exit function
                 if recalculatepath(npcindex) then
                     call pathfindingai(npcindex)
                     'existe el camino?
@@ -509,14 +781,16 @@ for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10    'makes a
                  'move towards user
                   dim tmpuserindex as integer
                   tmpuserindex = mapdata(npclist(npcindex).pos.map, x, y).userindex
-                  'we have to invert the coordinates, this is because
-                  'ore refers to maps in converse way of my pathfinding
-                  'routines.
-                  npclist(npcindex).pfinfo.target.x = userlist(tmpuserindex).pos.y
-                  npclist(npcindex).pfinfo.target.y = userlist(tmpuserindex).pos.x 'ops!
-                  npclist(npcindex).pfinfo.targetuser = tmpuserindex
-                  call seekpath(npcindex)
-                  exit function
+                  if userlist(tmpuserindex).flags.muerto = 0 and userlist(tmpuserindex).flags.invisible = 0 then
+                    'we have to invert the coordinates, this is because
+                    'ore refers to maps in converse way of my pathfinding
+                    'routines.
+                    npclist(npcindex).pfinfo.target.x = userlist(tmpuserindex).pos.y
+                    npclist(npcindex).pfinfo.target.y = userlist(tmpuserindex).pos.x 'ops!
+                    npclist(npcindex).pfinfo.targetuser = tmpuserindex
+                    call seekpath(npcindex)
+                    exit function
+                  end if
              end if
              
          end if
@@ -535,4 +809,14 @@ k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
 call npclanzaspellsobreuser(npcindex, userindex, npclist(npcindex).spells(k))
 
 end sub
+
+
+sub npclanzaunspellsobrenpc(byval npcindex as integer, byval targetnpc as integer)
+
+dim k as integer
+    k = randomnumber(1, npclist(npcindex).flags.lanzaspells)
+    call npclanzaspellsobrenpc(npcindex, targetnpc, npclist(npcindex).spells(k))
+
+end sub
+
 

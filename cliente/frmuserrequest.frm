@@ -1,10 +1,10 @@
 version 5.00
 begin vb.form frmuserrequest 
    caption         =   "peticion"
-   clientheight    =   2460
+   clientheight    =   2430
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   4680
+   clientwidth     =   4650
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"
@@ -16,11 +16,11 @@ begin vb.form frmuserrequest
       strikethrough   =   0   'false
    endproperty
    linktopic       =   "form1"
-   scaleheight     =   2460
-   scalewidth      =   4680
+   scaleheight     =   2430
+   scalewidth      =   4650
    startupposition =   1  'centerowner
    begin vb.commandbutton command1 
-      caption         =   "ok"
+      caption         =   "cerrar"
       height          =   495
       left            =   120
       tabindex        =   1
@@ -41,13 +41,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or

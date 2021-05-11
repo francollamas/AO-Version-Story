@@ -38,7 +38,6 @@ begin vb.form frmcargando
       _extenty        =   4233
       _version        =   393217
       backcolor       =   8421376
-      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       textrtf         =   $"frmcargando.frx":0000
@@ -70,12 +69,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by

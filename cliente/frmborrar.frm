@@ -51,6 +51,7 @@ begin vb.form frmborrar
       mousepointer    =   99  'custom
       tabindex        =   6
       top             =   2340
+      visible         =   0   'false
       width           =   1005
    end
    begin vb.textbox txtpasswd 
@@ -67,6 +68,7 @@ begin vb.form frmborrar
       left            =   135
       tabindex        =   5
       top             =   1860
+      visible         =   0   'false
       width           =   4350
    end
    begin vb.textbox txtnombre 
@@ -83,7 +85,26 @@ begin vb.form frmborrar
       left            =   120
       tabindex        =   4
       top             =   1140
+      visible         =   0   'false
       width           =   4350
+   end
+   begin vb.label lblwhat 
+      caption         =   $"frmborrar.frx":02a4
+      beginproperty font 
+         name            =   "verdana"
+         size            =   11.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   1995
+      left            =   195
+      tabindex        =   8
+      top             =   585
+      width           =   4290
    end
    begin vb.label label4 
       caption         =   "password:"
@@ -100,6 +121,7 @@ begin vb.form frmborrar
       left            =   150
       tabindex        =   3
       top             =   1635
+      visible         =   0   'false
       width           =   2145
    end
    begin vb.label label3 
@@ -117,6 +139,7 @@ begin vb.form frmborrar
       left            =   150
       tabindex        =   2
       top             =   900
+      visible         =   0   'false
       width           =   2145
    end
    begin vb.label label2 
@@ -135,6 +158,7 @@ begin vb.form frmborrar
       left            =   1740
       tabindex        =   1
       top             =   60
+      visible         =   0   'false
       width           =   1020
    end
    begin vb.label label1 
@@ -153,6 +177,7 @@ begin vb.form frmborrar
       left            =   120
       tabindex        =   0
       top             =   345
+      visible         =   0   'false
       width           =   4440
    end
 end
@@ -161,12 +186,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -197,10 +219,21 @@ attribute vb_exposed = false
 
 
 private sub cmdborrar_click()
+#if usarrwench = 1 then
+
 frmmain.socket1.hostname = curserverip
 frmmain.socket1.remoteport = curserverport
 me.mousepointer = 11
 frmmain.socket1.connect
+
+#else
+
+me.mousepointer = 11
+if frmmain.winsock1.state <> sckclosed then _
+    frmmain.winsock1.close
+frmmain.winsock1.connect curserverip, curserverport
+
+#end if
 end sub
 
 private sub command1_click()

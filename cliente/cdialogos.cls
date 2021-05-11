@@ -11,13 +11,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -243,7 +239,27 @@ on error resume next
         
         backbuffersurface.setfonttransparency true
         backbuffersurface.setforecolor lngcolor
+        
         backbuffersurface.setfont frmmain.font
+        
+        
+        backbuffersurface.drawtext lngxpos, lngypos, strtext, false
+   end if
+   
+end sub
+
+public sub drawtextbig(lngxpos as integer, lngypos as integer, strtext as string, lngcolor as long)
+on error resume next
+
+   if strtext <> "" then
+        backbuffersurface.setfonttransparency true
+        backbuffersurface.setforecolor vbblack
+        backbuffersurface.setfont frmmain.font
+        backbuffersurface.drawtext lngxpos - 2, lngypos - 1, strtext, false
+        
+        backbuffersurface.setfonttransparency true
+        backbuffersurface.setforecolor lngcolor
+        backbuffersurface.setfont frmmsg.font
         backbuffersurface.drawtext lngxpos, lngypos, strtext, false
    end if
    

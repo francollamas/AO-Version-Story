@@ -1,5 +1,5 @@
 attribute vb_name = "modfacciones"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@ attribute vb_name = "modfacciones"
 'pablo ignacio m�rquez
 
 
+
 option explicit
 
 public armaduraimperial1 as integer 'primer jerarquia
@@ -38,6 +39,26 @@ public armaduraimperial3 as integer 'enanos
 public tunicamagoimperial as integer 'magos
 public tunicamagoimperialenanos as integer 'magos
 
+public vestimentaimperialhumano as integer
+public vestimentaimperialenano as integer
+public tunicaconspicuahumano as integer
+public tunicaconspicuaenano as integer
+public armaduranobilisimahumano as integer
+public armaduranobilisimaenano as integer
+public armaduragransacerdote as integer
+
+public vestimentalegionhumano as integer
+public vestimentalegionenano as integer
+public tunicalobregahumano as integer
+public tunicalobregaenano as integer
+public tunicaegregiahumano as integer
+public tunicaegregiaenano as integer
+public sacerdotedemoniaco as integer
+
+
+
+
+
 
 public armaduracaos1 as integer
 public tunicamagocaos as integer
@@ -45,7 +66,7 @@ public tunicamagocaosenanos as integer
 public armaduracaos2 as integer
 public armaduracaos3 as integer
 
-public const expalunirse = 100000
+public const expalunirse = 50000
 public const expx100 = 5000
 
 
@@ -66,13 +87,13 @@ if criminal(userindex) then
     exit sub
 end if
 
-if userlist(userindex).faccion.criminalesmatados < 10 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 10 criminales, solo has matado " & userlist(userindex).faccion.criminalesmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+if userlist(userindex).faccion.criminalesmatados < 30 then
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 30 criminales, solo has matado " & userlist(userindex).faccion.criminalesmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
-if userlist(userindex).stats.elv < 18 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 18!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+if userlist(userindex).stats.elv < 25 then
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
  
@@ -81,44 +102,72 @@ if userlist(userindex).faccion.ciudadanosmatados > 0 then
     exit sub
 end if
 
+if userlist(userindex).faccion.reenlistadas > 4 then
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas reales demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    exit sub
+end if
+
 userlist(userindex).faccion.armadareal = 1
+userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas + 1
+
 userlist(userindex).faccion.recompensasreal = userlist(userindex).faccion.criminalesmatados \ 100
 
-call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "bienvenido a al ejercito imperial!!!, aqui tienes tu armadura. por cada centena de criminales que acabes te dare un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "���bienvenido a al ejercito imperial!!!, aqui tienes tus vestimentas. por cada centena de criminales que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 
 if userlist(userindex).faccion.recibioarmadurareal = 0 then
     dim miobj as obj
-    miobj.amount = 1
-    if ucase$(userlist(userindex).clase) = "mago" then
-           if ucase$(userlist(userindex).raza) = "enano" or _
-              ucase$(userlist(userindex).raza) = "gnomo" then
-                  miobj.objindex = tunicamagoimperialenanos
-           else
-                  miobj.objindex = tunicamagoimperial
-           end if
-    elseif ucase$(userlist(userindex).clase) = "guerrero" or _
-           ucase$(userlist(userindex).clase) = "cazador" or _
-           ucase$(userlist(userindex).clase) = "paladin" or _
-           ucase$(userlist(userindex).clase) = "bandido" or _
-           ucase$(userlist(userindex).clase) = "asesino" then
-              if ucase$(userlist(userindex).raza) = "enano" or _
-                 ucase$(userlist(userindex).raza) = "gnomo" then
-                  miobj.objindex = armaduraimperial3
-              else
-                  miobj.objindex = armaduraimperial1
-              end if
+    dim miobj2 as obj
+    miobj.amount = 20
+    miobj2.amount = 10
+    
+    
+    
+    
+'public vestimentaimperialhumano as integer
+'public vestimentaimperialenano as integer
+'public tunicaconspicuahumano as integer
+'public tunicaconspicuaenano as integer
+'public armaduranobilisimahumano as integer
+'public armaduranobilisimaenano as integer
+'public armaduragransacerdote as integer
+
+'public vestimentalegionhumano as integer
+'public vestimentalegionenano as integer
+'public tunicalobregahumano as integer
+'public tunicalobregaenano as integer
+'public tunicaegregiahumano as integer
+'public tunicaegregiaenano as integer
+'public sacerdotedemoniaco as integer
+'
+    
+        
+    if ucase$(userlist(userindex).raza) = "enano" or ucase$(userlist(userindex).raza) = "gnomo" then
+        miobj.objindex = vestimentaimperialenano
+        select case userlist(userindex).clase
+            case "mago"
+                miobj2.objindex = tunicaconspicuaenano
+            case else
+                miobj2.objindex = armaduranobilisimaenano
+        end select
     else
-              if ucase$(userlist(userindex).raza) = "enano" or _
-                 ucase$(userlist(userindex).raza) = "gnomo" then
-                  miobj.objindex = armaduraimperial3
-              else
-                  miobj.objindex = armaduraimperial2
-              end if
+        miobj.objindex = vestimentaimperialhumano
+        select case userlist(userindex).clase
+            case "mago"
+                miobj2.objindex = tunicaconspicuahumano
+            case "clerigo", "druida", "bardo"
+                miobj2.objindex = armaduragransacerdote
+            case else
+                miobj2.objindex = armaduranobilisimahumano
+        end select
     end if
     
     if not meteritemeninventario(userindex, miobj) then
             call tiraritemalpiso(userlist(userindex).pos, miobj)
     end if
+    if not meteritemeninventario(userindex, miobj2) then
+            call tiraritemalpiso(userlist(userindex).pos, miobj2)
+    end if
+    
     userlist(userindex).faccion.recibioarmadurareal = 1
 end if
 
@@ -151,37 +200,41 @@ end sub
 
 public sub expulsarfaccionreal(byval userindex as integer)
 userlist(userindex).faccion.armadareal = 0
+'call perderitemsfaccionarios(userindex)
 call senddata(toindex, userindex, 0, "||has sido expulsado de las tropas reales!!!." & fonttype_fight)
 end sub
 
 public sub expulsarfaccioncaos(byval userindex as integer)
 userlist(userindex).faccion.fuerzascaos = 0
-call senddata(toindex, userindex, 0, "||has sido expulsado de las fuerzas del caos!!!." & fonttype_fight)
+'call perderitemsfaccionarios(userindex)
+call senddata(toindex, userindex, 0, "||has sido expulsado de la legi�n oscura!!!." & fonttype_fight)
 end sub
 
 public function tituloreal(byval userindex as integer) as string
 
 select case userlist(userindex).faccion.recompensasreal
     case 0
-        tituloreal = "aprendiz real"
+        tituloreal = "aprendiz "
     case 1
-        tituloreal = "soldado real"
+        tituloreal = "escudero"
     case 2
-        tituloreal = "teniente real"
+        tituloreal = "caballero"
     case 3
-        tituloreal = "comandante real"
+        tituloreal = "capitan"
     case 4
-        tituloreal = "general real"
+        tituloreal = "teniente"
     case 5
-        tituloreal = "elite real"
+        tituloreal = "comandante"
     case 6
-        tituloreal = "guardian del bien"
+        tituloreal = "mariscal"
     case 7
-        tituloreal = "caballero imperial"
+        tituloreal = "senescal"
     case 8
+        tituloreal = "protector"
+    case 9
         tituloreal = "guardian del bien"
     case else
-        tituloreal = "protector de newbies"
+        tituloreal = "campe�n de la luz"
 end select
 
 end function
@@ -194,7 +247,7 @@ if not criminal(userindex) then
 end if
 
 if userlist(userindex).faccion.fuerzascaos = 1 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a las tropas del caos!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ya perteneces a la legi�n oscura!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
@@ -203,13 +256,20 @@ if userlist(userindex).faccion.armadareal = 1 then
     exit sub
 end if
 
+'[barrin 17-12-03] si era miembro de la armada real no se puede enlistar
+if userlist(userindex).faccion.recibioexpinicialreal = 1 then 'tomamos el valor de ah�: �recibio la experiencia para entrar?
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "no permitir� que ning�n insecto real ingrese �traidor del rey!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    exit sub
+end if
+'[/barrin]
+
 if not criminal(userindex) then
     call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "ja ja ja tu no eres bienvenido aqui!!!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
-if userlist(userindex).faccion.ciudadanosmatados < 150 then
-    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 150 ciudadanos, solo has matado " & userlist(userindex).faccion.ciudadanosmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+if userlist(userindex).faccion.ciudadanosmatados < 70 then
+    call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "para unirte a nuestras fuerzas debes matar al menos 70 ciudadanos, solo has matado " & userlist(userindex).faccion.ciudadanosmatados & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
     exit sub
 end if
 
@@ -218,40 +278,59 @@ if userlist(userindex).stats.elv < 25 then
     exit sub
 end if
 
+
+if userlist(userindex).faccion.reenlistadas > 4 then
+    if userlist(userindex).faccion.reenlistadas = 200 then
+        call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras y durante tu rebeld�a has atacado a mi ej�rcito. vete de aqu�!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    else
+        call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "has sido expulsado de las fuerzas oscuras demasiadas veces!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+    end if
+    exit sub
+end if
+
+userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas + 1
 userlist(userindex).faccion.fuerzascaos = 1
 userlist(userindex).faccion.recompensascaos = userlist(userindex).faccion.ciudadanosmatados \ 100
 
-call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "bienvenido a al lado oscuro!!!, aqui tienes tu armadura. por cada centena de ciudadanos que acabes te dare un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & "bienvenido a al lado oscuro!!!, aqui tienes tu armadura. por cada centena de ciudadanos que acabes te dar� un recompensa, buena suerte soldado!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
 
 if userlist(userindex).faccion.recibioarmaduracaos = 0 then
     dim miobj as obj
-    miobj.amount = 1
-    if ucase$(userlist(userindex).clase) = "mago" then
-                  miobj.objindex = tunicamagocaos
-    elseif ucase$(userlist(userindex).clase) = "guerrero" or _
-           ucase$(userlist(userindex).clase) = "cazador" or _
-           ucase$(userlist(userindex).clase) = "paladin" or _
-           ucase$(userlist(userindex).clase) = "bandido" or _
-           ucase$(userlist(userindex).clase) = "asesino" then
-              if ucase$(userlist(userindex).raza) = "enano" or _
-                 ucase$(userlist(userindex).raza) = "gnomo" then
-                  miobj.objindex = armaduracaos3
-              else
-                  miobj.objindex = armaduracaos1
-              end if
+    dim miobj2 as obj
+    miobj.amount = 20
+    miobj2.amount = 10
+    
+    if ucase$(userlist(userindex).raza) = "enano" or ucase$(userlist(userindex).raza) = "gnomo" then
+        miobj.objindex = vestimentalegionenano
+        select case userlist(userindex).clase
+            case "mago"
+                miobj2.objindex = tunicaegregiaenano
+            case else
+                miobj2.objindex = tunicalobregaenano
+        end select
     else
-              if ucase$(userlist(userindex).raza) = "enano" or _
-                 ucase$(userlist(userindex).raza) = "gnomo" then
-                  miobj.objindex = armaduracaos3
-              else
-                  miobj.objindex = armaduracaos2
-              end if
+        miobj.objindex = vestimentaimperialhumano
+        select case userlist(userindex).clase
+            case "mago"
+                miobj2.objindex = tunicaegregiahumano
+            case "clerigo", "druida", "bardo"
+                miobj2.objindex = sacerdotedemoniaco
+            case else
+                miobj2.objindex = tunicaegregiahumano
+        end select
     end if
     
     if not meteritemeninventario(userindex, miobj) then
             call tiraritemalpiso(userlist(userindex).pos, miobj)
     end if
+    if not meteritemeninventario(userindex, miobj2) then
+            call tiraritemalpiso(userlist(userindex).pos, miobj2)
+    end if
+    
     userlist(userindex).faccion.recibioarmaduracaos = 1
+    
+
+
 end if
 
 if userlist(userindex).faccion.recibioexpinicialcaos = 0 then
@@ -282,35 +361,55 @@ end if
 
 end sub
 
-public sub expulsarcaos(byval userindex as integer)
-userlist(userindex).faccion.fuerzascaos = 0
-call senddata(toindex, userindex, 0, "||has sido expulsado del ejercito del caos!!!." & fonttype_fight)
-end sub
-
 public function titulocaos(byval userindex as integer) as string
 select case userlist(userindex).faccion.recompensascaos
+    case 0
+        titulocaos = "esbirro"
     case 1
-        titulocaos = "esclavo de las sombras"
+        titulocaos = "servidor de las sombras"
     case 2
-        titulocaos = "guerrero del caos"
+        titulocaos = "ac�lito"
     case 3
-        titulocaos = "teniente del caos"
+        titulocaos = "guerrero sombr�o"
     case 4
-        titulocaos = "comandante del caos"
+        titulocaos = "sanguinario"
     case 5
-        titulocaos = "general del caos"
+        titulocaos = "caballero de la oscuridad"
     case 6
-        titulocaos = "elite caos"
+        titulocaos = "condenado"
     case 7
-        titulocaos = "asolador de las sombras"
+        titulocaos = "heraldo imp�o"
     case 8
-        titulocaos = "caballero oscuro"
-    case 9
-        titulocaos = "asesino del caos"
+        titulocaos = "corruptor"
     case else
-        titulocaos = "adorador del demonio"
+        titulocaos = "devorador de almas"
 end select
 
 
 end function
 
+'[barrin 17-12-03]
+'sub perderitemsfaccionarios(byval userindex as integer)
+'dim i as byte
+'dim miobj as obj
+'dim itemindex as integer
+'
+'for i = 1 to max_inventory_slots
+'  itemindex = userlist(userindex).invent.object(i).objindex
+'  if itemindex > 0 then
+'         if objdata(itemindex).real = 1 or objdata(itemindex).caos = 1 then
+'            call quitaruserinvitem(userindex, i, userlist(userindex).invent.object(i).amount)
+'            call updateuserinv(false, userindex, i)
+'            if objdata(itemindex).objtype = objtype_armour then
+'                if objdata(itemindex).real = 1 then userlist(userindex).faccion.recibioarmadurareal = 0
+'                if objdata(itemindex).caos = 1 then userlist(userindex).faccion.recibioarmaduracaos = 0
+'            else
+'                userlist(userindex).faccion.recibioitemfaccionario = 0
+'            end if
+'         end if
+'
+'  end if
+'next i
+'
+'end sub
+'[/barrin]

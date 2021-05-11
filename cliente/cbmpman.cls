@@ -13,6 +13,37 @@ attribute vb_predeclaredid = false
 attribute vb_exposed = false
 attribute vb_ext_key = "savedwithclassbuilder6" ,"yes"
 attribute vb_ext_key = "top_level" ,"yes"
+'argentum online 0.11.2
+'
+'copyright (c) 2002 m�rquez pablo ignacio
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the gnu general public license as published by
+'the free software foundation; either version 2 of the license, or
+'any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'gnu general public license for more details.
+'
+'you should have received a copy of the gnu general public license
+'along with this program; if not, write to the free software
+'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'
+'argentum online is based on baronsoft's vb6 online rpg
+'you can contact the original creator of ore at aaron@baronsoft.com
+'for more information about ore please visit http://www.baronsoft.com/
+'
+'
+'you can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'calle 3 n�mero 983 piso 7 dto a
+'la plata - pcia, buenos aires - republica argentina
+'c�digo postal 1900
+'pablo ignacio m�rquez
+
+
 '=============================================================================
 '
 '   nombre: cbmpman.cls
@@ -92,6 +123,7 @@ private type bmp_db_entry
     size as long
     accesos as long
     cont as long
+    efecto as long
 end type
 
 private type bmp_info
@@ -110,19 +142,27 @@ private mmaxentries as long
 private mcontador as long
 private mcantidadgraficos as long
 
+private musarmemoriavideo  as boolean
+
+private mefectopred as integer
+
 private grhpath as string
 
 public property let path(byval instring as string)
 grhpath = instring
 end property
 
-public function getbmp(filename as integer) as directdrawsurface7
+public function getbmp(byval filename as integer, optional byval efecto as integer = -1) as directdrawsurface7
 
 dim retval as integer
 
-if mkeys(filename) <> 0 then 'esta el surface en memoria?
-    mbmpdb(mkeys(filename)).accesos = mbmpdb(mkeys(filename)).accesos + 1 'sumo un acceso
-    set getbmp = msurfacedb(mkeys(filename)) 'y devuelvo una surface con el grafico cargado
+if efecto < 0 then
+    efecto = mefectopred
+end if
+
+if mkeys(efecto, filename) <> 0 then 'esta el surface en memoria?
+    mbmpdb(mkeys(efecto, filename)).accesos = mbmpdb(mkeys(efecto, filename)).accesos + 1 'sumo un acceso
+    set getbmp = msurfacedb(mkeys(efecto, filename)) 'y devuelvo una surface con el grafico cargado
 else 'grafico no cargado
     retval = buscavacio() 'busco espacio para cargarlo
     if retval = -1 then 'todas las surface ocupadas
@@ -131,7 +171,15 @@ else 'grafico no cargado
     end if
     call creargrafico(filename, retval) 'y creo la textura
     mbmpdb(retval).accesos = mbmpdb(retval).accesos + 1 'sumo un acceso
-    mkeys(filename) = retval
+    mbmpdb(retval).efecto = efecto
+    mkeys(efecto, filename) = retval
+    
+#if conalfab = 1 then
+    if efecto = 1 then
+        efectonoche msurfacedb(retval)
+    end if
+#end if
+
     set getbmp = msurfacedb(retval) 'y devuelvo una surface con el grafico cargado
 end if
 
@@ -139,7 +187,7 @@ end if
 end function
 
 
-public function init() as long 'inicializa todo, ejecutar antes de usar el objeto
+public function init(byval usarmemoriavideo as boolean) as long   'inicializa todo, ejecutar antes de usar el objeto
 on error goto errhandler
 
 if mmaxentries < 1 then 'por lo menos 1 grafico
@@ -149,8 +197,10 @@ end if
 
 redim mbmpdb(0 to mmaxentries)
 redim msurfacedb(0 to mmaxentries)
-redim mkeys(0 to 15000) as integer
+redim mkeys(0 to 1, 0 to 15000) as integer
 
+mefectopred = 0
+musarmemoriavideo = usarmemoriavideo
 mcantidadgraficos = 0
 mcontador = 0
 init = 1
@@ -165,31 +215,37 @@ public function borrartodo() as long
 'vacia la lista de graficos
 dim i as integer
 for i = 1 to mmaxentries
-    call zeromemory(mbmpdb(i), len(mbmpdb(i)))
-    set msurfacedb(i) = nothing
+    if mbmpdb(i).filename > 0 then
+        call borrar(mbmpdb(i).filename, mbmpdb(i).efecto)
+    end if
 next
 borrartodo = 1
 mcantidadgraficos = 0
 end function
 
-public function borrar(filename as integer) as integer
+public function borrar(byval filename as integer, byval efecto as integer) as integer
 'borra un grafico
 borrar = -1
-call zeromemory(mbmpdb(mkeys(filename)), len(mbmpdb(mkeys(filename))))
-set msurfacedb(mkeys(filename)) = nothing
-mkeys(filename) = 0
+call zeromemory(mbmpdb(mkeys(efecto, filename)), len(mbmpdb(mkeys(efecto, filename))))
+set msurfacedb(mkeys(efecto, filename)) = nothing
+mkeys(efecto, filename) = 0
 borrar = 1
 mcantidadgraficos = mcantidadgraficos - 1
 end function
 
-private function creargrafico(archivo as integer, bindex as integer) as integer
+private function creargrafico(byval archivo as integer, byval bindex as integer) as integer
 '12/1/3, colorkey
+on error resume next
 dim ddsd as ddsurfacedesc2, bmpinfo as bmp_info, retval as long, ddck as ddcolorkey
 ddsd.lflags = ddsd_caps or ddsd_height or ddsd_width
 
 call getbmpheader(grhpath & archivo & ".bmp", bmpinfo)  'para alto y ancho de la surface
 
-ddsd.ddscaps.lcaps = ddscaps_offscreenplain
+if musarmemoriavideo then
+    ddsd.ddscaps.lcaps = ddscaps_offscreenplain
+else
+    ddsd.ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_systemmemory
+end if
 ddsd.lheight = bmpinfo.height
 ddsd.lwidth = bmpinfo.width
 
@@ -215,6 +271,8 @@ end function
 
 private sub class_initialize()
 mmaxentries = 0
+musarmemoriavideo = true
+mefectopred = 0
 end sub
 
 
@@ -255,7 +313,7 @@ for i = 1 to mmaxentries
 next
 mcantidadgraficos = mcantidadgraficos - 1
 
-mkeys(mbmpdb(borramenosusado).filename) = 0
+mkeys(mbmpdb(borramenosusado).efecto, mbmpdb(borramenosusado).filename) = 0
 set msurfacedb(borramenosusado) = nothing
 call zeromemory(mbmpdb(borramenosusado), len(mbmpdb(borramenosusado)))
 
@@ -303,3 +361,33 @@ public property get cantidadgraficos() as variant
 cantidadgraficos = mcantidadgraficos
 end property
 
+'*******************************************************
+'*******************************************************
+'*******************************************************
+'*******************************************************
+'*******************************************************
+
+'para compatibilidad con el bmpman no dyn
+public property get totalgraficos() as variant
+
+end property
+
+public property let totalgraficos(byval vnewvalue as variant)
+
+end property
+
+public property get esdinamico() as variant
+esdinamico = true
+end property
+
+public function cargargrafico(archivo as integer) as integer
+
+end function
+
+public property get efectopred() as integer
+efectopred = mefectopred
+end property
+
+public property let efectopred(byval inewvalue as integer)
+mefectopred = inewvalue
+end property

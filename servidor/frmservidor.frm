@@ -2,17 +2,18 @@ version 5.00
 begin vb.form frmservidor 
    backcolor       =   &h00c0c0c0&
    caption         =   "servidor"
-   clientheight    =   5520
+   clientheight    =   6540
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   4575
+   clientwidth     =   4845
    controlbox      =   0   'false
    linktopic       =   "form1"
-   scaleheight     =   5520
-   scalewidth      =   4575
+   scaleheight     =   436
+   scalemode       =   3  'pixel
+   scalewidth      =   323
    startupposition =   3  'windows default
-   begin vb.commandbutton command17 
-      caption         =   "actualizar npcs.dat"
+   begin vb.commandbutton command26 
+      caption         =   "reset listen"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -23,30 +24,388 @@ begin vb.form frmservidor
          strikethrough   =   0   'false
       endproperty
       height          =   255
-      left            =   240
-      tabindex        =   16
-      top             =   3600
-      width           =   4095
+      left            =   1920
+      tabindex        =   28
+      top             =   6180
+      width           =   1455
    end
-   begin vb.commandbutton command16 
-      caption         =   "reload server.ini"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   15
-      top             =   3360
-      width           =   4095
+   begin vb.picturebox picfuera 
+      appearance      =   0  'flat
+      backcolor       =   &h00000000&
+      forecolor       =   &h80000008&
+      height          =   4335
+      left            =   120
+      scaleheight     =   287
+      scalemode       =   3  'pixel
+      scalewidth      =   304
+      tabindex        =   6
+      top             =   120
+      width           =   4590
+      begin vb.vscrollbar vs1 
+         height          =   4335
+         largechange     =   50
+         left            =   4320
+         smallchange     =   17
+         tabindex        =   26
+         top             =   0
+         width           =   255
+      end
+      begin vb.picturebox piccont 
+         backcolor       =   &h00c0c0c0&
+         borderstyle     =   0  'none
+         height          =   5055
+         left            =   0
+         scaleheight     =   337
+         scalemode       =   3  'pixel
+         scalewidth      =   289
+         tabindex        =   7
+         top             =   0
+         width           =   4334
+         begin vb.commandbutton command27 
+            caption         =   "debug userlist"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   29
+            top             =   4680
+            width           =   4095
+         end
+         begin vb.commandbutton command24 
+            caption         =   "estadisticas"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   25
+            top             =   4440
+            width           =   4095
+         end
+         begin vb.commandbutton command22 
+            caption         =   "administraci�n"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   8
+            top             =   4200
+            width           =   4095
+         end
+         begin vb.commandbutton command21 
+            caption         =   "pausar el servidor"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   9
+            top             =   3960
+            width           =   4095
+         end
+         begin vb.commandbutton command17 
+            caption         =   "actualizar npcs.dat"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   10
+            top             =   3720
+            width           =   4095
+         end
+         begin vb.commandbutton command25 
+            caption         =   "reload md5s"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   27
+            top             =   3480
+            width           =   4095
+         end
+         begin vb.commandbutton command16 
+            caption         =   "reload server.ini"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   11
+            top             =   3240
+            width           =   4095
+         end
+         begin vb.commandbutton command14 
+            caption         =   "update motd"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   12
+            top             =   3000
+            width           =   4095
+         end
+         begin vb.commandbutton command19 
+            caption         =   "unban all ips (peligro!)"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   13
+            top             =   2760
+            width           =   4095
+         end
+         begin vb.commandbutton command15 
+            caption         =   "unban all (peligro!)"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   14
+            top             =   2520
+            width           =   4095
+         end
+         begin vb.commandbutton command13 
+            caption         =   "debug listening socket"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   15
+            top             =   2280
+            width           =   4095
+         end
+         begin vb.commandbutton command12 
+            caption         =   "debug npcs"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   16
+            top             =   2040
+            width           =   4095
+         end
+         begin vb.commandbutton command11 
+            caption         =   "stats de los slots"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   17
+            top             =   1800
+            width           =   4095
+         end
+         begin vb.commandbutton command10 
+            caption         =   "trafico"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   18
+            top             =   1560
+            width           =   4095
+         end
+         begin vb.commandbutton command9 
+            caption         =   "reload lista nombres prohibidos"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   19
+            top             =   1320
+            width           =   4095
+         end
+         begin vb.commandbutton command8 
+            caption         =   "actualizar hechizos"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   20
+            top             =   1080
+            width           =   4095
+         end
+         begin vb.commandbutton command7 
+            caption         =   "configurar intervalos"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   21
+            top             =   840
+            width           =   4095
+         end
+         begin vb.commandbutton command3 
+            caption         =   "reiniciar"
+            enabled         =   0   'false
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   22
+            top             =   600
+            width           =   4095
+         end
+         begin vb.commandbutton command6 
+            caption         =   "respawn guardias en posiciones originales"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   23
+            top             =   360
+            width           =   4095
+         end
+         begin vb.commandbutton command1 
+            caption         =   "actualizar objetos.dat"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   24
+            top             =   120
+            width           =   4095
+         end
+      end
    end
-   begin vb.commandbutton command14 
-      caption         =   "update motd"
+   begin vb.commandbutton command23 
+      caption         =   "boton magico para apagar server"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -58,25 +417,8 @@ begin vb.form frmservidor
       endproperty
       height          =   255
       left            =   240
-      tabindex        =   14
-      top             =   3120
-      width           =   4095
-   end
-   begin vb.commandbutton command19 
-      caption         =   "unban all ips"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   18
-      top             =   2880
+      tabindex        =   5
+      top             =   5520
       width           =   4095
    end
    begin vb.commandbutton command5 
@@ -93,7 +435,7 @@ begin vb.form frmservidor
       height          =   255
       left            =   240
       tabindex        =   1
-      top             =   4740
+      top             =   5160
       width           =   4095
    end
    begin vb.commandbutton command18 
@@ -109,196 +451,8 @@ begin vb.form frmservidor
       endproperty
       height          =   255
       left            =   240
-      tabindex        =   17
-      top             =   4500
-      width           =   4095
-   end
-   begin vb.commandbutton command15 
-      caption         =   "unban all"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   13
-      top             =   2640
-      width           =   4095
-   end
-   begin vb.commandbutton command13 
-      caption         =   "debug listening socket"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   12
-      top             =   2400
-      width           =   4095
-   end
-   begin vb.commandbutton command12 
-      caption         =   "debug npcs"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   11
-      top             =   2160
-      width           =   4095
-   end
-   begin vb.commandbutton command11 
-      caption         =   "stats de los slots"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   8
-      top             =   1920
-      width           =   4095
-   end
-   begin vb.commandbutton command10 
-      caption         =   "trafico"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   7
-      top             =   1680
-      width           =   4095
-   end
-   begin vb.commandbutton command9 
-      caption         =   "reload lista nombres prohibidos"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   6
-      top             =   1440
-      width           =   4095
-   end
-   begin vb.commandbutton command8 
-      caption         =   "actualizar hechizos"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   5
-      top             =   1200
-      width           =   4095
-   end
-   begin vb.commandbutton command7 
-      caption         =   "configurar intervalos"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   4
-      top             =   960
-      width           =   4095
-   end
-   begin vb.commandbutton command3 
-      caption         =   "reiniciar"
-      enabled         =   0   'false
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   10
-      top             =   720
-      width           =   4095
-   end
-   begin vb.commandbutton command6 
-      caption         =   "respawn guardias en posiciones originales"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   9
-      top             =   480
-      width           =   4095
-   end
-   begin vb.commandbutton command1 
-      caption         =   "actualizar objetos.dat"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
       tabindex        =   3
-      top             =   240
+      top             =   4920
       width           =   4095
    end
    begin vb.commandbutton command4 
@@ -315,7 +469,7 @@ begin vb.form frmservidor
       height          =   255
       left            =   240
       tabindex        =   2
-      top             =   4260
+      top             =   4680
       width           =   4095
    end
    begin vb.commandbutton command2 
@@ -324,11 +478,11 @@ begin vb.form frmservidor
       height          =   255
       left            =   3480
       tabindex        =   0
-      top             =   5220
+      top             =   6180
       width           =   945
    end
    begin vb.commandbutton command20 
-      caption         =   "reiniciar sockets"
+      caption         =   "reset sockets"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -340,20 +494,14 @@ begin vb.form frmservidor
       endproperty
       height          =   255
       left            =   240
-      tabindex        =   19
-      top             =   5220
-      width           =   3135
-   end
-   begin vb.shape shape3 
-      height          =   3855
-      left            =   120
-      top             =   120
-      width           =   4335
+      tabindex        =   4
+      top             =   6180
+      width           =   1575
    end
    begin vb.shape shape2 
-      height          =   975
+      height          =   1335
       left            =   120
-      top             =   4140
+      top             =   4560
       width           =   4335
    end
 end
@@ -362,7 +510,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -392,10 +540,12 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
+
 option explicit
 
 private sub command1_click()
-call loadobjdata_nuevo
+call loadobjdata
 
 end sub
 
@@ -426,24 +576,27 @@ dim fn as string
 dim cad$
 dim n as integer, k as integer
 
-fn = app.path & "\logs\gentebanned.log"
+dim sentrada as string
 
-if fileexist(fn, vbnormal) then
-    n = freefile
-    open fn for input shared as #n
-    do while not eof(n)
-        k = k + 1
-        input #n, cad$
-        call unban(cad$)
-        
-    loop
-    close #n
-    msgbox "se han habilitado " & k & " personajes."
-    kill fn
+sentrada = inputbox("escribe ""estoy de acuerdo"" entre comillas y con distici�n de mayusculas minusculas para desbanear a todos los personajes", "unban", "hola")
+if sentrada = "estoy de acuerdo" then
+
+    fn = app.path & "\logs\gentebanned.log"
+    
+    if fileexist(fn, vbnormal) then
+        n = freefile
+        open fn for input shared as #n
+        do while not eof(n)
+            k = k + 1
+            input #n, cad$
+            call unban(cad$)
+            
+        loop
+        close #n
+        msgbox "se han habilitado " & k & " personajes."
+        kill fn
+    end if
 end if
-
-
-
 
 end sub
 
@@ -459,6 +612,7 @@ end sub
 
 private sub command18_click()
 me.mousepointer = 11
+call mdparty.actualizaexperiencias
 call guardarusuarios
 me.mousepointer = 0
 msgbox "grabado de personajes ok!"
@@ -467,12 +621,18 @@ end sub
 private sub command19_click()
 dim i as long, n as long
 
-n = banips.count
-for i = 1 to banips.count
-    banips.remove 1
-next i
+dim sentrada as string
 
-msgbox "se han habilitado " & n & " ipes"
+sentrada = inputbox("escribe ""estoy de acuerdo"" sin comillas y con distici�n de mayusculas minusculas para desbanear a todos los personajes", "unban", "hola")
+if sentrada = "estoy de acuerdo" then
+    
+    n = banips.count
+    for i = 1 to banips.count
+        banips.remove 1
+    next i
+    
+    msgbox "se han habilitado " & n & " ipes"
+end if
 
 end sub
 
@@ -481,37 +641,96 @@ frmservidor.visible = false
 end sub
 
 private sub command20_click()
-#if usarapi then
-dim i as long
+#if usarquesocket = 1 then
 
 if msgbox("esta seguro que desea reiniciar los sockets ? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+    call wsapireiniciarsockets
+end if
+
+#elseif usarquesocket = 2 then
+
+dim loopc as integer
+
+if msgbox("esta seguro que desea reiniciar los sockets ? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+    for loopc = 1 to maxusers
+        if userlist(loopc).connid <> -1 and userlist(loopc).connidvalida then
+            call closesocket(loopc)
+        end if
+    next loopc
+    
+    call frmmain.serv.detener
+    call frmmain.serv.iniciar(puerto)
+end if
+
+#end if
+end sub
+
+'barrin 29/9/03
+private sub command21_click()
+
+if enpausa = false then
+    enpausa = true
+    call senddata(toall, 0, 0, "bkw")
+    command21.caption = "reanudar el servidor"
+else
+    enpausa = false
+    call senddata(toall, 0, 0, "bkw")
+    command21.caption = "pausar el servidor"
+end if
+
+end sub
+
+private sub command22_click()
+    me.visible = false
+    frmadmin.show
+end sub
+
+private sub command23_click()
+if msgbox("esta seguro que desea hacer worldsave, guardar pjs y cerrar ?", vbyesno, "apagar magicamente") = vbyes then
+    me.mousepointer = 11
+    
+    frmstat.show
+   
+    'worldsave
+    call dobackup
+
+    'commit experiencia
+    call mdparty.actualizaexperiencias
+
+    'guardar pjs
+    call guardarusuarios
+    
+    'guilds
+    call saveguildsdb
+
+    'chauuu
+    unload frmmain
+end if
+end sub
+
+private sub command24_click()
+frmestadisticas.show
+
+end sub
+
+private sub command25_click()
+call md5scarga
+
+end sub
+
+private sub command26_click()
+#if usarquesocket = 1 then
     'cierra el socket de escucha
     if socklisten >= 0 then call apiclosesocket(socklisten)
     
-    'cierra todas las conexiones
-    for i = 1 to maxusers
-        if userlist(i).connid <> -1 then
-            call closesocket(i)
-        end if
-    next i
-    
     'inicia el socket de escucha
     socklisten = listenforconnect(puerto, hwndmsg, "")
-    
-    'comprueba si el proc de la ventana es el correcto
-    dim tmpwproc as long
-    tmpwproc = getwindowlong(hwndmsg, gwl_wndproc)
-    if tmpwproc <> actualwproc then
-        msgbox "incorrecto proc de ventana (" & tmpwproc & " <> " & actualwproc & ")"
-        call logapisock("incorrecto proc de ventana")
-        oldwproc = tmpwproc
-        if oldwproc <> 0 then
-            setwindowlong frmmain.hwnd, gwl_wndproc, addressof wndproc
-            actualwproc = getwindowlong(frmmain.hwnd, gwl_wndproc)
-        end if
-    end if
-end if
 #end if
+end sub
+
+private sub command27_click()
+frmuserlist.show
+
 end sub
 
 private sub command3_click()
@@ -550,11 +769,13 @@ if fileexist(app.path & "\logs\resurrecciones.log", vbnormal) then kill app.path
 if fileexist(app.path & "\logs\teleports.log", vbnormal) then kill app.path & "\logs\teleports.log"
 
 
-#if usarapi then
+#if usarquesocket = 1 then
 call apiclosesocket(socklisten)
-#else
+#elseif usarquesocket = 0 then
 frmmain.socket1.cleanup
 frmmain.socket2(0).cleanup
+#elseif usarquesocket = 2 then
+frmmain.serv.detener
 #end if
 
 dim loopc as integer
@@ -574,10 +795,10 @@ call loadsini
 call cargarbackup
 call loadobjdata
 
-#if usarapi then
-socklisten = listenforconnect(puerto, frmmain.hwnd, "")
+#if usarquesocket = 1 then
+socklisten = listenforconnect(puerto, hwndmsg, "")
 
-#else
+#elseif usarquesocket = 0 then
 frmmain.socket1.addressfamily = af_inet
 frmmain.socket1.protocol = ipproto_ip
 frmmain.socket1.sockettype = sock_stream
@@ -620,3 +841,32 @@ private sub form_deactivate()
 frmservidor.visible = false
 end sub
 
+private sub form_load()
+#if usarquesocket = 1 then
+command20.visible = true
+command26.visible = true
+#elseif usarquesocket = 0 then
+command20.visible = false
+command26.visible = false
+#elseif usarquesocket = 2 then
+command20.visible = true
+command26.visible = false
+#end if
+
+vs1.min = 0
+if piccont.height > picfuera.scaleheight then
+    vs1.max = piccont.height - picfuera.scaleheight
+else
+    vs1.max = 0
+end if
+piccont.top = -vs1.value
+
+end sub
+
+private sub vs1_change()
+piccont.top = -vs1.value
+end sub
+
+private sub vs1_scroll()
+piccont.top = -vs1.value
+end sub

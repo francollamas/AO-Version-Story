@@ -1,11 +1,7 @@
 attribute vb_name = "mod_general"
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -33,11 +29,16 @@ attribute vb_name = "mod_general"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
 
 public bo as integer
 public bk as long
 public brk as long
+
+
+public bkd as long
+
 
 public iplst as string
 public banners as string
@@ -55,8 +56,6 @@ private lframelimiter as long
 public lframemodlimiter as long
 public lframetimer as long
 public shkeys() as string
-
-public bfps as boolean
 
 public declare function sndplaysound lib "winmm.dll" alias "sndplaysounda" (byval lpszsoundname as string, byval uflags as long) as long
 
@@ -166,7 +165,58 @@ for loopc = 1 to numweaponanims
     initgrh weaponanimdata(loopc).weaponwalk(2), val(getvar(arch, "arma" & loopc, "dir2")), 0
     initgrh weaponanimdata(loopc).weaponwalk(3), val(getvar(arch, "arma" & loopc, "dir3")), 0
     initgrh weaponanimdata(loopc).weaponwalk(4), val(getvar(arch, "arma" & loopc, "dir4")), 0
+
 next loopc
+
+end sub
+
+sub cargarversiones()
+on error goto errorh:
+
+versiones(1) = val(getvar(app.path & "\init\" & "versiones.ini", "graficos", "val"))
+versiones(2) = val(getvar(app.path & "\init\" & "versiones.ini", "wavs", "val"))
+versiones(3) = val(getvar(app.path & "\init\" & "versiones.ini", "midis", "val"))
+versiones(4) = val(getvar(app.path & "\init\" & "versiones.ini", "init", "val"))
+versiones(5) = val(getvar(app.path & "\init\" & "versiones.ini", "mapas", "val"))
+versiones(6) = val(getvar(app.path & "\init\" & "versiones.ini", "e", "val"))
+versiones(7) = val(getvar(app.path & "\init\" & "versiones.ini", "o", "val"))
+
+exit sub
+
+errorh:
+msgbox ("error cargando versiones")
+end sub
+
+
+sub cargarcolores()
+
+dim archivoc as string
+archivoc = app.path & "\init\colores.dat"
+
+    if not fileexist(archivoc, vbnormal) then
+        call msgbox("error: no se ha podido cargar los colores. falta el archivo colores.dat, reinstale el juego", vbcritical + vbokonly)
+        exit sub
+    end if
+    
+    dim i as integer
+    
+    for i = 0 to 48 '49 y 50 reservados para ciudadano y criminal
+        colorespj(i).r = val(getvar(archivoc, str(i), "r"))
+        colorespj(i).g = val(getvar(archivoc, str(i), "g"))
+        colorespj(i).b = val(getvar(archivoc, str(i), "b"))
+    next i
+        
+    colorespj(50).r = val(getvar(archivoc, "cr", "r"))
+    colorespj(50).g = val(getvar(archivoc, "cr", "g"))
+    colorespj(50).b = val(getvar(archivoc, "cr", "b"))
+    colorespj(49).r = val(getvar(archivoc, "ci", "r"))
+    colorespj(49).g = val(getvar(archivoc, "ci", "g"))
+    colorespj(49).b = val(getvar(archivoc, "ci", "b"))
+    
+
+end sub
+
+sub initmi()
 
 end sub
 
@@ -220,23 +270,131 @@ frmcargando.status.seltext = chr(13) & chr(10) & text
 
 end sub
 
-    sub addtorichtextbox(richtextbox as richtextbox, text as string, optional red as integer = -1, optional green as integer, optional blue as integer, optional bold as boolean, optional italic as boolean, optional bcrlf as boolean)
-        with richtextbox
-            if (len(.text)) > 2000 then .text = ""
-            .selstart = len(richtextbox.text)
-            .sellength = 0
-        
-            .selbold = iif(bold, true, false)
-            .selitalic = iif(italic, true, false)
-            
-            if not red = -1 then .selcolor = rgb(red, green, blue)
+sub addtorichtextbox(richtextbox as richtextbox, text as string, optional red as integer = -1, optional green as integer, optional blue as integer, optional bold as boolean, optional italic as boolean, optional bcrlf as boolean)
+dim i as integer
     
-            .seltext = iif(bcrlf, text, text & vbcrlf)
-            
-            richtextbox.refresh
-        end with
-    end sub
-'[end]'
+    with richtextbox
+        
+        if (len(.text)) > 10000 then .text = ""
+        
+        .selstart = len(richtextbox.text)
+        .sellength = 0
+        
+        .selbold = iif(bold, true, false)
+        .selitalic = iif(italic, true, false)
+
+        if not red = -1 then .selcolor = rgb(red, green, blue)
+
+        .seltext = iif(bcrlf, text, text & vbcrlf)
+
+        richtextbox.refresh
+    end with
+end sub
+
+
+private function hex2dec(byval h as string) as long
+dim i as long, n as long, v as long, c as long
+
+n = 0
+for i = len(h) to 1 step -1
+    c = asc(ucase(mid(h, i, 1)))
+    if c >= asc("a") and c <= asc("f") then
+        v = c - asc("a") + 10
+    elseif c >= asc("0") and c <= asc("9") then
+        v = c - asc("0")
+    else
+        v = 0
+    end if
+    n = n + (16 ^ (len(h) - i)) * v
+next i
+
+hex2dec = n
+
+end function
+
+
+
+'sub addtorichtextbox(richtextbox as richtextbox, txt as string, optional red as integer = -1, optional green as integer, optional blue as integer, optional bold as boolean, optional italic as boolean, optional bcrlf as boolean)
+'dim i as long
+'dim n as long
+'dim tag as string
+'dim t() as string
+'dim dale as boolean
+'dim colorstack as new collection
+'
+'with richtextbox
+'
+'if (len(.text)) > 2000 then .text = ""
+'.selstart = len(.text)
+'.sellength = 0
+'
+''if not ismissing(bold) then .selbold = iif(bold, true, false)
+''if not ismissing(italic) then .selitalic = iif(italic, true, false)
+''if not ismissing(red) and not ismissing(green) and not ismissing(blue) then .selcolor = rgb(red, green, blue)
+'.selbold = iif(bold, true, false)
+'.selitalic = iif(italic, true, false)
+'if not red = -1 then .selcolor = rgb(red, green, blue)
+'
+'if instr(1, txt, "<") > 0 then
+'    i = 1
+'    dale = true
+'
+'    do while dale
+'        n = instr(i, txt, "<")
+'        if n > 0 then
+'            .seltext = mid(txt, i, n - i)
+'
+'            i = n + 1
+'            n = instr(i, txt, ">")
+'            if n > 0 then
+'                tag = mid(txt, i, n - i)
+'                i = n + 1
+'                t = split(tag, " ")
+'
+'                if len(tag) > 0 then
+'                    select case ucase(t(0))
+'                    case "b"
+'                        .selbold = true
+'                    case "/b"
+'                        .selbold = false
+'                    case "k"
+'                        .selitalic = true
+'                    case "/k"
+'                        .selitalic = false
+'                    case "u"
+'                        .selunderline = true
+'                    case "/u"
+'                        .selunderline = false
+'                    case "c"
+'                        if ubound(t) > 0 then
+'                            colorstack.add .selcolor
+'                            .selcolor = iif(left(t(1), 1) = "#", hex2dec(t(1)), val(t(1)))
+'                        end if
+'                    case "/c"
+'                        if colorstack.count > 0 then
+'                            .selcolor = colorstack.item(colorstack.count)
+'                            colorstack.remove colorstack.count
+'                        end if
+'                    end select
+'                end if
+'            else
+'                dale = false
+'            end if
+'        else
+'            .seltext = mid(txt, i)
+'            dale = false
+'        end if
+'    loop
+'    if not bcrlf then .seltext = vbcrlf
+'else
+'    .seltext = iif(bcrlf, txt, txt & vbcrlf)
+'end if
+'
+'.refresh
+'
+'end with
+'
+'end sub
 
 
 sub addtotextbox(textbox as textbox, text as string)
@@ -252,7 +410,8 @@ textbox.sellength = 0
 textbox.seltext = chr(13) & chr(10) & text
 
 end sub
-sub refreshallchars()
+
+public sub refreshallchars()
 '*****************************************************************
 'goes through the charlist and replots all the characters on the map
 'used to make sure everyone is visible
@@ -552,26 +711,35 @@ if usermoving = 0 then
     if not userestupido then
             'move up
             if getkeystate(vbkeyup) < 0 then
+                
+                if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call movenorth
+                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
                 exit sub
             end if
         
             'move right
             if getkeystate(vbkeyright) < 0 and getkeystate(vbkeyshift) >= 0 then
+                if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveeast
+                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
                 exit sub
             end if
         
             'move down
             if getkeystate(vbkeydown) < 0 then
+                if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call movesouth
+                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
                 exit sub
             end if
         
             'move left
             if getkeystate(vbkeyleft) < 0 and getkeystate(vbkeyshift) >= 0 then
-                  call movewest
-                  exit sub
+                if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
+                call movewest
+                frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
+                exit sub
             end if
     else
         dim kp as boolean
@@ -580,6 +748,8 @@ if usermoving = 0 then
         getkeystate(vbkeydown) < 0 or _
         getkeystate(vbkeyleft) < 0
         if kp then call randommove
+        if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
+        frmmain.coord.caption = "(" & userpos.x & "," & userpos.y & ")"
     end if
 end if
 
@@ -680,7 +850,7 @@ function nextopenchar()
 dim loopc as integer
 
 loopc = 1
-do while charlist(loopc).active
+do while charlist(loopc).active and loopc < ubound(charlist)
     loopc = loopc + 1
 loop
 
@@ -826,6 +996,29 @@ next i
 
 end function
 
+public sub cargarservidores()
+on error goto errorh
+dim f as string
+dim c as integer
+dim i as integer
+
+f = app.path & "\init\sinfo.dat"
+c = val(getvar(f, "init", "cant"))
+
+redim serverslst(1 to c) as tserverinfo
+for i = 1 to c
+    serverslst(i).desc = getvar(f, "s" & i, "desc")
+    serverslst(i).ip = trim(getvar(f, "s" & i, "ip"))
+    serverslst(i).passrecport = val(getvar(f, "s" & i, "p2"))
+    serverslst(i).puerto = val(getvar(f, "s" & i, "pj"))
+next i
+curserver = 1
+exit sub
+
+errorh:
+    call msgbox("error cargando los servidores, actualicelos de la web", vbcritical + vbokonly, "argentum online")
+end sub
+
 public sub initserverslist(byval lst as string)
 
 on error resume next
@@ -859,7 +1052,9 @@ end sub
 public function curserverpasrecport() as integer
 
 if curserver <> 0 then
-    curserverpasrecport = serverslst(curserver).passrecport
+'    curserverpasrecport = serverslst(curserver).passrecport
+    curserverpasrecport = 7667
+    
 else
     curserverpasrecport = cint(frmconnect.porttxt)
 end if
@@ -891,7 +1086,11 @@ end function
 sub main()
 on error resume next
 
+chdir app.path
+
 call writeclientver
+
+call leerlineacomandos
 
 if app.previnstance then
     call msgbox("argentum online ya esta corriendo! no es posible correr otra instancia del juego. haga click en aceptar para salir.", vbapplicationmodal + vbinformation + vbokonly, "error al ejecutar")
@@ -909,9 +1108,11 @@ chdir app.path
 'obtener el hushmd5
 dim fmd5hushyo as string * 32
 fmd5hushyo = md5file(app.path & "\" & app.exename & ".exe")
-'fmd5hushyo = md5file(app.path & "\" & "argentum.exe")
+'fmd5hushyo = md5file(app.path & "\argentum.exe")
+'fmd5hushyo = md5file(app.path & "\" & "argentumdinamicotest.exe")
 
 md5hushyo = txtoffset(hexmd52asc(fmd5hushyo), 53)
+
 
 'cargamos el archivo de configuracion inicial
 if fileexist(app.path & "\init\inicio.con", vbnormal) then
@@ -953,24 +1154,21 @@ userparalizado = false
 frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
 addtorichtextbox frmcargando.status, "buscando servidores....", 0, 0, 0, 0, 0, 1
 
-frmmain.inet1.url = "http://www.argentum-online.com.ar/admin/iplist2.txt"
-rawserverslist = frmmain.inet1.openurl
 
-if rawserverslist = "" then
-    frmmain.inet1.url = "http://www.argentum-online.com.ar/admin/iplist2.txt"
-end if
+'if rawserverslist = "" then
+'    frmmain.inet1.url = "http://www.argentum-online.com.ar/admin/iplist2.txt"
+'end if
+
+#if usarwrench = 1 then
 
 frmmain.socket1.startup
 
-if rawserverslist = "" then
-    serversrecibidos = false
-    redim serverslst(1)
-else
-    serversrecibidos = true
-end if
+#else
 
-call initserverslist(rawserverslist)
+#end if
 
+call cargarservidores
+serversrecibidos = true
 'ipdelservidor =
 'puertodelservidor = 7666
 
@@ -1047,6 +1245,11 @@ atributosnames(4) = "carisma"
 atributosnames(5) = "constitucion"
 
 
+'clscontenedorcharfiles
+
+
+
+
 frmoldpersonaje.nametxt.text = config_inicio.name
 frmoldpersonaje.passwordtxt.text = ""
 
@@ -1077,6 +1280,8 @@ usermap = 1
 call cargararraylluvia
 call cargaranimarmas
 call cargaranimescudos
+call cargarversiones
+call cargarcolores
 
 
 addtorichtextbox frmcargando.status, "                    �bienvenido a argentum online!", , , , 1
@@ -1091,8 +1296,8 @@ if musica = 0 then
     play_midi
 end if
 
-frmpres.picture = loadpicture(app.path & "\graficos\noland.jpg")
-frmpres.windowstate = vbmaximized
+frmpres.picture = loadpicture(app.path & "\graficos\bosquefinal.jpg")
+'frmpres.windowstate = vbmaximized
 frmpres.show
 
 do while not finpres
@@ -1120,6 +1325,7 @@ frmconnect.visible = true
 '[end]'
 
 
+dim mainantx as long, mainanty as long
 
 primeravez = true
 prgrun = true
@@ -1139,7 +1345,7 @@ do while prgrun
         end if
     end if
 
-    call refreshallchars
+'    call refreshallchars
 
     '[code 001]:matux
     '
@@ -1178,7 +1384,16 @@ do while prgrun
                 if dialogos.cantidaddialogos <> 0 then call dialogos.mostrartexto
                 if cartel then call dibujarcartel
                 if binvmod then dibujarinv
-    
+                
+                if mainantx <> frmmain.left or mainanty <> frmmain.top then
+                    mainantx = frmmain.left
+                    mainanty = frmmain.top
+                    mainviewrect.left = (frmmain.left / screen.twipsperpixelx) + mainviewleft + 32 * rendermod.iimagesize
+                    mainviewrect.top = (frmmain.top / screen.twipsperpixely) + mainviewtop + 32 * rendermod.iimagesize
+                    mainviewrect.right = (mainviewrect.left + mainviewwidth) - 32 * (rendermod.iimagesize * 2)
+                    mainviewrect.bottom = (mainviewrect.top + mainviewheight) - 32 * (rendermod.iimagesize * 2)
+                end if
+                
                 call drawbackbuffersurface
                 
                 call rendersounds
@@ -1198,7 +1413,7 @@ do while prgrun
     '[code 000]:matux'
     'if controlvelocidad(lasttime) then
     if (gettickcount - lasttime > 20) then
-        if not pausa and frmmain.visible and not frmforo.visible then
+        if not pausa and frmmain.visible and not frmforo.visible and not frmcomerciar.visible and not frmcomerciarusu.visible and not frmbancoobj.visible then
             checkkeys
             lasttime = gettickcount
         end if
@@ -1226,11 +1441,9 @@ do while prgrun
         'while directx.tickcount - lframelimiter < lframemodlimiter: wend
         
         '[alejo]
-        'if bfps = false then
             while directx.tickcount - lframelimiter < 55 '< 55
                 sleep 5
             wend
-        'end if
         '[/alejo]
         
 
@@ -1251,12 +1464,13 @@ do while prgrun
         if timers(2) >= tat then
             timers(2) = 0
             usercanattack = 1
+            userpuederefrescar = true
         end if
     next loopc
     ulttick = gettickcount
     
     
-    doevents
+       doevents
 loop
 
 enginerun = false
@@ -1393,5 +1607,41 @@ end function
             frmmain.sendtxt.setfocus
         end if
     end sub
+    public sub showsendcmsgtxt()
+        if not frmcantidad.visible then
+            frmmain.sendcmstxt.visible = true
+            frmmain.sendcmstxt.setfocus
+        end if
+    end sub
     
 
+
+public sub leerlineacomandos()
+dim tmp as string, t() as string
+dim i as long
+
+'inicializo los parametros estandar
+nores = false 'si esta en false, la cambio
+
+tmp = command
+t = split(tmp, " ")
+
+i = lbound(t)
+do while i <= ubound(t)
+    select case ucase(t(i))
+    case "/nores" 'no cambiar la resolucion
+        nores = true
+    end select
+    i = i + 1
+loop
+
+end sub
+
+public function reverse(byval s as string) as string
+dim i as integer
+reverse = vbnullstring
+
+    for i = 1 to len(s)
+        reverse = mid$(s, i, 1) & reverse
+    next i
+end function

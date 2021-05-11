@@ -2,18 +2,18 @@ version 5.00
 begin vb.form frmmensaje 
    backcolor       =   &h00c0c0c0&
    caption         =   "mensaje"
-   clientheight    =   3225
+   clientheight    =   3195
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   4020
+   clientwidth     =   3990
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
-   scaleheight     =   3225
-   scalewidth      =   4020
+   scaleheight     =   3195
+   scalewidth      =   3990
    startupposition =   1  'centerowner
    begin vb.commandbutton command1 
-      caption         =   "ok"
+      caption         =   "cerrar"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -44,10 +44,10 @@ begin vb.form frmmensaje
       endproperty
       forecolor       =   &h00000000&
       height          =   2535
-      left            =   120
+      left            =   60
       tabindex        =   0
       top             =   120
-      width           =   4935
+      width           =   3855
       wordwrap        =   -1  'true
    end
 end
@@ -56,13 +56,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or

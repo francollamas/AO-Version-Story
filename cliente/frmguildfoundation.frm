@@ -77,7 +77,7 @@ begin vb.form frmguildfoundation
       end
    end
    begin vb.frame frame1 
-      caption         =   "informaci�n basica"
+      caption         =   "informaci�n b�sica"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -134,10 +134,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -166,12 +162,11 @@ attribute vb_exposed = false
 'pablo ignacio m�rquez
 
 
-
 private sub command1_click()
 clanname = txtclanname
 site = text2
 unload me
-frmguilddetails.show
+frmguilddetails.show , me
 end sub
 
 private sub command2_click()

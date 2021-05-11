@@ -1,5 +1,6 @@
 attribute vb_name = "queue"
-'argentum online 0.9.0.2
+
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify

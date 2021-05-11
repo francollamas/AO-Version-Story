@@ -1,11 +1,7 @@
 attribute vb_name = "mod_dx"
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -33,7 +29,6 @@ attribute vb_name = "mod_dx"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
 
 public const numsoundbuffers = 20
@@ -50,7 +45,11 @@ public backbuffersurface as directdrawsurface7
 'public surfacedb() as directdrawsurface7
 
 '### 08/04/03 ###
-public surfacedb as new cbmpman
+#if (usardinamico = 1) then
+    public surfacedb as new cbmpman
+#else
+    public surfacedb as new cbmpmannodyn
+#end if
 
 public perf as directmusicperformance
 public seg as directmusicsegment
@@ -163,7 +162,15 @@ dim intheight as integer
 oldreswidth = screen.width \ screen.twipsperpixelx
 oldresheight = screen.height \ screen.twipsperpixely
 
-if oldreswidth <> 800 or oldresheight <> 600 then
+dim cambiarresolucion as boolean
+
+if nores then
+    cambiarresolucion = (oldreswidth < 800 or oldresheight < 600)
+else
+    cambiarresolucion = (oldreswidth <> 800 or oldresheight <> 600)
+end if
+
+if cambiarresolucion then
       with midevm
             .dmfields = dm_pelswidth or dm_pelsheight or dm_bitsperpel
             .dmpelswidth = 800

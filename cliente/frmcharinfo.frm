@@ -1,7 +1,7 @@
 version 5.00
 begin vb.form frmcharinfo 
    borderstyle     =   1  'fixed single
-   caption         =   "info"
+   caption         =   "informaci�n del personaje"
    clientheight    =   6195
    clientleft      =   45
    clienttop       =   330
@@ -44,6 +44,15 @@ begin vb.form frmcharinfo
    end
    begin vb.commandbutton aceptar 
       caption         =   "aceptar"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   495
       left            =   4200
       mouseicon       =   "frmcharinfo.frx":02a4
@@ -269,10 +278,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -299,7 +304,6 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 
 
 public frmmiembros as boolean

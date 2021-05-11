@@ -1,11 +1,7 @@
 attribute vb_name = "dibujarinventario"
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -34,7 +30,6 @@ attribute vb_name = "dibujarinventario"
 'pablo ignacio m�rquez
 
 
-
 option explicit
 
 '[code]:matux
@@ -60,29 +55,43 @@ private rboxframe(2) as rect
 private iframemod    as integer
 
 
-function clicenitemelegido(x as integer, y as integer) as boolean
-binvmod = true
-mx = x \ 32 + 1
-my = y \ 32 + 1
-if itemelegido = 0 or flagoro then
-    clicenitemelegido = false
-else
-    clicenitemelegido = (userinventory(itemelegido).objindex > 0) and (itemelegido = (mx + (my - 1) * 5) + offsetdelinv)
+function clicenitemelegido(byval x as integer, byval y as integer, picinv as picturebox) as boolean
+dim kmx as integer, kmy as integer
+
+if x > 0 and y > 0 and x < picinv.scalewidth and y < picinv.scaleheight then
+    
+    'binvmod = true
+    kmx = x \ 32 + 1
+    kmy = y \ 32 + 1
+    if itemelegido = flagoro then
+        clicenitemelegido = false
+    else
+'        clicenitemelegido = (userinventory(itemelegido).objindex > 0) and (itemelegido = (kmx + (kmy - 1) * 5) + offsetdelinv)
+        clicenitemelegido = (userinventory(itemelegido).objindex > 0) and (kmx = mx) and (kmy = my)
+    end if
+
 end if
+
 end function
 
-sub itemclick(x as integer, y as integer)
+sub itemclick(x as integer, y as integer, picinv as picturebox)
 dim lpreitem as long
 
 binvmod = false
-mx = x \ 32 + 1
-my = y \ 32 + 1
+if x > 0 and y > 0 and x < picinv.scalewidth and y < picinv.scaleheight then
+    mx = x \ 32 + 1
+    my = y \ 32 + 1
+    
+    lpreitem = (mx + (my - 1) * 5) + offsetdelinv
+    
+    if lpreitem <= max_inventory_slots then
+        if userinventory(lpreitem).grhindex > 0 then
+            itemelegido = lpreitem
+            binvmod = true
+        end if
+    end if
+end if
 
-lpreitem = (mx + (my - 1) * 5) + offsetdelinv
-
-if lpreitem <= max_inventory_slots then _
-if userinventory(lpreitem).grhindex > 0 then _
-    itemelegido = lpreitem: binvmod = true
 end sub
 
 public sub dibujarinvbox()
@@ -114,7 +123,7 @@ frmmain.picinv.cls
 for ix = offsetdelinv + 1 to ubound(userinventory)
     if userinventory(ix).grhindex > 0 then
         auxsurface.bltcolorfill auxr, vbblack
-        auxsurface.bltfast 0, 0, surfacedb.getbmp(grhdata(userinventory(ix).grhindex).filenum), auxr, ddbltfast_nocolorkey
+        auxsurface.bltfast 0, 0, surfacedb.getbmp(grhdata(userinventory(ix).grhindex).filenum, 0), auxr, ddbltfast_nocolorkey
         auxsurface.drawtext 0, 0, userinventory(ix).amount, false
 
         if userinventory(ix).equipped then
@@ -149,7 +158,7 @@ next ix
 binvmod = false
 
 if itemelegido = 0 then _
-    call itemclick(2, 2)
+    call itemclick(2, 2, frmmain.picinv)
 
 end sub
 private sub initmem()

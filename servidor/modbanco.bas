@@ -1,4 +1,35 @@
 attribute vb_name = "modbanco"
+'argentum online 0.11.20
+'copyright (c) 2002 m�rquez pablo ignacio
+'
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the gnu general public license as published by
+'the free software foundation; either version 2 of the license, or
+'any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'gnu general public license for more details.
+'
+'you should have received a copy of the gnu general public license
+'along with this program; if not, write to the free software
+'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'
+'argentum online is based on baronsoft's vb6 online rpg
+'you can contact the original creator of ore at aaron@baronsoft.com
+'for more information about ore please visit http://www.baronsoft.com/
+'
+'
+'you can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'calle 3 n�mero 983 piso 7 dto a
+'la plata - pcia, buenos aires - republica argentina
+'c�digo postal 1900
+'pablo ignacio m�rquez
+
+
 option explicit
 
 'modulo programado por neb
@@ -269,4 +300,41 @@ end if
 
 end sub
 
+sub senduserbovedatxt(byval sendindex as integer, byval userindex as integer)
+on error resume next
+dim j as integer
+call senddata(toindex, sendindex, 0, "||" & userlist(userindex).name & fonttype_info)
+call senddata(toindex, sendindex, 0, "|| tiene " & userlist(userindex).bancoinvent.nroitems & " objetos." & fonttype_info)
+for j = 1 to max_bancoinventory_slots
+    if userlist(userindex).bancoinvent.object(j).objindex > 0 then
+        call senddata(toindex, sendindex, 0, "|| objeto " & j & " " & objdata(userlist(userindex).bancoinvent.object(j).objindex).name & " cantidad:" & userlist(userindex).bancoinvent.object(j).amount & fonttype_info)
+    end if
+next
+
+end sub
+
+sub senduserbovedatxtfromchar(byval sendindex as integer, byval charname as string)
+on error resume next
+dim j as integer
+dim charfile as string, tmp as string
+dim objind as long, objcant as long
+
+charfile = charpath & charname & ".chr"
+
+if fileexist(charfile, vbnormal) then
+    call senddata(toindex, sendindex, 0, "||" & charname & fonttype_info)
+    call senddata(toindex, sendindex, 0, "|| tiene " & getvar(charfile, "bancoinventory", "cantidaditems") & " objetos." & fonttype_info)
+    for j = 1 to max_bancoinventory_slots
+        tmp = getvar(charfile, "bancoinventory", "obj" & j)
+        objind = readfield(1, tmp, asc("-"))
+        objcant = readfield(2, tmp, asc("-"))
+        if objind > 0 then
+            call senddata(toindex, sendindex, 0, "|| objeto " & j & " " & objdata(objind).name & " cantidad:" & objcant & fonttype_info)
+        end if
+    next
+else
+    call senddata(toindex, sendindex, 0, "||usuario inexistente: " & charname & fonttype_info)
+end if
+
+end sub
 

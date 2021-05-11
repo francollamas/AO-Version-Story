@@ -104,10 +104,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -136,7 +132,6 @@ attribute vb_exposed = false
 'pablo ignacio m�rquez
 
 
-
 '[code]:matux
 '
 '    le puse el iconito de la manito a los botones ^_^,
@@ -155,6 +150,6 @@ unload me
 end sub
 
 private sub form_deactivate()
-me.setfocus
+'me.setfocus
 end sub
 

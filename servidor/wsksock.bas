@@ -1,4 +1,38 @@
 attribute vb_name = "wsksock"
+
+'argentum online 0.11.20
+'copyright (c) 2002 m�rquez pablo ignacio
+'
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the gnu general public license as published by
+'the free software foundation; either version 2 of the license, or
+'any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'gnu general public license for more details.
+'
+'you should have received a copy of the gnu general public license
+'along with this program; if not, write to the free software
+'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'
+'argentum online is based on baronsoft's vb6 online rpg
+'you can contact the original creator of ore at aaron@baronsoft.com
+'for more information about ore please visit http://www.baronsoft.com/
+'
+'
+'you can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'calle 3 n�mero 983 piso 7 dto a
+'la plata - pcia, buenos aires - republica argentina
+'c�digo postal 1900
+'pablo ignacio m�rquez
+
+
+#if usarquesocket = 1 then
+
 'date stamp: sept 1, 1996 (for version control, please don't remove)
 
 'visual basic 4.0 winsock "header"
@@ -215,7 +249,7 @@ global const wsano_address = 11004
     public declare function sendto lib "winsock.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, to_addr as sockaddr, byval tolen as integer) as integer
     public declare function setsockopt lib "winsock.dll" (byval s as integer, byval level as integer, byval optname as integer, optval as any, byval optlen as integer) as integer
     public declare function shutdown lib "winsock.dll" alias "shutdown" (byval s as integer, byval how as integer) as integer
-    public declare function socket lib "winsock.dll" (byval af as integer, byval s_type as integer, byval protocol as integer) as integer
+    public declare function socket lib "winsock.dll" alias "socket" (byval af as integer, byval s_type as integer, byval protocol as integer) as integer
 '---database functions
     public declare function gethostbyaddr lib "winsock.dll" (addr as long, byval addr_len as integer, byval addr_type as integer) as long
     public declare function gethostbyname lib "winsock.dll" (byval host_name as string) as long
@@ -279,7 +313,7 @@ global const wsano_address = 11004
     public declare function sendto lib "wsock32.dll" (byval s as long, buf as any, byval buflen as long, byval flags as long, to_addr as sockaddr, byval tolen as long) as long
     public declare function setsockopt lib "wsock32.dll" (byval s as long, byval level as long, byval optname as long, optval as any, byval optlen as long) as long
     public declare function shutdown lib "wsock32.dll" alias "shutdown" (byval s as long, byval how as long) as long
-    public declare function socket lib "wsock32.dll" (byval af as long, byval s_type as long, byval protocol as long) as long
+    public declare function socket lib "wsock32.dll" alias "socket" (byval af as long, byval s_type as long, byval protocol as long) as long
 '---database functions
     public declare function gethostbyaddr lib "wsock32.dll" (addr as long, byval addr_len as long, byval addr_type as long) as long
     public declare function gethostbyname lib "wsock32.dll" (byval host_name as string) as long
@@ -791,7 +825,8 @@ public function listenforconnect(byval port&, byval hwndtomsg&, byval enlazar as
         listenforconnect = invalid_socket
         exit function
     end if
-    selectops = fd_read or fd_write or fd_close or fd_accept
+'    selectops = fd_read or fd_write or fd_close or fd_accept
+    selectops = fd_read or fd_close or fd_accept
     if wsaasyncselect(s, hwndtomsg, byval 1025, byval selectops) then
         if s > 0 then
             dummy = apiclosesocket(s)
@@ -800,7 +835,7 @@ public function listenforconnect(byval port&, byval hwndtomsg&, byval enlazar as
         exit function
     end if
     
-    if listen(s, 10) then
+    if listen(s, 5) then
         if s > 0 then
             dummy = apiclosesocket(s)
         end if
@@ -851,11 +886,11 @@ public function startwinsock(sdescription as string) as boolean
     if not wsastartedup then
         if not wsastartup(&h101, startupdata) then
             wsastartedup = true
-            debug.print "wversion="; startupdata.wversion, "whighversion="; startupdata.whighversion
-            debug.print "if wversion == 257 then everything is kewl"
-            debug.print "szdescription="; startupdata.szdescription
-            debug.print "szsystemstatus="; startupdata.szsystemstatus
-            debug.print "imaxsockets="; startupdata.imaxsockets, "imaxudpdg="; startupdata.imaxudpdg
+'            debug.print "wversion="; startupdata.wversion, "whighversion="; startupdata.whighversion
+'            debug.print "if wversion == 257 then everything is kewl"
+'            debug.print "szdescription="; startupdata.szdescription
+'            debug.print "szsystemstatus="; startupdata.szsystemstatus
+'            debug.print "imaxsockets="; startupdata.imaxsockets, "imaxudpdg="; startupdata.imaxudpdg
             sdescription = startupdata.szdescription
         else
             wsastartedup = false
@@ -867,3 +902,6 @@ end function
 public function wsamakeselectreply(theevent%, theerror%) as long
     wsamakeselectreply = (theerror * &h10000) + (theevent and &hffff&)
 end function
+
+
+#end if

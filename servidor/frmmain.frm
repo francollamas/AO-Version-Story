@@ -1,10 +1,9 @@
 version 5.00
-object = "{33101c00-75c3-11cf-a8a0-444553540000}#1.0#0"; "cswsk32.ocx"
 begin vb.form frmmain 
    backcolor       =   &h00c0c0c0&
    borderstyle     =   3  'fixed dialog
    caption         =   "argentum online"
-   clientheight    =   1725
+   clientheight    =   1785
    clientleft      =   1950
    clienttop       =   1815
    clientwidth     =   5190
@@ -25,116 +24,103 @@ begin vb.form frmmain
    maxbutton       =   0   'false
    minbutton       =   0   'false
    palettemode     =   1  'usezorder
-   scaleheight     =   1725
+   scaleheight     =   1785
    scalewidth      =   5190
-   showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    windowstate     =   1  'minimized
-   begin socketwrenchctrl.socket socket2 
-      index           =   0
-      left            =   15
-      top             =   495
-      _version        =   65536
-      _extentx        =   741
-      _extenty        =   741
-      _stockprops     =   0
-      autoresolve     =   -1  'true
-      backlog         =   1
-      binary          =   0   'false
-      blocking        =   0   'false
-      broadcast       =   0   'false
-      buffersize      =   0
-      hostaddress     =   ""
-      hostfile        =   ""
-      hostname        =   ""
-      inline          =   0   'false
-      interval        =   0
-      keepalive       =   0   'false
-      library         =   ""
-      linger          =   0
-      localport       =   0
-      localservice    =   ""
-      protocol        =   0
-      remoteport      =   0
-      remoteservice   =   ""
-      reuseaddress    =   0   'false
-      route           =   -1  'true
-      timeout         =   0
-      type            =   1
-      urgent          =   0   'false
+   begin vb.checkbox superlog 
+      caption         =   "log"
+      height          =   255
+      left            =   3120
+      tabindex        =   9
+      top             =   480
+      width           =   615
    end
-   begin socketwrenchctrl.socket socket1 
-      left            =   30
-      top             =   -60
-      _version        =   65536
-      _extentx        =   741
-      _extenty        =   741
-      _stockprops     =   0
-      autoresolve     =   -1  'true
-      backlog         =   1
-      binary          =   0   'false
-      blocking        =   0   'false
-      broadcast       =   0   'false
-      buffersize      =   2048
-      hostaddress     =   ""
-      hostfile        =   ""
-      hostname        =   ""
-      inline          =   0   'false
-      interval        =   0
-      keepalive       =   0   'false
-      library         =   ""
-      linger          =   0
-      localport       =   0
-      localservice    =   ""
-      protocol        =   0
-      remoteport      =   0
-      remoteservice   =   ""
-      reuseaddress    =   0   'false
-      route           =   -1  'true
-      timeout         =   0
-      type            =   1
-      urgent          =   0   'false
+   begin vb.commandbutton cmddump 
+      caption         =   "dump"
+      height          =   255
+      left            =   3720
+      tabindex        =   8
+      top             =   480
+      width           =   1215
+   end
+   begin vb.timer fx 
+      enabled         =   0   'false
+      interval        =   200
+      left            =   1440
+      top             =   540
+   end
+   begin vb.timer auditoria 
+      enabled         =   0   'false
+      interval        =   1000
+      left            =   1440
+      top             =   1020
    end
    begin vb.timer ttraficstat 
+      enabled         =   0   'false
       interval        =   6000
-      left            =   570
-      top             =   105
+      left            =   480
+      top             =   60
    end
    begin vb.timer timer1 
+      enabled         =   0   'false
       interval        =   3000
-      left            =   1425
-      top             =   630
+      left            =   960
+      top             =   540
    end
    begin vb.timer cmdexec 
+      enabled         =   0   'false
       interval        =   1
-      left            =   1260
-      top             =   90
+      left            =   960
+      top             =   60
    end
    begin vb.timer gametimer 
+      enabled         =   0   'false
       interval        =   40
-      left            =   1800
+      left            =   1440
       top             =   60
    end
    begin vb.timer tpiquetec 
+      enabled         =   0   'false
       interval        =   6000
-      left            =   495
-      top             =   510
+      left            =   480
+      top             =   540
    end
    begin vb.timer tlluviaevent 
+      enabled         =   0   'false
       interval        =   60000
-      left            =   2040
-      top             =   720
+      left            =   960
+      top             =   1020
    end
    begin vb.timer tlluvia 
+      enabled         =   0   'false
       interval        =   500
-      left            =   60
+      left            =   0
       top             =   1035
    end
    begin vb.timer autosave 
       enabled         =   0   'false
       interval        =   60000
-      left            =   570
-      top             =   1080
+      left            =   480
+      top             =   1020
+   end
+   begin vb.timer npcataca 
+      enabled         =   0   'false
+      interval        =   4000
+      left            =   1920
+      top             =   1020
+   end
+   begin vb.timer killlog 
+      enabled         =   0   'false
+      interval        =   60000
+      left            =   1920
+      top             =   60
+   end
+   begin vb.timer timer_ai 
+      enabled         =   0   'false
+      interval        =   100
+      left            =   1920
+      top             =   540
    end
    begin vb.frame frame1 
       caption         =   "broadcast"
@@ -143,18 +129,39 @@ begin vb.form frmmain
       tabindex        =   2
       top             =   600
       width           =   4935
-      begin vb.timer auditoria 
-         interval        =   1000
-         left            =   3180
-         top             =   90
+      begin vb.commandbutton command2 
+         caption         =   "broadcast consola"
+         beginproperty font 
+            name            =   "tahoma"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   255
+         left            =   2520
+         tabindex        =   6
+         top             =   720
+         width           =   2295
       end
       begin vb.commandbutton command1 
-         caption         =   "enviar"
+         caption         =   "broadcast clientes"
+         beginproperty font 
+            name            =   "tahoma"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
          height          =   255
          left            =   120
          tabindex        =   5
          top             =   720
-         width           =   4695
+         width           =   2295
       end
       begin vb.textbox broadmsg 
          height          =   315
@@ -166,31 +173,20 @@ begin vb.form frmmain
       begin vb.label label1 
          caption         =   "mensaje"
          height          =   255
+         index           =   0
          left            =   120
          tabindex        =   3
          top             =   240
          width           =   855
       end
    end
-   begin vb.timer fx 
-      interval        =   200
-      left            =   2520
-      top             =   60
-   end
-   begin vb.timer npcataca 
-      interval        =   4000
-      left            =   4440
-      top             =   0
-   end
-   begin vb.timer killlog 
-      interval        =   60000
-      left            =   3465
-      top             =   45
-   end
-   begin vb.timer timer_ai 
-      interval        =   100
-      left            =   3960
-      top             =   60
+   begin vb.label escuch 
+      caption         =   "label2"
+      height          =   255
+      left            =   3240
+      tabindex        =   7
+      top             =   240
+      width           =   1335
    end
    begin vb.label cantusuarios 
       appearance      =   0  'flat
@@ -199,7 +195,7 @@ begin vb.form frmmain
       backstyle       =   0  'transparent
       caption         =   "numero de usuarios:"
       beginproperty font 
-         name            =   "ms serif"
+         name            =   "tahoma"
          size            =   8.25
          charset         =   0
          weight          =   700
@@ -212,7 +208,7 @@ begin vb.form frmmain
       left            =   120
       tabindex        =   1
       top             =   240
-      width           =   1575
+      width           =   1725
    end
    begin vb.label txstatus 
       autosize        =   -1  'true
@@ -252,7 +248,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -281,6 +277,10 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
+
+
 
 
 option explicit
@@ -342,6 +342,16 @@ for iuserindex = 1 to maxusers
         userlist(iuserindex).counters.idlecount = userlist(iuserindex).counters.idlecount + 1
         if userlist(iuserindex).counters.idlecount >= idlelimit then
             call senddata(toindex, iuserindex, 0, "!!demasiado tiempo inactivo. has sido desconectado..")
+            'mato los comercios seguros
+            if userlist(iuserindex).comusu.destusu > 0 then
+                if userlist(userlist(iuserindex).comusu.destusu).flags.userlogged then
+                    if userlist(userlist(iuserindex).comusu.destusu).comusu.destusu = iuserindex then
+                        call senddata(toindex, userlist(iuserindex).comusu.destusu, 0, "||comercio cancelado por el otro usuario" & fonttype_talk)
+                        call fincomerciarusu(userlist(iuserindex).comusu.destusu)
+                    end if
+                end if
+                call fincomerciarusu(iuserindex)
+            end if
             call cerrar_usuario(iuserindex)
         end if
   end if
@@ -355,36 +365,24 @@ end sub
 private sub auditoria_timer()
 on error goto errhand
 
-dim k as integer
-for k = 1 to lastuser
-    if userlist(k).connid <> -1 then
-        daystats.segundos = daystats.segundos + 1
-    end if
-next k
+'dim k as integer
+'for k = 1 to lastuser
+'    if userlist(k).connid <> -1 then
+'        daystats.segundos = daystats.segundos + 1
+'    end if
+'next k
 
-call pasarsegundo
+call pasarsegundo 'sistema de desconexion de 10 segs
 
-static andando as boolean
-static contador as long
-dim tmp as boolean
+call actualizaestadisticasweb
+call actualizastatses
 
-contador = contador + 1
 
-if contador >= 10 then
-    contador = 0
-    tmp = estadisticasweb.estadisticasandando()
-    
-    if andando = false and tmp = true then
-        call inicializaestadisticas
-    end if
-    
-    andando = tmp
-end if
 
 exit sub
 
 errhand:
-call logerror("error en timer auditoria (sistema de desconexion de 10 segundos). err: " & err.description & " - " & err.number)
+call logerror("error en timer auditoria. err: " & err.description & " - " & err.number)
 end sub
 
 private sub autosave_timer()
@@ -394,10 +392,49 @@ on error goto errhandler
 
 static minutos as long
 static minutoslatsclean as long
-
 static minssocketreset as long
-
 static minspjessave as long
+static minutosnumuserscheck as long
+
+dim i as integer
+dim num as long
+
+'if reiniciarserver = 666 then
+'#if true = false then
+'    call senddata(toall, 0, 0, "||servidor> reiniciando..." & fonttype_server)
+'
+'    'worldsave
+'    call dobackup
+'
+'    'guardar pjs
+'#if usarquesocket = 1 then
+'    call apiclosesocket(socklisten)
+'#elseif usarquesocket = 0 then
+'
+'#end if
+'
+'    for i = 1 to maxusers
+'        if userlist(i).connid <> -1 and userlist(i).connidvalida then
+'            call closesocket(i)
+'        end if
+'    next i
+'
+'    'guilds
+'    call saveguildsdb
+'
+'    chdrive app.path
+'    chdir app.path
+'
+''    if fileexist(app.path & "\" & app.exename, vbnormal) then
+'        call shell(app.path & "\" & app.exename, vbnormalnofocus)
+''    end if
+'
+'    'chau
+'    unload frmmain
+'
+'    exit sub
+'#end if
+'end if
 
 minsrunning = minsrunning + 1
 
@@ -411,24 +448,58 @@ if minsrunning = 60 then
         call dayelapsed
         'dias = dias + 1
         horas = 0
+        
+'        if autoreiniciar = 1 then
+'            call senddata(toall, 0, 0, "||servidor> el servidor se reiniciar� en 1 minuto." & fonttype_server)
+'            reiniciarserver = 666
+'        end if
     end if
     minsrunning = 0
 end if
 
-dim i as integer
     
 minutos = minutos + 1
 
-'minssocketreset = minssocketreset + 1
-'for debug purposes
-'if minssocketreset > 1 then
-'    minssocketreset = 0
-'    for i = 1 to maxusers
-'        if userlist(i).connid <> -1 and not userlist(i).flags.userlogged then call closesocket(i)
-'    next i
-'    call reloadsokcet
-'end if
+#if usarquesocket = 1 then
+' ok la cosa es asi, este cacho de codigo es para
+' evitar los problemas de socket. a menos que estes
+' seguro de lo que estas haciendo, te recomiendo
+' que lo dejes tal cual est�.
+' alejo.
+minssocketreset = minssocketreset + 1
+' cada 1 minutos hacer el checkeo
+if minssocketreset >= 5 then
+    minssocketreset = 0
+    for i = 1 to maxusers
+        if userlist(i).connid <> -1 and not userlist(i).flags.userlogged then
+            if userlist(i).counters.idlecount > ((intervalocerrarconexion * 2) / 3) then
+                call closesocket(i)
+            end if
+        end if
+    next i
+    'call reloadsokcet
     
+    call logcriticevent("numusers: " & numusers & " wsapisock2usr: " & wsapisock2usr.count)
+end if
+#end if
+
+minutosnumuserscheck = minutosnumuserscheck + 1
+if minutosnumuserscheck >= 2 then
+    minutosnumuserscheck = 0
+    num = 0
+    for i = 1 to maxusers
+        if userlist(i).connid <> -1 and userlist(i).flags.userlogged then
+            num = num + 1
+        end if
+    next i
+    if num <> numusers then
+        numusers = num
+        'call senddata(toadmins, 0, 0, "servidor> error en numusers. contactar a algun programador." & fonttype_server)
+        call logcriticevent("num <> numusers")
+    end if
+end if
+
+
 if minutos >= minutosws then
     call dobackup
     call aclon.vaciarcoleccion
@@ -464,7 +535,7 @@ close #n
 
 exit sub
 errhandler:
-    call logerror("error en timerautosave")
+    call logerror("error en timerautosave " & err.number & ": " & err.description)
 
 end sub
 
@@ -473,16 +544,54 @@ end sub
 
 
 
+private sub cmddump_click()
+on error resume next
+
+dim i as integer
+for i = 1 to maxusers
+    call logcriticevent(i & ") connid: " & userlist(i).connid & ". connidvalida: " & userlist(i).connidvalida & " name: " & userlist(i).name & " userlogged: " & userlist(i).flags.userlogged)
+next i
+
+call logcriticevent("lastuser: " & lastuser & " nextopenuser: " & nextopenuser)
+
+end sub
+
 private sub cmdexec_timer()
 dim i as integer
+static n as long
+
+on error resume next ':(((
+
+n = n + 1
 
 for i = 1 to maxusers
-    if userlist(i).connid <> -1 then
+    if userlist(i).connid <> -1 and userlist(i).connidvalida then
         if not userlist(i).commandsbuffer.isempty then
             call handledata(i, userlist(i).commandsbuffer.pop)
         end if
+        if n >= 10 then
+            if userlist(i).colasalida.count > 0 then ' and userlist(i).sockpuedoenviar then
+    #if usarquesocket = 1 then
+                call intentarenviardatosencolados(i)
+    '#elseif usarquesocket = 0 then
+    '            call wrchintentarenviardatosencolados(i)
+    '#elseif usarquesocket = 2 then
+    '            call servintentarenviardatosencolados(i)
+    #elseif usarquesocket = 3 then
+        'nada, el control deberia ocuparse de esto!!!
+        'si la cola se llena, dispara un on close
+    #end if
+            end if
+        end if
     end if
 next i
+
+if n >= 10 then
+    n = 0
+end if
+
+exit sub
+hayerror:
 
 end sub
 
@@ -498,6 +607,10 @@ else
     frmmain.show
 end if
 
+end sub
+
+private sub command2_click()
+call senddata(toall, 0, 0, "||servidor> " & broadmsg.text & fonttype_server)
 end sub
 
 
@@ -552,10 +665,12 @@ on error resume next
 
 call quitariconosystray
 
-#if usarapi then
-call limpiawsapi
-#else
+#if usarquesocket = 1 then
+call limpiawsapi(frmmain.hwnd)
+#elseif usarquesocket = 0 then
 socket1.cleanup
+#elseif usarquesocket = 2 then
+serv.detener
 #end if
 
 call descarganpcsdat
@@ -584,6 +699,8 @@ end sub
 
 
 private sub fx_timer()
+on error goto hayerror
+
 dim mapindex as integer
 dim n as integer
 for mapindex = 1 to nummaps
@@ -632,6 +749,9 @@ for mapindex = 1 to nummaps
     end if
 next
 
+exit sub
+hayerror:
+
 end sub
 
 private sub gametimer_timer()
@@ -659,13 +779,14 @@ if lpermitetrabajar < intervalouserpuedetrabajar then
 end if
 '[/alejo]
 
+on error goto hayerror
 
  '<<<<<< procesa eventos de los usuarios >>>>>>
  for iuserindex = 1 to maxusers
    'conexion activa?
    if userlist(iuserindex).connid <> -1 then
       '�user valido?
-      if userlist(iuserindex).flags.userlogged then
+      if userlist(iuserindex).connidvalida and userlist(iuserindex).flags.userlogged then
          
          '[alejo-18-5]
          benviarstats = false
@@ -677,30 +798,31 @@ end if
 '         if lpermiteatacar < intervalouserpuedeatacar then
 '                lpermiteatacar = lpermiteatacar + 1
 '         else
-         if not lpermiteatacar < intervalouserpuedeatacar then
-                userlist(iuserindex).flags.puedeatacar = 1
+'         if not lpermiteatacar < intervalouserpuedeatacar then
+'                userlist(iuserindex).flags.puedeatacar = 1
 '                lpermiteatacar = 0
-         end if
+'         end if
          '<<<<<<<<<<<< allow attack >>>>>>>>>>>>>
 
          '<<<<<<<<<<<< allow cast spells >>>>>>>>>>>
 '         if lpermitecast < intervalouserpuedecastear then
 '              lpermitecast = lpermitecast + 1
 '         else
-         if not lpermitecast < intervalouserpuedecastear then
-              userlist(iuserindex).flags.puedelanzarspell = 1
-'              lpermitecast = 0
-         end if
+'         if not lpermitecast < intervalouserpuedecastear then
+'              userlist(iuserindex).flags.puedelanzarspell = 1
+''              lpermitecast = 0
+'                'call senddata(toadmins, 0, 0, "||intervalopuedecastear " & gettickcount() & fonttype_info)
+'         end if
          '<<<<<<<<<<<< allow cast spells >>>>>>>>>>>
 
          '<<<<<<<<<<<< allow work >>>>>>>>>>>
 '         if lpermitetrabajar < intervalouserpuedetrabajar then
 '              lpermitetrabajar = lpermitetrabajar + 1
 '         else
-         if not lpermitetrabajar < intervalouserpuedetrabajar then
-              userlist(iuserindex).flags.puedetrabajar = 1
+'         if not lpermitetrabajar < intervalouserpuedetrabajar then
+'              userlist(iuserindex).flags.puedetrabajar = 1
 '              lpermitetrabajar = 0
-         end if
+'         end if
          '<<<<<<<<<<<< allow work >>>>>>>>>>>
 
 
@@ -718,6 +840,7 @@ end if
                if userlist(iuserindex).flags.meditando then call domeditar(iuserindex)
                if userlist(iuserindex).flags.envenenado = 1 and userlist(iuserindex).flags.privilegios = 0 then call efectoveneno(iuserindex, benviarstats)
                if userlist(iuserindex).flags.admininvisible <> 1 and userlist(iuserindex).flags.invisible = 1 then call efectoinvisibilidad(iuserindex)
+               if userlist(iuserindex).flags.mimetizado = 1 then call efectomimetismo(iuserindex)
           
                call duracionpociones(iuserindex)
                call hambreysed(iuserindex, benviarays)
@@ -793,6 +916,9 @@ if not lpermitetrabajar < intervalouserpuedetrabajar then
      lpermitetrabajar = 0
 end if
 
+exit sub
+hayerror:
+
 '[/alejo]
   'doevents
 end sub
@@ -828,7 +954,9 @@ if fileexist(app.path & "\logs\haciendo.log", vbnormal) then kill app.path & "\l
 if fileexist(app.path & "\logs\stats.log", vbnormal) then kill app.path & "\logs\stats.log"
 if fileexist(app.path & "\logs\asesinatos.log", vbnormal) then kill app.path & "\logs\asesinatos.log"
 if fileexist(app.path & "\logs\hackattemps.log", vbnormal) then kill app.path & "\logs\hackattemps.log"
-if fileexist(app.path & "\logs\wsapi.log", vbnormal) then kill app.path & "\logs\wsapi.log"
+if not fileexist(app.path & "\logs\nokillwsapi.txt") then
+    if fileexist(app.path & "\logs\wsapi.log", vbnormal) then kill app.path & "\logs\wsapi.log"
+end if
 
 end sub
 
@@ -858,6 +986,8 @@ end sub
 
 private sub npcataca_timer()
 
+on error resume next
+
 dim npc as integer
 
 for npc = 1 to lastnpc
@@ -870,259 +1000,450 @@ end sub
 
 
 
-private sub socket1_accept(socketid as integer)
-#if not (usarapi = 1) then
-
-'=========================================================
-'uso del control socket wrench
-'=============================
-
-if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "pedido de conexion socketid:" & socketid & vbcrlf
-
-on error resume next
-    
-    dim newindex as integer
-    
-    
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "nextopenuser" & vbcrlf
-    
-    newindex = nextopenuser ' nuevo indice
-    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "userindex asignado " & newindex & vbcrlf
-    
-    if newindex <= maxusers then
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "cargando socket " & newindex & vbcrlf
-            
-            unload socket2(newindex)
-            load socket2(newindex)
-            
-            socket2(newindex).addressfamily = af_inet
-            socket2(newindex).protocol = ipproto_ip
-            socket2(newindex).sockettype = sock_stream
-            socket2(newindex).binary = false
-            socket2(newindex).buffersize = socket_buffer_size
-            socket2(newindex).blocking = false
-            socket2(newindex).linger = 1
-            
-            socket2(newindex).accept = socketid
-            
-            
-            if ados.maxconexiones(socket2(newindex).peeraddress) then
-            
-                userlist(newindex).connid = -1
-                if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "user slot reseteado " & newindex & vbcrlf
-            
-               
-                
-                if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "socket unloaded" & newindex & vbcrlf
-                
-                'call logcriticevent(socket2(newindex).peeraddress & " intento crear mas de 3 conexiones.")
-                call ados.restarconexion(socket2(newindex).peeraddress)
-                'socket2(newindex).disconnect
-                unload frmmain.socket2(newindex)
-                
-                exit sub
-            end if
-            
-            userlist(newindex).connid = socketid
-            userlist(newindex).ip = socket2(newindex).peeraddress
-            
-            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & socket2(newindex).peeraddress & " logged." & vbcrlf
-    else
-        call logcriticevent("no acepte conexion porque no tenia slots")
-    end if
-    
-exit sub
-
-#end if
-end sub
-
-
-private sub socket1_blocking(status as integer, cancel as integer)
-cancel = true
-end sub
-
-private sub socket1_lasterror(errorcode as integer, errorstring as string, response as integer)
-' solo para depurar
-'call logerror("socket1:" & errorstring)
-
-if debugsocket then frmdebugsocket.text2.text = frmdebugsocket.text2.text & time & " " & errorstring & vbcrlf
-
-frmdebugsocket.label3.caption = socket1.state
-end sub
-
-private sub socket2_blocking(index as integer, status as integer, cancel as integer)
-'cancel = true
-end sub
-
-private sub socket2_connect(index as integer)
-'if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "conectado" & vbcrlf
-set userlist(index).commandsbuffer = new ccolaarray
-end sub
-
-private sub socket2_disconnect(index as integer)
-    if userlist(index).flags.userlogged and _
-        userlist(index).counters.saliendo = false then
-        call cerrar_usuario(index)
-    else
-        call closesocket(index)
-    end if
-end sub
-
-'private sub socket2_lasterror(index as integer, errorcode as integer, errorstring as string, response as integer)
-''24004   wsaeintr    blocking function was canceled
-''24009   wsaebadf    invalid socket descriptor passed to function
-''24013   wsaeacces   access denied
-''24014   wsaefault   invalid address passed to function
-''24022   wsaeinval   invalid socket function call
-''24024   wsaemfile   no socket descriptors are available
-''24035   wsaewouldblock  socket would block on this operation
-''24036   wsaeinprogress  blocking function in progress
-''24037   wsaealready function being canceled has already completed
-''24038   wsaenotsock invalid socket descriptor passed to function
-''24039   wsaedestaddrreq destination address is required
-''24040   wsaemsgsize datagram was too large to fit in specified buffer
-''24041   wsaeprototype   specified protocol is the wrong type for this socket
-''24042   wsaenoprotoopt  socket option is unknown or unsupported
-''24043   wsaeprotonosupport  specified protocol is not supported
-''24044   wsaesocktnosupport  specified socket type is not supported in this address family
-''24045   wsaeopnotsupp   socket operation is not supported
-''24046   wsaepfnosupport specified protocol family is not supported
-''24047   wsaeafnosupport specified address family is not supported by this protocol
-''24048   wsaeaddrinuse   specified address is already in use
-''24049   wsaeaddrnotavail    specified address is not available
-''24050   wsaenetdown network subsystem has failed
-''24051   wsaenetunreach  network cannot be reached from this host
-''24052   wsaenetreset    network dropped connection on reset
-''24053   wsaeconnaborted connection was aborted due to timeout or other failure
-''24054   wsaeconnreset   connection was reset by remote network
-''24055   wsaenobufs  no buffer space is available
-''24056   wsaeisconn  socket is already connected
-''24057   wsaenotconn socket is not connected
-''24058   wsaeshutdown    socket connection has been shut down
-''24060   wsaetimedout    operation timed out before completion
-''24061   wsaeconnrefused connection refused by remote network
-''24064   wsaehostdown    remote host is down
-''24065   wsaehostunreach remote host is unreachable
-''24091   wsasysnotready  network subsystem is not ready for communication
-''24092   wsavernotsupported  requested version is not available
-''24093   wsanotinitialized   windows sockets library not initialized
-''25001   wsahost_not_found   authoritative answer host not found
-''25002   wsatry_again    non-authoritative answer host not found
-''25003   wsano_recovery  non-recoverable error
-''25004   wsano_data  no data record of requested type
-''response = socket_errignore
-'if errorcode = 24053 then call closesocket(index)
-'end sub
-
-private sub socket2_read(index as integer, datalength as integer, isurgent as integer)
-
-#if not (usarapi = 1) then
-
-on error goto errorhandler
-
-'*********************************************
-'separamos las lineas con endc y las enviamos a handledata()
-'*********************************************
-dim loopc as integer
-dim rd as string
-dim rbuffer(1 to command_buffer_size) as string
-dim cr as integer
-dim tchar as string
-dim schar as integer
-dim echar as integer
-dim aux$
-dim origcad as string
-
-dim lenrd as long
-
-'<<<<<<<<<<<<<<<<<< evitamos dos >>>>>>>>>>>>>>>>>>>>>>>>>>>
-'call addtovar(userlist(index).numeropaquetespormilisec, 1, 1000)
+'#if usarquesocket = 2 then
 '
-'if userlist(index).numeropaquetespormilisec > 700 then
-'   'userlist(index).flags.administrativeban = 1
-'   call logcriticalhackattemp(userlist(index).name & " " & frmmain.socket2(index).peeraddress & " alcanzo el max paquetes por iteracion.")
-'   call senddata(toindex, index, 0, "errse ha perdido la conexion, por favor vuelva a conectarse.")
-'   call closesocket(index)
-'   exit sub
+'
+'private sub serv_close(byval id as long)
+'#if usarquesocket = 2 then
+'
+'dim userindex as integer
+'
+'userindex = cint(serv.getdato(id))
+'
+'if userindex > 0 then
+'    if userlist(userindex).flags.userlogged then
+'        call closesocketsl(userindex)
+'        call cerrar_usuario(userindex)
+'    else
+'        call closesocket(userindex)
+'    end if
 'end if
-
-call socket2(index).read(rd, datalength)
-
-origcad = rd
-lenrd = len(rd)
-
-'call addtovar(userlist(index).bytestransmitidosuser, lenb(rd), 100000)
-
-'[��bucle infinito!!]'
-if lenrd = 0 then
-    userlist(index).anticuelgue = userlist(index).anticuelgue + 1
-    if userlist(index).anticuelgue >= 150 then
-        userlist(index).anticuelgue = 0
-        call logerror("!!!! detectado bucle infinito de eventos socket2_read. cerrando indice " & index)
-        socket2(index).disconnect
-        call closesocket(index)
-        exit sub
-    end if
-else
-    userlist(index).anticuelgue = 0
-end if
-'[��bucle infinito!!]'
-
-'verificamos por una comando roto y le agregamos el resto
-if userlist(index).rdbuffer <> "" then
-    rd = userlist(index).rdbuffer & rd
-    userlist(index).rdbuffer = ""
-end if
-
-'verifica por mas de una linea
-schar = 1
-for loopc = 1 to lenrd
-
-    tchar = mid$(rd, loopc, 1)
-
-    if tchar = endc then
-        cr = cr + 1
-        echar = loopc - schar
-        rbuffer(cr) = mid$(rd, schar, echar)
-        schar = loopc + 1
-    end if
-        
-next loopc
-
-'verifica una linea rota y guarda
-if len(rd) - (schar - 1) <> 0 then
-    userlist(index).rdbuffer = mid$(rd, schar, len(rd))
-end if
-
-'enviamos el buffer al manejador
-for loopc = 1 to cr
-    
-    '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    '%%% si esta opcion se activa soluciona %%%
-    '%%% el problema del speedhack          %%%
-    '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if clientscommandsqueue = 1 then
-        if rbuffer(loopc) <> "" then if not userlist(index).commandsbuffer.push(rbuffer(loopc)) then call cerrar_usuario(index)
-    
-    else ' sh tiebe efecto
-          if userlist(index).connid <> -1 then
-            call handledata(index, rbuffer(loopc))
-          else
-            exit sub
-          end if
-    end if
-        
-next loopc
-
-exit sub
-
-
-errorhandler:
-    call logerror("error en socket read." & err.description & " numero paquetes:" & userlist(index).numeropaquetespormilisec & " . rdata:" & origcad)
-
-#end if
-end sub
-
+'
+'#end if
+'end sub
+'
+'private sub serv_eror(byval numero as long, byval descripcion as string)
+'#if usarquesocket = 2 then
+'call logcriticevent("serv_eror " & numero & ": " & descripcion)
+'#end if
+'end sub
+'
+'private sub serv_nuevaconn(byval id as long)
+'#if usarquesocket = 2 then
+''==========================================================
+'
+'if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "pedido de conexion socketid:" & id & vbcrlf
+'
+'on error resume next
+'
+'    dim newindex as integer
+'    dim ret as long
+'    dim i as long
+'    dim tstr as string
+'
+'    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "nextopenuser" & vbcrlf
+'
+'    newindex = nextopenuser ' nuevo indice
+'    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "userindex asignado " & newindex & vbcrlf
+'
+'    if newindex <= maxusers then
+'        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "cargando socket " & newindex & vbcrlf
+'
+'
+'        userlist(newindex).ip = serv.getip(id)
+'
+'        'busca si esta banneada la ip
+'        for i = 1 to banips.count
+'            if banips.item(i) = userlist(newindex).ip then
+'                call serv.cerrarsocket(id)
+'                exit sub
+'            end if
+'        next i
+'
+'
+'        '=============================================
+'        if ados.maxconexiones(userlist(newindex).ip) then
+'            userlist(newindex).connid = -1
+'            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "user slot reseteado " & newindex & vbcrlf
+'            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "socket unloaded" & newindex & vbcrlf
+'            'call logcriticevent(userlist(newindex).ip & " intento crear mas de 3 conexiones.")
+'            call ados.restarconexion(userlist(newindex).ip)
+'            call serv.cerrarsocket(id)
+'            'exit sub
+'        end if
+'
+'        call serv.setdato(id, newindex)
+'
+'        userlist(newindex).sockpuedoenviar = true
+'        userlist(newindex).connid = id
+'        userlist(newindex).connidvalida = true
+'        set userlist(newindex).commandsbuffer = new ccolaarray
+'        set userlist(newindex).colasalida = new collection
+'
+'        if newindex > lastuser then lastuser = newindex
+'
+''        debug.print "conexion desde " & userlist(newindex).ip
+'
+'        if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & userlist(newindex).ip & " logged." & vbcrlf
+'    else
+'        call logcriticevent("no acepte conexion porque no tenia slots")
+'
+'        tstr = "errserver lleno" & endc
+'        call serv.enviar(id, tstr, len(tstr))
+'        call serv.cerrarsocket(id)
+'    end if
+'
+'#end if
+'end sub
+'
+'private sub serv_read(byval id as long, byval datos as string, byval cantidad as long)
+'#if usarquesocket = 2 then
+'
+'dim t() as string
+'dim loopc as long
+'dim userindex as integer
+'
+'userindex = cint(serv.getdato(id))
+'
+'if userindex > 0 then
+'    tcpesstats.bytesrecibidos = tcpesstats.bytesrecibidos + len(datos)
+'
+'    userlist(userindex).rdbuffer = userlist(userindex).rdbuffer & datos
+'
+'    'if instr(1, userlist(slot).rdbuffer, chr(2)) > 0 then
+'    '    userlist(slot).rdbuffer = "clienteviejo" & endc
+'    '    debug.print "clienteviejo"
+'    'end if
+'
+'    t = split(userlist(userindex).rdbuffer, endc)
+'    if ubound(t) > 0 then
+'        userlist(userindex).rdbuffer = t(ubound(t))
+'
+'        for loopc = 0 to ubound(t) - 1
+'            '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'            '%%% si esta opcion se activa soluciona %%%
+'            '%%% el problema del speedhack          %%%
+'            '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'            if clientscommandsqueue = 1 then
+'                if t(loopc) <> "" then if not userlist(userindex).commandsbuffer.push(t(loopc)) then call cerrar_usuario(userindex)
+'
+'            else ' sh tiebe efecto
+'                  if userlist(userindex).connid <> -1 then
+'                    call handledata(userindex, t(loopc))
+'                  else
+'                    exit sub
+'                  end if
+'            end if
+'        next loopc
+'    end if
+'end if
+'
+'#end if
+'end sub
+'
+'private sub serv_write(byval id as long)
+'#if usarquesocket = 2 then
+'
+'#end if
+'end sub
+'
+'#end if
+'
+'private sub socket1_accept(socketid as integer)
+'#if usarquesocket = 0 then
+'
+''=========================================================
+''uso del control socket wrench
+''=============================
+'
+'if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "pedido de conexion socketid:" & socketid & vbcrlf
+'
+'on error resume next
+'
+'    dim newindex as integer
+'
+'
+'    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "nextopenuser" & vbcrlf
+'
+'    newindex = nextopenuser ' nuevo indice
+'    if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "userindex asignado " & newindex & vbcrlf
+'
+'    if newindex >= 1 and newindex <= maxusers then
+'            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "cargando socket " & newindex & vbcrlf
+'
+'            unload socket2(newindex)
+'            load socket2(newindex)
+'
+'            socket2(newindex).addressfamily = af_inet
+'            socket2(newindex).protocol = ipproto_ip
+'            socket2(newindex).sockettype = sock_stream
+'            socket2(newindex).binary = false
+'            socket2(newindex).buffersize = socket_buffer_size
+'            socket2(newindex).blocking = false
+'            socket2(newindex).linger = 1
+'
+'            socket2(newindex).accept = socketid
+'
+'            userlist(newindex).ip = socket2(newindex).peeraddress
+'            if banipbuscar(userlist(newindex).ip) > 0 then
+'                call closesocket(newindex)
+'                exit sub
+'            end if
+'
+'
+'            if ados.maxconexiones(socket2(newindex).peeraddress) then
+'
+'                userlist(newindex).connid = -1
+'                if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "user slot reseteado " & newindex & vbcrlf
+'
+'
+'
+'                if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "socket unloaded" & newindex & vbcrlf
+'
+'                'call logcriticevent(socket2(newindex).peeraddress & " intento crear mas de 3 conexiones.")
+'                call ados.restarconexion(socket2(newindex).peeraddress)
+'                'socket2(newindex).disconnect
+'                unload frmmain.socket2(newindex)
+'
+'                exit sub
+'            end if
+'
+'            set userlist(newindex).commandsbuffer = new ccolaarray
+'            set userlist(newindex).colasalida = new collection
+'            userlist(newindex).connidvalida = true
+'            userlist(newindex).connid = socketid
+'            userlist(newindex).sockpuedoenviar = true
+'
+'            if newindex > lastuser then
+'                lastuser = newindex
+'                if lastuser > maxusers then
+'                    lastuser = maxusers
+'                    call closesocket(newindex)
+'                end if
+'            end if
+'
+'            if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & socket2(newindex).peeraddress & " logged." & vbcrlf
+'    else
+'        call logcriticevent("no acepte conexion porque no tenia slots")
+'    end if
+'
+'exit sub
+'
+'#end if
+'end sub
+'
+'private sub socket1_blocking(status as integer, cancel as integer)
+'cancel = true
+'end sub
+'
+'private sub socket1_lasterror(errorcode as integer, errorstring as string, response as integer)
+'
+'if debugsocket then frmdebugsocket.text2.text = frmdebugsocket.text2.text & time & " " & errorstring & vbcrlf
+'
+'frmdebugsocket.label3.caption = socket1.state
+'end sub
+'
+'private sub socket1_write()
+''
+'
+'end sub
+'
+'private sub socket2_blocking(index as integer, status as integer, cancel as integer)
+''cancel = true
+'end sub
+'
+'private sub socket2_connect(index as integer)
+''if debugsocket then frmdebugsocket.text1.text = frmdebugsocket.text1.text & "conectado" & vbcrlf
+'
+'on error resume next
+'
+'if index >= lbound(userlist) and index <= ubound(userlist) then
+'    set userlist(index).commandsbuffer = new ccolaarray
+'end if
+'
+'end sub
+'
+'private sub socket2_disconnect(index as integer)
+'on error goto hayerror
+'
+'    if userlist(index).flags.userlogged and _
+'        userlist(index).counters.saliendo = false then
+'        call cerrar_usuario(index)
+'    elseif not userlist(index).flags.userlogged then
+'        call closesocket(index)
+'    else
+'        call closesocketsl(index)
+'    end if
+'
+'exit sub
+'hayerror:
+'
+'end sub
+'
+''private sub socket2_lasterror(index as integer, errorcode as integer, errorstring as string, response as integer)
+'''24004   wsaeintr    blocking function was canceled
+'''24009   wsaebadf    invalid socket descriptor passed to function
+'''24013   wsaeacces   access denied
+'''24014   wsaefault   invalid address passed to function
+'''24022   wsaeinval   invalid socket function call
+'''24024   wsaemfile   no socket descriptors are available
+'''24035   wsaewouldblock  socket would block on this operation
+'''24036   wsaeinprogress  blocking function in progress
+'''24037   wsaealready function being canceled has already completed
+'''24038   wsaenotsock invalid socket descriptor passed to function
+'''24039   wsaedestaddrreq destination address is required
+'''24040   wsaemsgsize datagram was too large to fit in specified buffer
+'''24041   wsaeprototype   specified protocol is the wrong type for this socket
+'''24042   wsaenoprotoopt  socket option is unknown or unsupported
+'''24043   wsaeprotonosupport  specified protocol is not supported
+'''24044   wsaesocktnosupport  specified socket type is not supported in this address family
+'''24045   wsaeopnotsupp   socket operation is not supported
+'''24046   wsaepfnosupport specified protocol family is not supported
+'''24047   wsaeafnosupport specified address family is not supported by this protocol
+'''24048   wsaeaddrinuse   specified address is already in use
+'''24049   wsaeaddrnotavail    specified address is not available
+'''24050   wsaenetdown network subsystem has failed
+'''24051   wsaenetunreach  network cannot be reached from this host
+'''24052   wsaenetreset    network dropped connection on reset
+'''24053   wsaeconnaborted connection was aborted due to timeout or other failure
+'''24054   wsaeconnreset   connection was reset by remote network
+'''24055   wsaenobufs  no buffer space is available
+'''24056   wsaeisconn  socket is already connected
+'''24057   wsaenotconn socket is not connected
+'''24058   wsaeshutdown    socket connection has been shut down
+'''24060   wsaetimedout    operation timed out before completion
+'''24061   wsaeconnrefused connection refused by remote network
+'''24064   wsaehostdown    remote host is down
+'''24065   wsaehostunreach remote host is unreachable
+'''24091   wsasysnotready  network subsystem is not ready for communication
+'''24092   wsavernotsupported  requested version is not available
+'''24093   wsanotinitialized   windows sockets library not initialized
+'''25001   wsahost_not_found   authoritative answer host not found
+'''25002   wsatry_again    non-authoritative answer host not found
+'''25003   wsano_recovery  non-recoverable error
+'''25004   wsano_data  no data record of requested type
+'''response = socket_errignore
+''if errorcode = 24053 then call closesocket(index)
+''end sub
+'
+'private sub socket2_read(index as integer, datalength as integer, isurgent as integer)
+'#if usarquesocket = 0 then
+'
+'on error goto errorhandler
+'
+''*********************************************
+''separamos las lineas con endc y las enviamos a handledata()
+''*********************************************
+'dim loopc as integer
+'dim rd as string
+'dim rbuffer(1 to command_buffer_size) as string
+'dim cr as integer
+'dim tchar as string
+'dim schar as integer
+'dim echar as integer
+'dim aux$
+'dim origcad as string
+'
+'dim lenrd as long
+'
+''<<<<<<<<<<<<<<<<<< evitamos dos >>>>>>>>>>>>>>>>>>>>>>>>>>>
+''call addtovar(userlist(index).numeropaquetespormilisec, 1, 1000)
+''
+''if userlist(index).numeropaquetespormilisec > 700 then
+''   'userlist(index).flags.administrativeban = 1
+''   call logcriticalhackattemp(userlist(index).name & " " & frmmain.socket2(index).peeraddress & " alcanzo el max paquetes por iteracion.")
+''   call senddata(toindex, index, 0, "errse ha perdido la conexion, por favor vuelva a conectarse.")
+''   call closesocket(index)
+''   exit sub
+''end if
+'
+'call socket2(index).read(rd, datalength)
+'
+'origcad = rd
+'lenrd = len(rd)
+'
+''call addtovar(userlist(index).bytestransmitidosuser, lenb(rd), 100000)
+'
+''[��bucle infinito!!]'
+'if lenrd = 0 then
+'    userlist(index).anticuelgue = userlist(index).anticuelgue + 1
+'    if userlist(index).anticuelgue >= 150 then
+'        userlist(index).anticuelgue = 0
+'        call logerror("!!!! detectado bucle infinito de eventos socket2_read. cerrando indice " & index)
+'        unload socket2(index)
+'        call closesocket(index)
+'        exit sub
+'    end if
+'else
+'    userlist(index).anticuelgue = 0
+'end if
+''[��bucle infinito!!]'
+'
+''verificamos por una comando roto y le agregamos el resto
+'if userlist(index).rdbuffer <> "" then
+'    rd = userlist(index).rdbuffer & rd
+'    userlist(index).rdbuffer = ""
+'end if
+'
+''verifica por mas de una linea
+'schar = 1
+'for loopc = 1 to lenrd
+'
+'    tchar = mid$(rd, loopc, 1)
+'
+'    if tchar = endc then
+'        cr = cr + 1
+'        echar = loopc - schar
+'        rbuffer(cr) = mid$(rd, schar, echar)
+'        schar = loopc + 1
+'    end if
+'
+'next loopc
+'
+''verifica una linea rota y guarda
+'if len(rd) - (schar - 1) <> 0 then
+'    userlist(index).rdbuffer = mid$(rd, schar, len(rd))
+'end if
+'
+''enviamos el buffer al manejador
+'for loopc = 1 to cr
+'
+'    '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'    '%%% si esta opcion se activa soluciona %%%
+'    '%%% el problema del speedhack          %%%
+'    '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'    if clientscommandsqueue = 1 then
+'        if rbuffer(loopc) <> "" then if not userlist(index).commandsbuffer.push(rbuffer(loopc)) then call cerrar_usuario(index)
+'
+'    else ' sh tiebe efecto
+'          if userlist(index).connid <> -1 then
+'            call handledata(index, rbuffer(loopc))
+'          else
+'            exit sub
+'          end if
+'    end if
+'
+'next loopc
+'
+'exit sub
+'
+'
+'errorhandler:
+'    call logerror("error en socket read." & err.description & " numero paquetes:" & userlist(index).numeropaquetespormilisec & " . rdata:" & origcad)
+'
+'#end if
+'end sub
+'
+'
+'
+'private sub socket2_write(index as integer)
+''on error resume next
+''
+''if index >= lbound(userlist) and index <= ubound(userlist) then
+''    userlist(index).sockpuedoenviar = true
+''end if
+''
+'end sub
 
 
 private sub timer_ai_timer()
@@ -1134,29 +1455,50 @@ dim x as integer
 dim y as integer
 dim useai as integer
 dim mapa as integer
+dim e_p as integer
 
-if not haciendobk then
+'barrin 29/9/03
+if not haciendobk and not enpausa then
     'update npcs
     for npcindex = 1 to lastnpc
         
         if npclist(npcindex).flags.npcactive then 'nos aseguramos que sea inteligente!
-           if npclist(npcindex).flags.paralizado = 1 then
-                 call efectoparalisisnpc(npcindex)
-           else
-                'usamos ai si hay algun user en el mapa
-                mapa = npclist(npcindex).pos.map
-                if mapa > 0 then
-                     if mapinfo(mapa).numusers > 0 then
-                             if npclist(npcindex).movement <> estatico then
-                                   call npcai(npcindex)
-                             end if
+            e_p = espretoriano(npcindex)
+            if e_p > 0 then
+                if npclist(npcindex).flags.paralizado = 1 then call efectoparalisisnpc(npcindex)
+                select case e_p
+                    case 1  ''clerigo
+                        call prcler_ai(npcindex)
+                    case 2  ''mago
+                        call prmago_ai(npcindex)
+                    case 3  ''cazador
+                        call prcaza_ai(npcindex)
+                    case 4  ''rey
+                        call prrey_ai(npcindex)
+                    case 5  ''guerre
+                        call prguer_ai(npcindex)
+                end select
+            else
+                ''ia comun
+                if npclist(npcindex).flags.paralizado = 1 then
+                      call efectoparalisisnpc(npcindex)
+                else
+                     'usamos ai si hay algun user en el mapa
+                     if npclist(npcindex).flags.inmovilizado = 1 then
+                        call efectoparalisisnpc(npcindex)
                      end if
+                     mapa = npclist(npcindex).pos.map
+                     if mapa > 0 then
+                          if mapinfo(mapa).numusers > 0 then
+                                  if npclist(npcindex).movement <> estatico then
+                                        call npcai(npcindex)
+                                  end if
+                          end if
+                     end if
+                     
                 end if
-                
-           end if
-                   
+            end if
         end if
-    
     next npcindex
 
 end if
@@ -1171,6 +1513,8 @@ errorhandler:
 end sub
 
 private sub timer1_timer()
+
+on error resume next
 
 dim i as integer
 
@@ -1194,7 +1538,7 @@ end if
 
 exit sub
 errhandler:
-call logerror("tlluvia")
+call logerror("tlluvia " & err.number & ": " & err.description)
 end sub
 
 private sub tlluviaevent_timer()
@@ -1254,12 +1598,12 @@ dim i as integer
 for i = 1 to lastuser
     if userlist(i).flags.userlogged then
             
-            if mapdata(userlist(i).pos.map, userlist(i).pos.x, userlist(i).pos.y).trigger = 5 then
+            if mapdata(userlist(i).pos.map, userlist(i).pos.x, userlist(i).pos.y).trigger = trigger_antipiquete then
                     userlist(i).counters.piquetec = userlist(i).counters.piquetec + 1
-                    call senddata(toindex, i, 0, "||estas obstruyendo la via publica, muevete o seras encarcelado!!!" & fonttype_info)
+                    call senddata(toindex, i, 0, "||estas obstruyendo la via publica, mu�vete o seras encarcelado!!!" & fonttype_info)
                     if userlist(i).counters.piquetec > 23 then
                             userlist(i).counters.piquetec = 0
-                            call encarcelar(i, 3)
+                            call encarcelar(i, tiempo_carcel_piquete)
                     end if
             else
                     if userlist(i).counters.piquetec > 0 then userlist(i).counters.piquetec = 0
@@ -1282,7 +1626,7 @@ if segundos >= 18 then segundos = 0
 exit sub
 
 errhandler:
-    call logerror("error en tpiquetec_timer")
+    call logerror("error en tpiquetec_timer " & err.number & ": " & err.description)
 end sub
 
 
@@ -1304,6 +1648,131 @@ private sub ttraficstat_timer()
 
 end sub
 
-private sub userslst_click()
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''uso del control tcpserv'''''''''''''''''''''''''''
+'''''''''''''compilar con usarquesocket = 3''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+#if usarquesocket = 3 then
+
+private sub tcpserv_eror(byval numero as long, byval descripcion as string)
+    call logerror("tcpserver socket error: " & numero & "/" & descripcion)
+end sub
+
+private sub tcpserv_nuevaconn(byval id as long)
+on error goto errorhandlernc
+
+    
+    dim i as integer
+    
+    dim newindex as integer
+    newindex = nextopenuser
+    
+    if newindex <= maxusers then
+        'call logindex(newindex, "******> accept. connid: " & id)
+        
+        tcpserv.setdato id, newindex
+        
+        if ados.maxconexiones(tcpserv.getip(id)) then
+            call ados.restarconexion(tcpserv.getip(id))
+            call resetuserslot(newindex)
+            exit sub
+        end if
+
+        if newindex > lastuser then lastuser = newindex
+
+        userlist(newindex).connid = id
+        userlist(newindex).ip = tcpserv.getip(id)
+        userlist(newindex).connidvalida = true
+        set userlist(newindex).commandsbuffer = new ccolaarray
+        
+        for i = 1 to banips.count
+            if banips.item(i) = tcpserv.getip(id) then
+                call resetuserslot(newindex)
+                exit sub
+            end if
+        next i
+
+    else
+        call closesocket(newindex, true)
+        logcriticevent ("newindex > maxusers. imposible alocatear sockets")
+    end if
+
+exit sub
+
+errorhandlernc:
+call logerror("tcpserver::nuevaconexion " & err.description)
+end sub
+
+private sub tcpserv_close(byval id as long, byval midato as long)
+    on error goto eh
+    '' no cierro yo el socket. el on_close lo cierra por mi.
+    'call logindex(midato, "******> remote close. connid: " & id & " midato: " & midato)
+    call closesocket(midato, false)
+exit sub
+eh:
+    call logerror("ocurrio un error en el evento tcpserv_close. id/midato:" & id & "/" & midato)
+end sub
+
+private sub tcpserv_read(byval id as long, datos as variant, byval cantidad as long, byval midato as long)
+dim t() as string
+dim loopc as long
+dim rd as string
+on error goto errorh
+if userlist(midato).connid <> userlist(midato).connid then
+    call logerror("recibi un read de un usuario con connid alterada")
+    exit sub
+end if
+
+rd = strconv(datos, vbunicode)
+
+'call logindex(midato, "read. connid: " & id & " midato: " & midato & " dato: " & rd)
+
+userlist(midato).rdbuffer = userlist(midato).rdbuffer & rd
+
+t = split(userlist(midato).rdbuffer, endc)
+if ubound(t) > 0 then
+    userlist(midato).rdbuffer = t(ubound(t))
+    
+    for loopc = 0 to ubound(t) - 1
+        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        '%%% si esta opcion se activa soluciona %%%
+        '%%% el problema del speedhack          %%%
+        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if clientscommandsqueue = 1 then
+            if t(loopc) <> "" then
+                if not userlist(midato).commandsbuffer.push(t(loopc)) then
+                    call logerror("cerramos por no encolar. userindex:" & midato)
+                    call closesocket(midato)
+                end if
+            end if
+        else ' no encolamos los comandos (muy viejo)
+              if userlist(midato).connid <> -1 then
+                call handledata(midato, t(loopc))
+              else
+                exit sub
+              end if
+        end if
+    next loopc
+end if
+exit sub
+
+errorh:
+call logerror("error socket read: " & midato & " dato:" & rd & " userlogged: " & userlist(midato).flags.userlogged & " connid:" & userlist(midato).connid & " id parametro" & id & " error:" & err.description)
 
 end sub
+
+
+
+
+
+#end if
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+''''''''''''''fin  uso del control tcpserv'''''''''''''''''''''''''
+'''''''''''''compilar con usarquesocket = 3''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+

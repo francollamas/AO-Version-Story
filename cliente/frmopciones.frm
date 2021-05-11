@@ -24,6 +24,15 @@ begin vb.form frmopciones
    scalewidth      =   4680
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
+   begin vb.commandbutton command3 
+      caption         =   "a"
+      height          =   375
+      left            =   120
+      tabindex        =   4
+      top             =   120
+      visible         =   0   'false
+      width           =   375
+   end
    begin vb.commandbutton command2 
       caption         =   "cerrar"
       height          =   345
@@ -82,13 +91,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -115,7 +120,6 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-
 
 
 private sub command1_click(index as integer)
@@ -150,6 +154,20 @@ end sub
 
 private sub command2_click()
 me.visible = false
+end sub
+
+private sub command3_click()
+#if conalfab = 1 then
+
+bnoche = not bnoche
+surfacedb.efectopred = iif(bnoche, 1, 0)
+surfacedb.borrartodo
+
+#else
+
+msgbox "que hac�s ?"
+
+#end if
 end sub
 
 private sub form_load()

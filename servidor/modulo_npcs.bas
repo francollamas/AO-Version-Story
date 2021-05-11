@@ -1,5 +1,5 @@
 attribute vb_name = "npcs"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@ attribute vb_name = "npcs"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
 
 
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -80,9 +82,31 @@ sub muerenpc(byval npcindex as integer, byval userindex as integer)
 on error goto errhandler
 
 '   call logtarea("sub muerenpc")
-   
+      
    dim minpc as npc
    minpc = npclist(npcindex)
+      
+    if (espretoriano(npcindex) = 4) then
+        'seteamos todos estos 'flags' acorde para que cambien solos de alcoba
+        dim i as integer
+        dim j as integer
+        dim npci as integer
+        
+        for i = 8 to 90
+            for j = 8 to 90
+                
+                npci = mapdata(npclist(npcindex).pos.map, i, j).npcindex
+                if npci > 0 then
+                    if espretoriano(npci) > 0 then
+                        npclist(npci).invent.armoureqpslot = iif(npclist(npcindex).pos.x > 50, 1, 5)
+                    end if
+                end if
+            next j
+        next i
+        call crearclanpretoriano(mapa_pretoriano, npclist(npcindex).pos.x, npclist(npcindex).pos.y)
+    elseif espretoriano(npcindex) > 0 then
+            npclist(npcindex).invent.armoureqpslot = 0
+    end if
    
    'quitamos el npc
    call quitarnpc(npcindex)
@@ -106,16 +130,37 @@ on error goto errhandler
                 next t
         end if
         
-        call addtovar(userlist(userindex).stats.exp, minpc.giveexp, maxexp)
-        call senddata(toindex, userindex, 0, "||has ganado " & minpc.giveexp & " puntos de experiencia." & fonttype_fight)
-        call senddata(toindex, userindex, 0, "||has matado la criatura!" & fonttype_fight)
+        '[kevin]
+        '[alejo] faltaba este if :p
+        if minpc.flags.expcount > 0 then
+            '[arkaris] si est� en party...
+'            if userlist(userindex).partydata.pindex > 0 then   partyexp
+'                call givepartyxp(userindex, minpc.flags.expcount)
+'            else
+            if userlist(userindex).partyindex > 0 then
+                call mdparty.obtenerexito(userindex, minpc.flags.expcount, minpc.pos.map, minpc.pos.x, minpc.pos.y)
+            else
+                call addtovar(userlist(userindex).stats.exp, minpc.flags.expcount, maxexp)
+                call senddata(toindex, userindex, 0, "||has ganado " & minpc.flags.expcount & " puntos de experiencia." & fonttype_fight)
+'            end if
+            end if
+            minpc.flags.expcount = 0
+            '[/arkaris]
+        else
+            call senddata(toindex, userindex, 0, "||no has ganado experiencia al matar la criatura." & fonttype_fight)
+        end if
+        
+        '[/kevin]
+        call senddata(toindex, userindex, 0, "||has matado a la criatura!" & fonttype_fight)
         call addtovar(userlist(userindex).stats.npcsmuertos, 1, 32000)
         
         if minpc.stats.alineacion = 0 then
               if minpc.numero = guardias then
                     call volvercriminal(userindex)
               end if
-              if not esdios(userlist(userindex).name) then call addtovar(userlist(userindex).reputacion.asesinorep, vlasesino, maxrep)
+              if minpc.maestrouser = 0 then
+                    call addtovar(userlist(userindex).reputacion.asesinorep, vlasesino, maxrep)
+              end if
         elseif minpc.stats.alineacion = 1 then
           call addtovar(userlist(userindex).reputacion.pleberep, vlcazador, maxrep)
         elseif minpc.stats.alineacion = 2 then
@@ -168,6 +213,7 @@ npclist(npcindex).flags.maldicion = 0
 npclist(npcindex).flags.oldhostil = 0
 npclist(npcindex).flags.oldmovement = 0
 npclist(npcindex).flags.paralizado = 0
+npclist(npcindex).flags.inmovilizado = 0
 npclist(npcindex).flags.respawn = 0
 npclist(npcindex).flags.respawnorigpos = 0
 npclist(npcindex).flags.snd1 = 0
@@ -264,6 +310,7 @@ npclist(npcindex).tipoitems = 0
 npclist(npcindex).veneno = 0
 npclist(npcindex).desc = ""
 
+
 dim j as integer
 for j = 1 to npclist(npcindex).nrospells
     npclist(npcindex).spells(j) = 0
@@ -332,6 +379,7 @@ sub crearnpc(nronpc as integer, mapa as integer, origpos as worldpos)
 
 dim pos as worldpos
 dim newpos as worldpos
+dim altpos as worldpos
 dim nindex as integer
 dim posicionvalida as boolean
 dim iteraciones as long
@@ -357,6 +405,7 @@ if inmapbounds(origpos.map, origpos.x, origpos.y) then
 else
     
     pos.map = mapa 'mapa
+    altpos.map = mapa
     
     do while not posicionvalida
     
@@ -365,6 +414,8 @@ else
         pos.y = cint(rnd * 100 + 1) 'obtenemos posicion al azar en y
         
         call closestlegalpos(pos, newpos)  'nos devuelve la posicion valida mas cercana
+        if newpos.x <> 0 then altpos.x = newpos.x
+        if newpos.y <> 0 then altpos.y = newpos.y     'posicion alternativa (para evitar el anti respawn)
         
         'si x e y son iguales a 0 significa que no se encontro posicion valida
         if legalposnpc(newpos.map, newpos.x, newpos.y, npclist(nindex).flags.aguavalida) and _
@@ -383,9 +434,31 @@ else
         'for debug
         iteraciones = iteraciones + 1
         if iteraciones > maxspawnattemps then
-                call quitarnpc(nindex)
-                call logerror(maxspawnattemps & " iteraciones en crearnpc mapa:" & mapa & " nronpc:" & nronpc)
+            if altpos.x <> 0 and altpos.y <> 0 then
+                map = altpos.map
+                x = altpos.x
+                y = altpos.y
+                npclist(nindex).pos.map = map
+                npclist(nindex).pos.x = x
+                npclist(nindex).pos.y = y
+                call makenpcchar(tomap, 0, map, nindex, map, x, y)
                 exit sub
+            else
+                altpos.x = 50
+                altpos.y = 50
+                call closestlegalpos(altpos, newpos)
+                if newpos.x <> 0 and newpos.y <> 0 then
+                    npclist(nindex).pos.map = newpos.map
+                    npclist(nindex).pos.x = newpos.x
+                    npclist(nindex).pos.y = newpos.y
+                    call makenpcchar(tomap, 0, newpos.map, nindex, newpos.map, newpos.x, newpos.y)
+                    exit sub
+                else
+                    call quitarnpc(nindex)
+                    call logerror(maxspawnattemps & " iteraciones en crearnpc mapa:" & mapa & " nronpc:" & nronpc)
+                    exit sub
+                end if
+            end if
         end if
     loop
     
@@ -436,7 +509,7 @@ if npclist(npcindex).char.charindex <> 0 then charlist(npclist(npcindex).char.ch
 if npclist(npcindex).char.charindex = lastchar then
     do until charlist(lastchar) > 0
         lastchar = lastchar - 1
-        if lastchar < 1 then exit do
+        if lastchar <= 1 then exit do
     loop
 end if
 
@@ -466,14 +539,21 @@ on error goto errh
     'es mascota ????
     if npclist(npcindex).maestrouser > 0 then
             ' es una posicion legal
-            if legalpos(npclist(npcindex).pos.map, npos.x, npos.y) then
+            if legalpos(npclist(npcindex).pos.map, npos.x, npos.y, npclist(npcindex).flags.aguavalida = 1) then
             
                 if npclist(npcindex).flags.aguavalida = 0 and hayagua(npclist(npcindex).pos.map, npos.x, npos.y) then exit sub
                 if npclist(npcindex).flags.tierrainvalida = 1 and not hayagua(npclist(npcindex).pos.map, npos.x, npos.y) then exit sub
                 
                 '[alejo-18-5]
+                
+                'server
+                'altamente recomendado encriptar esta linea
                 call senddata(tomap, 0, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
-                'call senddata(tonpcarea, npcindex, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
+                
+                
+                'old. version 0.10
+                '''''call senddata(tonpcarea, npcindex, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
+            
             
                 'update map and user pos
                 mapdata(npclist(npcindex).pos.map, npclist(npcindex).pos.x, npclist(npcindex).pos.y).npcindex = 0
@@ -489,9 +569,16 @@ on error goto errh
                 if npclist(npcindex).flags.aguavalida = 0 and hayagua(npclist(npcindex).pos.map, npos.x, npos.y) then exit sub
                 if npclist(npcindex).flags.tierrainvalida = 1 and not hayagua(npclist(npcindex).pos.map, npos.x, npos.y) then exit sub
                 
-                '[alejo-18-5]
+                
+                'server
+                'altamente recomendado encriptar esta linea
                 call senddata(tomap, 0, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
-                'call senddata(tonpcarea, npcindex, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
+                
+                
+                               
+                
+                'old: version 0.10 by alejo
+                ''''''call senddata(tonpcarea, npcindex, npclist(npcindex).pos.map, "mp" & npclist(npcindex).char.charindex & "," & npos.x & "," & npos.y)
                 
                 'update map and user pos
                 mapdata(npclist(npcindex).pos.map, npclist(npcindex).pos.x, npclist(npcindex).pos.y).npcindex = 0
@@ -603,8 +690,8 @@ y = npclist(nindex).pos.y
 call makenpcchar(tomap, 0, map, nindex, map, x, y)
 
 if fx then
-    call senddata(tomap, 0, map, "tw" & snd_warp)
-    call senddata(tomap, 0, map, "cfx" & npclist(nindex).char.charindex & "," & fxwarp & "," & 0)
+    call senddata(tonpcarea, nindex, map, "tw" & snd_warp)
+    call senddata(tonpcarea, nindex, map, "cfx" & npclist(nindex).char.charindex & "," & fxwarp & "," & 0)
 end if
 
 spawnnpc = nindex
@@ -656,21 +743,189 @@ end sub
 
 
 
+'function opennpc_nuevodll(byval npcnumber as integer, optional byval respawn = true) as integer
+'
+'dim npcindex as integer
+''dim npcfile as string
+'dim a as long, s as long
+'
+'if npcnumber > 499 then
+''        npcfile = datpath & "npcs-hostiles.dat"
+'    a = anpc_host
+'else
+''        npcfile = datpath & "npcs.dat"
+'    a = anpc
+'end if
+'
+'s = inibuscarseccion(a, "npc" & npcnumber)
+'
+'npcindex = nextopennpc
+'
+'if npcindex > maxnpcs then 'limite de npcs
+'    opennpc = npcindex
+'    exit function
+'end if
+'
+'npclist(npcindex).numero = npcnumber
+''npclist(npcindex).name = leer.darvalor("npc" & npcnumber, "name")
+''npclist(npcindex).desc = leer.darvalor("npc" & npcnumber, "desc")
+''
+''npclist(npcindex).movement = val(leer.darvalor("npc" & npcnumber, "movement"))
+''npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
+'
+'npclist(npcindex).name = inidarclavestr(a, s, "name")
+'npclist(npcindex).desc = inidarclavestr(a, s, "desc")
+'
+'npclist(npcindex).movement = inidarclaveint(a, s, "movement")
+'npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
+'
+'npclist(npcindex).flags.aguavalida = inidarclaveint(a, s, "aguavalida")
+'npclist(npcindex).flags.tierrainvalida = inidarclaveint(a, s, "tierrainvalida")
+'npclist(npcindex).flags.faccion = inidarclaveint(a, s, "faccion")
+'
+'npclist(npcindex).npctype = inidarclaveint(a, s, "npctype")
+'
+'npclist(npcindex).char.body = inidarclaveint(a, s, "body")
+'npclist(npcindex).char.head = inidarclaveint(a, s, "head")
+'npclist(npcindex).char.heading = inidarclaveint(a, s, "heading")
+'
+'npclist(npcindex).attackable = inidarclaveint(a, s, "attackable")
+'npclist(npcindex).comercia = inidarclaveint(a, s, "comercia")
+'npclist(npcindex).hostile = inidarclaveint(a, s, "hostile")
+'npclist(npcindex).flags.oldhostil = npclist(npcindex).hostile
+'
+'npclist(npcindex).giveexp = inidarclaveint(a, s, "giveexp")
+'
+'npclist(npcindex).veneno = inidarclaveint(a, s, "veneno")
+'
+'npclist(npcindex).flags.domable = inidarclaveint(a, s, "domable")
+'
+'
+'npclist(npcindex).givegld = inidarclaveint(a, s, "givegld")
+'
+'npclist(npcindex).poderataque = inidarclaveint(a, s, "poderataque")
+'npclist(npcindex).poderevasion = inidarclaveint(a, s, "poderevasion")
+'
+'npclist(npcindex).invrespawn = inidarclaveint(a, s, "invrespawn")
+'
+'
+'npclist(npcindex).stats.maxhp = inidarclaveint(a, s, "maxhp")
+'npclist(npcindex).stats.minhp = inidarclaveint(a, s, "minhp")
+'npclist(npcindex).stats.maxhit = inidarclaveint(a, s, "maxhit")
+'npclist(npcindex).stats.minhit = inidarclaveint(a, s, "minhit")
+'npclist(npcindex).stats.def = inidarclaveint(a, s, "def")
+'npclist(npcindex).stats.alineacion = inidarclaveint(a, s, "alineacion")
+'npclist(npcindex).stats.impactrate = inidarclaveint(a, s, "impactrate")
+'
+'
+'dim loopc as integer
+'dim ln as string
+'npclist(npcindex).invent.nroitems = inidarclaveint(a, s, "nroitems")
+'for loopc = 1 to npclist(npcindex).invent.nroitems
+'    ln = inidarclavestr(a, s, "obj" & loopc)
+'    npclist(npcindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
+'    npclist(npcindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
+'next loopc
+'
+'npclist(npcindex).flags.lanzaspells = inidarclaveint(a, s, "lanzaspells")
+'if npclist(npcindex).flags.lanzaspells > 0 then redim npclist(npcindex).spells(1 to npclist(npcindex).flags.lanzaspells)
+'for loopc = 1 to npclist(npcindex).flags.lanzaspells
+'    npclist(npcindex).spells(loopc) = inidarclaveint(a, s, "sp" & loopc)
+'next loopc
+'
+'
+'if npclist(npcindex).npctype = npctype_entrenador then
+'    npclist(npcindex).nrocriaturas = inidarclaveint(a, s, "nrocriaturas")
+'    redim npclist(npcindex).criaturas(1 to npclist(npcindex).nrocriaturas) as tcriaturasentrenador
+'    for loopc = 1 to npclist(npcindex).nrocriaturas
+'        npclist(npcindex).criaturas(loopc).npcindex = inidarclaveint(a, s, "ci" & loopc)
+'        npclist(npcindex).criaturas(loopc).npcname = inidarclavestr(a, s, "cn" & loopc)
+'    next loopc
+'end if
+'
+'
+'npclist(npcindex).inflacion = inidarclaveint(a, s, "inflacion")
+'
+'npclist(npcindex).flags.npcactive = true
+'npclist(npcindex).flags.useainow = false
+'
+'if respawn then
+'    npclist(npcindex).flags.respawn = inidarclaveint(a, s, "respawn")
+'else
+'    npclist(npcindex).flags.respawn = 1
+'end if
+'
+'npclist(npcindex).flags.backup = inidarclaveint(a, s, "backup")
+'npclist(npcindex).flags.respawnorigpos = inidarclaveint(a, s, "origpos")
+'npclist(npcindex).flags.afectaparalisis = inidarclaveint(a, s, "afectaparalisis")
+'npclist(npcindex).flags.golpeexacto = inidarclaveint(a, s, "golpeexacto")
+'
+'
+'npclist(npcindex).flags.snd1 = inidarclaveint(a, s, "snd1")
+'npclist(npcindex).flags.snd2 = inidarclaveint(a, s, "snd2")
+'npclist(npcindex).flags.snd3 = inidarclaveint(a, s, "snd3")
+'npclist(npcindex).flags.snd4 = inidarclaveint(a, s, "snd4")
+'
+''<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
+'
+'dim aux as long
+'aux = inidarclaveint(a, s, "nroexp")
+'npclist(npcindex).nroexpresiones = (aux)
+'
+'if aux > 0 then
+'    redim npclist(npcindex).expresiones(1 to npclist(npcindex).nroexpresiones) as string
+'    for loopc = 1 to npclist(npcindex).nroexpresiones
+'        npclist(npcindex).expresiones(loopc) = inidarclavestr(a, s, "exp" & loopc)
+'    next loopc
+'end if
+'
+''<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
+'
+''tipo de items con los que comercia
+'npclist(npcindex).tipoitems = inidarclaveint(a, s, "tipoitems")
+'
+''update contadores de npcs
+'if npcindex > lastnpc then lastnpc = npcindex
+'numnpcs = numnpcs + 1
+'
+'
+''devuelve el nuevo indice
+'opennpc = npcindex
+'
+'end function
+
+
 function opennpc(byval npcnumber as integer, optional byval respawn = true) as integer
 
+'###################################################
+'#               atencion peligro                  #
+'###################################################
+'
+'    ���� no usar getvar para leer los npcs !!!!
+'
+'el que ose desafiar esta ley, se las tendr� que ver
+'con migo. para leer los npcs se deber� usar la
+'nueva clase clsleerinis.
+'
+'alejo
+'
+'###################################################
+
 dim npcindex as integer
-'dim npcfile as string
-dim a as long, s as long
+dim npcfile as string
+dim leer as clsleerinis
 
 if npcnumber > 499 then
-'        npcfile = datpath & "npcs-hostiles.dat"
-    a = anpc_host
+        'npcfile = datpath & "npcs-hostiles.dat"
+        set leer = leernpcshostiles
 else
-'        npcfile = datpath & "npcs.dat"
-    a = anpc
+        'npcfile = datpath & "npcs.dat"
+        set leer = leernpcs
 end if
 
-s = inibuscarseccion(a, "npc" & npcnumber)
+'leer.abrir npcfile
+'j = val(leer.darvalor(
+
 
 npcindex = nextopennpc
 
@@ -680,122 +935,120 @@ if npcindex > maxnpcs then 'limite de npcs
 end if
 
 npclist(npcindex).numero = npcnumber
-'npclist(npcindex).name = getvar(npcfile, "npc" & npcnumber, "name")
-'npclist(npcindex).desc = getvar(npcfile, "npc" & npcnumber, "desc")
-'
-'npclist(npcindex).movement = val(getvar(npcfile, "npc" & npcnumber, "movement"))
-'npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
+npclist(npcindex).name = leer.darvalor("npc" & npcnumber, "name")
+npclist(npcindex).desc = leer.darvalor("npc" & npcnumber, "desc")
 
-npclist(npcindex).name = inidarclavestr(a, s, "name")
-npclist(npcindex).desc = inidarclavestr(a, s, "desc")
-
-npclist(npcindex).movement = inidarclaveint(a, s, "movement")
+npclist(npcindex).movement = val(leer.darvalor("npc" & npcnumber, "movement"))
 npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
 
-npclist(npcindex).flags.aguavalida = inidarclaveint(a, s, "aguavalida")
-npclist(npcindex).flags.tierrainvalida = inidarclaveint(a, s, "tierrainvalida")
-npclist(npcindex).flags.faccion = inidarclaveint(a, s, "faccion")
+npclist(npcindex).flags.aguavalida = val(leer.darvalor("npc" & npcnumber, "aguavalida"))
+npclist(npcindex).flags.tierrainvalida = val(leer.darvalor("npc" & npcnumber, "tierrainvalida"))
+npclist(npcindex).flags.faccion = val(leer.darvalor("npc" & npcnumber, "faccion"))
 
-npclist(npcindex).npctype = inidarclaveint(a, s, "npctype")
+npclist(npcindex).npctype = val(leer.darvalor("npc" & npcnumber, "npctype"))
 
-npclist(npcindex).char.body = inidarclaveint(a, s, "body")
-npclist(npcindex).char.head = inidarclaveint(a, s, "head")
-npclist(npcindex).char.heading = inidarclaveint(a, s, "heading")
+npclist(npcindex).char.body = val(leer.darvalor("npc" & npcnumber, "body"))
+npclist(npcindex).char.head = val(leer.darvalor("npc" & npcnumber, "head"))
+npclist(npcindex).char.heading = val(leer.darvalor("npc" & npcnumber, "heading"))
 
-npclist(npcindex).attackable = inidarclaveint(a, s, "attackable")
-npclist(npcindex).comercia = inidarclaveint(a, s, "comercia")
-npclist(npcindex).hostile = inidarclaveint(a, s, "hostile")
+npclist(npcindex).attackable = val(leer.darvalor("npc" & npcnumber, "attackable"))
+npclist(npcindex).comercia = val(leer.darvalor("npc" & npcnumber, "comercia"))
+npclist(npcindex).hostile = val(leer.darvalor("npc" & npcnumber, "hostile"))
 npclist(npcindex).flags.oldhostil = npclist(npcindex).hostile
 
-npclist(npcindex).giveexp = inidarclaveint(a, s, "giveexp")
+npclist(npcindex).giveexp = val(leer.darvalor("npc" & npcnumber, "giveexp"))
 
-npclist(npcindex).veneno = inidarclaveint(a, s, "veneno")
+'npclist(npcindex).flags.expdada = npclist(npcindex).giveexp
+npclist(npcindex).flags.expcount = npclist(npcindex).giveexp
 
-npclist(npcindex).flags.domable = inidarclaveint(a, s, "domable")
+npclist(npcindex).veneno = val(leer.darvalor("npc" & npcnumber, "veneno"))
 
-
-npclist(npcindex).givegld = inidarclaveint(a, s, "givegld")
-
-npclist(npcindex).poderataque = inidarclaveint(a, s, "poderataque")
-npclist(npcindex).poderevasion = inidarclaveint(a, s, "poderevasion")
-
-npclist(npcindex).invrespawn = inidarclaveint(a, s, "invrespawn")
+npclist(npcindex).flags.domable = val(leer.darvalor("npc" & npcnumber, "domable"))
 
 
-npclist(npcindex).stats.maxhp = inidarclaveint(a, s, "maxhp")
-npclist(npcindex).stats.minhp = inidarclaveint(a, s, "minhp")
-npclist(npcindex).stats.maxhit = inidarclaveint(a, s, "maxhit")
-npclist(npcindex).stats.minhit = inidarclaveint(a, s, "minhit")
-npclist(npcindex).stats.def = inidarclaveint(a, s, "def")
-npclist(npcindex).stats.alineacion = inidarclaveint(a, s, "alineacion")
-npclist(npcindex).stats.impactrate = inidarclaveint(a, s, "impactrate")
+npclist(npcindex).givegld = val(leer.darvalor("npc" & npcnumber, "givegld"))
+
+npclist(npcindex).poderataque = val(leer.darvalor("npc" & npcnumber, "poderataque"))
+npclist(npcindex).poderevasion = val(leer.darvalor("npc" & npcnumber, "poderevasion"))
+
+npclist(npcindex).invrespawn = val(leer.darvalor("npc" & npcnumber, "invrespawn"))
+
+
+npclist(npcindex).stats.maxhp = val(leer.darvalor("npc" & npcnumber, "maxhp"))
+npclist(npcindex).stats.minhp = val(leer.darvalor("npc" & npcnumber, "minhp"))
+npclist(npcindex).stats.maxhit = val(leer.darvalor("npc" & npcnumber, "maxhit"))
+npclist(npcindex).stats.minhit = val(leer.darvalor("npc" & npcnumber, "minhit"))
+npclist(npcindex).stats.def = val(leer.darvalor("npc" & npcnumber, "def"))
+npclist(npcindex).stats.alineacion = val(leer.darvalor("npc" & npcnumber, "alineacion"))
+npclist(npcindex).stats.impactrate = val(leer.darvalor("npc" & npcnumber, "impactrate"))
 
 
 dim loopc as integer
 dim ln as string
-npclist(npcindex).invent.nroitems = inidarclaveint(a, s, "nroitems")
+npclist(npcindex).invent.nroitems = val(leer.darvalor("npc" & npcnumber, "nroitems"))
 for loopc = 1 to npclist(npcindex).invent.nroitems
-    ln = inidarclavestr(a, s, "obj" & loopc)
+    ln = leer.darvalor("npc" & npcnumber, "obj" & loopc)
     npclist(npcindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
     npclist(npcindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
 next loopc
 
-npclist(npcindex).flags.lanzaspells = inidarclaveint(a, s, "lanzaspells")
+npclist(npcindex).flags.lanzaspells = val(leer.darvalor("npc" & npcnumber, "lanzaspells"))
 if npclist(npcindex).flags.lanzaspells > 0 then redim npclist(npcindex).spells(1 to npclist(npcindex).flags.lanzaspells)
 for loopc = 1 to npclist(npcindex).flags.lanzaspells
-    npclist(npcindex).spells(loopc) = inidarclaveint(a, s, "sp" & loopc)
+    npclist(npcindex).spells(loopc) = val(leer.darvalor("npc" & npcnumber, "sp" & loopc))
 next loopc
 
 
 if npclist(npcindex).npctype = npctype_entrenador then
-    npclist(npcindex).nrocriaturas = inidarclaveint(a, s, "nrocriaturas")
+    npclist(npcindex).nrocriaturas = val(leer.darvalor("npc" & npcnumber, "nrocriaturas"))
     redim npclist(npcindex).criaturas(1 to npclist(npcindex).nrocriaturas) as tcriaturasentrenador
     for loopc = 1 to npclist(npcindex).nrocriaturas
-        npclist(npcindex).criaturas(loopc).npcindex = inidarclaveint(a, s, "ci" & loopc)
-        npclist(npcindex).criaturas(loopc).npcname = inidarclavestr(a, s, "cn" & loopc)
+        npclist(npcindex).criaturas(loopc).npcindex = leer.darvalor("npc" & npcnumber, "ci" & loopc)
+        npclist(npcindex).criaturas(loopc).npcname = leer.darvalor("npc" & npcnumber, "cn" & loopc)
     next loopc
 end if
 
 
-npclist(npcindex).inflacion = inidarclaveint(a, s, "inflacion")
+npclist(npcindex).inflacion = val(leer.darvalor("npc" & npcnumber, "inflacion"))
 
 npclist(npcindex).flags.npcactive = true
 npclist(npcindex).flags.useainow = false
 
 if respawn then
-    npclist(npcindex).flags.respawn = inidarclaveint(a, s, "respawn")
+    npclist(npcindex).flags.respawn = val(leer.darvalor("npc" & npcnumber, "respawn"))
 else
     npclist(npcindex).flags.respawn = 1
 end if
 
-npclist(npcindex).flags.backup = inidarclaveint(a, s, "backup")
-npclist(npcindex).flags.respawnorigpos = inidarclaveint(a, s, "origpos")
-npclist(npcindex).flags.afectaparalisis = inidarclaveint(a, s, "afectaparalisis")
-npclist(npcindex).flags.golpeexacto = inidarclaveint(a, s, "golpeexacto")
+npclist(npcindex).flags.backup = val(leer.darvalor("npc" & npcnumber, "backup"))
+npclist(npcindex).flags.respawnorigpos = val(leer.darvalor("npc" & npcnumber, "origpos"))
+npclist(npcindex).flags.afectaparalisis = val(leer.darvalor("npc" & npcnumber, "afectaparalisis"))
+npclist(npcindex).flags.golpeexacto = val(leer.darvalor("npc" & npcnumber, "golpeexacto"))
 
 
-npclist(npcindex).flags.snd1 = inidarclaveint(a, s, "snd1")
-npclist(npcindex).flags.snd2 = inidarclaveint(a, s, "snd2")
-npclist(npcindex).flags.snd3 = inidarclaveint(a, s, "snd3")
-npclist(npcindex).flags.snd4 = inidarclaveint(a, s, "snd4")
+npclist(npcindex).flags.snd1 = val(leer.darvalor("npc" & npcnumber, "snd1"))
+npclist(npcindex).flags.snd2 = val(leer.darvalor("npc" & npcnumber, "snd2"))
+npclist(npcindex).flags.snd3 = val(leer.darvalor("npc" & npcnumber, "snd3"))
+npclist(npcindex).flags.snd4 = val(leer.darvalor("npc" & npcnumber, "snd4"))
 
 '<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
 
-dim aux as long
-aux = inidarclaveint(a, s, "nroexp")
-npclist(npcindex).nroexpresiones = (aux)
-    
-if aux > 0 then
+dim aux as string
+aux = leer.darvalor("npc" & npcnumber, "nroexp")
+if aux = "" then
+    npclist(npcindex).nroexpresiones = 0
+else
+    npclist(npcindex).nroexpresiones = val(aux)
     redim npclist(npcindex).expresiones(1 to npclist(npcindex).nroexpresiones) as string
     for loopc = 1 to npclist(npcindex).nroexpresiones
-        npclist(npcindex).expresiones(loopc) = inidarclavestr(a, s, "exp" & loopc)
+        npclist(npcindex).expresiones(loopc) = leer.darvalor("npc" & npcnumber, "exp" & loopc)
     next loopc
 end if
 
 '<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
 
 'tipo de items con los que comercia
-npclist(npcindex).tipoitems = inidarclaveint(a, s, "tipoitems")
+npclist(npcindex).tipoitems = val(leer.darvalor("npc" & npcnumber, "tipoitems"))
 
 'update contadores de npcs
 if npcindex > lastnpc then lastnpc = npcindex
@@ -808,147 +1061,147 @@ opennpc = npcindex
 end function
 
 
-function opennpc_viejo(byval npcnumber as integer, optional byval respawn = true) as integer
-
-dim npcindex as integer
-dim npcfile as string
-
-if npcnumber > 499 then
-        npcfile = datpath & "npcs-hostiles.dat"
-else
-        npcfile = datpath & "npcs.dat"
-end if
-
-
-npcindex = nextopennpc
-
-if npcindex > maxnpcs then 'limite de npcs
-    opennpc_viejo = npcindex
-    exit function
-end if
-
-npclist(npcindex).numero = npcnumber
-npclist(npcindex).name = getvar(npcfile, "npc" & npcnumber, "name")
-npclist(npcindex).desc = getvar(npcfile, "npc" & npcnumber, "desc")
-
-npclist(npcindex).movement = val(getvar(npcfile, "npc" & npcnumber, "movement"))
-npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
-
-npclist(npcindex).flags.aguavalida = val(getvar(npcfile, "npc" & npcnumber, "aguavalida"))
-npclist(npcindex).flags.tierrainvalida = val(getvar(npcfile, "npc" & npcnumber, "tierrainvalida"))
-npclist(npcindex).flags.faccion = val(getvar(npcfile, "npc" & npcnumber, "faccion"))
-
-npclist(npcindex).npctype = val(getvar(npcfile, "npc" & npcnumber, "npctype"))
-
-npclist(npcindex).char.body = val(getvar(npcfile, "npc" & npcnumber, "body"))
-npclist(npcindex).char.head = val(getvar(npcfile, "npc" & npcnumber, "head"))
-npclist(npcindex).char.heading = val(getvar(npcfile, "npc" & npcnumber, "heading"))
-
-npclist(npcindex).attackable = val(getvar(npcfile, "npc" & npcnumber, "attackable"))
-npclist(npcindex).comercia = val(getvar(npcfile, "npc" & npcnumber, "comercia"))
-npclist(npcindex).hostile = val(getvar(npcfile, "npc" & npcnumber, "hostile"))
-npclist(npcindex).flags.oldhostil = npclist(npcindex).hostile
-
-npclist(npcindex).giveexp = val(getvar(npcfile, "npc" & npcnumber, "giveexp"))
-
-npclist(npcindex).veneno = val(getvar(npcfile, "npc" & npcnumber, "veneno"))
-
-npclist(npcindex).flags.domable = val(getvar(npcfile, "npc" & npcnumber, "domable"))
-
-
-npclist(npcindex).givegld = val(getvar(npcfile, "npc" & npcnumber, "givegld"))
-
-npclist(npcindex).poderataque = val(getvar(npcfile, "npc" & npcnumber, "poderataque"))
-npclist(npcindex).poderevasion = val(getvar(npcfile, "npc" & npcnumber, "poderevasion"))
-
-npclist(npcindex).invrespawn = val(getvar(npcfile, "npc" & npcnumber, "invrespawn"))
-
-
-npclist(npcindex).stats.maxhp = val(getvar(npcfile, "npc" & npcnumber, "maxhp"))
-npclist(npcindex).stats.minhp = val(getvar(npcfile, "npc" & npcnumber, "minhp"))
-npclist(npcindex).stats.maxhit = val(getvar(npcfile, "npc" & npcnumber, "maxhit"))
-npclist(npcindex).stats.minhit = val(getvar(npcfile, "npc" & npcnumber, "minhit"))
-npclist(npcindex).stats.def = val(getvar(npcfile, "npc" & npcnumber, "def"))
-npclist(npcindex).stats.alineacion = val(getvar(npcfile, "npc" & npcnumber, "alineacion"))
-npclist(npcindex).stats.impactrate = val(getvar(npcfile, "npc" & npcnumber, "impactrate"))
-
-
-dim loopc as integer
-dim ln as string
-npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npcnumber, "nroitems"))
-for loopc = 1 to npclist(npcindex).invent.nroitems
-    ln = getvar(npcfile, "npc" & npcnumber, "obj" & loopc)
-    npclist(npcindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
-    npclist(npcindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
-next loopc
-
-npclist(npcindex).flags.lanzaspells = val(getvar(npcfile, "npc" & npcnumber, "lanzaspells"))
-if npclist(npcindex).flags.lanzaspells > 0 then redim npclist(npcindex).spells(1 to npclist(npcindex).flags.lanzaspells)
-for loopc = 1 to npclist(npcindex).flags.lanzaspells
-    npclist(npcindex).spells(loopc) = val(getvar(npcfile, "npc" & npcnumber, "sp" & loopc))
-next loopc
-
-
-if npclist(npcindex).npctype = npctype_entrenador then
-    npclist(npcindex).nrocriaturas = val(getvar(npcfile, "npc" & npcnumber, "nrocriaturas"))
-    redim npclist(npcindex).criaturas(1 to npclist(npcindex).nrocriaturas) as tcriaturasentrenador
-    for loopc = 1 to npclist(npcindex).nrocriaturas
-        npclist(npcindex).criaturas(loopc).npcindex = getvar(npcfile, "npc" & npcnumber, "ci" & loopc)
-        npclist(npcindex).criaturas(loopc).npcname = getvar(npcfile, "npc" & npcnumber, "cn" & loopc)
-    next loopc
-end if
-
-
-npclist(npcindex).inflacion = val(getvar(npcfile, "npc" & npcnumber, "inflacion"))
-
-npclist(npcindex).flags.npcactive = true
-npclist(npcindex).flags.useainow = false
-
-if respawn then
-    npclist(npcindex).flags.respawn = val(getvar(npcfile, "npc" & npcnumber, "respawn"))
-else
-    npclist(npcindex).flags.respawn = 1
-end if
-
-npclist(npcindex).flags.backup = val(getvar(npcfile, "npc" & npcnumber, "backup"))
-npclist(npcindex).flags.respawnorigpos = val(getvar(npcfile, "npc" & npcnumber, "origpos"))
-npclist(npcindex).flags.afectaparalisis = val(getvar(npcfile, "npc" & npcnumber, "afectaparalisis"))
-npclist(npcindex).flags.golpeexacto = val(getvar(npcfile, "npc" & npcnumber, "golpeexacto"))
-
-
-npclist(npcindex).flags.snd1 = val(getvar(npcfile, "npc" & npcnumber, "snd1"))
-npclist(npcindex).flags.snd2 = val(getvar(npcfile, "npc" & npcnumber, "snd2"))
-npclist(npcindex).flags.snd3 = val(getvar(npcfile, "npc" & npcnumber, "snd3"))
-npclist(npcindex).flags.snd4 = val(getvar(npcfile, "npc" & npcnumber, "snd4"))
-
-'<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
-
-dim aux as string
-aux = getvar(npcfile, "npc" & npcnumber, "nroexp")
-if aux = "" then
-    npclist(npcindex).nroexpresiones = 0
-else
-    npclist(npcindex).nroexpresiones = val(aux)
-    redim npclist(npcindex).expresiones(1 to npclist(npcindex).nroexpresiones) as string
-    for loopc = 1 to npclist(npcindex).nroexpresiones
-        npclist(npcindex).expresiones(loopc) = getvar(npcfile, "npc" & npcnumber, "exp" & loopc)
-    next loopc
-end if
-
-'<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
-
-'tipo de items con los que comercia
-npclist(npcindex).tipoitems = val(getvar(npcfile, "npc" & npcnumber, "tipoitems"))
-
-'update contadores de npcs
-if npcindex > lastnpc then lastnpc = npcindex
-numnpcs = numnpcs + 1
-
-
-'devuelve el nuevo indice
-opennpc_viejo = npcindex
-
-end function
+'function opennpc(byval npcnumber as integer, optional byval respawn = true) as integer
+'
+'dim npcindex as integer
+'dim npcfile as string
+'
+'if npcnumber > 499 then
+'        npcfile = datpath & "npcs-hostiles.dat"
+'else
+'        npcfile = datpath & "npcs.dat"
+'end if
+'
+'
+'npcindex = nextopennpc
+'
+'if npcindex > maxnpcs then 'limite de npcs
+'    opennpc_viejo = npcindex
+'    exit function
+'end if
+'
+'npclist(npcindex).numero = npcnumber
+'npclist(npcindex).name = getvar(npcfile, "npc" & npcnumber, "name")
+'npclist(npcindex).desc = getvar(npcfile, "npc" & npcnumber, "desc")
+'
+'npclist(npcindex).movement = val(getvar(npcfile, "npc" & npcnumber, "movement"))
+'npclist(npcindex).flags.oldmovement = npclist(npcindex).movement
+'
+'npclist(npcindex).flags.aguavalida = val(getvar(npcfile, "npc" & npcnumber, "aguavalida"))
+'npclist(npcindex).flags.tierrainvalida = val(getvar(npcfile, "npc" & npcnumber, "tierrainvalida"))
+'npclist(npcindex).flags.faccion = val(getvar(npcfile, "npc" & npcnumber, "faccion"))
+'
+'npclist(npcindex).npctype = val(getvar(npcfile, "npc" & npcnumber, "npctype"))
+'
+'npclist(npcindex).char.body = val(getvar(npcfile, "npc" & npcnumber, "body"))
+'npclist(npcindex).char.head = val(getvar(npcfile, "npc" & npcnumber, "head"))
+'npclist(npcindex).char.heading = val(getvar(npcfile, "npc" & npcnumber, "heading"))
+'
+'npclist(npcindex).attackable = val(getvar(npcfile, "npc" & npcnumber, "attackable"))
+'npclist(npcindex).comercia = val(getvar(npcfile, "npc" & npcnumber, "comercia"))
+'npclist(npcindex).hostile = val(getvar(npcfile, "npc" & npcnumber, "hostile"))
+'npclist(npcindex).flags.oldhostil = npclist(npcindex).hostile
+'
+'npclist(npcindex).giveexp = val(getvar(npcfile, "npc" & npcnumber, "giveexp"))
+'
+'npclist(npcindex).veneno = val(getvar(npcfile, "npc" & npcnumber, "veneno"))
+'
+'npclist(npcindex).flags.domable = val(getvar(npcfile, "npc" & npcnumber, "domable"))
+'
+'
+'npclist(npcindex).givegld = val(getvar(npcfile, "npc" & npcnumber, "givegld"))
+'
+'npclist(npcindex).poderataque = val(getvar(npcfile, "npc" & npcnumber, "poderataque"))
+'npclist(npcindex).poderevasion = val(getvar(npcfile, "npc" & npcnumber, "poderevasion"))
+'
+'npclist(npcindex).invrespawn = val(getvar(npcfile, "npc" & npcnumber, "invrespawn"))
+'
+'
+'npclist(npcindex).stats.maxhp = val(getvar(npcfile, "npc" & npcnumber, "maxhp"))
+'npclist(npcindex).stats.minhp = val(getvar(npcfile, "npc" & npcnumber, "minhp"))
+'npclist(npcindex).stats.maxhit = val(getvar(npcfile, "npc" & npcnumber, "maxhit"))
+'npclist(npcindex).stats.minhit = val(getvar(npcfile, "npc" & npcnumber, "minhit"))
+'npclist(npcindex).stats.def = val(getvar(npcfile, "npc" & npcnumber, "def"))
+'npclist(npcindex).stats.alineacion = val(getvar(npcfile, "npc" & npcnumber, "alineacion"))
+'npclist(npcindex).stats.impactrate = val(getvar(npcfile, "npc" & npcnumber, "impactrate"))
+'
+'
+'dim loopc as integer
+'dim ln as string
+'npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npcnumber, "nroitems"))
+'for loopc = 1 to npclist(npcindex).invent.nroitems
+'    ln = getvar(npcfile, "npc" & npcnumber, "obj" & loopc)
+'    npclist(npcindex).invent.object(loopc).objindex = val(readfield(1, ln, 45))
+'    npclist(npcindex).invent.object(loopc).amount = val(readfield(2, ln, 45))
+'next loopc
+'
+'npclist(npcindex).flags.lanzaspells = val(getvar(npcfile, "npc" & npcnumber, "lanzaspells"))
+'if npclist(npcindex).flags.lanzaspells > 0 then redim npclist(npcindex).spells(1 to npclist(npcindex).flags.lanzaspells)
+'for loopc = 1 to npclist(npcindex).flags.lanzaspells
+'    npclist(npcindex).spells(loopc) = val(getvar(npcfile, "npc" & npcnumber, "sp" & loopc))
+'next loopc
+'
+'
+'if npclist(npcindex).npctype = npctype_entrenador then
+'    npclist(npcindex).nrocriaturas = val(getvar(npcfile, "npc" & npcnumber, "nrocriaturas"))
+'    redim npclist(npcindex).criaturas(1 to npclist(npcindex).nrocriaturas) as tcriaturasentrenador
+'    for loopc = 1 to npclist(npcindex).nrocriaturas
+'        npclist(npcindex).criaturas(loopc).npcindex = getvar(npcfile, "npc" & npcnumber, "ci" & loopc)
+'        npclist(npcindex).criaturas(loopc).npcname = getvar(npcfile, "npc" & npcnumber, "cn" & loopc)
+'    next loopc
+'end if
+'
+'
+'npclist(npcindex).inflacion = val(getvar(npcfile, "npc" & npcnumber, "inflacion"))
+'
+'npclist(npcindex).flags.npcactive = true
+'npclist(npcindex).flags.useainow = false
+'
+'if respawn then
+'    npclist(npcindex).flags.respawn = val(getvar(npcfile, "npc" & npcnumber, "respawn"))
+'else
+'    npclist(npcindex).flags.respawn = 1
+'end if
+'
+'npclist(npcindex).flags.backup = val(getvar(npcfile, "npc" & npcnumber, "backup"))
+'npclist(npcindex).flags.respawnorigpos = val(getvar(npcfile, "npc" & npcnumber, "origpos"))
+'npclist(npcindex).flags.afectaparalisis = val(getvar(npcfile, "npc" & npcnumber, "afectaparalisis"))
+'npclist(npcindex).flags.golpeexacto = val(getvar(npcfile, "npc" & npcnumber, "golpeexacto"))
+'
+'
+'npclist(npcindex).flags.snd1 = val(getvar(npcfile, "npc" & npcnumber, "snd1"))
+'npclist(npcindex).flags.snd2 = val(getvar(npcfile, "npc" & npcnumber, "snd2"))
+'npclist(npcindex).flags.snd3 = val(getvar(npcfile, "npc" & npcnumber, "snd3"))
+'npclist(npcindex).flags.snd4 = val(getvar(npcfile, "npc" & npcnumber, "snd4"))
+'
+''<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
+'
+'dim aux as string
+'aux = getvar(npcfile, "npc" & npcnumber, "nroexp")
+'if aux = "" then
+'    npclist(npcindex).nroexpresiones = 0
+'else
+'    npclist(npcindex).nroexpresiones = val(aux)
+'    redim npclist(npcindex).expresiones(1 to npclist(npcindex).nroexpresiones) as string
+'    for loopc = 1 to npclist(npcindex).nroexpresiones
+'        npclist(npcindex).expresiones(loopc) = getvar(npcfile, "npc" & npcnumber, "exp" & loopc)
+'    next loopc
+'end if
+'
+''<<<<<<<<<<<<<< expresiones >>>>>>>>>>>>>>>>
+'
+''tipo de items con los que comercia
+'npclist(npcindex).tipoitems = val(getvar(npcfile, "npc" & npcnumber, "tipoitems"))
+'
+''update contadores de npcs
+'if npcindex > lastnpc then lastnpc = npcindex
+'numnpcs = numnpcs + 1
+'
+'
+''devuelve el nuevo indice
+'opennpc_viejo = npcindex
+'
+'end function
 
 sub enviarlistacriaturas(byval userindex as integer, byval npcindex)
   dim sd as string

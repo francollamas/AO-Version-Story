@@ -1,5 +1,5 @@
 attribute vb_name = "comercio"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ attribute vb_name = "comercio"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,18 +42,35 @@ option explicit
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-sub usercompraobj(byval userindex as integer, byval objindex as integer, byval npcindex as integer, byval cantidad as integer)
-dim infla as integer
+function usercompraobj(byval userindex as integer, byval objindex as integer, byval npcindex as integer, byval cantidad as integer) as boolean
+dim infla as long
 dim descuento as string
 dim unidad as long, monto as long
 dim slot as integer
 dim obji as integer
 dim encontre as boolean
 
-if (npclist(userlist(userindex).flags.targetnpc).invent.object(objindex).amount <= 0) then exit sub
+on error goto errorh
+
+usercompraobj = false
+
+if (npclist(userlist(userindex).flags.targetnpc).invent.object(objindex).amount <= 0) then exit function
 
 obji = npclist(userlist(userindex).flags.targetnpc).invent.object(objindex).objindex
 
+'es una armadura real y el tipo no es faccion?
+if objdata(obji).real = 1 then
+    if npclist(npcindex).name <> "sr" then
+        call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "lo siento, la ropa faccionaria solo es para muestra, no tengo autorizaci�n para venderla. dir�jete al sastre de tu ej�rcito." & "�" & str(npclist(npcindex).char.charindex))
+        exit function
+    end if
+end if
+if objdata(obji).caos = 1 then
+    if npclist(npcindex).name <> "sc" then
+        call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "lo siento, la ropa faccionaria solo es para muestra, no tengo autorizaci�n para venderla. dir�jete al sastre de tu ej�rcito." & "�" & str(npclist(npcindex).char.charindex))
+        exit function
+    end if
+end if
 
 '�ya tiene un objeto de este tipo?
 slot = 1
@@ -73,14 +91,15 @@ if slot > max_inventory_slots then
 
             if slot > max_inventory_slots then
                 call senddata(toindex, userindex, 0, "||no pod�s tener mas objetos." & fonttype_info)
-                exit sub
+                exit function
             end if
         loop
         userlist(userindex).invent.nroitems = userlist(userindex).invent.nroitems + 1
 end if
 
 
-
+'desde aca para abajo se realiza la transaccion
+usercompraobj = true
 'mete el obj en el slot
 if userlist(userindex).invent.object(slot).amount + cantidad <= max_inventory_objs then
     
@@ -89,7 +108,7 @@ if userlist(userindex).invent.object(slot).amount + cantidad <= max_inventory_ob
     userlist(userindex).invent.object(slot).amount = userlist(userindex).invent.object(slot).amount + cantidad
     
     'le sustraemos el valor en oro del obj comprado
-    infla = (npclist(npcindex).inflacion * objdata(obji).valor) \ 100
+    infla = (npclist(npcindex).inflacion * objdata(obji).valor) / 100
     descuento = userlist(userindex).flags.descuento
     if descuento = 0 then descuento = 1 'evitamos dividir por 0!
     unidad = ((objdata(npclist(npcindex).invent.object(objindex).objindex).valor + infla) / descuento)
@@ -108,8 +127,11 @@ else
     call senddata(toindex, userindex, 0, "||no pod�s tener mas objetos." & fonttype_info)
 end if
 
+exit function
 
-end sub
+errorh:
+call logerror("error en usercompraobj. " & err.description)
+end function
 
 
 sub npccompraobj(byval userindex as integer, byval objindex as integer, byval cantidad as integer)
@@ -119,6 +141,7 @@ dim obji as integer
 dim npcindex as integer
 dim infla as long
 dim monto as long
+on error goto errorh
       
 if cantidad < 1 then exit sub
 
@@ -136,6 +159,11 @@ if npclist(npcindex).tipoitems <> objtype_cualquiera then
             call senddata(toindex, userindex, 0, "||el npc no esta interesado en comprar ese objeto." & fonttype_warning)
             exit sub
     end if
+end if
+
+if obji = ioro then
+    call senddata(toindex, userindex, 0, "||el npc no esta interesado en comprar ese objeto." & fonttype_warning)
+    exit sub
 end if
 
 '�ya tiene un objeto de este tipo?
@@ -191,7 +219,10 @@ else
     monto = ((objdata(obji).valor \ 3 + infla) * cantidad)
     call addtovar(userlist(userindex).stats.gld, monto, maxoro)
 end if
+exit sub
 
+errorh:
+    call logerror("error en npccompraobj. " & err.description)
 end sub
 
 sub iniciarcomercionpc(byval userindex as integer)
@@ -204,14 +235,30 @@ call updateuserinv(true, userindex, 0)
 'atcualizamos el dinero
 call senduserstatsbox(userindex)
 'mostramos la ventana pa' comerciar y ver ladear la osamenta. jajaja
-senddata toindex, userindex, 0, "initcom"
 userlist(userindex).flags.comerciando = true
+senddata toindex, userindex, 0, "initcom"
+
+exit sub
+
 
 errhandler:
-
+    dim str as string
+    str = "error en iniciarcomercionpc. ui=" & userindex
+    if userindex > 0 then
+        str = str & ".nombre: " & userlist(userindex).name & " ip:" & userlist(userindex).ip & " comerciando con "
+        if userlist(userindex).flags.targetnpc > 0 then
+            str = str & npclist(userlist(userindex).flags.targetnpc).name
+        else
+            str = str & "<npcindex 0>"
+        end if
+    else
+        str = str & "<userindex 0>"
+    end if
+    
 end sub
 
 sub npcventaitem(byval userindex as integer, byval i as integer, byval cantidad as integer, byval npcindex as integer)
+'listindex+1, cantidad
 on error goto errhandler
 
 dim infla as long
@@ -223,12 +270,26 @@ if cantidad < 1 then exit sub
 'npc vende un obj a un usuario
 call senduserstatsbox(userindex)
 
+if i > max_inventory_slots then
+    call senddata(toadmins, 0, 0, "posible intento de romper el sistema de comercio. usuario: " & userlist(userindex).name & fonttype_warning)
+    exit sub
+end if
+
+if cantidad > max_inventory_objs then
+    call senddata(toall, 0, 0, userlist(userindex).name & " ha sido baneado por el sistema anti-cheats." & fonttype_fight)
+    call ban(userlist(userindex).name, "sistema anti cheats", "intentar hackear el sistema de comercio " & cantidad)
+    userlist(userindex).flags.ban = 1
+    call senddata(toindex, userindex, 0, "errhas sido baneado por el sistema anti cheats")
+    call closesocket(userindex)
+    exit sub
+end if
+
 'calculamos el valor unitario
 infla = (npclist(npcindex).inflacion * objdata(npclist(npcindex).invent.object(i).objindex).valor) / 100
 desc = descuento(userindex)
 if desc = 0 then desc = 1 'evitamos dividir por 0!
 val = (objdata(npclist(npcindex).invent.object(i).objindex).valor + infla) / desc
-        
+
 
 
 if userlist(userindex).stats.gld >= (val * cantidad) then
@@ -236,7 +297,10 @@ if userlist(userindex).stats.gld >= (val * cantidad) then
        if npclist(userlist(userindex).flags.targetnpc).invent.object(i).amount > 0 then
             if cantidad > npclist(userlist(userindex).flags.targetnpc).invent.object(i).amount then cantidad = npclist(userlist(userindex).flags.targetnpc).invent.object(i).amount
             'agregamos el obj que compro al inventario
-            call usercompraobj(userindex, cint(i), userlist(userindex).flags.targetnpc, cantidad)
+            if not usercompraobj(userindex, cint(i), userlist(userindex).flags.targetnpc, cantidad) then
+                call senddata(toindex, userindex, 0, "||no puedes comprar este �tem." & fonttype_info)
+'                exit sub
+            end if
             'actualizamos el inventario del usuario
             call updateuserinv(true, userindex, 0)
             'actualizamos el oro
@@ -250,11 +314,12 @@ else
     call senddata(toindex, userindex, 0, "||no tenes suficiente dinero." & fonttype_info)
     exit sub
 end if
-
+exit sub
 
 errhandler:
-
+    call logerror("error en comprar item: " & err.description)
 end sub
+
 sub npccompraitem(byval userindex as integer, byval item as integer, byval cantidad as integer)
 
 on error goto errhandler
@@ -275,11 +340,11 @@ if userlist(userindex).invent.object(item).amount > 0 and userlist(userindex).in
             'actualizamos la ventana de comercio
             
             call updateventanacomercio(item, 1, userindex)
-            
+
 end if
-
+exit sub
 errhandler:
-
+    call logerror("error en vender item: " & err.description)
 end sub
 
 
@@ -290,50 +355,63 @@ sub updateventanacomercio(byval slot as integer, byval npcinv as byte, byval use
  
 end sub
 
-function descuento(byval userindex as integer) as string
 
-'establece el descuento en funcion del skill comercio
-dim ptscomercio as integer
-ptscomercio = userlist(userindex).stats.userskills(comerciar)
 
-if ptscomercio <= 10 and ptscomercio > 5 then
-    userlist(userindex).flags.descuento = 1.1
-    descuento = 1.1
-elseif ptscomercio <= 20 and ptscomercio >= 12 then
-    userlist(userindex).flags.descuento = 1.2
-    descuento = 1.2
-elseif ptscomercio <= 30 and ptscomercio >= 19 then
-    userlist(userindex).flags.descuento = 1.3
-    descuento = 1.3
-elseif ptscomercio <= 40 and ptscomercio >= 29 then
-    userlist(userindex).flags.descuento = 1.4
-    descuento = 1.4
-elseif ptscomercio <= 50 and ptscomercio >= 39 then
-    userlist(userindex).flags.descuento = 1.5
-    descuento = 1.5
-elseif ptscomercio <= 60 and ptscomercio >= 49 then
-    userlist(userindex).flags.descuento = 1.6
-    descuento = 1.6
-elseif ptscomercio <= 70 and ptscomercio >= 59 then
-    userlist(userindex).flags.descuento = 1.7
-    descuento = 1.7
-elseif ptscomercio <= 80 and ptscomercio >= 69 then
-    userlist(userindex).flags.descuento = 1.8
-    descuento = 1.8
-elseif ptscomercio <= 99 and ptscomercio >= 79 then
-    userlist(userindex).flags.descuento = 1.9
-    descuento = 1.9
-elseif ptscomercio <= 999999 and ptscomercio >= 99 then
-    userlist(userindex).flags.descuento = 2
-    descuento = 2
-else
-    userlist(userindex).flags.descuento = 0
-    descuento = 0
-end if
+function descuento(byval userindex as integer) as single
+   'calcula el descuento al comerciar
+  descuento = 1 + userlist(userindex).stats.userskills(comerciar) / 100
+  userlist(userindex).flags.descuento = descuento
 
 end function
 
 
+
+'function descuento(byval userindex as integer) as string
+'establece el descuento en funcion del skill comercio
+'dim ptscomercio as integer
+'ptscomercio = userlist(userindex).stats.userskills(comerciar)
+
+'if ptscomercio <= 10 and ptscomercio > 5 then
+'    userlist(userindex).flags.descuento = 1.1
+'    descuento = 1.1
+'elseif ptscomercio <= 20 and ptscomercio >= 11 then
+'    userlist(userindex).flags.descuento = 1.2
+'    descuento = 1.2
+'elseif ptscomercio <= 30 and ptscomercio >= 19 then
+'    userlist(userindex).flags.descuento = 1.3
+'    descuento = 1.3
+'elseif ptscomercio <= 40 and ptscomercio >= 29 then
+'    userlist(userindex).flags.descuento = 1.4
+'    descuento = 1.4
+'elseif ptscomercio <= 50 and ptscomercio >= 39 then
+'    userlist(userindex).flags.descuento = 1.5
+'    descuento = 1.5
+'elseif ptscomercio <= 60 and ptscomercio >= 49 then
+'    userlist(userindex).flags.descuento = 1.6
+'    descuento = 1.6
+'elseif ptscomercio <= 70 and ptscomercio >= 59 then
+'    userlist(userindex).flags.descuento = 1.7
+'    descuento = 1.7
+'elseif ptscomercio <= 80 and ptscomercio >= 69 then
+'    userlist(userindex).flags.descuento = 1.8
+'    descuento = 1.8
+'elseif ptscomercio <= 99 and ptscomercio >= 79 then
+'    userlist(userindex).flags.descuento = 1.9
+'    descuento = 1.9
+'elseif ptscomercio <= 999999 and ptscomercio >= 99 then
+'    userlist(userindex).flags.descuento = 2
+'    descuento = 2
+'else
+'    userlist(userindex).flags.descuento = 0
+'    descuento = 0
+'end if'
+'
+'end function
+'
+'
+'
+'
+'
 
 sub enviarnpcinv(byval userindex as integer, byval npcindex as integer)
 

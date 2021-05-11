@@ -21,6 +21,25 @@ begin vb.form frmconnect
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    visible         =   0   'false
+   begin vb.commandbutton command2 
+      backcolor       =   &h00c0e0ff&
+      caption         =   "actualizar servidores desde la web"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   735
+      left            =   8760
+      style           =   1  'graphical
+      tabindex        =   5
+      top             =   3120
+      width           =   1335
+   end
    begin vb.commandbutton command1 
       caption         =   "este server ->"
       height          =   375
@@ -164,10 +183,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -194,13 +209,6 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
-'
-'mat�as fernando peque�o
-'matux@fibertel.com.ar
-'www.noland-studios.com.ar
-'acoyte 678 piso 17 dto b
-'capital federal, buenos aires - republica argentina
-'c�digo postal 1405
 
 option explicit
 
@@ -211,7 +219,12 @@ dim i as integer
 lst_servers.clear
 
 if serversrecibidos then
+    call writevar(app.path & "\init\sinfo.dat", "init", "cant", ubound(serverslst))
     for i = 1 to ubound(serverslst)
+        call writevar(app.path & "\init\sinfo.dat", "s" & i, "desc", serverslst(i).desc)
+        call writevar(app.path & "\init\sinfo.dat", "s" & i, "ip", serverslst(i).ip)
+        call writevar(app.path & "\init\sinfo.dat", "s" & i, "pj", str(serverslst(i).puerto))
+        call writevar(app.path & "\init\sinfo.dat", "s" & i, "p2", str(serverslst(i).passrecport))
         lst_servers.additem serverslst(i).ip & ":" & serverslst(i).puerto & " - desc:" & serverslst(i).desc
     next i
 end if
@@ -224,6 +237,26 @@ ipdelservidor = iptxt
 puertodelservidor = porttxt
 end sub
 
+
+private sub command2_click()
+
+frmmain.inet1.url = "http://ao.alkon.com.ar/admin/iplist2.txt"
+rawserverslist = frmmain.inet1.openurl
+
+
+if rawserverslist = "" then
+    serversrecibidos = false
+    call msgbox("no se pudo cargar la lista de servidores")
+    redim serverslst(1)
+    exit sub
+else
+    serversrecibidos = true
+end if
+
+call initserverslist(rawserverslist)
+call cargarlst
+
+end sub
 
 private sub form_activate()
 'on error resume next
@@ -276,7 +309,8 @@ if keycode = vbkeyi and shift = vbctrlmask then
     'label4.visible = true
     
     'server ip
-    iptxt.text = "localhost"
+    porttxt.text = "7666"
+    iptxt.text = "192.168.0.2"
     iptxt.visible = true
     'label5.visible = true
     
@@ -350,10 +384,21 @@ select case index
         
         'frmcrearpersonaje.show vbmodal
         estadologin = dados
+#if usarwrench = 1 then
+        if frmmain.socket1.connected then
+            frmmain.socket1.disconnect
+            frmmain.socket1.cleanup
+        end if
         frmmain.socket1.hostname = curserverip
         frmmain.socket1.remoteport = curserverport
-        me.mousepointer = 11
         frmmain.socket1.connect
+#else
+        if frmmain.winsock1.state <> sckclosed then
+            frmmain.winsock1.close
+        end if
+        frmmain.winsock1.connect curserverip, curserverport
+#end if
+        me.mousepointer = 11
 
         
     case 1

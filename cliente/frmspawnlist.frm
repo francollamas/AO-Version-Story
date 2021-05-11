@@ -1,7 +1,7 @@
 version 5.00
 begin vb.form frmspawnlist 
    borderstyle     =   3  'fixed dialog
-   caption         =   "spawnlist"
+   caption         =   "invocar"
    clientheight    =   3465
    clientleft      =   45
    clienttop       =   330
@@ -83,13 +83,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -126,6 +122,6 @@ unload me
 end sub
 
 private sub form_deactivate()
-me.setfocus
+'me.setfocus
 end sub
 

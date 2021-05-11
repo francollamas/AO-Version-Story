@@ -7,6 +7,15 @@ begin vb.form frmskills3
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   5955
+   beginproperty font 
+      name            =   "tahoma"
+      size            =   8.25
+      charset         =   0
+      weight          =   400
+      underline       =   0   'false
+      italic          =   0   'false
+      strikethrough   =   0   'false
+   endproperty
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
@@ -17,6 +26,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   0
@@ -28,6 +46,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   1
@@ -39,6 +66,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   2
@@ -50,6 +86,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   3
@@ -61,6 +106,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   4
@@ -72,6 +126,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   5
@@ -83,6 +146,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   6
@@ -94,6 +166,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   7
@@ -105,6 +186,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   8
@@ -116,6 +206,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   9
@@ -127,6 +226,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   10
@@ -138,6 +246,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   11
@@ -150,6 +267,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   1
@@ -162,6 +288,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   2
@@ -174,6 +309,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   3
@@ -186,6 +330,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   4
@@ -198,6 +351,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   5
@@ -210,6 +372,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   6
@@ -222,6 +393,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   7
@@ -234,6 +414,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   8
@@ -246,6 +435,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   9
@@ -258,6 +456,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   10
@@ -270,6 +477,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   11
@@ -282,6 +498,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   12
@@ -469,6 +694,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   13
@@ -480,6 +714,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   12
@@ -506,6 +749,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   14
@@ -517,6 +769,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   13
@@ -543,6 +804,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   15
@@ -554,6 +824,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   14
@@ -580,6 +859,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   16
@@ -591,6 +879,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   15
@@ -617,6 +914,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   17
@@ -628,6 +934,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   16
@@ -654,6 +969,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   18
@@ -665,6 +989,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   17
@@ -683,6 +1016,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   18
@@ -695,6 +1037,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   19
@@ -720,6 +1071,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   19
@@ -732,6 +1092,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   20
@@ -757,6 +1126,15 @@ begin vb.form frmskills3
    begin vb.label label2 
       backstyle       =   0  'transparent
       caption         =   "skill1"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   240
       index           =   20
@@ -769,6 +1147,15 @@ begin vb.form frmskills3
       alignment       =   2  'center
       backstyle       =   0  'transparent
       caption         =   "0"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   255
       index           =   21
@@ -801,6 +1188,15 @@ begin vb.form frmskills3
       autosize        =   -1  'true
       backstyle       =   0  'transparent
       caption         =   "puntos:"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       forecolor       =   &h000000ff&
       height          =   195
       left            =   690
@@ -814,13 +1210,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -882,7 +1274,7 @@ puntos.caption = "puntos:" & alocados
 end sub
 
 private sub form_deactivate()
-me.visible = false
+'me.visible = false
 end sub
 
 private sub form_load()

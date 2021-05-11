@@ -1,14 +1,14 @@
 version 5.00
 begin vb.form frmcarp 
    caption         =   "carpintero"
-   clientheight    =   3195
+   clientheight    =   3165
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   4680
+   clientwidth     =   4650
    controlbox      =   0   'false
    linktopic       =   "form1"
-   scaleheight     =   3195
-   scalewidth      =   4680
+   scaleheight     =   3165
+   scalewidth      =   4650
    startupposition =   1  'centerowner
    begin vb.listbox lstarmas 
       height          =   2205
@@ -64,10 +64,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -110,6 +106,6 @@ unload me
 end sub
 
 private sub form_deactivate()
-me.setfocus
+'me.setfocus
 end sub
 

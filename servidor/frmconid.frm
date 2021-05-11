@@ -53,7 +53,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -84,6 +84,7 @@ attribute vb_exposed = false
 'pablo ignacio m�rquez
 
 
+
 private sub command1_click()
 unload me
 end sub
@@ -112,7 +113,7 @@ private sub command3_click()
 dim i as integer
 
 for i = 1 to maxusers
-    if userlist(i).connid <> -1 and not userlist(i).flags.userlogged then call closesocket(i)
+    if userlist(i).connid <> -1 and userlist(i).connidvalida and not userlist(i).flags.userlogged then call closesocket(i)
 next i
 
 end sub

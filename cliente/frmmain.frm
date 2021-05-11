@@ -2,13 +2,14 @@ version 5.00
 object = "{3b7c8863-d78f-101b-b9b5-04021c009402}#1.2#0"; "richtx32.ocx"
 object = "{33101c00-75c3-11cf-a8a0-444553540000}#1.0#0"; "cswsk32.ocx"
 object = "{48e59290-9880-11cf-9754-00aa00c00908}#1.0#0"; "msinet.ocx"
+object = "{248dd890-bb45-11cf-9abc-0080c7e7b78d}#1.0#0"; "mswinsck.ocx"
 begin vb.form frmmain 
    backcolor       =   &h00000000&
    borderstyle     =   1  'fixed single
    caption         =   "argentum online"
    clientheight    =   8625
    clientleft      =   390
-   clienttop       =   675
+   clienttop       =   690
    clientwidth     =   11910
    clipcontrols    =   0   'false
    beginproperty font 
@@ -28,11 +29,10 @@ begin vb.form frmmain
    scaleheight     =   575
    scalemode       =   3  'pixel
    scalewidth      =   794
-   startupposition =   2  'centerscreen
    visible         =   0   'false
    begin socketwrenchctrl.socket socket1 
       left            =   6750
-      top             =   1905
+      top             =   1920
       _version        =   65536
       _extentx        =   741
       _extenty        =   741
@@ -62,27 +62,68 @@ begin vb.form frmmain
       type            =   1
       urgent          =   0   'false
    end
+   begin vb.timer trainingmacro 
+      enabled         =   0   'false
+      interval        =   3121
+      left            =   6480
+      top             =   2520
+   end
+   begin vb.textbox sendcmstxt 
+      backcolor       =   &h00000000&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h000000ff&
+      height          =   315
+      left            =   45
+      maxlength       =   160
+      multiline       =   -1  'true
+      tabindex        =   16
+      tabstop         =   0   'false
+      tooltiptext     =   "chat"
+      top             =   8280
+      visible         =   0   'false
+      width           =   8160
+   end
+   begin vb.timer macro 
+      interval        =   750
+      left            =   5760
+      top             =   2520
+   end
+   begin mswinsocklib.winsock winsock1 
+      left            =   6240
+      top             =   1920
+      _extentx        =   741
+      _extenty        =   741
+      _version        =   393216
+   end
    begin vb.timer second 
       enabled         =   0   'false
       interval        =   1050
-      left            =   2790
-      top             =   2760
+      left            =   3600
+      top             =   2520
    end
    begin vb.timer spoofcheck 
       enabled         =   0   'false
       interval        =   60000
-      left            =   1290
-      top             =   2220
+      left            =   3120
+      top             =   2520
    end
    begin vb.timer trabajo 
       enabled         =   0   'false
-      left            =   7200
-      top             =   2760
+      left            =   4080
+      top             =   2520
    end
    begin vb.timer fps 
       interval        =   1000
-      left            =   6285
-      top             =   2040
+      left            =   5040
+      top             =   2520
    end
    begin inetctlsobjects.inet inet1 
       left            =   7605
@@ -132,6 +173,7 @@ begin vb.form frmmain
          mousepointer    =   99  'custom
          tabindex        =   10
          top             =   4800
+         visible         =   0   'false
          width           =   2430
       end
       begin vb.commandbutton despinv 
@@ -152,6 +194,7 @@ begin vb.form frmmain
          mousepointer    =   99  'custom
          tabindex        =   9
          top             =   2160
+         visible         =   0   'false
          width           =   2430
       end
       begin vb.picturebox picinv 
@@ -184,27 +227,60 @@ begin vb.form frmmain
          backcolor       =   &h00000000&
          forecolor       =   &h00ffffff&
          height          =   2790
-         left            =   360
+         left            =   420
          tabindex        =   15
          tabstop         =   0   'false
          top             =   2040
          visible         =   0   'false
-         width           =   2745
+         width           =   2565
+      end
+      begin vb.label lblporclvl 
+         autosize        =   -1  'true
+         backstyle       =   0  'transparent
+         caption         =   "33.33%"
+         forecolor       =   &h00ffff00&
+         height          =   195
+         left            =   1560
+         tabindex        =   18
+         top             =   450
+         width           =   660
+      end
+      begin vb.image cmdmoverhechi 
+         height          =   375
+         index           =   0
+         left            =   2940
+         mouseicon       =   "frmmain.frx":1ca1f
+         mousepointer    =   99  'custom
+         top             =   2100
+         visible         =   0   'false
+         width           =   315
+      end
+      begin vb.image cmdmoverhechi 
+         height          =   375
+         index           =   1
+         left            =   2940
+         mouseicon       =   "frmmain.frx":1cb71
+         mousepointer    =   99  'custom
+         top             =   2520
+         visible         =   0   'false
+         width           =   315
       end
       begin vb.image cmdinfo 
          height          =   405
          left            =   2310
-         mouseicon       =   "frmmain.frx":1ca1f
+         mouseicon       =   "frmmain.frx":1ccc3
          mousepointer    =   99  'custom
          top             =   4830
+         visible         =   0   'false
          width           =   855
       end
       begin vb.image cmdlanzar 
          height          =   405
          left            =   450
-         mouseicon       =   "frmmain.frx":1cb71
+         mouseicon       =   "frmmain.frx":1ce15
          mousepointer    =   99  'custom
          top             =   4830
+         visible         =   0   'false
          width           =   1770
       end
       begin vb.label label1 
@@ -232,7 +308,7 @@ begin vb.form frmmain
          autosize        =   -1  'true
          backstyle       =   0  'transparent
          caption         =   "exp:"
-         forecolor       =   &h8000000e&
+         forecolor       =   &h00ffffff&
          height          =   195
          left            =   285
          tabindex        =   13
@@ -284,7 +360,7 @@ begin vb.form frmmain
          height          =   300
          index           =   2
          left            =   1905
-         mouseicon       =   "frmmain.frx":1ccc3
+         mouseicon       =   "frmmain.frx":1cf67
          mousepointer    =   99  'custom
          top             =   7575
          width           =   1410
@@ -293,7 +369,7 @@ begin vb.form frmmain
          height          =   300
          index           =   1
          left            =   1905
-         mouseicon       =   "frmmain.frx":1ce15
+         mouseicon       =   "frmmain.frx":1d0b9
          mousepointer    =   99  'custom
          top             =   7200
          width           =   1410
@@ -302,7 +378,7 @@ begin vb.form frmmain
          height          =   300
          index           =   0
          left            =   1920
-         mouseicon       =   "frmmain.frx":1cf67
+         mouseicon       =   "frmmain.frx":1d20b
          mousepointer    =   99  'custom
          top             =   6840
          width           =   1410
@@ -369,7 +445,7 @@ begin vb.form frmmain
          endproperty
          forecolor       =   &h000000ff&
          height          =   195
-         left            =   495
+         left            =   420
          tabindex        =   11
          top             =   180
          width           =   2625
@@ -387,7 +463,7 @@ begin vb.form frmmain
          endproperty
          height          =   450
          left            =   1800
-         mouseicon       =   "frmmain.frx":1d0b9
+         mouseicon       =   "frmmain.frx":1d35d
          mousepointer    =   99  'custom
          tabindex        =   7
          top             =   1290
@@ -406,7 +482,7 @@ begin vb.form frmmain
          endproperty
          height          =   435
          left            =   150
-         mouseicon       =   "frmmain.frx":1d20b
+         mouseicon       =   "frmmain.frx":1d4af
          mousepointer    =   99  'custom
          tabindex        =   6
          top             =   1305
@@ -415,7 +491,7 @@ begin vb.form frmmain
       begin vb.image invequ 
          height          =   4395
          left            =   120
-         picture         =   "frmmain.frx":1d35d
+         picture         =   "frmmain.frx":1d601
          top             =   1320
          width           =   3240
       end
@@ -462,8 +538,8 @@ begin vb.form frmmain
    end
    begin vb.timer attack 
       enabled         =   0   'false
-      left            =   7170
-      top             =   1920
+      left            =   4560
+      top             =   2520
    end
    begin vb.textbox sendtxt 
       backcolor       =   &h00000000&
@@ -479,6 +555,7 @@ begin vb.form frmmain
       forecolor       =   &h000000ff&
       height          =   315
       left            =   45
+      maxlength       =   160
       multiline       =   -1  'true
       tabindex        =   0
       tabstop         =   0   'false
@@ -499,9 +576,11 @@ begin vb.form frmmain
       _extenty        =   2646
       _version        =   393217
       backcolor       =   0
+      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
-      textrtf         =   $"frmmain.frx":2ccb0
+      disablenoscroll =   -1  'true
+      textrtf         =   $"frmmain.frx":2cf54
       beginproperty font {0be35203-8f91-11ce-9de3-00aa004bb851} 
          name            =   "tahoma"
          size            =   8.25
@@ -512,11 +591,53 @@ begin vb.form frmmain
          strikethrough   =   0   'false
       endproperty
    end
+   begin vb.image picau 
+      borderstyle     =   1  'fixed single
+      height          =   510
+      left            =   9300
+      picture         =   "frmmain.frx":2cfd1
+      stretch         =   -1  'true
+      top             =   8100
+      visible         =   0   'false
+      width           =   510
+   end
+   begin vb.image picmh 
+      borderstyle     =   1  'fixed single
+      height          =   510
+      left            =   8790
+      picture         =   "frmmain.frx":2e243
+      stretch         =   -1  'true
+      top             =   8100
+      visible         =   0   'false
+      width           =   510
+   end
+   begin vb.label coord 
+      autosize        =   -1  'true
+      backcolor       =   &h00000000&
+      backstyle       =   0  'transparent
+      borderstyle     =   1  'fixed single
+      caption         =   "(000,00,00)"
+      forecolor       =   &h0000ffff&
+      height          =   255
+      left            =   10680
+      tabindex        =   17
+      top             =   8250
+      width           =   1035
+   end
+   begin vb.image picseg 
+      borderstyle     =   1  'fixed single
+      height          =   510
+      left            =   8280
+      picture         =   "frmmain.frx":2f055
+      stretch         =   -1  'true
+      top             =   8100
+      width           =   510
+   end
    begin vb.shape mainviewshp 
-      bordercolor     =   &h000000c0&
+      bordercolor     =   &h00404040&
       height          =   6165
       left            =   60
-      top             =   1950
+      top             =   2040
       width           =   8205
    end
    begin vb.menu mnuobj 
@@ -532,19 +653,30 @@ begin vb.form frmmain
          caption         =   "descripcion"
       end
    end
+   begin vb.menu mnunpc 
+      caption         =   "npc"
+      visible         =   0   'false
+      begin vb.menu mnunpcdesc 
+         caption         =   "(desc)"
+      end
+      begin vb.menu sep1 
+         caption         =   "-"
+      end
+      begin vb.menu mnunpcelem 
+         caption         =   "jj"
+         index           =   0
+         visible         =   0   'false
+      end
+   end
 end
 attribute vb_name = "frmmain"
 attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -580,6 +712,8 @@ public tx as integer
 public ty as integer
 public mousex as long
 public mousey as long
+public mouseboton as long
+public mouseshift as long
 
 dim gdsb as directsoundbuffer
 dim gd as dsbufferdesc
@@ -590,7 +724,32 @@ dim pos(0) as dsbpositionnotify
 public isplaying as byte
 
 dim endevent as long
+dim puedemacrear as boolean
+
 implements directxevent
+
+
+private sub cmdmoverhechi_click(index as integer)
+if hlst.listindex = -1 then exit sub
+
+select case index
+case 0 'subir
+    if hlst.listindex = 0 then exit sub
+case 1 'bajar
+    if hlst.listindex = hlst.listcount - 1 then exit sub
+end select
+
+call senddata("desphe" & index + 1 & "," & hlst.listindex + 1)
+
+select case index
+case 0 'subir
+    hlst.listindex = hlst.listindex - 1
+case 1 'bajar
+    hlst.listindex = hlst.listindex + 1
+end select
+
+end sub
+
 
 private sub directxevent_dxcallback(byval eventid as long)
 
@@ -623,6 +782,48 @@ err_out:
 
 end function
 
+public sub activarmacrohechizos()
+    if not hlst.visible then
+        call addtorichtextbox(frmmain.rectxt, "debes tener seleccionado el hechizo para activar el auto-lanzar", 0, 200, 200, false, true, false)
+        exit sub
+    end if
+    trainingmacro.interval = 2788
+    trainingmacro.enabled = true
+    call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos activado", 0, 200, 200, false, true, false)
+    picmh.visible = true
+end sub
+
+public sub desactivarmacrohechizos()
+        picmh.visible = false
+        trainingmacro.enabled = false
+        secuenciamacrohechizos = 0
+        call addtorichtextbox(frmmain.rectxt, "auto lanzar hechizos desactivado", 0, 150, 150, false, true, false)
+end sub
+public sub dibujarmh()
+picmh.visible = true
+end sub
+
+public sub desdibujarmh()
+picmh.visible = false
+end sub
+
+public sub dibujarseguro()
+picseg.visible = true
+end sub
+
+public sub desdibujarseguro()
+picseg.visible = false
+end sub
+
+public sub dibujarsatelite()
+picau.visible = true
+end sub
+public sub desdibujarsatelite()
+picau.visible = false
+end sub
+
+
+
 
 public sub play(byval nombre as string, optional byval loopsound as boolean = false)
     if fx = 1 then exit sub
@@ -634,6 +835,16 @@ public sub play(byval nombre as string, optional byval loopsound as boolean = fa
         gdsb.play dsbplay_default
     end if
 
+end sub
+
+private sub form_mousedown(button as integer, shift as integer, x as single, y as single)
+    mouseboton = button
+    mouseshift = shift
+end sub
+
+private sub form_mouseup(button as integer, shift as integer, x as single, y as single)
+    mouseboton = button
+    mouseshift = shift
 end sub
 
 private sub form_queryunload(cancel as integer, unloadmode as integer)
@@ -662,6 +873,29 @@ if logged and not frmmain.visible then
 end if
     
 end sub
+
+
+private sub macro_timer()
+    puedemacrear = true
+end sub
+
+private sub picau_click()
+    addtorichtextbox frmmain.rectxt, "hay actualizaciones pendientes. cierra el juego y ejecuta el autoupdate. (el mismo debe descargarse del sitio oficial http://ao.alkon.com.ar, y deber�s conectarte al puerto 7667 con la ip tradicional del juego)", 255, 255, 255, false, false, false
+end sub
+
+private sub picmh_click()
+    addtorichtextbox frmmain.rectxt, "auto lanzar hechizos. utiliza esta habilidad para entrenar �nicamente. para activarlo/desactivarlo utiliza f7.", 255, 255, 255, false, false, false
+end sub
+
+private sub picseg_click()
+    addtorichtextbox frmmain.rectxt, "el dibujo de la llave indica que tienes activado el seguro, esto evitar� que por accidente ataques a un ciudadano y te conviertas en criminal. para activarlo o desactivarlo utiliza la tecla '*' (asterisco)", 255, 255, 255, false, false, false
+end sub
+
+private sub coord_click()
+    addtorichtextbox frmmain.rectxt, "estas coordenadas son tu ubicaci�n en el mapa. utiliza la letra l para corregirla si esta no se corresponde con la del servidor por efecto del lag.", 255, 255, 255, false, false, false
+end sub
+
+
 
 private sub spoofcheck_timer()
 
@@ -711,7 +945,7 @@ private sub tiraritem()
             senddata "ti" & itemelegido & "," & 1
         else
            if userinventory(itemelegido).amount > 1 then
-            frmcantidad.show
+            frmcantidad.show , frmmain
            end if
         end if
     end if
@@ -725,6 +959,7 @@ private sub agarraritem()
 end sub
 
 private sub usaritem()
+    if trainingmacro.enabled then desactivarmacrohechizos
     if (itemelegido > 0) and (itemelegido < max_inventory_slots + 1) then senddata "usa" & itemelegido
     binvmod = true
 end sub
@@ -739,13 +974,48 @@ end sub
 '     hechizos control               '
 ''''''''''''''''''''''''''''''''''''''
 
+private sub trainingmacro_timer()
+    if not hlst.visible then
+        desactivarmacrohechizos
+        exit sub
+    end if
+    if comerciando then exit sub
+    select case secuenciamacrohechizos
+        case 0
+            if hlst.list(hlst.listindex) <> "(none)" and usercanattack = 1 then
+                call senddata("lh" & hlst.listindex + 1)
+                call senddata("uk" & magia)
+                'usercanattack = 0
+            end if
+            secuenciamacrohechizos = 1
+        case 1
+            call convertcptotp(mainviewshp.left, mainviewshp.top, mousex, mousey, tx, ty)
+            if (usingskill = magia or usingskill = proyectiles) and usercanattack = 0 then exit sub
+            senddata "wlc" & tx & "," & ty & "," & usingskill
+            if usingskill = magia or usingskill = proyectiles then usercanattack = 0
+            usingskill = 0
+            secuenciamacrohechizos = 0
+        case else
+            desactivarmacrohechizos
+    end select
+    
+end sub
+
+
 private sub cmdlanzar_click()
     if hlst.list(hlst.listindex) <> "(none)" and usercanattack = 1 then
         call senddata("lh" & hlst.listindex + 1)
         call senddata("uk" & magia)
+        usamacro = true
         'usercanattack = 0
     end if
 end sub
+
+private sub cmdlanzar_mousemove(button as integer, shift as integer, x as single, y as single)
+    usamacro = false
+    cntd = 0
+end sub
+
 
 private sub cmdinfo_click()
     call senddata("infs" & hlst.listindex + 1)
@@ -776,17 +1046,40 @@ private sub form_click()
 
     if cartel then cartel = false
 
+    
+
     if not comerciando then
         call convertcptotp(mainviewshp.left, mainviewshp.top, mousex, mousey, tx, ty)
 
-        if usingskill = 0 then
-            senddata "lc" & tx & "," & ty
-        else
-            frmmain.mousepointer = vbdefault
-            if (usingskill = magia or usingskill = proyectiles) and usercanattack = 0 then exit sub
-            senddata "wlc" & tx & "," & ty & "," & usingskill
-            if usingskill = magia or usingskill = proyectiles then usercanattack = 0
-            usingskill = 0
+        if mouseshift = 0 then
+            if mouseboton <> vbrightbutton then
+                '[ybarra]
+                if usamacro then
+                    cntd = cntd + 1
+                        if cntd = 3 then
+                            senddata "umh"
+                            cntd = 0
+                        end if
+                    usamacro = false
+                end if
+                '[/ybarra]
+                if usingskill = 0 then
+                    senddata "lc" & tx & "," & ty
+                else
+                    frmmain.mousepointer = vbdefault
+                    if (usingskill = magia or usingskill = proyectiles) and usercanattack = 0 then exit sub
+                    if trainingmacro.enabled then desactivarmacrohechizos
+                    senddata "wlc" & tx & "," & ty & "," & usingskill
+                    if usingskill = magia or usingskill = proyectiles then usercanattack = 0
+                    usingskill = 0
+                end if
+            else
+                call abrirmenuviewport
+            end if
+        elseif (mouseshift and 1) = 1 then
+            if mouseshift = vbleftbutton then
+                call senddata("/telep yo " & usermap & " " & tx & " " & ty)
+            end if
         end if
     end if
     
@@ -801,7 +1094,9 @@ end sub
 private sub form_keyup(keycode as integer, shift as integer)
 on error resume next
     
-if (not sendtxt.visible) and _
+
+    
+if (not sendtxt.visible) and (not sendcmstxt.visible) and _
    ((keycode >= 65 and keycode <= 90) or _
    (keycode >= 48 and keycode <= 57)) then
         
@@ -828,7 +1123,7 @@ if (not sendtxt.visible) and _
                 case vbkeyr:
                     call senddata("uk" & robar)
                 case vbkeys:
-                    call senddata("seg")
+                    addtorichtextbox frmmain.rectxt, "para activar o desactivar el seguro utiliza la tecla '*' (asterisco)", 255, 255, 255, false, false, false
                 case vbkeyo:
                     call senddata("uk" & ocultarse)
                 case vbkeyt:
@@ -838,14 +1133,27 @@ if (not sendtxt.visible) and _
                         nopuedeusar = true
                         call usaritem
                     end if
+                case vbkeyl:
+                    if userpuederefrescar then
+                        call senddata("rpu")
+                        userpuederefrescar = false
+                        beep
+                    end if
             end select
         end if
         
         select case keycode
             case vbkeyreturn:
+                if sendcmstxt.visible then exit sub
                 if not frmcantidad.visible then
                     sendtxt.visible = true
                     sendtxt.setfocus
+                end if
+            case vbkeydelete:
+                if sendtxt.visible then exit sub
+                if not frmcantidad.visible then
+                    sendcmstxt.visible = true
+                    sendcmstxt.setfocus
                 end if
             case vbkeyf4:
                 fpsflag = not fpsflag
@@ -857,13 +1165,39 @@ if (not sendtxt.visible) and _
                    (not usermeditar) then
                         senddata "at"
                         usercanattack = 0
+                        
+                        '[anim atak]
+'                        charlist(usercharindex).arma.weaponwalk(charlist(usercharindex).heading).started = 1
+'                        charlist(usercharindex).arma.weaponattack = grhdata(charlist(usercharindex).arma.weaponwalk(charlist(usercharindex).heading).grhindex).numframes + 1
+                        
                 end if
             case vbkeyf5:
                 call frmopciones.show(vbmodeless, frmmain)
+            case vbkeyf6:
+                if not puedemacrear then
+                    addtorichtextbox frmmain.rectxt, "no tan r�pido..!", 255, 255, 255, false, false, false
+                else
+                    dim k as string
+                    k = "dit"
+                    call senddata("/me" & k & "ar")
+                    puedemacrear = false
+                end if
+            case vbkeyf7:
+                if trainingmacro.enabled then
+                    desactivarmacrohechizos
+                else
+                    activarmacrohechizos
+                end if
+            case vbkeymultiply:
+                call senddata("seg")
+                
         end select
+        
 end sub
 
 private sub form_load()
+    
+    
     frmmain.caption = "argentum online" & " v " & app.major & "." & _
     app.minor & "." & app.revision
     panelder.picture = loadpicture(app.path & _
@@ -872,12 +1206,14 @@ private sub form_load()
     invequ.picture = loadpicture(app.path & _
     "\graficos\centronuevoinventario.jpg")
     
-   
+   me.left = 0
+   me.top = 0
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
     mousex = x
     mousey = y
+    
 end sub
 
 private sub hlst_keydown(keycode as integer, shift as integer)
@@ -904,12 +1240,13 @@ private sub image1_click(index as integer)
             llegofama = false
             senddata "atri"
             senddata "eski"
+            senddata "fest"
             senddata "fama"
             do while not llegaronskills or not llegaronatrib or not llegofama
                 doevents 'esperamos a que lleguen y mantenemos la interfaz viva
             loop
             frmestadisticas.iniciar_labels
-            frmestadisticas.show
+            frmestadisticas.show , frmmain
             llegaronatrib = false
             llegaronskills = false
             llegofama = false
@@ -924,7 +1261,7 @@ private sub image3_click(index as integer)
         case 0
             itemelegido = flagoro
             if usergld > 0 then
-                frmcantidad.show
+                frmcantidad.show , frmmain
             end if
     end select
 end sub
@@ -936,7 +1273,7 @@ private sub label1_click()
     next i
     alocados = skillpoints
     frmskills3.puntos.caption = "puntos:" & skillpoints
-    frmskills3.show
+    frmskills3.show , frmmain
 end sub
 
 private sub label4_click()
@@ -944,13 +1281,16 @@ private sub label4_click()
 
     invequ.picture = loadpicture(app.path & "\graficos\centronuevoinventario.jpg")
 
-    despinv(0).visible = true
-    despinv(1).visible = true
+    'despinv(0).visible = true
+    'despinv(1).visible = true
     picinv.visible = true
 
     hlst.visible = false
     cmdinfo.visible = false
     cmdlanzar.visible = false
+    
+    cmdmoverhechi(0).visible = true
+    cmdmoverhechi(1).visible = true
 end sub
 
 private sub label7_click()
@@ -958,12 +1298,15 @@ private sub label7_click()
 
     invequ.picture = loadpicture(app.path & "\graficos\centronuevohechizos.jpg")
     '%%%%%%ocultamos el inv&&&&&&&&&&&&
-    despinv(0).visible = false
-    despinv(1).visible = false
+    'despinv(0).visible = false
+    'despinv(1).visible = false
     picinv.visible = false
     hlst.visible = true
     cmdinfo.visible = true
     cmdlanzar.visible = true
+    
+    cmdmoverhechi(0).visible = true
+    cmdmoverhechi(1).visible = true
 end sub
 
 private sub picinv_dblclick()
@@ -976,6 +1319,7 @@ private sub picinv_mousemove(button as integer, shift as integer, x as single, y
     dim mx as integer
     dim my as integer
     dim aux as integer
+    usamacro = false
     mx = x \ 32 + 1
     my = y \ 32 + 1
     aux = (mx + (my - 1) * 5) + offsetdelinv
@@ -985,18 +1329,40 @@ end sub
 
 private sub picinv_mouseup(button as integer, shift as integer, x as single, y as single)
     call playwaveds(snd_click)
-
-    if (button = vbrightbutton) and (clicenitemelegido(cint(x), cint(y))) then
-        popupmenu mnuobj
+    
+    call itemclick(cint(x), cint(y), picinv)
+    
+#if (conmenuseconextuales = 1) then
+    if (button = vbrightbutton) and (clicenitemelegido(cint(x), cint(y), picinv)) then
+        if itemelegido >= lbound(userinventory) and itemelegido <= ubound(userinventory) then
+            dim i as long
+            dim m as new frmmenusefashion
+            
+            load m
+            m.setcallback me
+            m.setmenuid 0
+            m.listainit 4, false
+            
+            m.listasetitem 0, userinventory(itemelegido).name, true
+'            m.listasetitem 1, " "
+            m.listasetitem 1, "tirar"
+            m.listasetitem 2, "usar"
+            m.listasetitem 3, "equipar"
+            
+            m.listafin
+            m.show , me
+        end if
     end if
+#end if
 
-    call itemclick(cint(x), cint(y))
 end sub
 
 private sub rectxt_change()
     on error resume next  'el .setfocus causaba errores al salir y volver a entrar
     if sendtxt.visible then
         sendtxt.setfocus
+    elseif me.sendcmstxt.visible then
+        sendcmstxt.setfocus
     else
       if (not frmcomerciar.visible) and _
          (not frmskills3.visible) and _
@@ -1020,7 +1386,13 @@ private sub rectxt_keydown(keycode as integer, shift as integer)
 end sub
 
 private sub sendtxt_change()
-    stxtbuffer = sendtxt.text
+    if len(sendtxt.text) > 160 then
+        stxtbuffer = "soy un cheater, avisenle a un gm"
+    else
+        stxtbuffer = sendtxt.text
+    end if
+    
+    
 end sub
 
 private sub sendtxt_keypress(keyascii as integer)
@@ -1061,11 +1433,61 @@ private sub sendtxt_keyup(keycode as integer, shift as integer)
     end if
 end sub
 
+
+private sub sendcmstxt_keyup(keycode as integer, shift as integer)
+    'send text
+    if keycode = vbkeyreturn then
+        'say
+        if stxtbuffercmsg <> "" then
+            call senddata("/cmsg " & stxtbuffercmsg)
+        end if
+
+        stxtbuffercmsg = ""
+        sendcmstxt.text = ""
+        keycode = 0
+        me.sendcmstxt.visible = false
+    end if
+end sub
+
+
+private sub sendcmstxt_keypress(keyascii as integer)
+    if not (keyascii = vbkeyback) and _
+       not (keyascii >= vbkeyspace and keyascii <= 250) then _
+        keyascii = 0
+end sub
+
+
+private sub sendcmstxt_change()
+    if len(sendcmstxt.text) > 160 then
+        stxtbuffercmsg = "soy un cheater, avisenle a un gm"
+    else
+        stxtbuffercmsg = sendcmstxt.text
+    end if
+end sub
+
+
 ''''''''''''''''''''''''''''''''''''''
 '     socket1                        '
 ''''''''''''''''''''''''''''''''''''''
+#if usarwrench = 1 then
 
 private sub socket1_connect()
+    dim serverip as string
+    dim temporal1 as long
+    dim temporal as long
+    
+    
+    serverip = socket1.peeraddress
+    temporal = instr(1, serverip, ".")
+    temporal1 = ((mid(serverip, 1, temporal - 1) xor &h65) and &h7f) * 16777216
+    serverip = mid(serverip, temporal + 1, len(serverip))
+    temporal = instr(1, serverip, ".")
+    temporal1 = temporal1 + (mid(serverip, 1, temporal - 1) xor &hf6) * 65536
+    serverip = mid(serverip, temporal + 1, len(serverip))
+    temporal = instr(1, serverip, ".")
+    temporal1 = temporal1 + (mid(serverip, 1, temporal - 1) xor &h4b) * 256
+    serverip = mid(serverip, temporal + 1, len(serverip)) xor &h42
+    mixedkey = (temporal1 + serverip)
     
     second.enabled = true
     
@@ -1086,6 +1508,8 @@ private sub socket1_connect()
 end sub
 
 private sub socket1_disconnect()
+    dim i as long
+    
     lastsecond = 0
     second.enabled = false
     logged = false
@@ -1096,13 +1520,23 @@ private sub socket1_disconnect()
     frmconnect.mousepointer = vbnormal
     
     if frmpasswd.visible = true then frmpasswd.visible = false
+    if frmpasswdsinpadrinos.visible = true then frmpasswdsinpadrinos.visible = false
     frmcrearpersonaje.visible = false
     frmconnect.visible = true
+    
+    on local error resume next
+    for i = 0 to forms.count - 1
+        if forms(i).name <> me.name and forms(i).name <> frmconnect.name then
+            unload forms(i)
+        end if
+    next i
+    on local error goto 0
     
     frmmain.visible = false
 
     pausa = false
     usermeditar = false
+    
 
     userclase = ""
     usersexo = ""
@@ -1110,7 +1544,6 @@ private sub socket1_disconnect()
     useremail = ""
     bo = 100
     
-    dim i as integer
     for i = 1 to numskills
         userskills(i) = 0
     next i
@@ -1171,6 +1604,222 @@ private sub socket1_read(datalength as integer, isurgent as integer)
     dim nfile as integer
 
     socket1.read rd, datalength
+    
+    'check for previous broken data and add to current data
+    if tempstring <> "" then
+        rd = tempstring & rd
+        tempstring = ""
+    end if
+
+    'check for more than one line
+    schar = 1
+    for loopc = 1 to len(rd)
+
+        tchar = mid$(rd, loopc, 1)
+
+        if tchar = endc then
+            cr = cr + 1
+            echar = loopc - schar
+            rbuffer(cr) = mid$(rd, schar, echar)
+            schar = loopc + 1
+        end if
+
+    next loopc
+
+    'check for broken line and save for next time
+    if len(rd) - (schar - 1) <> 0 then
+        tempstring = mid$(rd, schar, len(rd))
+    end if
+
+    'send buffer to handle data
+    for loopc = 1 to cr
+        call handledata(rbuffer(loopc))
+    next loopc
+end sub
+
+#end if
+
+private sub abrirmenuviewport()
+#if (conmenuseconextuales = 1) then
+
+if tx >= minxborder and ty >= minyborder and _
+    ty <= maxyborder and tx <= maxxborder then
+    if mapdata(tx, ty).charindex > 0 then
+        if charlist(mapdata(tx, ty).charindex).invisible = false then
+        
+            dim i as long
+            dim m as new frmmenusefashion
+            
+            load m
+            m.setcallback me
+            m.setmenuid 1
+            m.listainit 2, false
+            
+            if charlist(mapdata(tx, ty).charindex).nombre <> "" then
+                m.listasetitem 0, charlist(mapdata(tx, ty).charindex).nombre, true
+            else
+                m.listasetitem 0, "<npc>", true
+            end if
+            m.listasetitem 1, "comerciar"
+            
+            m.listafin
+            m.show , me
+
+        end if
+    end if
+end if
+
+#end if
+end sub
+
+public sub callbackmenufashion(byval menuid as long, byval sel as long)
+select case menuid
+
+case 0 'inventario
+    select case sel
+    case 0
+    case 1
+    case 2 'tirar
+        call tiraritem
+    case 3 'usar
+        if not nopuedeusar then
+            nopuedeusar = true
+            call usaritem
+        end if
+    case 3 'equipar
+        call equiparitem
+    end select
+    
+case 1 'menu del viewport del engine
+    select case sel
+    case 0 'nombre
+        senddata "lc" & tx & "," & ty
+    case 1 'comerciar
+        call senddata("lc" & tx & "," & ty)
+        call senddata("/comerciar")
+    end select
+end select
+end sub
+
+
+'
+' -------------------
+'    w i n s o c k
+' -------------------
+'
+
+#if usarwrench <> 1 then
+
+private sub winsock1_close()
+    dim i as long
+    
+    debug.print "winsock close"
+    
+    lastsecond = 0
+    second.enabled = false
+    logged = false
+    connected = false
+    
+    if winsock1.state <> sckclosed then _
+        winsock1.close
+    
+    frmconnect.mousepointer = vbnormal
+    
+    if frmpasswd.visible = true then frmpasswd.visible = false
+    if frmpasswdsinpadrinos.visible = true then frmpasswdsinpadrinos.visible = false
+    frmcrearpersonaje.visible = false
+    frmconnect.visible = true
+    
+    on local error resume next
+    for i = 0 to forms.count - 1
+        if forms(i).name <> me.name and forms(i).name <> frmconnect.name then
+            unload forms(i)
+        end if
+    next i
+    on local error goto 0
+    
+    frmmain.visible = false
+
+    pausa = false
+    usermeditar = false
+
+    userclase = ""
+    usersexo = ""
+    userraza = ""
+    useremail = ""
+    bo = 100
+    
+    for i = 1 to numskills
+        userskills(i) = 0
+    next i
+
+    for i = 1 to numatributos
+        useratributos(i) = 0
+    next i
+
+    skillpoints = 0
+    alocados = 0
+
+    dialogos.ultimodialogo = 0
+    dialogos.cantidaddialogos = 0
+end sub
+
+private sub winsock1_connect()
+    dim serverip as string
+    dim temporal1 as long
+    dim temporal as long
+    
+    debug.print "winsock connect"
+    
+    serverip = winsock1.remotehostip
+    temporal = instr(1, serverip, ".")
+    temporal1 = ((mid(serverip, 1, temporal - 1) xor &h65) and &h7f) * 16777216
+    serverip = mid(serverip, temporal + 1, len(serverip))
+    temporal = instr(1, serverip, ".")
+    temporal1 = temporal1 + (mid(serverip, 1, temporal - 1) xor &hf6) * 65536
+    serverip = mid(serverip, temporal + 1, len(serverip))
+    temporal = instr(1, serverip, ".")
+    temporal1 = temporal1 + (mid(serverip, 1, temporal - 1) xor &h4b) * 256
+    serverip = mid(serverip, temporal + 1, len(serverip)) xor &h42
+    mixedkey = (temporal1 + serverip)
+    
+    second.enabled = true
+    
+    'if frmcrearpersonaje.visible then
+    if estadologin = crearnuevopj then
+        call senddata("givemevalcode")
+    'elseif not frmrecuperar.visible then
+    elseif estadologin = normal then
+        call senddata("givemevalcode")
+    elseif estadologin = dados then
+        call senddata("givemevalcode")
+    'else
+    elseif estadologin = recuperarpass then
+        dim cmd$
+        cmd$ = "passreco" & frmrecuperar.txtnombre.text & "~" & frmrecuperar.txtcorreo
+        'frmmain.socket1.write cmd$, len(cmd$)
+        'call senddata(cmd$)
+    end if
+end sub
+
+private sub winsock1_dataarrival(byval bytestotal as long)
+    dim loopc as integer
+
+    dim rd as string
+    dim rbuffer(1 to 500) as string
+    static tempstring as string
+
+    dim cr as integer
+    dim tchar as string
+    dim schar as integer
+    dim echar as integer
+    dim aux$
+    dim nfile as integer
+
+    debug.print "winsock dataarrival"
+    
+    'socket1.read rd, datalength
+    winsock1.getdata rd
 
     'check for previous broken data and add to current data
     if tempstring <> "" then
@@ -1204,5 +1853,37 @@ private sub socket1_read(datalength as integer, isurgent as integer)
     next loopc
 end sub
 
+private sub winsock1_error(byval number as integer, description as string, byval scode as long, byval source as string, byval helpfile as string, byval helpcontext as long, canceldisplay as boolean)
+    '*********************************************
+    'handle socket errors
+    '*********************************************
+'    if errorcode = 24036 then
+'        call msgbox("por favor espere, intentando completar conexion.", vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+'        exit sub
+'    end if
+    
+    debug.print "winsock error"
+    
+    call msgbox(description, vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+    frmconnect.mousepointer = 1
+    'response = 0
+    lastsecond = 0
+    second.enabled = false
 
+    if winsock1.state <> sckclosed then _
+        winsock1.close
+    
+    if frmoldpersonaje.visible then
+        frmoldpersonaje.visible = false
+    end if
 
+    if not frmcrearpersonaje.visible then
+        if not frmborrar.visible and not frmrecuperar.visible then
+            frmconnect.show
+        end if
+    else
+        frmcrearpersonaje.mousepointer = 0
+    end if
+end sub
+
+#end if

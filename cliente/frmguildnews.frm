@@ -65,7 +65,7 @@ begin vb.form frmguildnews
    end
    begin vb.commandbutton command1 
       cancel          =   -1  'true
-      caption         =   "ok"
+      caption         =   "aceptar"
       height          =   375
       left            =   240
       mouseicon       =   "frmguildnews.frx":0008
@@ -83,10 +83,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -144,7 +140,7 @@ for j% = j% + 1 to j% + h%
     
 next j%
 
-me.show vbmodeless, frmmain
+me.show , frmmain
 
 end sub
 

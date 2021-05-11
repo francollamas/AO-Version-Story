@@ -68,7 +68,7 @@ begin vb.form frmcantidad
       left            =   330
       tabindex        =   1
       top             =   525
-      width           =   2550
+      width           =   2625
    end
    begin vb.label label1 
       backstyle       =   0  'transparent
@@ -95,12 +95,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
@@ -152,7 +149,7 @@ frmcantidad.text1.text = "0"
 end sub
 
 private sub form_deactivate()
-unload me
+'unload me
 end sub
 
 private sub text1_change()

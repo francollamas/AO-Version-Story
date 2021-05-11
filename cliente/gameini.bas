@@ -1,11 +1,7 @@
 attribute vb_name = "gameini"
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -97,6 +93,8 @@ leergameini = gameini
 end function
 
 public sub escribirgameini(byref gameiniconfiguration as tgameini)
+on local error resume next
+
 dim n as integer
 n = freefile
 open app.path & "\init\inicio.con" for binary as #n

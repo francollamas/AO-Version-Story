@@ -1,5 +1,5 @@
 attribute vb_name = "modclanes"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ attribute vb_name = "modclanes"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 
 
 option explicit
@@ -326,7 +327,11 @@ end sub
 
 public sub eacharmember(byval userindex as integer, byval rdata as string)
 
-if userlist(userindex).guildinfo.esguildleader = 0 then exit sub
+if userlist(userindex).guildinfo.esguildleader = 0 then
+    exit sub
+elseif (ucase(userlist(userindex).guildref.leader) <> ucase(userlist(userindex).name)) and (ucase(rdata) <> ucase(userlist(userindex).name)) then
+    exit sub
+end if
 
 dim oguild as cguild
 
@@ -339,6 +344,10 @@ dim memberindex as integer
 memberindex = dameuserindexconnombre(rdata)
 
 if memberindex <> 0 then 'esta online
+    if userlist(memberindex).guildinfo.esguildleader = 1 then
+        call senddata(toguildmembers, memberindex, 0, "||�no pueden expulsar al l�der del clan!" & fonttype_guild)
+        exit sub
+    end if
     call senddata(toindex, memberindex, 0, "||has sido expulsado del clan." & fonttype_guild)
     call addtovar(userlist(memberindex).guildinfo.echadas, 1, 1000)
     userlist(memberindex).guildinfo.guildpoints = 0
@@ -926,9 +935,9 @@ end sub
 
 public function cancreateguild(byval userindex as integer) as boolean
 
-if userlist(userindex).stats.elv < 20 then
+if userlist(userindex).stats.elv < 25 then
     cancreateguild = false
-    call senddata(toindex, userindex, 0, "||para fundar un clan debes de ser nivel 20 o superior" & fonttype_guild)
+    call senddata(toindex, userindex, 0, "||para fundar un clan debes de ser nivel 25 o superior." & fonttype_guild)
     exit function
 end if
 

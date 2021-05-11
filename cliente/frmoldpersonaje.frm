@@ -79,13 +79,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -151,9 +147,12 @@ call playwaveds(snd_click)
 select case index
     case 0
        
-        
+#if usarwrench = 1 then
         if frmmain.socket1.connected then frmmain.socket1.disconnect
-        
+#else
+        if frmmain.winsock1.state <> sckclosed then _
+            frmmain.winsock1.close
+#end if
         if frmconnect.mousepointer = 11 then
             exit sub
         end if
@@ -165,12 +164,18 @@ select case index
         aux = passwordtxt.text
         userpassword = md5string(aux)
         if checkuserdata(false) = true then
-            frmmain.socket1.hostname = curserverip
-            frmmain.socket1.remoteport = curserverport
             'sendnewchar = false
             estadologin = normal
             me.mousepointer = 11
+#if usarwrench = 1 then
+            frmmain.socket1.hostname = curserverip
+            frmmain.socket1.remoteport = curserverport
             frmmain.socket1.connect
+#else
+            if frmmain.winsock1.state <> sckclosed then _
+                frmmain.winsock1.close
+            frmmain.winsock1.connect curserverip, curserverport
+#end if
         end if
         
     case 1

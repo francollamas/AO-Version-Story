@@ -13,7 +13,7 @@ begin vb.form frmpres
    scaleheight     =   3195
    scalewidth      =   4680
    showintaskbar   =   0   'false
-   startupposition =   1  'centerowner
+   startupposition =   2  'centerscreen
    begin vb.timer timer1 
       interval        =   3400
       left            =   1125
@@ -25,13 +25,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -60,10 +56,16 @@ attribute vb_exposed = false
 'pablo ignacio m�rquez
 
 option explicit
-
+dim puedo as boolean
 
 private sub form_keypress(keyascii as integer)
-if keyascii = 27 then finpres = true
+if keyascii = 27 then if puedo then finpres = true
+end sub
+
+private sub form_load()
+me.width = 800 * screen.twipsperpixelx
+me.height = 600 * screen.twipsperpixely
+puedo = false
 end sub
 
 private sub timer1_timer()
@@ -72,11 +74,12 @@ static ticks as long
 ticks = ticks + 1
 
 if ticks = 1 then
-    me.picture = loadpicture(app.path & "\graficos\argentum.jpg")
+    me.picture = loadpicture(app.path & "\graficos\alkonao2.jpg")
+    puedo = true
 'elseif ticks = 2 then
     'me.picture = loadpicture(app.path & "\graficos\datafull.jpg")
 elseif ticks = 2 then
-    me.picture = loadpicture(app.path & "\graficos\argentum.jpg")
+    me.picture = loadpicture(app.path & "\graficos\newfinal.jpg")
 else
  finpres = true
 end if

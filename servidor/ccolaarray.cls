@@ -11,7 +11,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -40,6 +40,8 @@ attribute vb_exposed = false
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
 option explicit
 
 private m_maxelem as long

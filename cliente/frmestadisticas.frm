@@ -1,19 +1,18 @@
 version 5.00
 begin vb.form frmestadisticas 
    backcolor       =   &h00c0c0c0&
-   borderstyle     =   3  'fixed dialog
+   borderstyle     =   1  'fixed single
    caption         =   "estadisticas"
-   clientheight    =   6210
+   clientheight    =   6315
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   6900
-   controlbox      =   0   'false
+   icon            =   "frmestadisticas.frx":0000
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   6210
+   scaleheight     =   6315
    scalewidth      =   6900
-   showintaskbar   =   0   'false
    startupposition =   1  'centerowner
    begin vb.commandbutton command1 
       cancel          =   -1  'true
@@ -28,13 +27,118 @@ begin vb.form frmestadisticas
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   255
+      height          =   375
       left            =   60
-      mouseicon       =   "frmestadisticas.frx":0000
+      mouseicon       =   "frmestadisticas.frx":000c
       mousepointer    =   99  'custom
       tabindex        =   6
       top             =   5880
       width           =   6810
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   5
+      left            =   240
+      tabindex        =   43
+      top             =   5580
+      width           =   2475
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   4
+      left            =   240
+      tabindex        =   42
+      top             =   5340
+      width           =   2475
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   3
+      left            =   240
+      tabindex        =   41
+      top             =   5100
+      width           =   2475
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   2
+      left            =   240
+      tabindex        =   40
+      top             =   4860
+      width           =   2475
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   1
+      left            =   240
+      tabindex        =   39
+      top             =   4620
+      width           =   2475
+   end
+   begin vb.label label6 
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas1"
+      height          =   195
+      index           =   0
+      left            =   240
+      tabindex        =   38
+      top             =   4380
+      width           =   2475
+   end
+   begin vb.shape shape4 
+      height          =   1815
+      left            =   120
+      top             =   4020
+      width           =   2715
+   end
+   begin vb.shape shape3 
+      height          =   2055
+      left            =   120
+      top             =   1920
+      width           =   2715
+   end
+   begin vb.shape shape1 
+      height          =   1755
+      left            =   120
+      top             =   120
+      width           =   2715
+   end
+   begin vb.shape shape2 
+      height          =   5715
+      left            =   2880
+      top             =   120
+      width           =   3855
+   end
+   begin vb.label label5 
+      alignment       =   2  'center
+      autosize        =   -1  'true
+      backstyle       =   0  'transparent
+      caption         =   "estadisticas"
+      beginproperty font 
+         name            =   "tahoma"
+         size            =   9
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      forecolor       =   &h00000000&
+      height          =   210
+      left            =   945
+      tabindex        =   37
+      top             =   4080
+      width           =   1080
    end
    begin vb.label skills 
       autosize        =   -1  'true
@@ -243,7 +347,7 @@ begin vb.form frmestadisticas
       index           =   7
       left            =   285
       tabindex        =   27
-      top             =   3975
+      top             =   3660
       width           =   900
    end
    begin vb.label label4 
@@ -264,7 +368,7 @@ begin vb.form frmestadisticas
       index           =   6
       left            =   285
       tabindex        =   26
-      top             =   3675
+      top             =   3420
       width           =   900
    end
    begin vb.label label4 
@@ -285,7 +389,7 @@ begin vb.form frmestadisticas
       index           =   5
       left            =   285
       tabindex        =   25
-      top             =   3375
+      top             =   3180
       width           =   900
    end
    begin vb.label label4 
@@ -306,7 +410,7 @@ begin vb.form frmestadisticas
       index           =   4
       left            =   285
       tabindex        =   24
-      top             =   3075
+      top             =   2940
       width           =   900
    end
    begin vb.label label4 
@@ -327,16 +431,8 @@ begin vb.form frmestadisticas
       index           =   3
       left            =   285
       tabindex        =   23
-      top             =   2775
+      top             =   2700
       width           =   900
-   end
-   begin vb.shape shape3 
-      backcolor       =   &h80000006&
-      bordercolor     =   &h00000000&
-      height          =   2430
-      left            =   105
-      top             =   1845
-      width           =   2715
    end
    begin vb.label label4 
       autosize        =   -1  'true
@@ -652,13 +748,6 @@ begin vb.form frmestadisticas
       top             =   720
       width           =   480
    end
-   begin vb.shape shape2 
-      bordercolor     =   &h00000000&
-      height          =   5610
-      left            =   2910
-      top             =   135
-      width           =   3675
-   end
    begin vb.label label2 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
@@ -804,13 +893,6 @@ begin vb.form frmestadisticas
       top             =   210
       width           =   885
    end
-   begin vb.shape shape1 
-      bordercolor     =   &h00000000&
-      height          =   1650
-      left            =   120
-      top             =   135
-      width           =   2700
-   end
 end
 attribute vb_name = "frmestadisticas"
 attribute vb_globalnamespace = false
@@ -820,10 +902,6 @@ attribute vb_exposed = false
 'argentum online 0.9.0.9
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -851,7 +929,6 @@ attribute vb_exposed = false
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
 
 private sub command1_click()
@@ -859,7 +936,7 @@ unload me
 end sub
 
 private sub form_deactivate()
-me.visible = false
+'me.visible = false
 end sub
 
 private sub form_load()
@@ -891,9 +968,21 @@ if userreputacion.promedio < 0 then
     label4(7).forecolor = vbred
     label4(7).caption = "status: criminal"
 else
-    label4(7).forecolor = vbwhite
+    label4(7).forecolor = vbblue
     label4(7).caption = "status: ciudadano"
 end if
 
+with userestadisticas
+    label6(0).caption = "criminales matados: " & .criminalesmatados
+    label6(1).caption = "ciudadanos matados: " & .ciudadanosmatados
+    label6(2).caption = "usuarios matados: " & .usuariosmatados
+    label6(3).caption = "npcs matados: " & .npcsmatados
+    label6(4).caption = "clase: " & .clase
+    label6(5).caption = "tiempo restante en carcel: " & .penacarcel
+end with
+
 end sub
 
+private sub form_queryunload(cancel as integer, unloadmode as integer)
+unload me
+end sub

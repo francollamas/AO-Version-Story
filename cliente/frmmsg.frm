@@ -1,12 +1,21 @@
 version 5.00
 begin vb.form frmmsg 
    borderstyle     =   1  'fixed single
-   caption         =   "gm messenger"
+   caption         =   "mensajes de gms"
    clientheight    =   3270
    clientleft      =   150
    clienttop       =   435
    clientwidth     =   2445
    controlbox      =   0   'false
+   beginproperty font 
+      name            =   "verdana"
+      size            =   12
+      charset         =   0
+      weight          =   700
+      underline       =   0   'false
+      italic          =   0   'false
+      strikethrough   =   0   'false
+   endproperty
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
@@ -14,7 +23,7 @@ begin vb.form frmmsg
    scalewidth      =   2445
    startupposition =   1  'centerowner
    begin vb.commandbutton command1 
-      caption         =   "ok"
+      caption         =   "cerrar"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -33,6 +42,15 @@ begin vb.form frmmsg
       width           =   1935
    end
    begin vb.listbox list1 
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   2010
       left            =   180
       tabindex        =   1
@@ -42,6 +60,15 @@ begin vb.form frmmsg
    begin vb.label label1 
       autosize        =   -1  'true
       caption         =   "usuarios"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   400
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   195
       left            =   840
       tabindex        =   0
@@ -67,13 +94,9 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'copyright (c) 2002 mat�as fernando peque�o
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or

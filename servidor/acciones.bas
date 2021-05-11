@@ -1,5 +1,5 @@
 attribute vb_name = "acciones"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@ attribute vb_name = "acciones"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
+
 option explicit
 
 
@@ -89,6 +91,33 @@ if inmapbounds(map, x, y) then
             
         end select
         
+    elseif mapdata(map, x, y).npcindex > 0 then
+        if npclist(mapdata(map, x, y).npcindex).comercia = 1 then
+              if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 3 then
+                  call senddata(toindex, userindex, 0, "||estas demasiado lejos del vendedor." & fonttype_info)
+                  exit sub
+              end if
+              
+        '[dng!]
+        if npclist(userlist(userindex).flags.targetnpc).name = "sr" then
+            if userlist(userindex).faccion.armadareal <> 1 then
+                call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & "muestra tu bandera antes de comprar ropa del ej�rcito" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+                exit sub
+            end if
+        end if
+        
+        if npclist(userlist(userindex).flags.targetnpc).name = "sc" then
+            if userlist(userindex).faccion.fuerzascaos <> 1 then
+                call senddata(topcarea, userindex, userlist(userindex).pos.map, "||" & vbred & "�" & "�vete de aqu�!" & "�" & str(npclist(userlist(userindex).flags.targetnpc).char.charindex))
+                exit sub
+            end if
+        end if
+        '[/dng!]
+        
+        'iniciamos la rutina pa' comerciar.
+        call iniciarcomercionpc(userindex)
+        end if
+        
     else
         userlist(userindex).flags.targetnpc = 0
         userlist(userindex).flags.targetnpctipo = 0
@@ -108,6 +137,16 @@ dim suerte as byte
 dim exito as byte
 dim obj as obj
 dim raise as integer
+
+dim pos as worldpos
+pos.map = map
+pos.x = x
+pos.y = y
+
+if distancia(pos, userlist(userindex).pos) > 2 then
+    call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+    exit sub
+end if
 
 
 if userlist(userindex).stats.userskills(supervivencia) > 1 and userlist(userindex).stats.userskills(supervivencia) < 6 then
@@ -143,6 +182,16 @@ end sub
 
 sub accionparaforo(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
 on error resume next
+
+dim pos as worldpos
+pos.map = map
+pos.x = x
+pos.y = y
+
+if distancia(pos, userlist(userindex).pos) > 2 then
+    call senddata(toindex, userindex, 0, "||estas demasiado lejos." & fonttype_info)
+    exit sub
+end if
 
 '�hay mensajes?
 dim f as string, tit as string, men as string, base as string, auxcad as string
@@ -248,4 +297,5 @@ if objdata(mapdata(map, x, y).objinfo.objindex).objtype = 8 then
 end if
 
 end sub
+
 

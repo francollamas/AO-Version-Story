@@ -1,5 +1,5 @@
 attribute vb_name = "declaraciones"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ attribute vb_name = "declaraciones"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
 
 public mixedkey as long
@@ -56,12 +57,22 @@ public const fxsangre = 14
 
 public const ifragatafantasmal = 87
 
+public enum iminerales
+    hierrocrudo = 192
+    platacruda = 193
+    orocrudo = 194
+    lingotedehierro = 386
+    lingotedeplata = 387
+    lingotedeoro = 388
+end enum
+
+
 public type tllamadagm
     usuario as string * 255
     desc as string * 255
 end type
 
-public const limitenewbie = 8
+public const limitenewbie = 12
 
 public type tcabecera 'cabecera de los con
     desc as string * 255
@@ -71,10 +82,14 @@ end type
 
 public micabecera as tcabecera
 
+'barrin 3/10/03
+public const tiempo_iniciomeditar = 3
+
 public const ningunescudo = 2
 public const ninguncasco = 2
 
 public const espadamatadragonesindex = 402
+public const laudmagico = 696
 
 public const maxmascotasentrenador = 7
 
@@ -84,8 +99,24 @@ public const fxcurar = 2
 public const fxmeditarchico = 4
 public const fxmeditarmediano = 5
 public const fxmeditargrande = 6
+public const fxmeditarxgrande = 16
 
-public const posinvalida = 3
+public const tiempo_carcel_piquete = 10
+
+'triggers
+public const trigger_nada = 0
+public const trigger_bajotecho = 1
+public const trigger_2 = 2
+public const trigger_posinvalida = 3 'los npcs no pueden pisar tiles con este trigger
+public const trigger_zonasegura = 4 'no se puede robar o pelear desde este trigger
+public const trigger_antipiquete = 5
+public const trigger_zonapelea = 6 'al pelear en este trigger no se caen las cosas y no cambia el estado de ciuda o crimi
+
+public enum etrigger6
+    trigger6_permite = 1
+    trigger6_prohibe = 2
+    trigger6_ausente = 3
+end enum
 
 public const bosque = "bosque"
 public const nieve = "nieve"
@@ -138,7 +169,7 @@ public const maxrep = 6000000
 public const maxoro = 90000000
 public const maxexp = 99999999
 
-public const maxatributos = 35
+public const maxatributos = 38
 public const minatributos = 6
 
 public const lingotehierro = 386
@@ -162,12 +193,16 @@ public const hierro_mina = 192
 public const martillo_herrero = 389
 public const serrucho_carpintero = 198
 public const objarboles = 4
+public const red_pesca = 543
+
 
 public const npctype_comun = 0
 public const npctype_revivir = 1
 public const npctype_guardias = 2
 public const npctype_entrenador = 3
 public const npctype_banquero = 4
+public const npctype_timbero = 7
+public const npctype_guardiascaos = 8
 
 
 
@@ -212,6 +247,12 @@ public const icabezamuerto = 500
 public const ioro = 12
 public const pescado = 139
 
+public enum peces_posibles
+    pescado1 = 139
+    pescado2 = 544
+    pescado3 = 545
+    pescado4 = 546
+end enum
 
 '%%%%%%%%%% constantes de indices %%%%%%%%%%%%%%%
 public const suerte = 1
@@ -250,6 +291,7 @@ public const constitucion = 5
 
 
 public const adicionalhpguerrero = 2 'hp adicionales cuando sube de nivel
+public const adicionalhpcazador = 1 'hp adicionales cuando sube de nivel
 public const adicionalstladron = 3
 
 public const adicionalstle�ador = 23
@@ -352,9 +394,21 @@ public const fonttype_talk = "~255~255~255~0~0"
 public const fonttype_fight = "~255~0~0~1~0"
 public const fonttype_warning = "~32~51~223~1~1"
 public const fonttype_info = "~65~190~156~0~0"
+public const fonttype_infobold = "~65~190~156~1~0"
+public const fonttype_ejecucion = "~130~130~130~1~0"
+public const fonttype_party = "~255~180~255~0~0"
 public const fonttype_veneno = "~0~255~0~0~0"
 public const fonttype_guild = "~255~255~255~1~0"
 
+
+'mejoramos los mensajes del servidor
+public const fonttype_server = "~0~185~0~0~0"
+public const fonttype_guildmsg = "~228~199~27~0~0"
+
+public const fonttype_consejo = "~130~130~255~1~0"
+public const fonttype_consejocaos = "~255~60~00~1~0"
+public const fonttype_consejovesa = "~0~200~255~1~0"
+public const fonttype_consejocaosvesa = "~255~50~0~1~0"
 'estadisticas
 public const stat_maxelv = 99
 public const stat_maxhp = 999
@@ -429,7 +483,9 @@ type thechizo
     
     invisibilidad as byte
     paraliza as byte
+    inmoviliza as byte
     removerparalisis as byte
+    removerestupidez as byte
     curaveneno as byte
     envenena as byte
     maldicion as byte
@@ -439,6 +495,9 @@ type thechizo
     ceguera as byte
     revivir as byte
     morph as byte
+    mimetiza as byte
+    remueveinvisibilidadparcial as byte
+    
     
     invoca as byte
     numnpc as integer
@@ -450,7 +509,14 @@ type thechizo
     minskill as integer
     manarequerido as integer
 
+    'barrin 29/9/03
+    starequerido as integer
+
     target as byte
+    
+    needstaff as integer
+    staffaffected as boolean
+    
 end type
 
 type levelskill
@@ -484,13 +550,18 @@ type inventario
     nroitems as integer
 end type
 
+type tpartydata
+    pindex as integer
+    remxp as double 'la exp. en el server se cuenta con doubles
+    targetuser as integer 'para las invitaciones
+end type
 
 type position
     x as integer
     y as integer
 end type
 
-type worldpos
+public type worldpos
     map as integer
     x as integer
     y as integer
@@ -594,7 +665,9 @@ public type objdata
     razaenana as byte
     mujer as byte
     hombre as byte
+    
     envenena as byte
+    paraliza as byte
     
     resistencia as long
     agarrable as byte
@@ -620,6 +693,15 @@ public type objdata
     
     real as integer
     caos as integer
+    
+    nosecae as integer
+    
+    staffpower as integer
+    staffdamagebonus as integer
+    defensamagicamax as integer
+    defensamagicamin as integer
+    refuerzo as byte
+    
     
 end type
 
@@ -704,6 +786,7 @@ end type
 
 'flags
 type userflags
+    estaempo as byte    '<-empollando (by yb)
     muerto as byte '�esta muerto?
     escondido as byte '�esta escondido?
     comerciando as boolean '�esta comerciando?
@@ -713,9 +796,8 @@ type userflags
     descuento as string
     hambre as byte
     sed as byte
-    puedeatacar as byte
     puedemoverse as byte
-    puedelanzarspell as byte
+    timerlanzarspell as long
     puedetrabajar as byte
     envenenado as byte
     paralizado as byte
@@ -762,6 +844,7 @@ type userflags
     
     statschanged as byte
     privilegios as byte
+    esrolesmaster as boolean
     
     valcode as integer
     
@@ -771,6 +854,29 @@ type userflags
     oldbody as integer
     oldhead as integer
     admininvisible as byte
+    
+    
+    '[barrin 30-11-03]
+    timeswalk as long
+    startwalk as long
+    countsh as long
+    trabajando as boolean
+    '[/barrin 30-11-03]
+    
+    '[cdt 17-02-04]
+    ultimomensaje as byte
+    '[/cdt]
+    
+    noactualizado as boolean
+    pertalcons as byte
+    pertalconscaos as byte
+    
+    silenciado as byte
+    
+    mimetizado as byte
+    
+    
+
     
 end type
 
@@ -787,6 +893,7 @@ type usercounters
     ceguera as integer
     estupidez as integer
     invisibilidad as integer
+    mimetismo as integer
     piquetec as long
     pena as long
     sendmapcounter as worldpos
@@ -795,6 +902,16 @@ type usercounters
     saliendo as boolean
     salir as integer
     '[/gonzalo]
+    
+    'barrin 3/10/03
+    tiniciomeditar as long
+    bpuedemeditar as boolean
+    'barrin
+    
+    timerlanzarspell as long
+    timerpuedeatacar as long
+    timerpuedetrabajar as long
+    timerusar as long
 end type
 
 type tfacciones
@@ -808,6 +925,7 @@ type tfacciones
     recibioexpinicialcaos as byte
     recibioarmadurareal as byte
     recibioarmaduracaos as byte
+    reenlistadas as byte
 end type
 
 type tguild
@@ -834,25 +952,29 @@ type user
     password as string
     
     char as char 'define la apariencia
+    charmimetizado as char
     origchar as char
     
     desc as string ' descripcion
+    descrm as string
+    
     clase as string
     raza as string
     genero as string
     email as string
     hogar as string
-    
-    
+        
     invent as inventario
     
     pos as worldpos
     
-    
-    connid as integer 'id
+    connidvalida as boolean
+    connid as long 'id
     rdbuffer as string 'buffer roto
     
     commandsbuffer as new ccolaarray
+    colasalida as new collection
+    sockpuedoenviar as boolean
     
     '[kevin]
     bancoinvent as bancoinventario
@@ -888,9 +1010,17 @@ type user
     '[/alejo]
     
     anticuelgue as long
+
+    'barrin 2/10/03
+    apadrinados as integer
+    '[ybarra]
+    
+    empocont as byte
+    
+    partyindex as integer   'index a la party q es miembro
+    partysolicitud as integer   'index a la party q solicito
+    
 end type
-
-
 
 
 '*********************************************************
@@ -930,6 +1060,13 @@ type npcflags
     faccion as byte
     lanzaspells as byte
     
+    '[kevin]
+    'dequest as byte
+    
+    'expdada as long
+    expcount as long '[alejo]
+    '[/kevin]
+    
     oldmovement as byte
     oldhostil as byte
     
@@ -950,6 +1087,7 @@ type npcflags
     
     envenenado as byte
     paralizado as byte
+    inmovilizado as byte
     invisible as byte
     maldicion as byte
     bendicion as byte
@@ -990,36 +1128,37 @@ type npc
     name as string
     char as char 'define como se vera
     desc as string
-    
+    descextra as string
+
     npctype as integer
     numero as integer
-    
+
     level as integer
-    
+
     invrespawn as byte
-    
+
     comercia as integer
     target as long
     targetnpc as long
     tipoitems as integer
-    
+
     veneno as byte
-    
+
     pos as worldpos 'posicion
     orig as worldpos
     skilldomar as integer
-    
+
     movement as integer
     attackable as byte
     hostile as byte
     poderataque as long
     poderevasion as long
-    
+
     inflacion as long
-    
+
     giveexp as long
     givegld as long
-    
+
     stats as npcstats
     flags as npcflags
     contadores as npccounters
@@ -1070,6 +1209,8 @@ type mapinfo
     startpos as worldpos
     mapversion as integer
     pk as boolean
+    magiasinefecto as byte
+    noencriptarmp as byte
     
     terreno as string
     zona as string
@@ -1130,7 +1271,25 @@ public minutos as string
 public haciendobk as boolean
 public oscuridad as integer
 public nochedia as integer
-public puedecrearpersonajes as byte
+public puedecrearpersonajes as integer
+public camaralenta as integer
+public serversologms as integer
+public anticheatsonline as integer
+public anticheatsesperado as string
+public modoanticheats as integer
+
+
+public md5clientesactivado as byte
+
+
+public usandosistemapadrinos as byte
+public cantidadporpadrino as integer
+
+
+public enpausa as boolean
+public entesting as boolean
+public encriptarprotocoloscriticos as boolean
+
 
 '*****************arrays publicos*************************
 public userlist() as user 'usuarios
@@ -1149,6 +1308,7 @@ public armadurasherrero() as integer
 public objcarpintero() as integer
 public md5s() as string
 public banips as new collection
+public parties() as clsparty
 '*********************************************************
 
 public nix as worldpos
@@ -1161,6 +1321,7 @@ public libertad as worldpos
 
 
 public ayuda as new ccola
+public consultapopular as new consultaspopulares
 
 public declare function gettickcount lib "kernel32" () as long
 
@@ -1168,7 +1329,7 @@ public declare function gettickcount lib "kernel32" () as long
 public declare function writeprivateprofilestring lib "kernel32" alias "writeprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpstring as string, byval lpfilename as string) as long
 public declare function getprivateprofilestring lib "kernel32" alias "getprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpdefault as string, byval lpreturnedstring as string, byval nsize as long, byval lpfilename as string) as long
 public declare function sndplaysound lib "winmm.dll" alias "sndplaysounda" (byval lpszsoundname as string, byval uflags as long) as long
-public declare function gencrc lib "crc" alias "gencrc" (byval crckey as long, byval crcstring as string) as long
+
 
 
 sub playwaveapi(file as string)

@@ -1,5 +1,5 @@
 attribute vb_name = "admin"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ attribute vb_name = "admin"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
+
 option explicit
 
 public type tmotd
@@ -39,12 +40,21 @@ end type
 public maxlines as integer
 public motd() as tmotd
 
+public type tapuestas
+    ganancias as long
+    perdidas as long
+    jugadas as long
+end type
+public apuestas as tapuestas
+
 public npcs as long
 public debugsocket as boolean
 
 public horas as long
 public dias as long
 public minsrunning as long
+
+public reiniciarserver as long
 
 public tinicioserver as long
 public estadisticasweb as new clsestadisticasipc
@@ -60,7 +70,6 @@ public intervaloparalizado as integer
 public intervaloinvisible as integer
 public intervalofrio as integer
 public intervalowavfx as integer
-public intervalomover as integer
 public intervalolanzahechizo as integer
 public intervalonpcpuedeatacar as integer
 public intervalonpcai as integer
@@ -70,6 +79,10 @@ public intervalouserpuedecastear as long
 public intervalouserpuedetrabajar as long
 public intervaloparaconexion as long
 public intervalocerrarconexion as long '[gonzalo]
+public intervalouserpuedeusar as long
+public intervaloflechascazadores as long
+public intervaloautoreiniciar as long   'segundos
+
 public minutosws as long
 public puerto as integer
 
@@ -77,14 +90,47 @@ public maxpasos as long
 
 public bootdelbackup as byte
 public lloviendo as boolean
+public denoche as boolean
 
 public iplist as new collection
 public clientscommandsqueue as byte
+
+public type tcpesstats
+    bytesenviados as double
+    bytesrecibidos as double
+    bytesenviadosxseg as long
+    bytesrecibidosxseg as long
+    bytesenviadosxsegmax as long
+    bytesrecibidosxsegmax as long
+    bytesenviadosxsegcuando as date
+    bytesrecibidosxsegcuando as date
+end type
+
+public tcpesstats as tcpesstats
 
 'public resetthread as new clsthreading
 
 function versionok(byval ver as string) as boolean
 versionok = (ver = ultimaversion)
+end function
+
+public function versionesactuales(byval v1 as integer, byval v2 as integer, byval v3 as integer, byval v4 as integer, byval v5 as integer, byval v6 as integer, byval v7 as integer) as boolean
+dim rv as boolean
+dim i as integer
+dim f as string
+f = app.path & "\autoupdater\versiones.ini"
+
+rv = val(getvar(f, "actuales", "graficos")) = v1
+rv = rv and val(getvar(f, "actuales", "wavs")) = v2
+rv = rv and val(getvar(f, "actuales", "midis")) = v3
+rv = rv and val(getvar(f, "actuales", "init")) = v4
+rv = rv and val(getvar(f, "actuales", "mapas")) = v5
+rv = rv and val(getvar(f, "actuales", "aoexe")) = v6
+rv = rv and val(getvar(f, "actuales", "extras")) = v7
+versionesactuales = rv
+
+
+
 end function
 
 
@@ -114,9 +160,10 @@ for i = 1 to lastnpc
                 call respawnnpc(minpc)
         end if
         
-        if npclist(i).contadores.tiempoexistencia > 0 then
-                call muerenpc(i, 0)
-        end if
+        'tildada por sugerencia de yind
+        'if npclist(i).contadores.tiempoexistencia > 0 then
+        '        call muerenpc(i, 0)
+        'end if
    end if
    
 next i
@@ -130,7 +177,7 @@ on error resume next
 dim loopx as integer
 dim porc as long
 
-call senddata(toall, 0, 0, "||%%%%por favor espere, iniciando worldsave%%%%" & fonttype_info)
+call senddata(toall, 0, 0, "||servidor> iniciando worldsave" & fonttype_server)
 
 call respawnorigposnpcs 'respawn de los guardias en las pos originales
 
@@ -166,8 +213,7 @@ for loopx = 1 to lastnpc
     end if
 next
 
-call senddata(toall, 0, 0, "||%%%%worldsave done%%%%" & fonttype_info)
-
+call senddata(toall, 0, 0, "||servidor> worldsave ha conclu�do" & fonttype_server)
 
 end sub
 
@@ -232,18 +278,190 @@ end function
 public function unban(byval name as string) as boolean
 'unban the character
 call writevar(app.path & "\charfile\" & name & ".chr", "flags", "ban", "0")
+
 'remove it from the banned people database
 call writevar(app.path & "\logs\" & "bandetail.dat", name, "bannedby", "nobody")
-call writevar(app.path & "\logs\" & "bandetail.dat", name, "reason", "noone")
+call writevar(app.path & "\logs\" & "bandetail.dat", name, "reason", "no reason")
 end function
 
 public function md5ok(byval md5formateado as string) as boolean
-    dim i as integer
+dim i as integer
+
+if md5clientesactivado = 1 then
     for i = 0 to ubound(md5s)
         if (md5formateado = md5s(i)) then
             md5ok = true
             exit function
         end if
     next i
+    md5ok = false
+else
     md5ok = true
+end if
+
 end function
+
+public sub md5scarga()
+dim loopc as integer
+
+md5clientesactivado = val(getvar(inipath & "server.ini", "md5hush", "activado"))
+
+if md5clientesactivado = 1 then
+    redim md5s(val(getvar(inipath & "server.ini", "md5hush", "md5aceptados")))
+    for loopc = 0 to ubound(md5s)
+        md5s(loopc) = getvar(inipath & "server.ini", "md5hush", "md5aceptado" & (loopc + 1))
+        md5s(loopc) = txtoffset(hexmd52asc(md5s(loopc)), 53)
+    next loopc
+end if
+
+end sub
+
+public sub banipagrega(byval ip as string)
+banips.add ip
+
+call banipguardar
+end sub
+
+public function banipbuscar(byval ip as string) as long
+dim dale as boolean
+dim loopc as long
+
+dale = true
+loopc = 1
+do while loopc <= banips.count and dale
+    dale = (banips.item(loopc) <> ip)
+    loopc = loopc + 1
+loop
+
+if dale then
+    banipbuscar = 0
+else
+    banipbuscar = loopc - 1
+end if
+end function
+
+public function banipquita(byval ip as string) as boolean
+
+on error resume next
+
+dim n as long
+
+n = banipbuscar(ip)
+if n > 0 then
+    banips.remove n
+    banipguardar
+    banipquita = true
+else
+    banipquita = false
+end if
+
+end function
+
+public sub banipguardar()
+dim archivobanip as string
+dim archn as long
+dim loopc as long
+
+archivobanip = app.path & "\dat\banips.dat"
+
+archn = freefile()
+open archivobanip for output as #archn
+
+for loopc = 1 to banips.count
+    print #archn, banips.item(loopc)
+next loopc
+
+close #archn
+
+end sub
+
+public sub banipcargar()
+dim archn as long
+dim tmp as string
+dim archivobanip as string
+
+archivobanip = app.path & "\dat\banips.dat"
+
+do while banips.count > 0
+    banips.remove 1
+loop
+
+archn = freefile()
+open archivobanip for input as #archn
+
+do while not eof(archn)
+    line input #archn, tmp
+    banips.add tmp
+loop
+
+close #archn
+
+end sub
+
+public sub actualizaestadisticasweb()
+
+static andando as boolean
+static contador as long
+dim tmp as boolean
+
+contador = contador + 1
+
+if contador >= 10 then
+    contador = 0
+    tmp = estadisticasweb.estadisticasandando()
+    
+    if andando = false and tmp = true then
+        call inicializaestadisticas
+    end if
+    
+    andando = tmp
+end if
+
+end sub
+
+public sub actualizastatses()
+
+static tult as single
+dim transcurrido as single
+
+transcurrido = timer - tult
+
+if transcurrido >= 5 then
+    tult = timer
+    with tcpesstats
+        .bytesenviadosxseg = clng(.bytesenviados / transcurrido)
+        .bytesrecibidosxseg = clng(.bytesrecibidos / transcurrido)
+        .bytesenviados = 0
+        .bytesrecibidos = 0
+        
+        if .bytesenviadosxseg > .bytesenviadosxsegmax then
+            .bytesenviadosxsegmax = .bytesenviadosxseg
+            .bytesenviadosxsegcuando = cdate(now)
+        end if
+        
+        if .bytesrecibidosxseg > .bytesrecibidosxsegmax then
+            .bytesrecibidosxsegmax = .bytesrecibidosxseg
+            .bytesrecibidosxsegcuando = cdate(now)
+        end if
+        
+        if frmestadisticas.visible then
+            call frmestadisticas.actualizastats
+        end if
+    end with
+end if
+
+end sub
+
+
+public function userdarprivilegiolevel(byval name as string) as long
+if esdios(name) then
+    userdarprivilegiolevel = 3
+elseif essemidios(name) then
+    userdarprivilegiolevel = 2
+elseif esconsejero(name) then
+    userdarprivilegiolevel = 1
+else
+    userdarprivilegiolevel = 0
+end if
+end function
+

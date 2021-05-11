@@ -1,10 +1,7 @@
 attribute vb_name = "mod_declaraciones"
-'argentum online 0.9.0.9
+'argentum online 0.11.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
-'copyright (c) 2002 otto perez
-'copyright (c) 2002 aaron perkins
-'
 'this program is free software; you can redistribute it and/or modify
 'it under the terms of the gnu general public license as published by
 'the free software foundation; either version 2 of the license, or
@@ -32,10 +29,18 @@ attribute vb_name = "mod_declaraciones"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-
 option explicit
 
 public rawserverslist as string
+
+public type tcolor
+    r as byte
+    g as byte
+    b as byte
+end type
+
+public colorespj(0 to 50) as tcolor
+
 
 public type tserverinfo
     ip as string
@@ -56,6 +61,7 @@ public site as string
 public userciego as boolean
 public userestupido as boolean
 
+public nores as boolean 'no cambiar la resolucion
 
 public const bcabeza = 1
 public const bpiernaizquierda = 2
@@ -78,6 +84,14 @@ public numescudosanims as integer
 public armasherrero(0 to 100) as integer
 public armadurasherrero(0 to 100) as integer
 public objcarpintero(0 to 100) as integer
+
+public versiones(1 to 7) as integer
+
+public usamacro as boolean
+public cntd as byte
+public secuenciamacrohechizos as byte
+
+
 
 '[kevin]
 public const max_bancoinventory_slots = 40
@@ -185,6 +199,15 @@ type treputacion 'fama del usuario
     promedio as long
 end type
 
+type testadisticasusu
+    ciudadanosmatados as long
+    criminalesmatados as long
+    usuariosmatados as long
+    npcsmatados as long
+    clase as string
+    penacarcel as long
+end type
+
 public listarazas() as string
 public listaclases() as string
 
@@ -218,6 +241,7 @@ public userestado as byte '0 = vivo & 1 = muerto
 public userpasarnivel as long
 public userexp as long
 public userreputacion as treputacion
+public userestadisticas as testadisticasusu
 public userdescansar as boolean
 public tipf as string
 public primeravez as boolean
@@ -227,6 +251,12 @@ public iscombate as boolean
 public userparalizado as boolean
 public usernavegando as boolean
 public userhogar as string
+
+'barrin 29/9/03
+public padrinoname as string
+public padrinopassword as string
+public usandosistemapadrinos as byte
+public puedecrearpjs as integer
 
 '<-------------------------nuevo-------------------------->
 public comerciando as boolean
@@ -256,6 +286,9 @@ public oscuridad as integer
 public logged as boolean
 public nopuedeusar as boolean
 
+'barrin 30/9/03
+public userpuederefrescar as boolean
+
 public usingskill as integer
 
 
@@ -273,6 +306,7 @@ public estadologin as e_modo
 'server stuff
 public requestpostimer as integer 'used in main loop
 public stxtbuffer as string 'holds temp raw data from server
+public stxtbuffercmsg as string 'holds temp raw data from server
 public sendnewchar as boolean 'used during login
 public connected as boolean 'true when connected to server
 public downloadingmap as boolean 'currently downloading a map from server
@@ -317,4 +351,5 @@ public type tindicefx
     offsety as integer
 end type
 
+const estosolucionaunproblemaconelmd5 = 69
 

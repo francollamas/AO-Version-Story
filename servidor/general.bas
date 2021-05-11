@@ -1,5 +1,5 @@
 attribute vb_name = "general"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -29,48 +29,89 @@ attribute vb_name = "general"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-global anpc as long
-global anpc_host as long
+
+global leernpcs as new clsleerinis
+global leernpcshostiles as new clsleerinis
 
 option explicit
 
-sub darcuerpodesnudo(byval userindex as integer)
+sub darcuerpodesnudo(byval userindex as integer, optional byval mimetizado as boolean = false)
 
 select case ucase$(userlist(userindex).raza)
     case "humano"
       select case ucase$(userlist(userindex).genero)
                 case "hombre"
-                     userlist(userindex).char.body = 21
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 21
+                    else
+                        userlist(userindex).char.body = 21
+                    end if
                 case "mujer"
-                     userlist(userindex).char.body = 39
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 39
+                    else
+                        userlist(userindex).char.body = 39
+                    end if
       end select
     case "elfo oscuro"
       select case ucase$(userlist(userindex).genero)
                 case "hombre"
-                     userlist(userindex).char.body = 32
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 32
+                    else
+                        userlist(userindex).char.body = 32
+                    end if
                 case "mujer"
-                     userlist(userindex).char.body = 40
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 40
+                    else
+                        userlist(userindex).char.body = 40
+                    end if
       end select
     case "enano"
       select case ucase$(userlist(userindex).genero)
                 case "hombre"
-                     userlist(userindex).char.body = 53
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 53
+                    else
+                        userlist(userindex).char.body = 53
+                    end if
                 case "mujer"
-                     userlist(userindex).char.body = 60
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 60
+                    else
+                        userlist(userindex).char.body = 60
+                    end if
       end select
     case "gnomo"
       select case ucase$(userlist(userindex).genero)
                 case "hombre"
-                     userlist(userindex).char.body = 53
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 53
+                    else
+                        userlist(userindex).char.body = 53
+                    end if
                 case "mujer"
-                     userlist(userindex).char.body = 60
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 60
+                    else
+                        userlist(userindex).char.body = 60
+                    end if
       end select
     case else
       select case ucase$(userlist(userindex).genero)
                 case "hombre"
-                     userlist(userindex).char.body = 21
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 21
+                    else
+                        userlist(userindex).char.body = 21
+                    end if
                 case "mujer"
-                     userlist(userindex).char.body = 39
+                    if mimetizado then
+                        userlist(userindex).charmimetizado.body = 39
+                    else
+                        userlist(userindex).char.body = 39
+                    end if
       end select
     
 end select
@@ -138,7 +179,7 @@ call senddata(toindex, userindex, 0, sd)
 end sub
 
 sub configlisteningsocket(byref obj as object, byval port as integer)
-#if not (usarapi = 1) then
+#if usarquesocket = 0 then
 
 obj.addressfamily = af_inet
 obj.protocol = ipproto_ip
@@ -163,6 +204,7 @@ chdir app.path
 chdrive app.path
 
 call loadmotd
+call banipcargar
 
 prision.map = 66
 libertad.map = 66
@@ -180,6 +222,8 @@ minutos = format(now, "short time")
 
 redim npclist(1 to maxnpcs) as npc 'npcs
 redim charlist(1 to maxchars) as integer
+redim parties(1 to max_parties) as clsparty
+
 
 
 inipath = app.path & "\"
@@ -306,7 +350,7 @@ frmcargando.show
 
 
 
-call playwaveapi(app.path & "\wav\harp3.wav")
+'call playwaveapi(app.path & "\wav\harp3.wav")
 
 frmmain.caption = frmmain.caption & " v." & app.major & "." & app.minor & "." & app.revision
 endl = chr(13) & chr(10)
@@ -331,7 +375,9 @@ call cargarforbidenwords
 '�?�?�?�?�?�?�?� cargamos datos desde archivos �??�?�?�?�?�?�?�
 frmcargando.label1(2).caption = "cargando server.ini"
 
+maxusers = 0
 call loadsini
+call cargaapuestas
 
 '*************************************************
 call carganpcsdat
@@ -339,7 +385,7 @@ call carganpcsdat
 
 frmcargando.label1(2).caption = "cargando obj.dat"
 'call loadobjdata
-call loadobjdata_nuevo
+call loadobjdata
     
 frmcargando.label1(2).caption = "cargando hechizos.dat"
 call cargarhechizos
@@ -352,13 +398,16 @@ call loadobjcarpintero
 if bootdelbackup then
     
     frmcargando.label1(2).caption = "cargando backup"
-    call cargarbackup
+    call cargarbackup_nuevo2
 else
     frmcargando.label1(2).caption = "cargando mapas"
     call loadmapdata
     'call loadmapdata_nuevo
 end if
 
+
+'comentado porque hay worldsave en ese mapa!
+'call crearclanpretoriano(mapa_pretoriano, alcoba2_x, alcoba2_y)
 '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 dim loopc as integer
@@ -366,22 +415,39 @@ dim loopc as integer
 'resetea las conexiones de los usuarios
 for loopc = 1 to maxusers
     userlist(loopc).connid = -1
+    userlist(loopc).connidvalida = false
 next loopc
 
-frmmain.autosave.enabled = true
+'�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
-
-
+with frmmain
+    .autosave.enabled = true
+    .tlluvia.enabled = true
+    .tpiquetec.enabled = true
+    .timer1.enabled = true
+    if clientscommandsqueue <> 0 then
+        .cmdexec.enabled = true
+    else
+        .cmdexec.enabled = false
+    end if
+    .gametimer.enabled = true
+    .tlluviaevent.enabled = true
+    .fx.enabled = true
+    .auditoria.enabled = true
+    .killlog.enabled = true
+    .timer_ai.enabled = true
+    .npcataca.enabled = true
+end with
 
 '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 'configuracion de los sockets
 
-#if usarapi then
+#if usarquesocket = 1 then
 
-call iniciawsapi
+call iniciawsapi(frmmain.hwnd)
 socklisten = listenforconnect(puerto, hwndmsg, "")
 
-#else
+#elseif usarquesocket = 0 then
 
 frmcargando.label1(2).caption = "configurando sockets"
 
@@ -392,9 +458,18 @@ frmmain.socket2(0).binary = false
 frmmain.socket2(0).blocking = false
 frmmain.socket2(0).buffersize = 2048
 
-
-
 call configlisteningsocket(frmmain.socket1, puerto)
+
+#elseif usarquesocket = 2 then
+
+frmmain.serv.iniciar puerto
+
+#elseif usarquesocket = 3 then
+
+frmmain.tcpserv.encolar true
+frmmain.tcpserv.iniciartabla 1009
+frmmain.tcpserv.setqueuelim 51200
+frmmain.tcpserv.iniciar puerto
 
 #end if
 
@@ -421,8 +496,10 @@ else
     call frmmain.initmain(0)
 end if
 
-tinicioserver = gettickcount()
+tinicioserver = gettickcount() and &h7fffffff
 call inicializaestadisticas
+
+randomize timer
 
 'resetthread.createnewthread addressof threadresetactions, tpnormal
 
@@ -433,7 +510,7 @@ end sub
 
 
 
-function fileexist(file as string, filetype as vbfileattribute) as boolean
+function fileexist(file as string, optional filetype as vbfileattribute = vbnormal) as boolean
 
 on error resume next
 '*****************************************************************
@@ -541,6 +618,22 @@ errhandler:
 end sub
 
 
+public sub logindex(byval index as integer, byval desc as string)
+on error goto errhandler
+
+dim nfile as integer
+nfile = freefile ' obtenemos un canal
+open app.path & "\logs\" & index & ".log" for append shared as #nfile
+print #nfile, date & " " & time & " " & desc
+close #nfile
+
+exit sub
+
+errhandler:
+
+end sub
+
+
 public sub logerror(desc as string)
 on error goto errhandler
 
@@ -587,6 +680,20 @@ errhandler:
 
 end sub
 
+
+
+public sub logdesarrollo(byval str as string)
+
+dim nfile as integer
+nfile = freefile ' obtenemos un canal
+open app.path & "\logs\desarrollo.log" for append shared as #nfile
+print #nfile, date & " " & time & " " & str
+close #nfile
+
+end sub
+
+
+
 public sub loggm(nombre as string, texto as string, consejero as boolean)
 on error goto errhandler
 
@@ -607,24 +714,23 @@ errhandler:
 end sub
 
 public sub savedaystats()
-on error goto errhandler
-
-dim nfile as integer
-nfile = freefile ' obtenemos un canal
-open app.path & "\logs\" & replace(date, "/", "-") & ".log" for append shared as #nfile
-
-print #nfile, "<stats>"
-print #nfile, "<ao>"
-print #nfile, "<dia>" & date & "</dia>"
-print #nfile, "<hora>" & time & "</hora>"
-print #nfile, "<segundos_total>" & daystats.segundos & "</segundos_total>"
-print #nfile, "<max_user>" & daystats.maxusuarios & "</max_user>"
-print #nfile, "</ao>"
-print #nfile, "</stats>"
-
-
-close #nfile
-
+''on error goto errhandler
+''
+''dim nfile as integer
+''nfile = freefile ' obtenemos un canal
+''open app.path & "\logs\" & replace(date, "/", "-") & ".log" for append shared as #nfile
+''
+''print #nfile, "<stats>"
+''print #nfile, "<ao>"
+''print #nfile, "<dia>" & date & "</dia>"
+''print #nfile, "<hora>" & time & "</hora>"
+''print #nfile, "<segundos_total>" & daystats.segundos & "</segundos_total>"
+''print #nfile, "<max_user>" & daystats.maxusuarios & "</max_user>"
+''print #nfile, "</ao>"
+''print #nfile, "</stats>"
+''
+''
+''close #nfile
 exit sub
 
 errhandler:
@@ -681,6 +787,22 @@ exit sub
 errhandler:
 
 end sub
+
+public sub logcheating(texto as string)
+on error goto errhandler
+
+dim nfile as integer
+nfile = freefile ' obtenemos un canal
+open app.path & "\logs\ch.log" for append shared as #nfile
+print #nfile, date & " " & time & " " & texto
+close #nfile
+
+exit sub
+
+errhandler:
+
+end sub
+
 
 public sub logcriticalhackattemp(texto as string)
 on error goto errhandler
@@ -743,16 +865,36 @@ if frmmain.visible then frmmain.txstatus.caption = "reiniciando."
 
 dim loopc as integer
   
-frmmain.socket1.cleanup
-frmmain.socket1.startup
-  
-frmmain.socket2(0).cleanup
-frmmain.socket2(0).startup
+#if usarquesocket = 0 then
+
+    frmmain.socket1.cleanup
+    frmmain.socket1.startup
+      
+    frmmain.socket2(0).cleanup
+    frmmain.socket2(0).startup
+
+#elseif usarquesocket = 1 then
+
+    'cierra el socket de escucha
+    if socklisten >= 0 then call apiclosesocket(socklisten)
+    
+    'inicia el socket de escucha
+    socklisten = listenforconnect(puerto, hwndmsg, "")
+
+#elseif usarquesocket = 2 then
+
+#end if
 
 for loopc = 1 to maxusers
     call closesocket(loopc)
 next
-  
+
+redim userlist(1 to maxusers)
+
+for loopc = 1 to maxusers
+    userlist(loopc).connid = -1
+    userlist(loopc).connidvalida = false
+next loopc
 
 lastuser = 0
 numusers = 0
@@ -767,7 +909,7 @@ call loadmapdata
 
 call cargarhechizos
 
-#if not (usarapi = 1) then
+#if usarquesocket = 0 then
 
 '*****************setup socket
 frmmain.socket1.addressfamily = af_inet
@@ -786,6 +928,10 @@ frmmain.socket2(0).buffersize = 2048
 'escucha
 frmmain.socket1.localport = val(puerto)
 frmmain.socket1.listen
+
+#elseif usarquesocket = 1 then
+
+#elseif usarquesocket = 2 then
 
 #end if
 
@@ -831,7 +977,7 @@ if userlist(userindex).flags.userlogged then
                 dim modifi as long
                 modifi = porcentaje(userlist(userindex).stats.maxsta, 3)
                 call quitarsta(userindex, modifi)
-                call senddata(toindex, userindex, 0, "||��has perdido stamina, busca pronto refugio de la lluvia!!." & fonttype_info)
+'                call senddata(toindex, userindex, 0, "||��has perdido stamina, busca pronto refugio de la lluvia!!." & fonttype_info)
                 call senduserstatsbox(userindex)
     end if
 end if
@@ -874,7 +1020,7 @@ else
   else
     modifi = porcentaje(userlist(userindex).stats.maxsta, 5)
     call quitarsta(userindex, modifi)
-    call senddata(toindex, userindex, 0, "||��has perdido stamina, si no te abrigas rapido perderas toda!!." & fonttype_info)
+    'call senddata(toindex, userindex, 0, "||��has perdido stamina, si no te abrigas rapido perderas toda!!." & fonttype_info)
   end if
   
   userlist(userindex).counters.frio = 0
@@ -883,17 +1029,56 @@ end if
 
 end sub
 
+public sub efectomimetismo(byval userindex as integer)
+
+if userlist(userindex).counters.mimetismo < intervaloinvisible then
+    userlist(userindex).counters.mimetismo = userlist(userindex).counters.mimetismo + 1
+else
+    'restore old char
+    call senddata(toindex, userindex, 0, "||recuperas tu apariencia normal." & fonttype_info)
+    
+    userlist(userindex).char.body = userlist(userindex).charmimetizado.body
+    userlist(userindex).char.head = userlist(userindex).charmimetizado.head
+    userlist(userindex).char.cascoanim = userlist(userindex).charmimetizado.cascoanim
+    userlist(userindex).char.shieldanim = userlist(userindex).charmimetizado.shieldanim
+    userlist(userindex).char.weaponanim = userlist(userindex).charmimetizado.weaponanim
+        
+    
+    userlist(userindex).counters.mimetismo = 0
+    userlist(userindex).flags.mimetizado = 0
+    call changeuserchar(tomap, userindex, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+end if
+            
+end sub
+
+
 
 public sub efectoinvisibilidad(byval userindex as integer)
 
 if userlist(userindex).counters.invisibilidad < intervaloinvisible then
+  
+  'cazador con armadura de cazador oculto no se hace visible
+  'mersada de inmediata direccion pero no me importa pq esta
+  'version ya fue :d
+  if ucase$(userlist(userindex).clase) = "cazador" and userlist(userindex).flags.oculto > 0 and userlist(userindex).stats.userskills(ocultarse) > 90 then
+    if userlist(userindex).invent.armoureqpobjindex = 648 or userlist(userindex).invent.armoureqpobjindex = 360 then
+        exit sub
+    end if
+  end if
+  
   userlist(userindex).counters.invisibilidad = userlist(userindex).counters.invisibilidad + 1
 else
   call senddata(toindex, userindex, 0, "||has vuelto a ser visible." & fonttype_info)
   userlist(userindex).counters.invisibilidad = 0
   userlist(userindex).flags.invisible = 0
   userlist(userindex).flags.oculto = 0
-  call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+'   no ecripto los noverx,0
+'  if encriptarprotocoloscriticos then
+'    call sendcrypteddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+'  else
+    call senddata(tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+'  end if
+    
 end if
             
 end sub
@@ -905,6 +1090,7 @@ if npclist(npcindex).contadores.paralisis > 0 then
     npclist(npcindex).contadores.paralisis = npclist(npcindex).contadores.paralisis - 1
 else
     npclist(npcindex).flags.paralizado = 0
+    npclist(npcindex).flags.inmovilizado = 0
 end if
 
 end sub
@@ -917,11 +1103,12 @@ else
     if userlist(userindex).flags.ceguera = 1 then
         userlist(userindex).flags.ceguera = 0
         call senddata(toindex, userindex, 0, "nsegue")
-    else
+    end if
+    if userlist(userindex).flags.estupidez = 1 then
         userlist(userindex).flags.estupidez = 0
         call senddata(toindex, userindex, 0, "nestup")
     end if
-    
+
 end if
 
 
@@ -955,7 +1142,7 @@ if userlist(userindex).stats.minsta < userlist(userindex).stats.maxsta then
        massta = cint(randomnumber(1, porcentaje(userlist(userindex).stats.maxsta, 5)))
        userlist(userindex).stats.minsta = userlist(userindex).stats.minsta + massta
        if userlist(userindex).stats.minsta > userlist(userindex).stats.maxsta then userlist(userindex).stats.minsta = userlist(userindex).stats.maxsta
-           call senddata(toindex, userindex, 0, "||te sentis menos cansado." & fonttype_info)
+'           call senddata(toindex, userindex, 0, "||te sentis menos cansado." & fonttype_info)
            enviarstats = true
        end if
 end if
@@ -1058,21 +1245,29 @@ end if
 end sub
 
 public sub carganpcsdat()
+'dim npcfile as string
+'
+'npcfile = datpath & "npcs.dat"
+'anpc = inicarga(npcfile)
+'call iniconf(anpc, 0, "", 0)
+'
+'npcfile = datpath & "npcs-hostiles.dat"
+'anpc_host = inicarga(npcfile)
+'call iniconf(anpc_host, 0, "", 0)
+
 dim npcfile as string
 
 npcfile = datpath & "npcs.dat"
-anpc = inicarga(npcfile)
-call iniconf(anpc, 0, "", 0)
+leernpcs.abrir npcfile
 
 npcfile = datpath & "npcs-hostiles.dat"
-anpc_host = inicarga(npcfile)
-call iniconf(anpc_host, 0, "", 0)
+leernpcshostiles.abrir npcfile
 
 end sub
 
 public sub descarganpcsdat()
-if anpc <> 0 then call inidescarga(anpc)
-if anpc_host <> 0 then call inidescarga(anpc_host)
+'if anpc <> 0 then call inidescarga(anpc)
+'if anpc_host <> 0 then call inidescarga(anpc_host)
 
 end sub
 
@@ -1089,24 +1284,95 @@ sub pasarsegundo()
                 call senddata(toindex, i, 0, "finok")
                 
                 call closesocket(i)
+                exit sub
 '                call closeuser(i)
 '                userlist(i).connid = -1: userlist(i).numeropaquetespormilisec = 0
 '                frmmain.socket2(i).disconnect
 '                frmmain.socket2(i).cleanup
 '                'unload frmmain.socket2(i)
 '                call resetuserslot(i)
-            else
-                call senddata(toindex, i, 0, "||en " & userlist(i).counters.salir & " segundos se cerrar� el juego..." & fonttype_info)
+'            else
+'                call senddata(toindex, i, 0, "||en " & userlist(i).counters.salir & " segundos se cerrar� el juego..." & fonttype_info)
+            end if
+        
+        'antiempollos
+        elseif userlist(i).flags.estaempo = 1 then
+             userlist(i).empocont = userlist(i).empocont + 1
+             if userlist(i).empocont = 30 then
+                 
+                 'if fileexist(charpath & userlist(z).name & ".chr", vbnormal) then
+                 'esto siempre existe! sino no estaria logueado ;p
+                 
+                 'tmpp = val(getvar(charpath & userlist(z).name & ".chr", "penas", "cant"))
+                 'call writevar(charpath & userlist(z).name & ".chr", "penas", "cant", tmpp + 1)
+                 'call writevar(charpath & userlist(z).name & ".chr", "penas", "p" & tmpp + 1, lcase$(userlist(z).name) & ": carcel " & 30 & "m, motivo: empollando" & " " & date & " " & time)
+
+                 'call encarcelar(z, 30, "el sistema anti empollo")
+                 call senddata(toindex, i, 0, "!! fuiste expulsado por permanecer muerto sobre un item")
+                 'call senddata(toadmins, z, 0, "|| " & userlist(z).name & " fue encarcelado por empollar" & fonttype_info)
+                 userlist(i).empocont = 0
+                 call closesocket(i)
+                 exit sub
+             elseif userlist(i).empocont = 15 then
+                 call senddata(toindex, i, 0, "|| llevas 15 segundos bloqueando el item, mu�vete o ser�s desconectado." & fonttype_warning)
+             end if
+         end if
+    next i
+    
+    'revisamos auto reiniciares
+    if intervaloautoreiniciar <> -1 then
+        intervaloautoreiniciar = intervaloautoreiniciar - 1
+                
+        if intervaloautoreiniciar <= 1200 then
+            select case intervaloautoreiniciar
+            
+                case 1200, 600, 240, 120, 180, 60, 30
+                    call senddata(toall, 0, 0, "|| servidor> el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones" & fonttype_server)
+                case 300
+                    call senddata(toall, 0, 0, "!! el servidor se reiniciar� por mantenimiento autom�tico en " & intervaloautoreiniciar & " segundos. tomen las debidas precauciones")
+                case is < 30
+                    call senddata(toall, 0, 0, "|| servidor> el servidor se reiniciar� en " & intervaloautoreiniciar & " segundos." & fonttype_talk)
+            end select
+        
+            if intervaloautoreiniciar = 0 then
+                call reiniciarservidor(true)
             end if
         end if
-    next i
+    end if
 end sub
+ 
+public function reiniciarautoupdate() as double
+
+    reiniciarautoupdate = shell(app.path & "\autoupdater\aoau.exe", vbminimizednofocus)
+
+end function
+ 
+public sub reiniciarservidor(optional byval ejecutarlauncher as boolean = true)
+    'worldsave
+    call dobackup
+
+    'commit experiencias
+    call mdparty.actualizaexperiencias
+
+    'guardar pjs
+    call guardarusuarios
+    
+    'guilds
+    call saveguildsdb
+
+    if ejecutarlauncher then shell (app.path & "\launcher.exe")
+
+    'chauuu
+    unload frmmain
+
+end sub
+
  
 sub guardarusuarios()
     haciendobk = true
     
     call senddata(toall, 0, 0, "bkw")
-    call senddata(toall, 0, 0, "||%%%%%% grabando personajes %%%%%%" & fonttype_info)
+    call senddata(toall, 0, 0, "||servidor> grabando personajes" & fonttype_server)
     
     dim i as integer
     for i = 1 to lastuser
@@ -1115,7 +1381,7 @@ sub guardarusuarios()
         end if
     next i
     
-    call senddata(toall, 0, 0, "||%%%%%% personajes grabados %%%%%%" & fonttype_info)
+    call senddata(toall, 0, 0, "||servidor> personajes grabados" & fonttype_server)
     call senddata(toall, 0, 0, "bkw")
 
     haciendobk = false
@@ -1124,7 +1390,7 @@ end sub
 
 sub inicializaestadisticas()
 dim ta as long
-ta = gettickcount()
+ta = gettickcount() and &h7fffffff
 
 call estadisticasweb.inicializa(frmmain.hwnd)
 call estadisticasweb.informar(cantidad_mapas, nummaps)

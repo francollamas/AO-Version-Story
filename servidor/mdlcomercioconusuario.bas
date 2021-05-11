@@ -1,14 +1,46 @@
 attribute vb_name = "mdlcomercioconusuario"
+'argentum online 0.11.20
+'copyright (c) 2002 m�rquez pablo ignacio
+'
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the gnu general public license as published by
+'the free software foundation; either version 2 of the license, or
+'any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'gnu general public license for more details.
+'
+'you should have received a copy of the gnu general public license
+'along with this program; if not, write to the free software
+'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'
+'argentum online is based on baronsoft's vb6 online rpg
+'you can contact the original creator of ore at aaron@baronsoft.com
+'for more information about ore please visit http://www.baronsoft.com/
+'
+'
+'you can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'calle 3 n�mero 983 piso 7 dto a
+'la plata - pcia, buenos aires - republica argentina
+'c�digo postal 1900
+'pablo ignacio m�rquez
+
+
 'modulo para comerciar con otro usuario
 'por alejo (alejandro santos)
 '
 '
 '[alejo]
-
+private const max_oro_logueable = 90000
 option explicit
 
 public type tcomerciousuario
     destusu as integer 'el otro usuario
+    destnick as string
     objeto as integer 'indice del inventario a comerciar, que objeto desea dar
     
     'el tipo de datos de cant ahora es long (antes integer)
@@ -21,7 +53,7 @@ end type
 
 'origen: origen de la transaccion, originador del comando
 'destino: receptor de la transaccion
-public sub iniciarcomercioconusuario(origen as integer, destino as integer)
+public sub iniciarcomercioconusuario(byval origen as integer, byval destino as integer)
 on error goto errhandler
 
 'si ambos pusieron /comerciar entonces
@@ -49,11 +81,11 @@ end if
 
 exit sub
 errhandler:
-
+    call logerror("error en iniciarcomercioconusuario: " & err.description)
 end sub
 
 'envia a aquien el objeto del otro
-public sub enviarobjetotransaccion(aquien as integer)
+public sub enviarobjetotransaccion(byval aquien as integer)
 'dim object as userobj
 dim objind as integer
 dim objcant as long
@@ -93,36 +125,62 @@ end if
 
 end sub
 
-public sub fincomerciarusu(userindex as integer)
-userlist(userindex).comusu.acepto = false
-userlist(userindex).comusu.cant = 0
-userlist(userindex).comusu.destusu = 0
-userlist(userindex).comusu.objeto = 0
+public sub fincomerciarusu(byval userindex as integer)
+with userlist(userindex)
+    if .comusu.destusu > 0 then
+        call senddata(toindex, userindex, 0, "fincomusuok")
+    end if
+    
+    .comusu.acepto = false
+    .comusu.cant = 0
+    .comusu.destusu = 0
+    .comusu.objeto = 0
+    .comusu.destnick = ""
+    .flags.comerciando = false
+end with
 
-userlist(userindex).flags.comerciando = false
-
-call senddata(toindex, userindex, 0, "fincomusuok")
 end sub
 
-public sub aceptarcomerciousu(userindex as integer)
-if userlist(userindex).comusu.destusu <= 0 or _
-    userlist(userlist(userindex).comusu.destusu).comusu.destusu <> userindex then
-    exit sub
-end if
-
-userlist(userindex).comusu.acepto = true
-
-if userlist(userlist(userindex).comusu.destusu).comusu.acepto = false then
-    call senddata(toindex, userindex, 0, "||el otro usuario aun no ha aceptado tu oferta." & fonttype_talk)
-    exit sub
-end if
-
+public sub aceptarcomerciousu(byval userindex as integer)
 dim obj1 as obj, obj2 as obj
 dim otrouserindex as integer
 dim terminarahora as boolean
 
 terminarahora = false
+
+if userlist(userindex).comusu.destusu <= 0 then
+    terminarahora = true
+end if
+
 otrouserindex = userlist(userindex).comusu.destusu
+
+
+if userlist(otrouserindex).flags.userlogged = false or userlist(userindex).flags.userlogged = false then
+    terminarahora = true
+end if
+if userlist(otrouserindex).comusu.destusu <> userindex then
+    terminarahora = true
+end if
+if userlist(otrouserindex).name <> userlist(userindex).comusu.destnick then
+    terminarahora = true
+end if
+if userlist(userindex).name <> userlist(otrouserindex).comusu.destnick then
+    terminarahora = true
+end if
+
+if terminarahora = true then
+    call fincomerciarusu(userindex)
+    call fincomerciarusu(otrouserindex)
+    exit sub
+end if
+
+userlist(userindex).comusu.acepto = true
+terminarahora = false
+
+if userlist(userlist(userindex).comusu.destusu).comusu.acepto = false then
+    call senddata(toindex, userindex, 0, "||el otro usuario aun no ha aceptado tu oferta." & fonttype_talk)
+    exit sub
+end if
 
 '[alejo]: creo haber podido erradicar el bug de
 '         no poder comerciar con mas de 32k de oro.
@@ -178,9 +236,11 @@ end if
 if userlist(otrouserindex).comusu.objeto = flagoro then
     'quito la cantidad de oro ofrecida
     userlist(otrouserindex).stats.gld = userlist(otrouserindex).stats.gld - userlist(otrouserindex).comusu.cant
+    if userlist(otrouserindex).comusu.cant > max_oro_logueable then call logdesarrollo(date & " " & userlist(otrouserindex).name & " solto oro en comercio seguro con " & userlist(userindex).name & ". cantidad: " & userlist(otrouserindex).comusu.cant)
     call senduserstatsbox(otrouserindex)
     'y se la doy al otro
     userlist(userindex).stats.gld = userlist(userindex).stats.gld + userlist(otrouserindex).comusu.cant
+    if userlist(otrouserindex).comusu.cant > max_oro_logueable then call logdesarrollo(date & " " & userlist(userindex).name & " recibio oro en comercio seguro con " & userlist(otrouserindex).name & ". cantidad: " & userlist(otrouserindex).comusu.cant)
     call senduserstatsbox(userindex)
 else
     'quita el objeto y se lo da al otro
@@ -194,14 +254,16 @@ end if
 if userlist(userindex).comusu.objeto = flagoro then
     'quito la cantidad de oro ofrecida
     userlist(userindex).stats.gld = userlist(userindex).stats.gld - userlist(userindex).comusu.cant
+    if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(date & " " & userlist(userindex).name & " solto oro en comercio seguro con " & userlist(otrouserindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
     call senduserstatsbox(userindex)
     'y se la doy al otro
     userlist(otrouserindex).stats.gld = userlist(otrouserindex).stats.gld + userlist(userindex).comusu.cant
+    if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(date & " " & userlist(otrouserindex).name & " recibio oro en comercio seguro con " & userlist(userindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
     call senduserstatsbox(otrouserindex)
 else
     'quita el objeto y se lo da al otro
     if meteritemeninventario(otrouserindex, obj1) = false then
-        call tiraritemalpiso(userlist(otrouserindex).pos, obj2)
+        call tiraritemalpiso(userlist(otrouserindex).pos, obj1)
     end if
     call quitarobjetos(obj1.objindex, obj1.amount, userindex)
 end if

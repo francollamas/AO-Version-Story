@@ -1,5 +1,5 @@
 attribute vb_name = "extra"
-'argentum online 0.9.0.2
+'argentum online 0.11.20
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ attribute vb_name = "extra"
 'la plata - pcia, buenos aires - republica argentina
 'c�digo postal 1900
 'pablo ignacio m�rquez
+
 
 
 option explicit
@@ -74,8 +75,10 @@ if inmapbounds(map, x, y) then
                 end if
             else 'no es newbie
                 call senddata(toindex, userindex, 0, "||mapa exclusivo para newbies." & fonttype_info)
-                
-                call closestlegalpos(userlist(userindex).pos, npos)
+                dim veces as byte
+                veces = 0
+                call closeststablepos(userlist(userindex).pos, npos)
+
                 if npos.x <> 0 and npos.y <> 0 then
                         call warpuserchar(userindex, npos.map, npos.x, npos.y)
                 end if
@@ -176,33 +179,82 @@ end if
 
 end sub
 
-function nameindex(byval name as string) as integer
+sub closeststablepos(pos as worldpos, byref npos as worldpos)
+'*****************************************************************
+'encuentra la posicion legal mas cercana que no sea un portal y la guarda en npos
+'*****************************************************************
 
+dim notfound as boolean
+dim loopc as integer
+dim tx as integer
+dim ty as integer
+
+npos.map = pos.map
+
+do while not legalpos(pos.map, npos.x, npos.y)
+    if loopc > 12 then
+        notfound = true
+        exit do
+    end if
+    
+    for ty = pos.y - loopc to pos.y + loopc
+        for tx = pos.x - loopc to pos.x + loopc
+            
+            if legalpos(npos.map, tx, ty) and mapdata(npos.map, tx, ty).tileexit.map = 0 then
+                npos.x = tx
+                npos.y = ty
+                '�hay objeto?
+                
+                tx = pos.x + loopc
+                ty = pos.y + loopc
+  
+            end if
+        
+        next tx
+    next ty
+    
+    loopc = loopc + 1
+    
+loop
+
+if notfound = true then
+    npos.x = 0
+    npos.y = 0
+end if
+
+end sub
+
+function nameindex(byval name as string) as integer
+ 
 dim userindex as integer
 '�nombre valido?
 if name = "" then
     nameindex = 0
     exit function
 end if
-  
+
+name = ucase$(replace(name, "+", " "))
+
 userindex = 1
-do until ucase$(left$(userlist(userindex).name, len(name))) = ucase$(name)
+do until ucase$(userlist(userindex).name) = name
     
     userindex = userindex + 1
     
     if userindex > maxusers then
-        userindex = 0
-        exit do
+        nameindex = 0
+        exit function
     end if
     
 loop
+ 
 nameindex = userindex
+ 
 end function
 
 
-function ip_index(byval inip as string) as integer
-on error goto local_errhand
 
+function ip_index(byval inip as string) as integer
+ 
 dim userindex as integer
 '�nombre valido?
 if inip = "" then
@@ -217,16 +269,17 @@ do until userlist(userindex).ip = inip
     
     if userindex > maxusers then
         ip_index = 0
-        exit do
+        exit function
     end if
     
 loop
+ 
+ip_index = userindex
 
-local_errhand:
-    
-    ip_index = userindex
+exit function
 
 end function
+
 
 function checkforsameip(byval userindex as integer, byval userip as string) as boolean
 dim loopc as integer
@@ -246,7 +299,14 @@ function checkforsamename(byval userindex as integer, byval name as string) as b
 dim loopc as integer
 for loopc = 1 to maxusers
     if userlist(loopc).flags.userlogged then
-        if ucase$(userlist(loopc).name) = ucase$(name) and userlist(loopc).connid <> -1 then
+        
+        'if ucase$(userlist(loopc).name) = ucase$(name) and userlist(loopc).connid <> -1 then
+        'ojo preguntar por el connid <> -1 produce que un pj en determinado
+        'momento pueda estar logueado 2 veces (ie: cierra el socket desde alla)
+        'ese evento no dispara un save user, lo que puede ser utilizado para duplicar items
+        'este bug en alkon produjo que el servidor este caido durante 3 dias. atentos.
+        
+        if ucase$(userlist(loopc).name) = ucase$(name) then
             checkforsamename = true
             exit function
         end if
@@ -331,13 +391,13 @@ else
    legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
      (mapdata(map, x, y).userindex = 0) and _
      (mapdata(map, x, y).npcindex = 0) and _
-     (mapdata(map, x, y).trigger <> posinvalida) _
+     (mapdata(map, x, y).trigger <> trigger_posinvalida) _
      and not hayagua(map, x, y)
  else
    legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
      (mapdata(map, x, y).userindex = 0) and _
      (mapdata(map, x, y).npcindex = 0) and _
-     (mapdata(map, x, y).trigger <> posinvalida)
+     (mapdata(map, x, y).trigger <> trigger_posinvalida)
  end if
  
 end if
@@ -371,7 +431,7 @@ dim foundchar as byte
 dim foundsomething as byte
 dim tempcharindex as integer
 dim stat as string
-
+dim objtype as integer
 '�posicion valida?
 if inmapbounds(map, x, y) then
     userlist(userindex).flags.targetmap = map
@@ -380,8 +440,6 @@ if inmapbounds(map, x, y) then
     '�es un obj?
     if mapdata(map, x, y).objinfo.objindex > 0 then
         'informa el nombre
-        call senddata(toindex, userindex, 0, "||" & objdata(mapdata(map, x, y).objinfo.objindex).name & fonttype_info)
-        userlist(userindex).flags.targetobj = mapdata(map, x, y).objinfo.objindex
         userlist(userindex).flags.targetobjmap = map
         userlist(userindex).flags.targetobjx = x
         userlist(userindex).flags.targetobjy = y
@@ -389,8 +447,6 @@ if inmapbounds(map, x, y) then
     elseif mapdata(map, x + 1, y).objinfo.objindex > 0 then
         'informa el nombre
         if objdata(mapdata(map, x + 1, y).objinfo.objindex).objtype = objtype_puertas then
-            call senddata(toindex, userindex, 0, "||" & objdata(mapdata(map, x + 1, y).objinfo.objindex).name & fonttype_info)
-            userlist(userindex).flags.targetobj = mapdata(map, x + 1, y).objinfo.objindex
             userlist(userindex).flags.targetobjmap = map
             userlist(userindex).flags.targetobjx = x + 1
             userlist(userindex).flags.targetobjy = y
@@ -399,8 +455,6 @@ if inmapbounds(map, x, y) then
     elseif mapdata(map, x + 1, y + 1).objinfo.objindex > 0 then
         if objdata(mapdata(map, x + 1, y + 1).objinfo.objindex).objtype = objtype_puertas then
             'informa el nombre
-            call senddata(toindex, userindex, 0, "||" & objdata(mapdata(map, x + 1, y + 1).objinfo.objindex).name & fonttype_info)
-            userlist(userindex).flags.targetobj = mapdata(map, x + 1, y + 1).objinfo.objindex
             userlist(userindex).flags.targetobjmap = map
             userlist(userindex).flags.targetobjx = x + 1
             userlist(userindex).flags.targetobjy = y + 1
@@ -409,13 +463,21 @@ if inmapbounds(map, x, y) then
     elseif mapdata(map, x, y + 1).objinfo.objindex > 0 then
         if objdata(mapdata(map, x, y + 1).objinfo.objindex).objtype = objtype_puertas then
             'informa el nombre
-            call senddata(toindex, userindex, 0, "||" & objdata(mapdata(map, x, y + 1).objinfo.objindex).name & fonttype_info)
-            userlist(userindex).flags.targetobj = mapdata(map, x, y).objinfo.objindex
             userlist(userindex).flags.targetobjmap = map
             userlist(userindex).flags.targetobjx = x
             userlist(userindex).flags.targetobjy = y + 1
             foundsomething = 1
         end if
+    end if
+    
+    if foundsomething = 1 then
+        userlist(userindex).flags.targetobj = mapdata(map, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex
+        if mostrarcantidad(userlist(userindex).flags.targetobj) then
+            call senddata(toindex, userindex, 0, "||" & objdata(userlist(userindex).flags.targetobj).name & " - " & mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.amount & "" & fonttype_info)
+        else
+            call senddata(toindex, userindex, 0, "||" & objdata(userlist(userindex).flags.targetobj).name & fonttype_info)
+        end if
+    
     end if
     '�es un personaje?
     if y + 1 <= ymaxmapsize then
@@ -444,58 +506,121 @@ if inmapbounds(map, x, y) then
     'reaccion al personaje
     if foundchar = 1 then '  �encontro un usuario?
             
-       if userlist(tempcharindex).flags.admininvisible = 0 then
+       if userlist(tempcharindex).flags.admininvisible = 0 or userlist(userindex).flags.privilegios = 3 then
             
-            if esnewbie(tempcharindex) then
-                stat = " <newbie>"
+            if userlist(tempcharindex).descrm = "" then
+            
+                if esnewbie(tempcharindex) then
+                    stat = " <newbie>"
+                end if
+    
+                if userlist(tempcharindex).faccion.armadareal = 1 then
+                    stat = stat & " <ejercito real> " & "<" & tituloreal(tempcharindex) & ">"
+                elseif userlist(tempcharindex).faccion.fuerzascaos = 1 then
+                    stat = stat & " <legi�n oscura> " & "<" & titulocaos(tempcharindex) & ">"
+                end if
+                
+                if userlist(tempcharindex).guildinfo.guildname <> "" then
+                    stat = stat & " <" & userlist(tempcharindex).guildinfo.guildname & ">"
+                end if
+                
+                if len(userlist(tempcharindex).desc) > 1 then
+                    stat = "||ves a " & userlist(tempcharindex).name & stat & " - " & userlist(tempcharindex).desc
+                else
+                    'call senddata(toindex, userindex, 0, "||ves a " & userlist(tempcharindex).name & stat)
+                    stat = "||ves a " & userlist(tempcharindex).name & stat
+                end if
+
+                if userlist(tempcharindex).flags.pertalcons > 0 then
+                    stat = stat & " [consejo de banderbill]" & fonttype_consejovesa
+                elseif userlist(tempcharindex).flags.pertalconscaos > 0 then
+                    stat = stat & " [consejo de las sombras]" & fonttype_consejocaosvesa
+                else
+                    if userlist(tempcharindex).flags.privilegios > 0 then
+                        stat = stat & " <game master> ~0~185~0~1~0"
+                    elseif criminal(tempcharindex) then
+                        stat = stat & " <criminal> ~255~0~0~1~0"
+                    else
+                        stat = stat & " <ciudadano> ~0~0~200~1~0"
+                    end if
+                end if
+            else
+                stat = "||" & userlist(tempcharindex).descrm & " " & fonttype_infobold
             end if
 
-            if userlist(tempcharindex).faccion.armadareal = 1 then
-                stat = stat & " <ejercito real> " & "<" & tituloreal(tempcharindex) & ">"
-            elseif userlist(tempcharindex).faccion.fuerzascaos = 1 then
-                stat = stat & " <fuerzas del caos> " & "<" & titulocaos(tempcharindex) & ">"
-            end if
-            
-            if userlist(tempcharindex).guildinfo.guildname <> "" then
-                stat = stat & " <" & userlist(tempcharindex).guildinfo.guildname & ">"
-            end if
-            
-            if len(userlist(tempcharindex).desc) > 1 then
-                stat = "||ves a " & userlist(tempcharindex).name & stat & " - " & userlist(tempcharindex).desc
-            else
-                'call senddata(toindex, userindex, 0, "||ves a " & userlist(tempcharindex).name & stat)
-                stat = "||ves a " & userlist(tempcharindex).name & stat
-            end if
-            
-            if userlist(tempcharindex).flags.privilegios > 0 then
-                stat = stat & " <game master> ~0~185~0~1~0"
-            elseif criminal(tempcharindex) then
-                stat = stat & " <criminal> ~255~0~0~1~0"
-            else
-                stat = stat & " <ciudadano> ~0~0~200~1~0"
-            end if
-            
             call senddata(toindex, userindex, 0, stat)
-                
-            
+
             foundsomething = 1
             userlist(userindex).flags.targetuser = tempcharindex
             userlist(userindex).flags.targetnpc = 0
             userlist(userindex).flags.targetnpctipo = 0
        
        end if
-       
+
     end if
     if foundchar = 2 then '�encontro un npc?
+            dim estatus as string
+            
+            if userlist(userindex).stats.userskills(supervivencia) >= 0 and userlist(userindex).stats.userskills(supervivencia) <= 10 then
+                estatus = "(dudoso) "
+            elseif userlist(userindex).stats.userskills(supervivencia) > 10 and userlist(userindex).stats.userskills(supervivencia) <= 20 then
+                if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp / 2) then
+                    estatus = "(herido) "
+                else
+                    estatus = "(sano) "
+                end if
+            elseif userlist(userindex).stats.userskills(supervivencia) > 20 and userlist(userindex).stats.userskills(supervivencia) <= 30 then
+                if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                    estatus = "(malherido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                    estatus = "(herido) "
+                else
+                    estatus = "(sano) "
+                end if
+            elseif userlist(userindex).stats.userskills(supervivencia) > 30 and userlist(userindex).stats.userskills(supervivencia) <= 40 then
+                if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
+                    estatus = "(muy malherido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                    estatus = "(herido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                    estatus = "(levemente herido) "
+                else
+                    estatus = "(sano) "
+                end if
+            elseif userlist(userindex).stats.userskills(supervivencia) > 40 and userlist(userindex).stats.userskills(supervivencia) < 60 then
+                if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.05) then
+                    estatus = "(agonizando) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.1) then
+                    estatus = "(casi muerto) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
+                    estatus = "(muy malherido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                    estatus = "(herido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                    estatus = "(levemente herido) "
+                elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp) then
+                    estatus = "(sano) "
+                else
+                    estatus = "(intacto) "
+                end if
+            elseif userlist(userindex).stats.userskills(supervivencia) >= 60 then
+                estatus = "(" & npclist(tempcharindex).stats.minhp & "/" & npclist(tempcharindex).stats.maxhp & ") "
+            else
+                estatus = "!error!"
+            end if
+
+            if userlist(userindex).flags.privilegios = 1 or userlist(userindex).flags.privilegios = 2 then
+                estatus = "(" & npclist(tempcharindex).stats.maxhp & ")"
+            end if
             
             if len(npclist(tempcharindex).desc) > 1 then
                 call senddata(toindex, userindex, 0, "||" & vbwhite & "�" & npclist(tempcharindex).desc & "�" & npclist(tempcharindex).char.charindex & fonttype_info)
             else
                 
                 if npclist(tempcharindex).maestrouser > 0 then
-                    call senddata(toindex, userindex, 0, "|| " & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name & fonttype_info)
+                    call senddata(toindex, userindex, 0, "|| " & estatus & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name & fonttype_info)
                 else
-                    call senddata(toindex, userindex, 0, "|| " & npclist(tempcharindex).name & "." & fonttype_info)
+                    call senddata(toindex, userindex, 0, "|| " & estatus & npclist(tempcharindex).name & "." & fonttype_info)
                 end if
                 
             end if
@@ -608,5 +733,24 @@ end if
 
 end function
 
+'[barrin 30-11-03]
+public function itemnoesdemapa(byval index as integer) as boolean
 
+itemnoesdemapa = objdata(index).objtype <> objtype_puertas and _
+            objdata(index).objtype <> objtype_foros and _
+            objdata(index).objtype <> objtype_carteles and _
+            objdata(index).objtype <> objtype_arboles and _
+            objdata(index).objtype <> objtype_yacimiento and _
+            objdata(index).objtype <> objtype_teleport
+end function
+'[/barrin 30-11-03]
+
+public function mostrarcantidad(byval index as integer) as boolean
+mostrarcantidad = objdata(index).objtype <> objtype_puertas and _
+            objdata(index).objtype <> objtype_foros and _
+            objdata(index).objtype <> objtype_carteles and _
+            objdata(index).objtype <> objtype_arboles and _
+            objdata(index).objtype <> objtype_yacimiento and _
+            objdata(index).objtype <> objtype_teleport
+end function
 
