@@ -1,5 +1,5 @@
 attribute vb_name = "extra"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -64,144 +64,129 @@ public sub dotileevents(byval userindex as integer, byval map as integer, byval 
 'handles the map passage of users. allows the existance
 'of exclusive maps for newbies, royal army and caos legion members
 'and enables gms to enter every map without restriction.
-'uses: mapinfo(map).restringir = "newbie" (newbies), "armada", "caos" and "no".
+'uses: mapinfo(map).restringir = "newbie" (newbies), "armada", "caos", "faccion" or "no".
 '***************************************************
+    dim npos as worldpos
+    dim fxflag as boolean
+    
 on error goto errhandler
-
-dim npos as worldpos
-dim fxflag as boolean
-'controla las salidas
-if inmapbounds(map, x, y) then
-    
-    if mapdata(map, x, y).objinfo.objindex > 0 then
-        fxflag = objdata(mapdata(map, x, y).objinfo.objindex).objtype = eobjtype.otteleport
-    end if
-    
-    if (mapdata(map, x, y).tileexit.map > 0) and (mapdata(map, x, y).tileexit.map <= nummaps) then
-        '�es mapa de newbies?
-        if ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "newbie" then
-            '�el usuario es un newbie?
-            if esnewbie(userindex) or esgm(userindex) then
-                if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
-                    if fxflag then '�fx?
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
-                    else
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, false)
-                    end if
-                else
-                    call closestlegalpos(mapdata(map, x, y).tileexit, npos)
-                    if npos.x <> 0 and npos.y <> 0 then
-                        if fxflag then
-                            call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
+    'controla las salidas
+    if inmapbounds(map, x, y) then
+        with mapdata(map, x, y)
+            if .objinfo.objindex > 0 then
+                fxflag = objdata(.objinfo.objindex).objtype = eobjtype.otteleport
+            end if
+            
+            if .tileexit.map > 0 and .tileexit.map <= nummaps then
+                '�es mapa de newbies?
+                if ucase$(mapinfo(.tileexit.map).restringir) = "newbie" then
+                    '�el usuario es un newbie?
+                    if esnewbie(userindex) or esgm(userindex) then
+                        if legalpos(.tileexit.map, .tileexit.x, .tileexit.y, puedeatravesaragua(userindex)) then
+                            call warpuserchar(userindex, .tileexit.map, .tileexit.x, .tileexit.y, fxflag)
                         else
+                            call closestlegalpos(.tileexit, npos)
+                            if npos.x <> 0 and npos.y <> 0 then
+                                call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                            end if
+                        end if
+                    else 'no es newbie
+                        call writeconsolemsg(userindex, "mapa exclusivo para newbies.", fonttypenames.fonttype_info)
+                        call closeststablepos(userlist(userindex).pos, npos)
+        
+                        if npos.x <> 0 and npos.y <> 0 then
                             call warpuserchar(userindex, npos.map, npos.x, npos.y, false)
                         end if
                     end if
-                end if
-            else 'no es newbie
-                call writeconsolemsg(userindex, "mapa exclusivo para newbies.", fonttypenames.fonttype_info)
-                call closeststablepos(userlist(userindex).pos, npos)
-
-                if npos.x <> 0 and npos.y <> 0 then
-                    call warpuserchar(userindex, npos.map, npos.x, npos.y, false)
-                end if
-            end if
-        elseif ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "armada" then '�es mapa de armadas?
-            '�el usuario es armada?
-            if esarmada(userindex) or esgm(userindex) then
-                if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
-                    if fxflag then '�fx?
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
-                    else
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y)
-                    end if
-                else
-                    call closestlegalpos(mapdata(map, x, y).tileexit, npos)
-                    if npos.x <> 0 and npos.y <> 0 then
-                        if fxflag then
-                            call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
+                elseif ucase$(mapinfo(.tileexit.map).restringir) = "armada" then '�es mapa de armadas?
+                    '�el usuario es armada?
+                    if esarmada(userindex) or esgm(userindex) then
+                        if legalpos(.tileexit.map, .tileexit.x, .tileexit.y, puedeatravesaragua(userindex)) then
+                            call warpuserchar(userindex, .tileexit.map, .tileexit.x, .tileexit.y, fxflag)
                         else
-                            call warpuserchar(userindex, npos.map, npos.x, npos.y)
+                            call closestlegalpos(.tileexit, npos)
+                            if npos.x <> 0 and npos.y <> 0 then
+                                call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                            end if
+                        end if
+                    else 'no es armada
+                        call writeconsolemsg(userindex, "mapa exclusivo para miembros del ej�rcito real", fonttypenames.fonttype_info)
+                        call closeststablepos(userlist(userindex).pos, npos)
+                        
+                        if npos.x <> 0 and npos.y <> 0 then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                        end if
+                    end if
+                elseif ucase$(mapinfo(.tileexit.map).restringir) = "caos" then '�es mapa de caos?
+                    '�el usuario es caos?
+                    if escaos(userindex) or esgm(userindex) then
+                        if legalpos(.tileexit.map, .tileexit.x, .tileexit.y, puedeatravesaragua(userindex)) then
+                            call warpuserchar(userindex, .tileexit.map, .tileexit.x, .tileexit.y, fxflag)
+                        else
+                            call closestlegalpos(.tileexit, npos)
+                            if npos.x <> 0 and npos.y <> 0 then
+                                call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                            end if
+                        end if
+                    else 'no es caos
+                        call writeconsolemsg(userindex, "mapa exclusivo para miembros del ej�rcito oscuro.", fonttypenames.fonttype_info)
+                        call closeststablepos(userlist(userindex).pos, npos)
+                        
+                        if npos.x <> 0 and npos.y <> 0 then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                        end if
+                    end if
+                elseif ucase$(mapinfo(.tileexit.map).restringir) = "faccion" then '�es mapa de faccionarios?
+                    '�el usuario es armada o caos?
+                    if esarmada(userindex) or escaos(userindex) or esgm(userindex) then
+                        if legalpos(.tileexit.map, .tileexit.x, .tileexit.y, puedeatravesaragua(userindex)) then
+                            call warpuserchar(userindex, .tileexit.map, .tileexit.x, .tileexit.y, fxflag)
+                        else
+                            call closestlegalpos(.tileexit, npos)
+                            if npos.x <> 0 and npos.y <> 0 then
+                                call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                            end if
+                        end if
+                    else 'no es faccionario
+                        call writeconsolemsg(userindex, "solo se permite entrar al mapa si eres miembro de alguna facci�n", fonttypenames.fonttype_info)
+                        call closeststablepos(userlist(userindex).pos, npos)
+                        
+                        if npos.x <> 0 and npos.y <> 0 then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                        end if
+                    end if
+                else 'no es un mapa de newbies, ni armadas, ni caos, ni faccionario.
+                    if legalpos(.tileexit.map, .tileexit.x, .tileexit.y, puedeatravesaragua(userindex)) then
+                        call warpuserchar(userindex, .tileexit.map, .tileexit.x, .tileexit.y, fxflag)
+                    else
+                        call closestlegalpos(.tileexit, npos)
+                        if npos.x <> 0 and npos.y <> 0 then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
                         end if
                     end if
                 end if
-            else 'no es armada
-                call writeconsolemsg(userindex, "mapa exclusivo para miembros del ejercito real", fonttypenames.fonttype_info)
-                call closeststablepos(userlist(userindex).pos, npos)
-
-                if npos.x <> 0 and npos.y <> 0 then
-                        call warpuserchar(userindex, npos.map, npos.x, npos.y)
+                
+                'te fusite del mapa. la criatura ya no es m�s tuya ni te reconoce como que vos la atacaste.
+                dim an as integer
+                
+                an = userlist(userindex).flags.atacadopornpc
+                if an > 0 then
+                   npclist(an).movement = npclist(an).flags.oldmovement
+                   npclist(an).hostile = npclist(an).flags.oldhostil
+                   npclist(an).flags.attackedby = vbnullstring
                 end if
-            end if
-        elseif ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "caos" then '�es mapa de caos?
-            '�el usuario es caos?
-            if escaos(userindex) or esgm(userindex) then
-                if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
-                    if fxflag then '�fx?
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
-                    else
-                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y)
-                    end if
-                else
-                    call closestlegalpos(mapdata(map, x, y).tileexit, npos)
-                    if npos.x <> 0 and npos.y <> 0 then
-                        if fxflag then
-                            call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
-                        else
-                            call warpuserchar(userindex, npos.map, npos.x, npos.y)
-                        end if
+            
+                an = userlist(userindex).flags.npcatacado
+                if an > 0 then
+                    if npclist(an).flags.attackedfirstby = userlist(userindex).name then
+                        npclist(an).flags.attackedfirstby = vbnullstring
                     end if
                 end if
-            else 'no es caos
-                call writeconsolemsg(userindex, "mapa exclusivo para miembros del ejercito oscuro.", fonttypenames.fonttype_info)
-                call closeststablepos(userlist(userindex).pos, npos)
-
-                if npos.x <> 0 and npos.y <> 0 then
-                        call warpuserchar(userindex, npos.map, npos.x, npos.y)
-                end if
+                userlist(userindex).flags.atacadopornpc = 0
+                userlist(userindex).flags.npcatacado = 0
             end if
-        else 'no es un mapa de newbies, ni armadas, ni caos
-            if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
-                if fxflag then
-                    call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
-                else
-                    call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y)
-                end if
-            else
-                call closestlegalpos(mapdata(map, x, y).tileexit, npos)
-                if npos.x <> 0 and npos.y <> 0 then
-                    if fxflag then
-                        call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
-                    else
-                        call warpuserchar(userindex, npos.map, npos.x, npos.y)
-                    end if
-                end if
-            end if
-        end if
-        'te fusite del mapa. la criatura ya no es m�s tuya ni te reconoce como que vos la atacaste.
-        dim an as integer
-    
-        an = userlist(userindex).flags.atacadopornpc
-        if an > 0 then
-           npclist(an).movement = npclist(an).flags.oldmovement
-           npclist(an).hostile = npclist(an).flags.oldhostil
-           npclist(an).flags.attackedby = vbnullstring
-        end if
-    
-        an = userlist(userindex).flags.npcatacado
-        if an > 0 then
-            if npclist(an).flags.attackedfirstby = userlist(userindex).name then
-            npclist(an).flags.attackedfirstby = vbnullstring
-            end if
-        end if
-        userlist(userindex).flags.atacadopornpc = 0
-        userlist(userindex).flags.npcatacado = 0
+        end with
     end if
-    
-end if
-
-
-
 exit sub
 
 errhandler:
@@ -252,8 +237,8 @@ sub closestlegalpos(pos as worldpos, byref npos as worldpos, optional puedeagua 
 
 dim notfound as boolean
 dim loopc as integer
-dim tx as integer
-dim ty as integer
+dim tx as long
+dim ty as long
 
 npos.map = pos.map
 
@@ -290,15 +275,15 @@ end if
 
 end sub
 
-sub closeststablepos(pos as worldpos, byref npos as worldpos)
+private sub closeststablepos(pos as worldpos, byref npos as worldpos)
 '*****************************************************************
 'encuentra la posicion legal mas cercana que no sea un portal y la guarda en npos
 '*****************************************************************
 
 dim notfound as boolean
 dim loopc as integer
-dim tx as integer
-dim ty as integer
+dim tx as long
+dim ty as long
 
 npos.map = pos.map
 
@@ -336,135 +321,87 @@ end if
 end sub
 
 function nameindex(byval name as string) as integer
-
-dim userindex as integer
-'�nombre valido?
-if lenb(name) = 0 then
-    nameindex = 0
-    exit function
-end if
-
-if instrb(name, "+") <> 0 then
-    name = ucase$(replace(name, "+", " "))
-end if
-
-userindex = 1
-do until ucase$(userlist(userindex).name) = ucase$(name)
+    dim userindex as long
     
-    userindex = userindex + 1
-    
-    if userindex > maxusers then
+    '�nombre valido?
+    if lenb(name) = 0 then
         nameindex = 0
         exit function
     end if
     
-loop
- 
-nameindex = userindex
- 
-end function
-
-
-
-function ip_index(byval inip as string) as integer
- 
-dim userindex as integer
-'�nombre valido?
-if lenb(inip) = 0 then
-    ip_index = 0
-    exit function
-end if
-  
-userindex = 1
-do until userlist(userindex).ip = inip
-    
-    userindex = userindex + 1
-    
-    if userindex > maxusers then
-        ip_index = 0
-        exit function
+    if instrb(name, "+") <> 0 then
+        name = ucase$(replace(name, "+", " "))
     end if
     
-loop
- 
-ip_index = userindex
-
-exit function
-
-end function
-
-
-function checkforsameip(byval userindex as integer, byval userip as string) as boolean
-dim loopc as integer
-for loopc = 1 to maxusers
-    if userlist(loopc).flags.userlogged = true then
-        if userlist(loopc).ip = userip and userindex <> loopc then
-            checkforsameip = true
+    userindex = 1
+    do until ucase$(userlist(userindex).name) = ucase$(name)
+        
+        userindex = userindex + 1
+        
+        if userindex > maxusers then
+            nameindex = 0
             exit function
         end if
-    end if
-next loopc
-checkforsameip = false
+    loop
+     
+    nameindex = userindex
+end function
+
+function checkforsameip(byval userindex as integer, byval userip as string) as boolean
+    dim loopc as long
+    
+    for loopc = 1 to maxusers
+        if userlist(loopc).flags.userlogged = true then
+            if userlist(loopc).ip = userip and userindex <> loopc then
+                checkforsameip = true
+                exit function
+            end if
+        end if
+    next loopc
+    
+    checkforsameip = false
 end function
 
 function checkforsamename(byval name as string) as boolean
 'controlo que no existan usuarios con el mismo nombre
-dim loopc as long
-for loopc = 1 to lastuser
-    if userlist(loopc).flags.userlogged then
-        
-        'if ucase$(userlist(loopc).name) = ucase$(name) and userlist(loopc).connid <> -1 then
-        'ojo preguntar por el connid <> -1 produce que un pj en determinado
-        'momento pueda estar logueado 2 veces (ie: cierra el socket desde alla)
-        'ese evento no dispara un save user, lo que puede ser utilizado para duplicar items
-        'este bug en alkon produjo que el servidor este caido durante 3 dias. atentos.
-        
-        if ucase$(userlist(loopc).name) = ucase$(name) then
-            checkforsamename = true
-            exit function
+    dim loopc as long
+    
+    for loopc = 1 to lastuser
+        if userlist(loopc).flags.userlogged then
+            
+            'if ucase$(userlist(loopc).name) = ucase$(name) and userlist(loopc).connid <> -1 then
+            'ojo preguntar por el connid <> -1 produce que un pj en determinado
+            'momento pueda estar logueado 2 veces (ie: cierra el socket desde alla)
+            'ese evento no dispara un save user, lo que puede ser utilizado para duplicar items
+            'este bug en alkon produjo que el servidor este caido durante 3 dias. atentos.
+            
+            if ucase$(userlist(loopc).name) = ucase$(name) then
+                checkforsamename = true
+                exit function
+            end if
         end if
-    end if
-next loopc
-checkforsamename = false
+    next loopc
+    
+    checkforsamename = false
 end function
 
 sub headtopos(byval head as eheading, byref pos as worldpos)
 '*****************************************************************
 'toma una posicion y se mueve hacia donde esta perfilado
 '*****************************************************************
-dim x as integer
-dim y as integer
-dim tempvar as single
-dim nx as integer
-dim ny as integer
-
-x = pos.x
-y = pos.y
-
-if head = eheading.north then
-    nx = x
-    ny = y - 1
-end if
-
-if head = eheading.south then
-    nx = x
-    ny = y + 1
-end if
-
-if head = eheading.east then
-    nx = x + 1
-    ny = y
-end if
-
-if head = eheading.west then
-    nx = x - 1
-    ny = y
-end if
-
-'devuelve valores
-pos.x = nx
-pos.y = ny
-
+    select case head
+        case eheading.north
+            pos.y = pos.y - 1
+        
+        case eheading.south
+            pos.y = pos.y + 1
+        
+        case eheading.east
+            pos.x = pos.x + 1
+        
+        case eheading.west
+            pos.x = pos.x - 1
+    end select
 end sub
 
 function legalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true) as boolean
@@ -499,29 +436,160 @@ else
 end if
 
 end function
-function legalposnpc(byval map as integer, byval x as integer, byval y as integer, byval aguavalida as byte) as boolean
 
+function movetolegalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true) as boolean
+'***************************************************
+'autor: zama
+'last modification: 26/03/2009
+'checks if the position is legal, but considers that if there's a casper, it's a legal movement.
+'***************************************************
+
+dim userindex as integer
+dim isdeadchar as boolean
+
+
+'�es un mapa valido?
 if (map <= 0 or map > nummaps) or _
    (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
-    legalposnpc = false
-else
-
- if aguavalida = 0 then
-   legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
-     (mapdata(map, x, y).userindex = 0) and _
-     (mapdata(map, x, y).npcindex = 0) and _
-     (mapdata(map, x, y).trigger <> etrigger.posinvalida) _
-     and not hayagua(map, x, y)
- else
-   legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
-     (mapdata(map, x, y).userindex = 0) and _
-     (mapdata(map, x, y).npcindex = 0) and _
-     (mapdata(map, x, y).trigger <> etrigger.posinvalida)
- end if
- 
+            movetolegalpos = false
+    else
+        userindex = mapdata(map, x, y).userindex
+        if userindex > 0 then
+            isdeadchar = userlist(userindex).flags.muerto = 1
+        else
+            isdeadchar = false
+        end if
+    
+    if puedeagua and puedetierra then
+        movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
+                   (userindex = 0 or isdeadchar) and _
+                   (mapdata(map, x, y).npcindex = 0)
+    elseif puedetierra and not puedeagua then
+        movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
+                   (userindex = 0 or isdeadchar) and _
+                   (mapdata(map, x, y).npcindex = 0) and _
+                   (not hayagua(map, x, y))
+    elseif puedeagua and not puedetierra then
+        movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
+                   (userindex = 0 or isdeadchar) and _
+                   (mapdata(map, x, y).npcindex = 0) and _
+                   (hayagua(map, x, y))
+    else
+        movetolegalpos = false
+    end if
+  
 end if
 
 
+end function
+
+public sub findlegalpos(byval userindex as integer, byval map as integer, byref x as integer, byref y as integer)
+'***************************************************
+'autor: zama
+'last modification: 26/03/2009
+'search for a legal pos for the user who is being teleported.
+'***************************************************
+
+    if mapdata(map, x, y).userindex <> 0 or _
+        mapdata(map, x, y).npcindex <> 0 then
+                    
+        ' se teletransporta a la misma pos a la que estaba
+        if mapdata(map, x, y).userindex = userindex then exit sub
+                            
+        dim foundplace as boolean
+        dim tx as long
+        dim ty as long
+        dim rango as long
+        dim otheruserindex as integer
+    
+        for rango = 1 to 5
+            for ty = y - rango to y + rango
+                for tx = x - rango to x + rango
+                    'reviso que no haya user ni npc
+                    if mapdata(map, tx, ty).userindex = 0 and _
+                        mapdata(map, tx, ty).npcindex = 0 then
+                        
+                        if inmapbounds(map, tx, ty) then foundplace = true
+                        
+                        exit for
+                    end if
+
+                next tx
+        
+                if foundplace then _
+                    exit for
+            next ty
+            
+            if foundplace then _
+                    exit for
+        next rango
+
+    
+        if foundplace then 'si encontramos un lugar, listo, nos quedamos ahi
+            x = tx
+            y = ty
+        else
+            'muy poco probable, pero..
+            'si no encontramos un lugar, sacamos al usuario que tenemos abajo, y si es un npc, lo pisamos.
+            otheruserindex = mapdata(map, x, y).userindex
+            if otheruserindex <> 0 then
+                'si no encontramos lugar, y abajo teniamos a un usuario, lo pisamos y cerramos su comercio seguro
+                if userlist(otheruserindex).comusu.destusu > 0 then
+                    'le avisamos al que estaba comerciando que se tuvo que ir.
+                    if userlist(userlist(otheruserindex).comusu.destusu).flags.userlogged then
+                        call fincomerciarusu(userlist(otheruserindex).comusu.destusu)
+                        call writeconsolemsg(userlist(otheruserindex).comusu.destusu, "comercio cancelado. el otro usuario se ha desconectado.", fonttypenames.fonttype_talk)
+                        call flushbuffer(userlist(otheruserindex).comusu.destusu)
+                    end if
+                    'lo sacamos.
+                    if userlist(otheruserindex).flags.userlogged then
+                        call fincomerciarusu(otheruserindex)
+                        call writeerrormsg(otheruserindex, "alguien se ha conectado donde te encontrabas, por favor recon�ctate...")
+                        call flushbuffer(otheruserindex)
+                    end if
+                end if
+            
+                call closesocket(otheruserindex)
+            end if
+        end if
+    end if
+
+end sub
+
+function legalposnpc(byval map as integer, byval x as integer, byval y as integer, byval aguavalida as byte) as boolean
+'***************************************************
+'autor: unkwnown
+'last modification: 27/04/2009
+'checks if it's a legal pos for the npc to move to.
+'***************************************************
+dim isdeadchar as boolean
+dim userindex as integer
+
+    if (map <= 0 or map > nummaps) or _
+        (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
+        legalposnpc = false
+        exit function
+    end if
+
+    userindex = mapdata(map, x, y).userindex
+    if userindex > 0 then
+        isdeadchar = userlist(userindex).flags.muerto = 1
+    else
+        isdeadchar = false
+    end if
+    
+    if aguavalida = 0 then
+        legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
+        (mapdata(map, x, y).userindex = 0 or isdeadchar) and _
+        (mapdata(map, x, y).npcindex = 0) and _
+        (mapdata(map, x, y).trigger <> etrigger.posinvalida) _
+        and not hayagua(map, x, y)
+    else
+        legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
+        (mapdata(map, x, y).userindex = 0 or isdeadchar) and _
+        (mapdata(map, x, y).npcindex = 0) and _
+        (mapdata(map, x, y).trigger <> etrigger.posinvalida)
+    end if
 end function
 
 sub sendhelp(byval index as integer)
@@ -545,13 +613,18 @@ public sub expresar(byval npcindex as integer, byval userindex as integer)
 end sub
 
 sub lookattile(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 26/03/2009
+'13/02/2009: zama - el nombre del gm que aparece por consola al clickearlo, tiene el color correspondiente a su rango
+'***************************************************
+
 
 'responde al click del usuario sobre el mapa
 dim foundchar as byte
 dim foundsomething as byte
 dim tempcharindex as integer
 dim stat as string
-dim objtype as integer
 dim ft as fonttypenames
 
 '�rango visi�n? (toxicwaste)
@@ -610,9 +683,7 @@ if inmapbounds(map, x, y) then
     if y + 1 <= ymaxmapsize then
         if mapdata(map, x, y + 1).userindex > 0 then
             tempcharindex = mapdata(map, x, y + 1).userindex
-            if userlist(tempcharindex).showname then    ' es gm y pidi� que se oculte su nombre??
-                foundchar = 1
-            end if
+            foundchar = 1
         end if
         if mapdata(map, x, y + 1).npcindex > 0 then
             tempcharindex = mapdata(map, x, y + 1).npcindex
@@ -623,9 +694,7 @@ if inmapbounds(map, x, y) then
     if foundchar = 0 then
         if mapdata(map, x, y).userindex > 0 then
             tempcharindex = mapdata(map, x, y).userindex
-            if userlist(tempcharindex).showname then    ' es gm y pidi� que se oculte su nombre??
-                foundchar = 1
-            end if
+            foundchar = 1
         end if
         if mapdata(map, x, y).npcindex > 0 then
             tempcharindex = mapdata(map, x, y).npcindex
@@ -639,13 +708,13 @@ if inmapbounds(map, x, y) then
             
        if userlist(tempcharindex).flags.admininvisible = 0 or userlist(userindex).flags.privilegios and playertype.dios then
             
-            if lenb(userlist(tempcharindex).descrm) = 0 then
+            if lenb(userlist(tempcharindex).descrm) = 0 and userlist(tempcharindex).showname then 'no tiene descrm y quiere que se vea su nombre.
                 if esnewbie(tempcharindex) then
                     stat = " <newbie>"
                 end if
                 
                 if userlist(tempcharindex).faccion.armadareal = 1 then
-                    stat = stat & " <ejercito real> " & "<" & tituloreal(tempcharindex) & ">"
+                    stat = stat & " <ej�rcito real> " & "<" & tituloreal(tempcharindex) & ">"
                 elseif userlist(tempcharindex).faccion.fuerzascaos = 1 then
                     stat = stat & " <legi�n oscura> " & "<" & titulocaos(tempcharindex) & ">"
                 end if
@@ -665,12 +734,21 @@ if inmapbounds(map, x, y) then
                     stat = stat & " [consejo de banderbill]"
                     ft = fonttypenames.fonttype_consejovesa
                 elseif userlist(tempcharindex).flags.privilegios and playertype.chaoscouncil then
-                    stat = stat & " [consejo de las sombras]"
+                    stat = stat & " [concilio de las sombras]"
                     ft = fonttypenames.fonttype_consejocaosvesa
                 else
                     if not userlist(tempcharindex).flags.privilegios and playertype.user then
                         stat = stat & " <game master>"
-                        ft = fonttypenames.fonttype_gm
+                        
+                        ' elijo el color segun el rango del gm
+                        if userlist(tempcharindex).flags.privilegios = playertype.dios then
+                            ft = fonttypenames.fonttype_dios
+                        elseif userlist(tempcharindex).flags.privilegios = playertype.semidios then
+                            ft = fonttypenames.fonttype_gm
+                        elseif userlist(tempcharindex).flags.privilegios = playertype.consejero then
+                            ft = fonttypenames.fonttype_conse
+                        end if
+                        
                     elseif criminal(tempcharindex) then
                         stat = stat & " <criminal>"
                         ft = fonttypenames.fonttype_fight
@@ -679,7 +757,7 @@ if inmapbounds(map, x, y) then
                         ft = fonttypenames.fonttype_citizen
                     end if
                 end if
-            else
+            else  'si tiene descrm la muestro siempre.
                 stat = userlist(tempcharindex).descrm
                 ft = fonttypenames.fonttype_infobold
             end if

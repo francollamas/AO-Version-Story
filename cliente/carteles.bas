@@ -88,11 +88,11 @@ if not cartel then exit sub
 dim x as integer, y as integer
 x = xposcartel + 20
 y = yposcartel + 60
-call ddrawtransgrhindextosurface(backbuffersurface, textura, xposcartel, yposcartel, 0, 0)
+call ddrawtransgrhindextosurface(textura, xposcartel, yposcartel, 0)
 dim j as integer, desp as integer
 
 for j = 0 to ubound(leyendaformateada)
-    drawtext x, y + desp, leyendaformateada(j), vbwhite, frmmain.font
+    rendertext x, y + desp, leyendaformateada(j), vbwhite, frmmain.font
     desp = desp + (frmmain.font.size) + 5
 next
 end sub

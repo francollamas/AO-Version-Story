@@ -1,5 +1,5 @@
 attribute vb_name = "modfacciones"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -65,7 +65,8 @@ public const expx100 as integer = 5000
 public sub enlistararmadareal(byval userindex as integer)
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 23/01/2007
+'last modification: 15/03/2009
+'15/03/2009: zama - no se puede enlistar el fundador de un clan con alineaci�n neutral.
 'handles the entrance of users to the "armada real"
 '***************************************************
 if userlist(userindex).faccion.armadareal = 1 then
@@ -79,7 +80,7 @@ if userlist(userindex).faccion.fuerzascaos = 1 then
 end if
 
 if criminal(userindex) then
-    call writechatoverhead(userindex, "���no se permiten criminales en el ejercito imperial!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
+    call writechatoverhead(userindex, "���no se permiten criminales en el ej�rcito imperial!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
     exit sub
 end if
 
@@ -104,14 +105,25 @@ if userlist(userindex).faccion.reenlistadas > 4 then
 end if
 
 if userlist(userindex).reputacion.noblerep < 1000000 then
-    call writechatoverhead(userindex, "necesitas ser a�n m�s noble para integrar el ejercito del rey, solo tienes " & userlist(userindex).reputacion.noblerep & "/1.000.000 puntos de nobleza", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
+    call writechatoverhead(userindex, "necesitas ser a�n m�s noble para integrar el ej�rcito del rey, solo tienes " & userlist(userindex).reputacion.noblerep & "/1.000.000 puntos de nobleza", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
     exit sub
 end if
+
+with userlist(userindex)
+    if .guildindex > 0 then
+        if modguilds.guildfounder(.guildindex) = .name then
+            if modguilds.guildalignment(.guildindex) = "neutro" then
+                call writechatoverhead(userindex, "���eres el fundador de un clan neutro!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+        end if
+    end if
+end with
 
 userlist(userindex).faccion.armadareal = 1
 userlist(userindex).faccion.reenlistadas = userlist(userindex).faccion.reenlistadas + 1
 
-call writechatoverhead(userindex, "���bienvenido al ejercito imperial!!!, aqui tienes tus vestimentas. cumple bien tu labor exterminando criminales y me encargar� de recompensarte.", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
+call writechatoverhead(userindex, "���bienvenido al ej�rcito imperial!!!, aqui tienes tus vestimentas. cumple bien tu labor exterminando criminales y me encargar� de recompensarte.", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
 
 if userlist(userindex).faccion.recibioarmadurareal = 0 then
     dim miobj as obj
@@ -165,6 +177,15 @@ if userlist(userindex).faccion.recibioexpinicialreal = 0 then
     call checkuserlevel(userindex)
 end if
 
+'agregado para que no hayan armadas en un clan neutro
+if userlist(userindex).guildindex > 0 then
+    if modguilds.guildalignment(userlist(userindex).guildindex) = "neutro" then
+        call modguilds.m_echarmiembrodeclan(-1, userlist(userindex).name)
+        call writeconsolemsg(userindex, "has sido expulsado del clan por tu nueva facci�n.", fonttypenames.fonttype_guild)
+    end if
+end if
+
+if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
 
 call logejercitoreal(userlist(userindex).name & " ingres� el " & date & " cuando era nivel " & userlist(userindex).stats.elv)
 
@@ -307,22 +328,50 @@ call checkuserlevel(userindex)
 
 end sub
 
-public sub expulsarfaccionreal(byval userindex as integer)
+public sub expulsarfaccionreal(byval userindex as integer, optional expulsado as boolean = true)
 
     userlist(userindex).faccion.armadareal = 0
     'call perderitemsfaccionarios(userindex)
-    call writeconsolemsg(userindex, "has sido expulsado de las tropas reales!!!.", fonttypenames.fonttype_fight)
-    'desequipamos la armadura real si est� equipada
-    if objdata(userlist(userindex).invent.armoureqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+    if expulsado then
+        call writeconsolemsg(userindex, "���has sido expulsado de las tropas reales!!!.", fonttypenames.fonttype_fight)
+    else
+        call writeconsolemsg(userindex, "���te has retirado de las tropas reales!!!.", fonttypenames.fonttype_fight)
+    end if
+    
+    if userlist(userindex).invent.armoureqpobjindex then
+        'desequipamos la armadura real si est� equipada
+        if objdata(userlist(userindex).invent.armoureqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+    end if
+    
+    if userlist(userindex).invent.escudoeqpobjindex then
+        'desequipamos el escudo de caos si est� equipado
+        if objdata(userlist(userindex).invent.escudoeqpobjindex).real = 1 then call desequipar(userindex, userlist(userindex).invent.escudoeqpobjindex)
+    end if
+    
+    if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
 end sub
 
-public sub expulsarfaccioncaos(byval userindex as integer)
+public sub expulsarfaccioncaos(byval userindex as integer, optional expulsado as boolean = true)
 
     userlist(userindex).faccion.fuerzascaos = 0
     'call perderitemsfaccionarios(userindex)
-    call writeconsolemsg(userindex, "has sido expulsado de la legi�n oscura!!!.", fonttypenames.fonttype_fight)
-    'desequipamos la armadura real si est� equipada
-    if objdata(userlist(userindex).invent.armoureqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+    if expulsado then
+        call writeconsolemsg(userindex, "���has sido expulsado de la legi�n oscura!!!.", fonttypenames.fonttype_fight)
+    else
+        call writeconsolemsg(userindex, "���te has retirado de la legi�n oscura!!!.", fonttypenames.fonttype_fight)
+    end if
+    
+    if userlist(userindex).invent.armoureqpobjindex then
+        'desequipamos la armadura de caos si est� equipada
+        if objdata(userlist(userindex).invent.armoureqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.armoureqpslot)
+    end if
+    
+    if userlist(userindex).invent.escudoeqpobjindex then
+        'desequipamos el escudo de caos si est� equipado
+        if objdata(userlist(userindex).invent.escudoeqpobjindex).caos = 1 then call desequipar(userindex, userlist(userindex).invent.escudoeqpobjindex)
+    end if
+    
+    if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
 end sub
 
 public function tituloreal(byval userindex as integer) as string
@@ -358,7 +407,7 @@ select case userlist(userindex).faccion.recompensasreal
     case 3
         tituloreal = "sargento"
     case 4
-        tituloreal = "caballero"
+        tituloreal = "teniente"
     case 5
         tituloreal = "comandante"
     case 6
@@ -387,7 +436,8 @@ end function
 public sub enlistarcaos(byval userindex as integer)
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
-'last modification: 23/01/2007
+'last modification: 15/3/2009
+'15/03/2009: zama - no se puede enlistar el fundador de un clan con alineaci�n neutral.
 'handles the entrance of users to the "legi�n oscura"
 '***************************************************
 if not criminal(userindex) then
@@ -426,6 +476,17 @@ if userlist(userindex).stats.elv < 25 then
     call writechatoverhead(userindex, "���para unirte a nuestras fuerzas debes ser al menos de nivel 25!!!", str(npclist(userlist(userindex).flags.targetnpc).char.charindex), vbwhite)
     exit sub
 end if
+
+with userlist(userindex)
+    if .guildindex > 0 then
+        if modguilds.guildfounder(.guildindex) = .name then
+            if modguilds.guildalignment(.guildindex) = "neutro" then
+                call writechatoverhead(userindex, "���eres el fundador de un clan neutro!!!", str(npclist(.flags.targetnpc).char.charindex), vbwhite)
+                exit sub
+            end if
+        end if
+    end if
+end with
 
 
 if userlist(userindex).faccion.reenlistadas > 4 then
@@ -491,6 +552,15 @@ if userlist(userindex).faccion.recibioexpinicialcaos = 0 then
     call checkuserlevel(userindex)
 end if
 
+'agregado para que no hayan armadas en un clan neutro
+if userlist(userindex).guildindex > 0 then
+    if modguilds.guildalignment(userlist(userindex).guildindex) = "neutro" then
+        call modguilds.m_echarmiembrodeclan(-1, userlist(userindex).name)
+        call writeconsolemsg(userindex, "has sido expulsado del clan por tu nueva facci�n.", fonttypenames.fonttype_guild)
+    end if
+end if
+
+if userlist(userindex).flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
 
 call logejercitocaos(userlist(userindex).name & " ingres� el " & date & " cuando era nivel " & userlist(userindex).stats.elv)
 
@@ -675,3 +745,4 @@ select case userlist(userindex).faccion.recompensascaos
 end select
 
 end function
+

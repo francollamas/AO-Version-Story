@@ -43,7 +43,7 @@ private const message_count as byte = 10
 
 ''
 ' defines the maximum length allowed for any custom message.
-private const max_message_length as byte = 255
+private const max_message_length as byte = 120
 
 ''
 ' the error code thrown when the message being set is invalid.
@@ -64,7 +64,7 @@ private custommessages(message_count - 1) as string
 
 private sub class_initialize()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/26/07
 'initializes the messages by loading them from the config file
 '***************************************************
@@ -98,7 +98,7 @@ end sub
 
 private sub class_terminate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/26/07
 'stores all messages back into config file for later use.
 '***************************************************
@@ -139,7 +139,7 @@ end sub
 
 public property get message(byval index as integer) as string
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/26/07
 'retrieves the requested message.
 '***************************************************
@@ -158,7 +158,7 @@ end property
 
 public property let message(byval index as integer, byval nvalue as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/26/07
 'sets the given message index with the requested message.
 '***************************************************
@@ -181,7 +181,7 @@ end property
 
 public property get invalidmessageerrcode() as long
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/26/07
 'retrieves the invalid_message error code.
 '***************************************************
@@ -196,18 +196,46 @@ end property
 
 private function messageisvalid(byref msg as string) as boolean
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 07/26/07
-'checks if the given message is valid or not.
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 08/07/07
+'last modified by: rapsodius
+'
+'erased line "msg=strconv(msg,vbunicode)", because
+'it was causing problems and detected as many messages
+'as wrong with nothing bad on them
 '***************************************************
+    dim i as long
+    dim char as string * 1
+    dim ascii as byte
+    
+    'get rid of spaces
+    msg = trim$(msg)
+        
     'empty messages are valid
     if lenb(msg) = 0 then
         messageisvalid = true
         exit function
     end if
     
-    'messages only containning spaces are discarded
-    if lenb(trim$(msg)) = 0 then exit function
+    for i = 1 to len(msg)
+        char = mid$(msg, i, 1)
+        ascii = asc(char)
+        
+        'check for invalid chars...
+        if ascii < 31 then exit function
+        
+        if ascii > 126 and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" _
+          and char <> "�" and char <> "�" and char <> "�" and char <> "�" and char <> "�" then
+            exit function
+        end if
+    next i
     
     'discard extremely long messages
     if len(msg) > max_message_length then exit function

@@ -96,10 +96,15 @@ public sub loadsoundmapinfo()
 end sub
 
 public sub reproducirsonidosdemapas()
-    dim i as integer
-    dim sonidosmapa as byte
+    dim i as long
     dim sonidomapa as byte
-
+    dim posx as byte
+    dim posy as byte
+    
+    'sounds are played at a random position
+    posx = randomnumber(xminmapsize, xmaxmapsize)
+    posy = randomnumber(yminmapsize, ymaxmapsize)
+    
     for i = 1 to ubound(p_mapas)
         if p_mapas(i).cantidad > 0 then
             sonidomapa = randomnumber(1, p_mapas(i).cantidad)
@@ -107,11 +112,11 @@ public sub reproducirsonidosdemapas()
                 'tocarlo
                 if lloviendo then
                     if p_mapas(i).flags(sonidomapa) xor p_esoundflags.lluvia then
-                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa)))
+                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa), posx, posy))
                     end if
                 else
                     if p_mapas(i).flags(sonidomapa) xor p_esoundflags.ninguna then
-                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa)))
+                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa), posx, posy))
                     end if
                 end if
             end if
@@ -120,5 +125,5 @@ public sub reproducirsonidosdemapas()
 end sub
 
 public sub reproducirsonido(byval destino as sendtarget, byval index as integer, byval soundindex as integer)
-    call senddata(destino, index, preparemessageplaywave(soundindex))
+    call senddata(destino, index, preparemessageplaywave(soundindex, userlist(index).pos.x, userlist(index).pos.y))
 end sub

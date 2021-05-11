@@ -25,7 +25,7 @@ begin vb.form frmservidor
       endproperty
       height          =   255
       left            =   1920
-      tabindex        =   28
+      tabindex        =   26
       top             =   6180
       width           =   1455
    end
@@ -33,9 +33,9 @@ begin vb.form frmservidor
       appearance      =   0  'flat
       backcolor       =   &h00000000&
       forecolor       =   &h80000008&
-      height          =   4335
+      height          =   4350
       left            =   120
-      scaleheight     =   287
+      scaleheight     =   288
       scalemode       =   3  'pixel
       scalewidth      =   304
       tabindex        =   6
@@ -46,16 +46,16 @@ begin vb.form frmservidor
          largechange     =   50
          left            =   4320
          smallchange     =   17
-         tabindex        =   26
+         tabindex        =   24
          top             =   0
          width           =   255
       end
       begin vb.picturebox piccont 
          backcolor       =   &h00c0c0c0&
          borderstyle     =   0  'none
-         height          =   5055
+         height          =   4815
          left            =   0
-         scaleheight     =   337
+         scaleheight     =   321
          scalemode       =   3  'pixel
          scalewidth      =   289
          tabindex        =   7
@@ -74,24 +74,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   29
-            top             =   4680
-            width           =   4095
-         end
-         begin vb.commandbutton command24 
-            caption         =   "estadisticas"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   25
+            tabindex        =   27
             top             =   4440
             width           =   4095
          end
@@ -159,7 +142,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   27
+            tabindex        =   25
             top             =   3480
             width           =   4095
          end
@@ -180,6 +163,23 @@ begin vb.form frmservidor
             top             =   3240
             width           =   4095
          end
+         begin vb.commandbutton command28 
+            caption         =   "reload balance.dat"
+            beginproperty font 
+               name            =   "tahoma"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   255
+            left            =   120
+            tabindex        =   28
+            top             =   3000
+            width           =   4095
+         end
          begin vb.commandbutton command14 
             caption         =   "update motd"
             beginproperty font 
@@ -194,7 +194,7 @@ begin vb.form frmservidor
             height          =   255
             left            =   120
             tabindex        =   12
-            top             =   3000
+            top             =   2760
             width           =   4095
          end
          begin vb.commandbutton command19 
@@ -211,7 +211,7 @@ begin vb.form frmservidor
             height          =   255
             left            =   120
             tabindex        =   13
-            top             =   2760
+            top             =   2520
             width           =   4095
          end
          begin vb.commandbutton command15 
@@ -228,23 +228,6 @@ begin vb.form frmservidor
             height          =   255
             left            =   120
             tabindex        =   14
-            top             =   2520
-            width           =   4095
-         end
-         begin vb.commandbutton command13 
-            caption         =   "debug listening socket"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   15
             top             =   2280
             width           =   4095
          end
@@ -261,7 +244,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   16
+            tabindex        =   15
             top             =   2040
             width           =   4095
          end
@@ -278,7 +261,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   17
+            tabindex        =   16
             top             =   1800
             width           =   4095
          end
@@ -295,7 +278,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   18
+            tabindex        =   17
             top             =   1560
             width           =   4095
          end
@@ -312,7 +295,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   19
+            tabindex        =   18
             top             =   1320
             width           =   4095
          end
@@ -329,7 +312,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   20
+            tabindex        =   19
             top             =   1080
             width           =   4095
          end
@@ -346,7 +329,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   21
+            tabindex        =   20
             top             =   840
             width           =   4095
          end
@@ -364,7 +347,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   22
+            tabindex        =   21
             top             =   600
             width           =   4095
          end
@@ -381,7 +364,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   23
+            tabindex        =   22
             top             =   360
             width           =   4095
          end
@@ -398,7 +381,7 @@ begin vb.form frmservidor
             endproperty
             height          =   255
             left            =   120
-            tabindex        =   24
+            tabindex        =   23
             top             =   120
             width           =   4095
          end
@@ -510,7 +493,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -555,10 +538,6 @@ end sub
 
 private sub command12_click()
 frmdebugnpc.show
-end sub
-
-private sub command13_click()
-frmdebugsocket.visible = true
 end sub
 
 private sub command14_click()
@@ -699,11 +678,6 @@ if msgbox("esta seguro que desea hacer worldsave, guardar pjs y cerrar ?", vbyes
 end if
 end sub
 
-private sub command24_click()
-frmestadisticas.show
-
-end sub
-
 private sub command25_click()
 call md5scarga
 
@@ -722,6 +696,10 @@ end sub
 private sub command27_click()
 frmuserlist.show
 
+end sub
+
+private sub command28_click()
+    call loadbalance
 end sub
 
 private sub command3_click()

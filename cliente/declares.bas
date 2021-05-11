@@ -39,6 +39,7 @@ public dialogos as new clsdialogs
 public audio as new clsaudio
 public inventario as new clsgrapchicalinventory
 public surfacedb as clssurfacemanager   'no va new porque es una interfaz, el new se pone al decidir que clase de objeto es
+public customkeys as new clscustomkeys
 public custommessages as new clscustommessages
 
 public incomingdata as new clsbytequeue
@@ -313,6 +314,9 @@ public const mensaje_seguro_desactivado as string = ">>seguro desactivado<<"
 public const mensaje_pierde_nobleza as string = "��has perdido puntaje de nobleza y ganado puntaje de criminalidad!! si sigues ayudando a criminales te convertir�s en uno de ellos y ser�s perseguido por las tropas de las ciudades."
 public const mensaje_usar_meditando as string = "�est�s meditando! debes dejar de meditar para usar objetos."
 
+public const mensaje_seguro_resu_on as string = "seguro de resurreccion activado"
+public const mensaje_seguro_resu_off as string = "seguro de resurreccion desactivado"
+
 public const mensaje_golpe_cabeza as string = "��la criatura te ha pegado en la cabeza por "
 public const mensaje_golpe_brazo_izq as string = "��la criatura te ha pegado el brazo izquierdo por "
 public const mensaje_golpe_brazo_der as string = "��la criatura te ha pegado el brazo derecho por "
@@ -365,7 +369,7 @@ type inventory
     amount as long
     '[/alejo]
     equipped as byte
-    valor as long
+    valor as single
     objtype as integer
     def as integer
     maxhit as integer
@@ -377,7 +381,7 @@ type npcinv
     name as string
     grhindex as integer
     amount as integer
-    valor as long
+    valor as single
     objtype as integer
     def as integer
     maxhit as integer
@@ -389,7 +393,6 @@ type npcinv
     c5 as string
     c6 as string
     c7 as string
-    
 end type
 
 type treputacion 'fama del usuario
@@ -414,15 +417,12 @@ end type
 
 public nombres as boolean
 
-public mixedkey as long
-
 'user status vars
 global otroinventario(1 to max_inventory_slots) as inventory
 
 public userhechizos(1 to maxhechi) as integer
 
 public npcinventory(1 to max_npc_inventory_slots) as npcinv
-public npcinvdim as integer
 public usermeditar as boolean
 public username as string
 public userpassword as string
@@ -432,6 +432,10 @@ public usermaxman as integer
 public userminman as integer
 public usermaxsta as integer
 public userminsta as integer
+public usermaxagu as byte
+public userminagu as byte
+public usermaxham as byte
+public userminham as byte
 public usergld as long
 public userlvl as integer
 public userport as integer
@@ -502,6 +506,7 @@ public enum fxmeditar
     mediano = 5
     grande = 6
     xgrande = 16
+    xxgrande = 34
 end enum
 
 public enum eclantype
@@ -559,10 +564,6 @@ public sendnewchar as boolean 'used during login
 public connected as boolean 'true when connected to server
 public downloadingmap as boolean 'currently downloading a map from server
 public usermap as integer
-
-'string contants
-public const endc as string * 1 = vbnullchar    'endline character for talking with server
-public const endl as string * 2 = vbcrlf        'holds the endline character for textboxes
 
 'control
 public prgrun as boolean 'when true the program ends

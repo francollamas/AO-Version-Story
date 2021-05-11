@@ -3,7 +3,7 @@ object = "{831fdd16-0c5c-11d2-a9fc-0000f8754da1}#2.0#0"; "mscomctl.ocx"
 begin vb.form frmopciones 
    backcolor       =   &h00000000&
    borderstyle     =   3  'fixed dialog
-   clientheight    =   4245
+   clientheight    =   5325
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   4740
@@ -21,10 +21,26 @@ begin vb.form frmopciones
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   4245
+   scaleheight     =   5325
    scalewidth      =   4740
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
+   begin vb.commandbutton cmdchangepassword 
+      caption         =   "cambiar contrase�a"
+      height          =   375
+      left            =   960
+      tabindex        =   15
+      top             =   3600
+      width           =   2775
+   end
+   begin vb.commandbutton cmdcustomkeys 
+      caption         =   "configurar teclas"
+      height          =   375
+      left            =   960
+      tabindex        =   14
+      top             =   3120
+      width           =   2775
+   end
    begin vb.commandbutton custommsgcmd 
       caption         =   "mensajes personalizados"
       height          =   375
@@ -38,7 +54,7 @@ begin vb.form frmopciones
       height          =   375
       left            =   960
       tabindex        =   12
-      top             =   3240
+      top             =   4320
       width           =   2775
    end
    begin vb.frame frame2 
@@ -160,7 +176,7 @@ begin vb.form frmopciones
       mouseicon       =   "frmopciones.frx":0152
       mousepointer    =   99  'custom
       tabindex        =   0
-      top             =   3720
+      top             =   4800
       width           =   2790
    end
    begin vb.label label1 
@@ -254,16 +270,29 @@ private sub check1_click(index as integer)
     end select
 end sub
 
+private sub cmdcustomkeys_click()
+    if not loading then _
+        call audio.playwave(snd_click)
+    call frmcustomkeys.show(vbmodal, me)
+end sub
+
 private sub cmdmanual_click()
+    if not loading then _
+        call audio.playwave(snd_click)
     call shellexecute(0, "open", "http://ao.alkon.com.ar/aomanual/", "", app.path, 0)
+end sub
+
+private sub cmdchangepassword_click()
+    call frmnewpassword.show(vbmodal, me)
 end sub
 
 private sub command2_click()
     unload me
+    frmmain.setfocus
 end sub
 
 private sub custommsgcmd_click()
-    call frmmessagetxt.show(vbmodeless, frmmain)
+    call frmmessagetxt.show(vbmodeless, me)
 end sub
 
 private sub form_load()

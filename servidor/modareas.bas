@@ -68,7 +68,6 @@ public sub initareas()
 '**************************************************************
     dim loopc as long
     dim loopx as long
-    dim curarea as byte
 
 ' setup areas...
     for loopc = 0 to 11

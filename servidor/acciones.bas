@@ -1,5 +1,5 @@
 attribute vb_name = "acciones"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -42,120 +42,131 @@ option explicit
 ' @param y y
 
 sub accion(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
+    dim tempindex as integer
+    
 on error resume next
-
-'�rango visi�n? (toxicwaste)
-if (abs(userlist(userindex).pos.y - y) > rango_vision_y) or (abs(userlist(userindex).pos.x - x) > rango_vision_x) then
-    exit sub
-end if
-
-'�posicion valida?
-if inmapbounds(map, x, y) then
-   
-    dim foundchar as byte
-    dim foundsomething as byte
-    dim tempcharindex as integer
-       
-    if mapdata(map, x, y).npcindex > 0 then     'acciones npcs
-        'set the target npc
-        userlist(userindex).flags.targetnpc = mapdata(map, x, y).npcindex
-        
-        if npclist(mapdata(map, x, y).npcindex).comercia = 1 then
-            '�esta el user muerto? si es asi no puede comerciar
-            if userlist(userindex).flags.muerto = 1 then
-                call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            
-            if distancia(npclist(userlist(userindex).flags.targetnpc).pos, userlist(userindex).pos) > 3 then
-                call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            
-            'iniciamos la rutina pa' comerciar.
-            call iniciarcomercionpc(userindex)
-        
-        elseif npclist(mapdata(map, x, y).npcindex).npctype = enpctype.banquero then
-            '�esta el user muerto? si es asi no puede comerciar
-            if userlist(userindex).flags.muerto = 1 then
-                call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            
-            if distancia(npclist(mapdata(map, x, y).npcindex).pos, userlist(userindex).pos) > 3 then
-                call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            
-            'a depositar de una
-            call iniciardeposito(userindex)
-        
-        elseif npclist(mapdata(map, x, y).npcindex).npctype = enpctype.revividor or npclist(mapdata(map, x, y).npcindex).npctype = enpctype.resucitadornewbie then
-            if distancia(userlist(userindex).pos, npclist(mapdata(map, x, y).npcindex).pos) > 10 then
-                call writeconsolemsg(userindex, "el sacerdote no puede curarte debido a que estas demasiado lejos.", fonttypenames.fonttype_info)
-                exit sub
-            end if
-            
-            'revivimos si es necesario
-            if userlist(userindex).flags.muerto = 1 and (npclist(mapdata(map, x, y).npcindex).npctype = enpctype.revividor or esnewbie(userindex)) then
-                call revivirusuario(userindex)
-            end if
-            
-            if npclist(mapdata(map, x, y).npcindex).npctype = enpctype.revividor or esnewbie(userindex) then
-                'curamos totalmente
-                userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
-                call writeupdateuserstats(userindex)
-            end if
-        end if
-        
-    '�es un obj?
-    elseif mapdata(map, x, y).objinfo.objindex > 0 then
-        userlist(userindex).flags.targetobj = mapdata(map, x, y).objinfo.objindex
-        
-        select case objdata(mapdata(map, x, y).objinfo.objindex).objtype
-            
-            case eobjtype.otpuertas 'es una puerta
-                call accionparapuerta(map, x, y, userindex)
-            case eobjtype.otcarteles 'es un cartel
-                call accionparacartel(map, x, y, userindex)
-            case eobjtype.otforos 'foro
-                call accionparaforo(map, x, y, userindex)
-            case eobjtype.otle�a    'le�a
-                if mapdata(map, x, y).objinfo.objindex = fogata_apag and userlist(userindex).flags.muerto = 0 then
-                    call accionpararamita(map, x, y, userindex)
-                end if
-        end select
-    '>>>>>>>>>>>objetos que ocupam mas de un tile<<<<<<<<<<<<<
-    elseif mapdata(map, x + 1, y).objinfo.objindex > 0 then
-        userlist(userindex).flags.targetobj = mapdata(map, x + 1, y).objinfo.objindex
-        
-        select case objdata(mapdata(map, x + 1, y).objinfo.objindex).objtype
-            
-            case eobjtype.otpuertas 'es una puerta
-                call accionparapuerta(map, x + 1, y, userindex)
-            
-        end select
-    elseif mapdata(map, x + 1, y + 1).objinfo.objindex > 0 then
-        userlist(userindex).flags.targetobj = mapdata(map, x + 1, y + 1).objinfo.objindex
-
-        select case objdata(mapdata(map, x + 1, y + 1).objinfo.objindex).objtype
-            
-            case eobjtype.otpuertas 'es una puerta
-                call accionparapuerta(map, x + 1, y + 1, userindex)
-            
-        end select
-    elseif mapdata(map, x, y + 1).objinfo.objindex > 0 then
-        userlist(userindex).flags.targetobj = mapdata(map, x, y + 1).objinfo.objindex
-
-        select case objdata(mapdata(map, x, y + 1).objinfo.objindex).objtype
-            
-            case eobjtype.otpuertas 'es una puerta
-                call accionparapuerta(map, x, y + 1, userindex)
-            
-        end select
+    '�rango visi�n? (toxicwaste)
+    if (abs(userlist(userindex).pos.y - y) > rango_vision_y) or (abs(userlist(userindex).pos.x - x) > rango_vision_x) then
+        exit sub
     end if
-end if
-
+    
+    '�posicion valida?
+    if inmapbounds(map, x, y) then
+        with userlist(userindex)
+            if mapdata(map, x, y).npcindex > 0 then     'acciones npcs
+                tempindex = mapdata(map, x, y).npcindex
+                
+                'set the target npc
+                .flags.targetnpc = tempindex
+                
+                if npclist(tempindex).comercia = 1 then
+                    '�esta el user muerto? si es asi no puede comerciar
+                    if .flags.muerto = 1 then
+                        call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                    
+                    'is it already in commerce mode??
+                    if .flags.comerciando then
+                        exit sub
+                    end if
+                    
+                    if distancia(npclist(tempindex).pos, .pos) > 3 then
+                        call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                    
+                    'iniciamos la rutina pa' comerciar.
+                    call iniciarcomercionpc(userindex)
+                
+                elseif npclist(tempindex).npctype = enpctype.banquero then
+                    '�esta el user muerto? si es asi no puede comerciar
+                    if .flags.muerto = 1 then
+                        call writeconsolemsg(userindex, "��estas muerto!!", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                    
+                    'is it already in commerce mode??
+                    if .flags.comerciando then
+                        exit sub
+                    end if
+                    
+                    if distancia(npclist(tempindex).pos, .pos) > 3 then
+                        call writeconsolemsg(userindex, "estas demasiado lejos del vendedor.", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                    
+                    'a depositar de una
+                    call iniciardeposito(userindex)
+                
+                elseif npclist(tempindex).npctype = enpctype.revividor or npclist(tempindex).npctype = enpctype.resucitadornewbie then
+                    if distancia(.pos, npclist(tempindex).pos) > 10 then
+                        call writeconsolemsg(userindex, "el sacerdote no puede curarte debido a que estas demasiado lejos.", fonttypenames.fonttype_info)
+                        exit sub
+                    end if
+                    
+                    'revivimos si es necesario
+                    if .flags.muerto = 1 and (npclist(tempindex).npctype = enpctype.revividor or esnewbie(userindex)) then
+                        call revivirusuario(userindex)
+                    end if
+                    
+                    if npclist(tempindex).npctype = enpctype.revividor or esnewbie(userindex) then
+                        'curamos totalmente
+                        .stats.minhp = .stats.maxhp
+                        call writeupdateuserstats(userindex)
+                    end if
+                end if
+                
+            '�es un obj?
+            elseif mapdata(map, x, y).objinfo.objindex > 0 then
+                tempindex = mapdata(map, x, y).objinfo.objindex
+                
+                .flags.targetobj = tempindex
+                
+                select case objdata(tempindex).objtype
+                    case eobjtype.otpuertas 'es una puerta
+                        call accionparapuerta(map, x, y, userindex)
+                    case eobjtype.otcarteles 'es un cartel
+                        call accionparacartel(map, x, y, userindex)
+                    case eobjtype.otforos 'foro
+                        call accionparaforo(map, x, y, userindex)
+                    case eobjtype.otle�a    'le�a
+                        if tempindex = fogata_apag and .flags.muerto = 0 then
+                            call accionpararamita(map, x, y, userindex)
+                        end if
+                end select
+            '>>>>>>>>>>>objetos que ocupam mas de un tile<<<<<<<<<<<<<
+            elseif mapdata(map, x + 1, y).objinfo.objindex > 0 then
+                tempindex = mapdata(map, x + 1, y).objinfo.objindex
+                .flags.targetobj = tempindex
+                
+                select case objdata(tempindex).objtype
+                    
+                    case eobjtype.otpuertas 'es una puerta
+                        call accionparapuerta(map, x + 1, y, userindex)
+                    
+                end select
+            
+            elseif mapdata(map, x + 1, y + 1).objinfo.objindex > 0 then
+                tempindex = mapdata(map, x + 1, y + 1).objinfo.objindex
+                .flags.targetobj = tempindex
+        
+                select case objdata(tempindex).objtype
+                    case eobjtype.otpuertas 'es una puerta
+                        call accionparapuerta(map, x + 1, y + 1, userindex)
+                end select
+            
+            elseif mapdata(map, x, y + 1).objinfo.objindex > 0 then
+                tempindex = mapdata(map, x, y + 1).objinfo.objindex
+                .flags.targetobj = tempindex
+                
+                select case objdata(tempindex).objtype
+                    case eobjtype.otpuertas 'es una puerta
+                        call accionparapuerta(map, x, y + 1, userindex)
+                end select
+            end if
+        end with
+    end if
 end sub
 
 sub accionparaforo(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
@@ -203,9 +214,6 @@ end sub
 sub accionparapuerta(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
 on error resume next
 
-dim miobj as obj
-dim wp as worldpos
-
 if not (distance(userlist(userindex).pos.x, userlist(userindex).pos.y, x, y) > 2) then
     if objdata(mapdata(map, x, y).objinfo.objindex).llave = 0 then
         if objdata(mapdata(map, x, y).objinfo.objindex).cerrada = 1 then
@@ -226,7 +234,7 @@ if not (distance(userlist(userindex).pos.x, userlist(userindex).pos.y, x, y) > 2
                     
                       
                     'sonido
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_puerta))
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_puerta, x, y))
                     
                 else
                      call writeconsolemsg(userindex, "la puerta esta cerrada con llave.", fonttypenames.fonttype_info)
@@ -244,7 +252,7 @@ if not (distance(userlist(userindex).pos.x, userlist(userindex).pos.y, x, y) > 2
                 call bloquear(true, map, x - 1, y, 1)
                 call bloquear(true, map, x, y, 1)
                 
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_puerta))
+                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_puerta, x, y))
         end if
         
         userlist(userindex).flags.targetobj = mapdata(map, x, y).objinfo.objindex
@@ -259,9 +267,6 @@ end sub
 
 sub accionparacartel(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
 on error resume next
-
-
-dim miobj as obj
 
 if objdata(mapdata(map, x, y).objinfo.objindex).objtype = 8 then
   
@@ -279,7 +284,6 @@ on error resume next
 dim suerte as byte
 dim exito as byte
 dim obj as obj
-dim raise as integer
 
 dim pos as worldpos
 pos.map = map
@@ -312,9 +316,8 @@ if exito = 1 then
         obj.amount = 1
         
         call writeconsolemsg(userindex, "has prendido la fogata.", fonttypenames.fonttype_info)
-        call senddata(topcarea, userindex, preparemessageplayfiresound())
         
-        call makeobj(map, obj, map, x, y)
+        call makeobj(obj, map, x, y)
         
         'las fogatas prendidas se deben eliminar
         dim fogatita as new cgarbage

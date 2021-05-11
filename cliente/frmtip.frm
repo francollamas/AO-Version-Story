@@ -130,13 +130,3 @@ private sub form_deactivate()
 me.setfocus
 end sub
 
-private sub label2_click()
-if frmtip.check1.value = vbchecked then
-    tipf = "1"
-else
-    tipf = "0"
-end if
-
-unload me
-end sub
-

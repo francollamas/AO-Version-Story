@@ -1,5 +1,5 @@
 attribute vb_name = "declaraciones"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -33,17 +33,6 @@ option explicit
 ' modulo de declaraciones. aca hay de todo.
 '
 
-public mixedkey as long
-public serverip as string
-
-type testadisticasdiarias
-    segundos as double
-    maxusuarios as integer
-    promedio as integer
-end type
-    
-public daystats as testadisticasdiarias
-
 #if seguridadalkon then
 public ados as new clsantidos
 #end if
@@ -53,7 +42,7 @@ public trashcollector as new collection
 
 
 public const maxspawnattemps = 60
-public const loopadeternum = 999
+public const infinite_loops as integer = -1
 public const fxsangre = 14
 
 ''
@@ -64,10 +53,22 @@ public const chat_color_dead_char as long = &hc0c0c0
 ' the color of yells made by any kind of game administrator.
 public const chat_color_gm_yell as long = &hf82ff
 
+''
+' coordinates for normal sounds (not 3d, like rain)
+public const no_3d_sound as byte = 0
 
 public const ifragatafantasmal = 87
 public const ifragatareal = 190
 public const ifragatacaos = 189
+public const ibarca = 84
+public const igalera = 85
+public const igaleon = 86
+public const ibarcaciuda = 395
+public const ibarcapk = 396
+public const igaleraciuda = 397
+public const igalerapk = 398
+public const igaleonciuda = 399
+public const igaleonpk = 400
 
 public enum iminerales
     hierrocrudo = 192
@@ -77,12 +78,6 @@ public enum iminerales
     lingotedeplata = 387
     lingotedeoro = 388
 end enum
-
-
-public type tllamadagm
-    usuario as string * 255
-    desc as string * 255
-end type
 
 public enum playertype
     user = &h1
@@ -125,7 +120,7 @@ end enum
 public enum eraza
     humano = 1
     elfo
-    elfooscuro
+    drow
     gnomo
     enano
 end enum
@@ -155,7 +150,8 @@ end type
 public micabecera as tcabecera
 
 'barrin 3/10/03
-public const tiempo_iniciomeditar as integer = 3000
+'cambiado a 2 segundos el 30/11/07
+public const tiempo_iniciomeditar as integer = 2000
 
 public const ningunescudo as integer = 2
 public const ninguncasco as integer = 2
@@ -163,6 +159,8 @@ public const ningunarma as integer = 2
 
 public const espadamatadragonesindex as integer = 402
 public const laudmagico as integer = 696
+public const flautamagica as integer = 208
+
 
 public const maxmascotasentrenador as byte = 7
 
@@ -172,6 +170,7 @@ public enum fxids
     fxmeditarmediano = 5
     fxmeditargrande = 6
     fxmeditarxgrande = 16
+    fxmeditarxxgrande = 34
 end enum
 
 public const tiempo_carcel_piquete as long = 10
@@ -212,12 +211,12 @@ public enum etrigger6
 end enum
 
 'todo : reemplazar por un enum
-public const bosque = "bosque"
-public const nieve = "nieve"
-public const desierto = "desierto"
-public const ciudad = "ciudad"
-public const campo = "campo"
-public const dungeon = "dungeon"
+public const bosque as string = "bosque"
+public const nieve as string = "nieve"
+public const desierto as string = "desierto"
+public const ciudad as string = "ciudad"
+public const campo as string = "campo"
+public const dungeon as string = "dungeon"
 
 ' <<<<<< targets >>>>>>
 public enum targettype
@@ -806,12 +805,35 @@ public type objdata
     defensamagicamax as integer
     defensamagicamin as integer
     refuerzo as byte
+    
+    log as byte 'es un objeto que queremos loguear? pablo (toxicwaste) 07/09/07
+    nolog as byte 'es un objeto que esta prohibido loguear?
 end type
 
 public type obj
     objindex as integer
     amount as integer
 end type
+
+'[pablo toxicwaste]
+public type modclase
+    evasion as double
+    ataquearmas as double
+    ataqueproyectiles as double
+    da�oarmas as double
+    da�oproyectiles as double
+    da�owrestling as double
+    escudo as double
+end type
+
+public type modraza
+    fuerza as single
+    agilidad as single
+    inteligencia as single
+    carisma as single
+    constitucion as single
+end type
+'[/pablo toxicwaste]
 
 '[kevin]
 'banco objs
@@ -900,6 +922,7 @@ public type userflags
     puedetrabajar as byte
     envenenado as byte
     paralizado as byte
+    inmovilizado as byte
     estupidez as byte
     ceguera as byte
     invisible as byte
@@ -915,6 +938,7 @@ public type userflags
     vuela as byte
     navegando as byte
     seguro as boolean
+    seguroresu as boolean
     
     duracionefecto as long
     targetnpc as integer ' npc se�alado por el usuario
@@ -1001,7 +1025,6 @@ public type usercounters
     piquetec as long
     pena as long
     sendmapcounter as worldpos
-    pasos as integer
     '[gonzalo]
     saliendo as boolean
     salir as integer
@@ -1019,10 +1042,13 @@ public type usercounters
     timerusar as long
     timermagiagolpe as long
     timergolpemagia as long
+    timergolpeusar as long
     
     
     trabajando as long  ' para el centinela
     ocultando as long   ' unico trabajo no revisado por el centinela
+    
+    failedusageattempts as long
 end type
 
 'cosas faccionarias.
@@ -1050,8 +1076,6 @@ public type user
     id as long
     
     showname as boolean 'permite que los gms oculten su nick con el comando /showname
-    
-    modname as string
     
     char as char 'define la apariencia
     charmimetizado as char
@@ -1081,13 +1105,10 @@ public type user
     
     mascotasindex(1 to maxmascotas) as integer
     mascotastype(1 to maxmascotas) as integer
-    nromacotas as integer
+    nromascotas as integer
     
     stats as userstats
     flags as userflags
-    numeropaquetespormilisec as long
-    bytestransmitidosuser as long
-    bytestransmitidossvr as long
     
     reputacion as treputacion
     
@@ -1144,7 +1165,7 @@ public type npcstats
     maxhit as integer
     minhit as integer
     def as integer
-    usuariosmatados as integer
+    defm as integer
 end type
 
 public type npccounters
@@ -1154,20 +1175,15 @@ end type
 
 public type npcflags
     afectaparalisis as byte
-    golpeexacto as byte
     domable as integer
     respawn as byte
     npcactive as boolean '�esta vivo?
     follow as boolean
     faccion as byte
+    atacadoble as byte
     lanzaspells as byte
     
-    '[kevin]
-    'dequest as byte
-    
-    'expdada as long
-    expcount as long '[alejo]
-    '[/kevin]
+    expcount as long
     
     oldmovement as tipoai
     oldhostil as byte
@@ -1175,16 +1191,9 @@ public type npcflags
     aguavalida as byte
     tierrainvalida as byte
     
-    useainow as boolean
     sound as integer
-    attacking as integer
     attackedby as string
     attackedfirstby as string
-    category1 as string
-    category2 as string
-    category3 as string
-    category4 as string
-    category5 as string
     backup as byte
     respawnorigpos as byte
     
@@ -1198,11 +1207,6 @@ public type npcflags
     snd1 as integer
     snd2 as integer
     snd3 as integer
-    
-    atacaapj as integer
-    atacaanpc as integer
-    aialineacion as e_alineacion
-    aipersonalidad as e_personalidad
 end type
 
 public type tcriaturasentrenador
@@ -1234,12 +1238,9 @@ public type npc
     name as string
     char as char 'define como se vera
     desc as string
-    descextra as string
 
     npctype as enpctype
     numero as integer
-
-    level as integer
 
     invrespawn as byte
 
@@ -1333,6 +1334,8 @@ public backup as boolean ' todo: se usa esta variable ?
 public listarazas(1 to numrazas) as string
 public skillsnames(1 to numskills) as string
 public listaclases(1 to numclases) as string
+public listaatributos(1 to numatributos) as string
+
 
 public recordusuarios as long
 
@@ -1363,12 +1366,6 @@ public maxxborder as byte
 public minyborder as byte
 public maxyborder as byte
 
-public respos as worldpos ' todo: se usa esta variable ?
-
-''
-'posicion de comienzo
-public startpos as worldpos ' todo: se usa esta variable ?
-
 ''
 'numero de usuarios actual
 public numusers as integer
@@ -1388,10 +1385,7 @@ public hideme as byte
 public lastbackup as string
 public minutos as string
 public haciendobk as boolean
-public oscuridad as integer
-public nochedia as integer
 public puedecrearpersonajes as integer
-public camaralenta as integer
 public serversologms as integer
 
 ''
@@ -1401,7 +1395,6 @@ public md5clientesactivado as byte
 
 public enpausa as boolean
 public entesting as boolean
-public encriptarprotocoloscriticos as boolean
 
 
 '*****************arrays publicos*************************
@@ -1422,6 +1415,11 @@ public objcarpintero() as integer
 public md5s() as string
 public banips as new collection
 public parties(1 to max_parties) as clsparty
+public modclase(1 to numclases) as modclase
+public modraza(1 to numrazas) as modraza
+public modvida(1 to numclases) as double
+public distribucionenteravida(1 to 5) as integer
+public distribucionsemienteravida(1 to 4) as integer
 '*********************************************************
 
 public nix as worldpos

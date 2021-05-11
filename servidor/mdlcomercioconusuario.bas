@@ -22,7 +22,8 @@ attribute vb_name = "mdlcomercioconusuario"
 '[alejo]
 option explicit
 
-private const max_oro_logueable as long = 90000
+private const max_oro_logueable as long = 50000
+private const max_obj_logueable as long = 1000
 
 public type tcomerciousuario
     destusu as integer 'el otro usuario
@@ -222,6 +223,7 @@ if userlist(otrouserindex).comusu.objeto = flagoro then
     'y se la doy al otro
     userlist(userindex).stats.gld = userlist(userindex).stats.gld + userlist(otrouserindex).comusu.cant
     if userlist(otrouserindex).comusu.cant > max_oro_logueable then call logdesarrollo(userlist(userindex).name & " recibio oro en comercio seguro con " & userlist(otrouserindex).name & ". cantidad: " & userlist(otrouserindex).comusu.cant)
+    'esta linea del log es al pedo. > vuelvo a ponerla a pedido del cgms
     call writeupdateuserstats(userindex)
 else
     'quita el objeto y se lo da al otro
@@ -229,17 +231,30 @@ else
         call tiraritemalpiso(userlist(userindex).pos, obj2)
     end if
     call quitarobjetos(obj2.objindex, obj2.amount, otrouserindex)
+    
+    'es un objeto que tenemos que loguear? pablo (toxicwaste) 07/09/07
+    if objdata(obj2.objindex).log = 1 then
+        call logdesarrollo(userlist(otrouserindex).name & " le pas� en comercio seguro a " & userlist(userindex).name & " " & obj2.amount & " " & objdata(obj2.objindex).name)
+    end if
+    'es mucha cantidad?
+    if obj2.amount > max_obj_logueable then
+    'si no es de los prohibidos de loguear, lo logueamos.
+        if objdata(obj2.objindex).nolog <> 1 then
+            call logdesarrollo(userlist(otrouserindex).name & " le pas� en comercio seguro a " & userlist(userindex).name & " " & obj2.amount & " " & objdata(obj2.objindex).name)
+        end if
+    end if
 end if
 
 'pone el oro directamente en la billetera
 if userlist(userindex).comusu.objeto = flagoro then
     'quito la cantidad de oro ofrecida
     userlist(userindex).stats.gld = userlist(userindex).stats.gld - userlist(userindex).comusu.cant
-    if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(userlist(userindex).name & " solto oro en comercio seguro con " & userlist(otrouserindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
+    if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(userlist(userindex).name & " solt� oro en comercio seguro con " & userlist(otrouserindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
     call writeupdateuserstats(userindex)
     'y se la doy al otro
     userlist(otrouserindex).stats.gld = userlist(otrouserindex).stats.gld + userlist(userindex).comusu.cant
-    if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(userlist(otrouserindex).name & " recibio oro en comercio seguro con " & userlist(userindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
+    'if userlist(userindex).comusu.cant > max_oro_logueable then call logdesarrollo(userlist(otrouserindex).name & " recibio oro en comercio seguro con " & userlist(userindex).name & ". cantidad: " & userlist(userindex).comusu.cant)
+    'esta linea del log es al pedo.
     call writeupdateuserstats(otrouserindex)
 else
     'quita el objeto y se lo da al otro
@@ -247,6 +262,19 @@ else
         call tiraritemalpiso(userlist(otrouserindex).pos, obj1)
     end if
     call quitarobjetos(obj1.objindex, obj1.amount, userindex)
+    
+    'es un objeto que tenemos que loguear? pablo (toxicwaste) 07/09/07
+    if objdata(obj1.objindex).log = 1 then
+        call logdesarrollo(userlist(userindex).name & " le pas� en comercio seguro a " & userlist(otrouserindex).name & " " & obj1.amount & " " & objdata(obj1.objindex).name)
+    end if
+    'es mucha cantidad?
+    if obj1.amount > max_obj_logueable then
+    'si no es de los prohibidos de loguear, lo logueamos.
+        if objdata(obj1.objindex).nolog <> 1 then
+            call logdesarrollo(userlist(otrouserindex).name & " le pas� en comercio seguro a " & userlist(userindex).name & " " & obj1.amount & " " & objdata(obj1.objindex).name)
+        end if
+    end if
+    
 end if
 
 '[/corregido] :p

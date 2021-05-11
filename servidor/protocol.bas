@@ -39,6 +39,10 @@ option explicit
 private const separator as string * 1 = vbnullchar
 
 ''
+'the last existing client packet id.
+private const last_client_packet_id as byte = 244
+
+''
 'auxiliar bytequeue used as buffer to generate messages not intended to be sent right away.
 'specially usefull to create a message once and send it over to several clients.
 private auxiliarbuffer as new clsbytequeue
@@ -66,6 +70,8 @@ private enum serverpacketid
     updateneeded            ' reau
     safemodeon              ' segon
     safemodeoff             ' segoff
+    resuscitationsafeon
+    resuscitationsafeoff
     nobilitylost            ' pn
     cantusewhilemeditating  ' m!
     updatesta               ' ass
@@ -89,6 +95,7 @@ private enum serverpacketid
     charactercreate         ' cc
     characterremove         ' bp
     charactermove           ' mp, +, * and _ '
+    forcecharmove
     characterchange         ' cp
     objectcreate            ' ho
     objectdelete            ' bo
@@ -96,7 +103,6 @@ private enum serverpacketid
     playmidi                ' tm
     playwave                ' tw
     guildlist               ' gl
-    playfiresound           ' fo
     areachanged             ' ca
     pausetoggle             ' bkw
     raintoggle              ' llu
@@ -167,6 +173,7 @@ private enum clientpacketid
     pickup                  'ag
     combatmodetoggle        'tab        - should be hanlded just by the client!!
     safetoggle              '/seg & seg  (seg's behaviour has to be coded in the client)
+    resuscitationsafetoggle
     requestguildleaderinfo  'glinfo
     requestatributes        'atr
     requestfame             'fama
@@ -258,7 +265,7 @@ private enum clientpacketid
     changedescription       '/desc
     guildvote               '/voto
     punishments             '/penas
-    changepassword          '/passwd
+    changepassword          '/contrase�a
     gamble                  '/apostar
     inquiryvote             '/encuesta ( with parameters )
     leavefaction            '/retirar ( with no arguments )
@@ -392,7 +399,6 @@ private enum clientpacketid
     showserverform          '/show int
     night                   '/noche
     kickallchars            '/echartodospjs
-    requesttcpstats         '/tcpesstats
     reloadnpcs              '/reloadnpcs
     reloadserverini         '/reloadsini
     reloadspells            '/reloadhechizos
@@ -424,6 +430,8 @@ public enum fonttypenames
     fonttype_gmmsg
     fonttype_gm
     fonttype_citizen
+    fonttype_conse
+    fonttype_dios
 end enum
 
 public enum eeditoptions
@@ -466,15 +474,21 @@ on error resume next
         
         'is the user actually logged?
         if not userlist(userindex).flags.userlogged then
-            call closesocket(userindex, true)
+            call closesocket(userindex)
             exit sub
         
         'he is logged. reset idle counter if id is valid.
-        elseif packetid <= clientpacketid.checkslot then
-                userlist(userindex).counters.idlecount = 0
+        elseif packetid <= last_client_packet_id then
+            userlist(userindex).counters.idlecount = 0
         end if
-    elseif packetid <= clientpacketid.checkslot then
+    elseif packetid <= last_client_packet_id then
         userlist(userindex).counters.idlecount = 0
+        
+        'is the user logged?
+        if userlist(userindex).flags.userlogged then
+            call closesocket(userindex)
+            exit sub
+        end if
     end if
     
     select case packetid
@@ -513,6 +527,9 @@ on error resume next
         
         case clientpacketid.safetoggle              '/seg & seg  (seg's behaviour has to be coded in the client)
             call handlesafetoggle(userindex)
+        
+        case clientpacketid.resuscitationsafetoggle
+            call handleresuscitationtoggle(userindex)
         
         case clientpacketid.requestguildleaderinfo  'glinfo
             call handlerequestguildleaderinfo(userindex)
@@ -787,7 +804,7 @@ on error resume next
         case clientpacketid.punishments             '/penas
             call handlepunishments(userindex)
         
-        case clientpacketid.changepassword          '/passwd
+        case clientpacketid.changepassword          '/contrase�a
             call handlechangepassword(userindex)
         
         case clientpacketid.gamble                  '/apostar
@@ -1185,9 +1202,6 @@ on error resume next
         case clientpacketid.kickallchars            '/echartodospjs
             call handlekickallchars(userindex)
         
-        case clientpacketid.requesttcpstats         '/tcpesstats
-            call handlerequesttcpstats(userindex)
-        
         case clientpacketid.reloadnpcs              '/reloadnpcs
             call handlereloadnpcs(userindex)
         
@@ -1221,7 +1235,7 @@ on error resume next
 #else
         case else
             'error : abort!
-            call closesocket(userindex, true)
+            call closesocket(userindex)
 #end if
     end select
     
@@ -1236,7 +1250,7 @@ on error resume next
                         vbtab & " helpfile: " & err.helpfile & vbtab & " helpcontext: " & err.helpcontext & _
                         vbtab & " lastdllerror: " & err.lastdllerror & vbtab & _
                         " - userindex: " & userindex & " - producido al manejar el paquete: " & cstr(packetid))
-        call closesocket(userindex, true)
+        call closesocket(userindex)
     
     else
         'flush buffer - send everything that has been written
@@ -1293,7 +1307,7 @@ on error goto errhandler
     if not asciivalidos(username) then
         call writeerrormsg(userindex, "nombre invalido.")
         call flushbuffer(userindex)
-        call closesocket(userindex, true)
+        call closesocket(userindex)
         
         exit sub
     end if
@@ -1301,7 +1315,7 @@ on error goto errhandler
     if not personajeexiste(username) then
         call writeerrormsg(userindex, "el personaje no existe.")
         call flushbuffer(userindex)
-        call closesocket(userindex, true)
+        call closesocket(userindex)
         
         exit sub
     end if
@@ -1355,11 +1369,11 @@ private sub handlethrowdices(byval userindex as integer)
     call userlist(userindex).incomingdata.readbyte
     
     with userlist(userindex).stats
-        .useratributos(eatributos.fuerza) = 9 + randomnumber(0, 4) + randomnumber(0, 5)
-        .useratributos(eatributos.agilidad) = 9 + randomnumber(0, 4) + randomnumber(0, 5)
-        .useratributos(eatributos.inteligencia) = 12 + randomnumber(0, 3) + randomnumber(0, 3)
-        .useratributos(eatributos.carisma) = 12 + randomnumber(0, 3) + randomnumber(0, 3)
-        .useratributos(eatributos.constitucion) = 12 + randomnumber(0, 3) + randomnumber(0, 3)
+        .useratributos(eatributos.fuerza) = maximoint(15, 13 + randomnumber(0, 3) + randomnumber(0, 2))
+        .useratributos(eatributos.agilidad) = maximoint(15, 12 + randomnumber(0, 3) + randomnumber(0, 3))
+        .useratributos(eatributos.inteligencia) = maximoint(16, 13 + randomnumber(0, 3) + randomnumber(0, 2))
+        .useratributos(eatributos.carisma) = maximoint(15, 12 + randomnumber(0, 3) + randomnumber(0, 3))
+        .useratributos(eatributos.constitucion) = 16 + randomnumber(0, 1) + randomnumber(0, 1)
     end with
     
     call writediceroll(userindex)
@@ -1454,7 +1468,7 @@ on error goto errhandler
     race = buffer.readbyte()
     gender = buffer.readbyte()
     class = buffer.readbyte()
-    call buffer.readblock(skills, 21)
+    call buffer.readblock(skills, numskills)
     mail = buffer.readasciistring()
     homeland = buffer.readbyte()
     
@@ -1786,12 +1800,8 @@ private sub handlewalk(byval userindex as integer)
         
         .flags.timeswalk = .flags.timeswalk + 1
         
-        'salida parche
-        if .counters.saliendo then
-            call writeconsolemsg(userindex, "/salir cancelado.", fonttypenames.fonttype_warning)
-            .counters.saliendo = false
-            .counters.salir = 0
-        end if
+        'if exiting, cancel
+        call cancelexit(userindex)
         
         if .flags.paralizado = 0 then
             if .flags.meditando then
@@ -1874,8 +1884,9 @@ end sub
 private sub handleattack(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 10/01/08
+'last modified by: lucas tavolaro ortiz (tavo)
+' 10/01/2008: tavo - se cancela la salida del juego si el user esta saliendo
 '***************************************************
     with userlist(userindex)
         'remove packet id
@@ -1905,6 +1916,9 @@ private sub handleattack(byval userindex as integer)
                 exit sub
             end if
         end if
+        
+        'if exiting, cancel
+        call cancelexit(userindex)
         
         'attack!
         call usuarioataca(userindex)
@@ -1970,9 +1984,9 @@ private sub hanldecombatmodetoggle(byval userindex as integer)
         call .incomingdata.readbyte
         
         if .flags.modocombate then
-            call writeconsolemsg(userindex, "has salido del modo de combate.", fonttypenames.fonttype_info)
+            call writeconsolemsg(userindex, "has salido del modo combate.", fonttypenames.fonttype_info)
         else
-            call writeconsolemsg(userindex, "has pasado al modo de combate.", fonttypenames.fonttype_info)
+            call writeconsolemsg(userindex, "has pasado al modo combate.", fonttypenames.fonttype_info)
         end if
         
         .flags.modocombate = not .flags.modocombate
@@ -2001,6 +2015,29 @@ private sub handlesafetoggle(byval userindex as integer)
         end if
         
         .flags.seguro = not .flags.seguro
+    end with
+end sub
+
+''
+' handles the "resuscitationsafetoggle" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handleresuscitationtoggle(byval userindex as integer)
+'***************************************************
+'author: rapsodius
+'creation date: 10/10/07
+'***************************************************
+    with userlist(userindex)
+        call .incomingdata.readbyte
+        
+        .flags.seguroresu = not .flags.seguroresu
+        
+        if .flags.seguroresu then
+            call writeresuscitationsafeon(userindex)
+        else
+            call writeresuscitationsafeoff(userindex)
+        end if
     end with
 end sub
 
@@ -2389,6 +2426,9 @@ private sub handlework(byval userindex as integer)
             exit sub
         end if
         
+        'if exiting, cancel
+        call cancelexit(userindex)
+        
         select case skill
             case robar, magia, domar
                 call writeworkrequesttarget(userindex, skill)
@@ -2572,6 +2612,7 @@ private sub handleworkleftclick(byval userindex as integer)
         
         skill = .incomingdata.readbyte()
         
+        
         if .flags.muerto = 1 or .flags.descansar or .flags.meditando _
                         or not inmapbounds(.pos.map, x, y) then
             exit sub
@@ -2582,6 +2623,9 @@ private sub handleworkleftclick(byval userindex as integer)
             exit sub
         end if
         
+        'if exiting, cancel
+        call cancelexit(userindex)
+        
         select case skill
             case eskill.proyectiles
             
@@ -2591,7 +2635,6 @@ private sub handleworkleftclick(byval userindex as integer)
                 if not intervalopermitelanzarspell(userindex, false) then exit sub
                 'check bow's interval
                 if not intervalopermiteusararcos(userindex) then exit sub
-                
                 
                 'make sure the item is valid and there is ammo equipped.
                 with .invent
@@ -2627,7 +2670,11 @@ private sub handleworkleftclick(byval userindex as integer)
                 if .stats.minsta >= 10 then
                     call quitarsta(userindex, randomnumber(1, 10))
                 else
-                    call writeconsolemsg(userindex, "est�s muy cansado para luchar.", fonttypenames.fonttype_info)
+                    if .genero = egenero.hombre then
+                        call writeconsolemsg(userindex, "estas muy cansado para luchar.", fonttypenames.fonttype_info)
+                    else
+                        call writeconsolemsg(userindex, "estas muy cansada para luchar.", fonttypenames.fonttype_info)
+                    end if
                     exit sub
                 end if
                 
@@ -2650,26 +2697,9 @@ private sub handleworkleftclick(byval userindex as integer)
                         exit sub
                     end if
                     
-                    'can't hit administrators!
-                    ' 23/08/2006 gs > agregue que si es un personaje administrativo no ingrese
-                    ' 29/04/2007 tw > directamente no va ya que este chequeo se hace bien dentro de la sigueinte funci�n.
-                    'if .flags.seguro then
-                    '    if not criminal(tu) then
-                    '        if userlist(tu).flags.privilegios and playertype.user then
-                    '            call writeconsolemsg(userindex, "�para atacar ciudadanos desactiva el seguro!", fonttypenames.fonttype_fight)
-                    '            exit sub
-                    '        end if
-                    '    end if
-                    'end if
-                    'pero hay que hacer algo para que no se pierda la flecha si es que ataca a un gm en zona sin trigger6
-                                                               
                     'attack!
                     if not puedeatacar(userindex, tu) then exit sub 'todo: por ahora pongo esto para solucionar lo anterior.
                     call usuarioatacausuario(userindex, tu)
-                    
-                    
-                    
-                
                 elseif tn > 0 then
                     'only allow to atack if the other one can retaliate (can see us)
                     if abs(npclist(tn).pos.y - .pos.y) > rango_vision_y and abs(npclist(tn).pos.x - .pos.x) > rango_vision_x then
@@ -2723,6 +2753,7 @@ private sub handleworkleftclick(byval userindex as integer)
                 'check bow's interval
                 if not intervalopermiteusararcos(userindex, false) then exit sub
                 
+                
                 'check spell-hit interval
                 if not intervalopermitegolpemagia(userindex) then
                     'check magic interval
@@ -2772,7 +2803,7 @@ private sub handleworkleftclick(byval userindex as integer)
                     end select
                     
                     'play sound!
-                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_pescar))
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_pescar, .pos.x, .pos.y))
                 else
                     call writeconsolemsg(userindex, "no hay agua donde pescar. busca un lago, rio o mar.", fonttypenames.fonttype_info)
                 end if
@@ -2817,7 +2848,7 @@ private sub handleworkleftclick(byval userindex as integer)
                         call writeconsolemsg(userindex, "no a quien robarle!.", fonttypenames.fonttype_info)
                     end if
                 else
-                    call writeconsolemsg(userindex, "�no pod�s robar en zonas seguras!.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "�no puedes robar en zonas seguras!.", fonttypenames.fonttype_info)
                 end if
             
             case eskill.talar
@@ -2850,7 +2881,7 @@ private sub handleworkleftclick(byval userindex as integer)
                     
                     '�hay un arbol donde clickeo?
                     if objdata(dummyint).objtype = eobjtype.otarboles then
-                        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_talar))
+                        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_talar, .pos.x, .pos.y))
                         call dotalar(userindex)
                     end if
                 else
@@ -3010,6 +3041,8 @@ on error goto errhandler
         
         if modguilds.crearnuevoclan(userindex, desc, guildname, site, codex, .fundandoguildalineacion, errorstr) then
             call senddata(sendtarget.toall, userindex, preparemessageconsolemsg(.name & " fund� el clan " & guildname & " de alineaci�n " & modguilds.guildalignment(.guildindex) & ".", fonttypenames.fonttype_guild))
+            call senddata(sendtarget.toall, 0, preparemessageplaywave(44, no_3d_sound, no_3d_sound))
+
             
             'update tag
              call refreshcharstatus(userindex)
@@ -3128,8 +3161,10 @@ end sub
 private sub handlechangeheading(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 06/28/2008
+'last modified by: niconz
+' 10/01/2008: tavo - se cancela la salida del juego si el user esta saliendo
+' 06/28/2008: niconz - s�lo se puede cambiar si est� inmovilizado.
 '***************************************************
     if userlist(userindex).incomingdata.length < 2 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -3141,8 +3176,27 @@ private sub handlechangeheading(byval userindex as integer)
         call .incomingdata.readbyte
         
         dim heading as eheading
-        
+        dim posx as integer
+        dim posy as integer
+                
         heading = .incomingdata.readbyte()
+        
+        if .flags.paralizado = 1 and .flags.inmovilizado = 0 then
+            select case heading
+                case eheading.north
+                    posy = -1
+                case eheading.east
+                    posx = 1
+                case eheading.south
+                    posy = 1
+                case eheading.west
+                    posx = -1
+            end select
+            
+                if legalpos(.pos.map, .pos.x + posx, .pos.y + posy, cbool(.flags.navegando), not cbool(.flags.navegando)) then
+                    exit sub
+                end if
+        end if
         
         'validate heading (vb won't say invalid cast if not a valid index like .net languages would do... *sigh*)
         if heading > 0 and heading < 5 then
@@ -3306,7 +3360,7 @@ private sub handlecommercebuy(byval userindex as integer)
         end if
         
         'user compra el item
-        call npcventaitem(userindex, slot, amount, .flags.targetnpc)
+        call comercio(emodocomercio.compra, userindex, .flags.targetnpc, slot, amount)
     end with
 end sub
 
@@ -3397,7 +3451,7 @@ private sub handlecommercesell(byval userindex as integer)
         end if
         
         'user compra el item del slot
-        call npccompraitem(userindex, slot, amount)
+        call comercio(emodocomercio.venta, userindex, .flags.targetnpc, slot, amount)
     end with
 end sub
 
@@ -4278,6 +4332,8 @@ on error goto errhandler
             'war shall be!
             call senddata(sendtarget.toguildmembers, .guildindex, preparemessageconsolemsg("tu clan ha entrado en guerra con " & guild, fonttypenames.fonttype_guild))
             call senddata(sendtarget.toguildmembers, otherguildindex, preparemessageconsolemsg(modguilds.guildname(.guildindex) & " le declara la guerra a tu clan", fonttypenames.fonttype_guild))
+            call senddata(sendtarget.toguildmembers, .guildindex, preparemessageplaywave(45, no_3d_sound, no_3d_sound))
+            call senddata(sendtarget.toguildmembers, otherguildindex, preparemessageplaywave(45, no_3d_sound, no_3d_sound))
         end if
         
         'if we got here then packet is complete, copy data back to original queue
@@ -4376,9 +4432,11 @@ on error goto errhandler
             tuser = nameindex(username)
             if tuser > 0 then
                 call modguilds.m_conectarmiembroaclan(tuser, .guildindex)
+                call refreshcharstatus(tuser)
             end if
             
             call senddata(sendtarget.toguildmembers, .guildindex, preparemessageconsolemsg(username & " ha sido aceptado como miembro del clan.", fonttypenames.fonttype_guild))
+            call senddata(sendtarget.toguildmembers, .guildindex, preparemessageplaywave(43, no_3d_sound, no_3d_sound))
         end if
         
         'if we got here then packet is complete, copy data back to original queue
@@ -4431,7 +4489,7 @@ on error goto errhandler
         username = buffer.readasciistring()
         reason = buffer.readasciistring()
         
-        if not modguilds.a_rechazaraspirante(userindex, username, reason, errorstr) then
+        if not modguilds.a_rechazaraspirante(userindex, username, errorstr) then
             call writeconsolemsg(userindex, errorstr, fonttypenames.fonttype_guild)
         else
             tuser = nameindex(username)
@@ -4494,6 +4552,7 @@ on error goto errhandler
         
         if guildindex > 0 then
             call senddata(sendtarget.toguildmembers, guildindex, preparemessageconsolemsg(username & " fue expulsado del clan.", fonttypenames.fonttype_guild))
+            call senddata(sendtarget.toguildmembers, guildindex, preparemessageplaywave(45, no_3d_sound, no_3d_sound))
         else
             call writeconsolemsg(userindex, "no puedes expulsar ese personaje del clan.", fonttypenames.fonttype_guild)
         end if
@@ -4583,7 +4642,7 @@ on error goto errhandler
         call buffer.readbyte
         
         call modguilds.senddetallespersonaje(userindex, buffer.readasciistring())
-                
+        
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
     end with
@@ -4759,10 +4818,13 @@ end sub
 private sub handlequit(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 04/15/2008 (niconz)
+'if user is invisible, it automatically becomes
+'visible before doing the countdown to exit
+'04/15/2008 - no se reseteaban lso contadores de invi ni de ocultar. (niconz)
 '***************************************************
     dim tuser as integer
+    dim isnotvisible as boolean
     
     with userlist(userindex)
         'remove packet id
@@ -4858,7 +4920,7 @@ private sub handlerequestaccountstate(byval userindex as integer)
         
         select case npclist(.flags.targetnpc).npctype
             case enpctype.banquero
-                call writechatoverhead(userindex, "tenes " & .stats.banco & " monedas de oro en tu cuenta.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+                call writechatoverhead(userindex, "ten�s " & .stats.banco & " monedas de oro en tu cuenta.", npclist(.flags.targetnpc).char.charindex, vbwhite)
             
             case enpctype.timbero
                 if not .flags.privilegios and playertype.user then
@@ -5057,8 +5119,9 @@ end sub
 private sub handlemeditate(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 04/15/08 (niconz)
+'arregl� un bug que mandaba un index de la meditacion diferente
+'al que decia el server.
 '***************************************************
     with userlist(userindex)
         'remove packet id
@@ -5097,25 +5160,26 @@ private sub handlemeditate(byval userindex as integer)
             
             call writeconsolemsg(userindex, "te est�s concentrando. en " & fix(tiempo_iniciomeditar / 1000) & " segundos comenzar�s a meditar.", fonttypenames.fonttype_info)
             
-            .char.loops = loopadeternum
+            .char.loops = infinite_loops
             
             'show proper fx according to level
-            if .stats.elv < 15 then
-                call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, fxids.fxmeditarchico, loopadeternum))
+            if .stats.elv < 13 then
                 .char.fx = fxids.fxmeditarchico
             
-            elseif .stats.elv < 30 then
-                call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, fxids.fxmeditarmediano, loopadeternum))
+            elseif .stats.elv < 25 then
                 .char.fx = fxids.fxmeditarmediano
             
-            elseif .stats.elv < 45 then
-                call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, fxids.fxmeditargrande, loopadeternum))
+            elseif .stats.elv < 35 then
                 .char.fx = fxids.fxmeditargrande
             
-            else
-                call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, fxids.fxmeditarxgrande, loopadeternum))
+            elseif .stats.elv < 42 then
                 .char.fx = fxids.fxmeditarxgrande
+            
+            else
+                .char.fx = fxids.fxmeditarxxgrande
             end if
+            
+            call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(.char.charindex, .char.fx, infinite_loops))
         else
             .counters.bpuedemeditar = false
             
@@ -5350,6 +5414,11 @@ private sub handlebankstart(byval userindex as integer)
             exit sub
         end if
         
+        if .flags.comerciando then
+            call writeconsolemsg(userindex, "ya est�s comerciando", fonttypenames.fonttype_info)
+            exit sub
+        end if
+        
         'validate target npc
         if .flags.targetnpc > 0 then
             if distancia(npclist(.flags.targetnpc).pos, .pos) > 3 then
@@ -5519,8 +5588,8 @@ end sub
 private sub handleuptime(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 01/10/08
+'01/10/2008 - marcos martinez (byval) - automatic restart removed from the server along with all their assignments and varibles
 '***************************************************
     'remove packet id
     call userlist(userindex).incomingdata.readbyte
@@ -5541,25 +5610,13 @@ private sub handleuptime(byval userindex as integer)
     uptimestr = (time mod 24) & " horas, " & uptimestr
     time = time \ 24
     
-    uptimestr = time & " dias, " & uptimestr
+    if time = 1 then
+        uptimestr = time & " d�a, " & uptimestr
+    else
+        uptimestr = time & " d�as, " & uptimestr
+    end if
     
-    call writeconsolemsg(userindex, "uptime: " & uptimestr, fonttypenames.fonttype_info)
-    
-    'send auto-reset time
-    time = intervaloautoreiniciar
-    
-    uptimestr = (time mod 60) & " segundos."
-    time = time \ 60
-    
-    uptimestr = (time mod 60) & " minutos, " & uptimestr
-    time = time \ 60
-    
-    uptimestr = (time mod 24) & " horas, " & uptimestr
-    time = time \ 24
-    
-    uptimestr = time & " dias, " & uptimestr
-    
-    call writeconsolemsg(userindex, "pr�ximo mantenimiento autom�tico: " & uptimestr, fonttypenames.fonttype_info)
+    call writeconsolemsg(userindex, "server online: " & uptimestr, fonttypenames.fonttype_info)
 end sub
 
 ''
@@ -5640,8 +5697,8 @@ end sub
 private sub handleguildmessage(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 02/03/09
+'02/03/09: zama - arreglado un indice mal pasado a la funcion de cartel de clanes overhead.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -5667,8 +5724,7 @@ on error goto errhandler
             
             if .guildindex > 0 then
                 call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & "> " & chat))
-'todo : con la 0.12.1 se debe definir si esto vuelve o se borra (/cmsg overhead)
-                'call senddata(sendtarget.toclanarea, userindex, userlist(userindex).pos.map, "||" & vbyellow & "�< " & rdata & " >�" & cstr(userlist(userindex).char.charindex))
+                call senddata(sendtarget.toclanarea, userindex, preparemessagechatoverhead("< " & chat & " >", .char.charindex, vbyellow))
             end if
         end if
         
@@ -6033,7 +6089,7 @@ on error goto errhandler
                 call writeconsolemsg(userindex, "la descripci�n tiene caract�res inv�lidos.", fonttypenames.fonttype_info)
             else
                 .desc = trim$(description)
-                call writeconsolemsg(userindex, "la descripci�n a cambiado.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "la descripci�n ha cambiado.", fonttypenames.fonttype_info)
             end if
         end if
         
@@ -6188,60 +6244,59 @@ end sub
 private sub handlechangepassword(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'creation date: 10/10/07
+'last modified by: rapsodius
 '***************************************************
 #if seguridadalkon then
-    if userlist(userindex).incomingdata.length < 33 then
+    if userlist(userindex).incomingdata.length < 65 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
         exit sub
     end if
 #else
-on error goto errhandler
-    if userlist(userindex).incomingdata.length < 3 then
+    if userlist(userindex).incomingdata.length < 5 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
         exit sub
     end if
 #end if
     
+on error goto errhandler
     with userlist(userindex)
-#if seguridadalkon then
-        'remove packet id
-        call .incomingdata.readbyte
-#else
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
         dim buffer as new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
+        dim oldpass as string
+        dim newpass as string
+        dim oldpass2 as string
+        
         'remove packet id
         call buffer.readbyte
-#end if
         
-        dim pass as string
-        
-        'get password and validate it if necessary
 #if seguridadalkon then
-        pass = .incomingdata.readasciistringfixed(32)
+        oldpass = ucase$(buffer.readasciistringfixed(32))
+        newpass = ucase$(buffer.readasciistringfixed(32))
 #else
-        pass = buffer.readasciistring()
-        
-        if len(pass) < 6 then
-             call writeconsolemsg(userindex, "el password debe tener al menos 6 caract�res.", fonttypenames.fonttype_info)
-        else
+        oldpass = ucase$(buffer.readasciistring())
+        newpass = ucase$(buffer.readasciistring())
 #end if
-            call writevar(charpath & userlist(userindex).name & ".chr", "init", "password", pass)
+        
+        if lenb(newpass) = 0 then
+            call writeconsolemsg(userindex, "debe especificar una contrase�a nueva, int�ntelo de nuevo", fonttypenames.fonttype_info)
+        else
+            oldpass2 = ucase$(getvar(charpath & userlist(userindex).name & ".chr", "init", "password"))
             
-            'everything is right, change password
-            call writeconsolemsg(userindex, "el password ha sido cambiado.", fonttypenames.fonttype_info)
-#if seguridadalkon = 0 then
+            if oldpass2 <> oldpass then
+                call writeconsolemsg(userindex, "la contrase�a actual proporcionada no es correcta. la contrase�a no ha sido cambiada, int�ntelo de nuevo.", fonttypenames.fonttype_info)
+            else
+                call writevar(charpath & userlist(userindex).name & ".chr", "init", "password", newpass)
+                call writeconsolemsg(userindex, "la contrase�a fue cambiada con �xito", fonttypenames.fonttype_info)
+            end if
         end if
         
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
-#end if
     end with
     
-#if seguridadalkon = 0 then
 errhandler:
     dim error as long
     error = err.number
@@ -6252,8 +6307,8 @@ on error goto 0
     
     if error <> 0 then _
         err.raise error
-#end if
 end sub
+
 
 ''
 ' handles the "gamble" message.
@@ -6440,7 +6495,7 @@ private sub handleleavefaction(byval userindex as integer)
             'quit the chaos legion??
            elseif .faccion.fuerzascaos = 1 then
                if npclist(.flags.targetnpc).flags.faccion = 1 then
-                   call expulsarfaccioncaos(userindex)
+                   call expulsarfaccioncaos(userindex, false)
                    call writechatoverhead(userindex, "ya volver�s arrastrandote.", npclist(.flags.targetnpc).char.charindex, vbwhite)
                else
                    call writechatoverhead(userindex, "sal de aqu� maldito criminal", npclist(.flags.targetnpc).char.charindex, vbwhite)
@@ -6620,8 +6675,9 @@ end sub
 private sub handlepartykick(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 05/05/09
+'last modification by: marco vanotti (marco)
+'- 05/05/09: now it uses "userpuedeejecutarcomandos" to check if the user can use party commands
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -6642,15 +6698,18 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        tuser = nameindex(username)
-        if tuser > 0 then
-            call mdparty.expulsardeparty(userindex, tuser)
-        else
-            if instr(username, "+") then
-                username = replace(username, "+", " ")
-            end if
+        if userpuedeejecutarcomandos(userindex) then
+            tuser = nameindex(username)
             
-            call writeconsolemsg(userindex, username & " no pertenece a tu party.", fonttypenames.fonttype_info)
+            if tuser > 0 then
+                call mdparty.expulsardeparty(userindex, tuser)
+            else
+                if instr(username, "+") then
+                    username = replace(username, "+", " ")
+                end if
+                
+                call writeconsolemsg(userindex, lcase(username) & " no pertenece a tu party.", fonttypenames.fonttype_info)
+            end if
         end if
         
         'if we got here then packet is complete, copy data back to original queue
@@ -6677,15 +6736,16 @@ end sub
 private sub handlepartysetleader(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 05/05/09
+'last modification by: marco vanotti (markoxx)
+'- 05/05/09: now it uses "userpuedeejecutarcomandos" to check if the user can use party commands
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
         exit sub
     end if
     
-on error goto errhandler
+'on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
         dim buffer as new clsbytequeue
@@ -6696,14 +6756,26 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
+        dim rank as integer
+        rank = playertype.admin or playertype.dios or playertype.semidios or playertype.consejero
         
         username = buffer.readasciistring()
-        
-        tuser = nameindex(username)
-        if tuser > 0 then
-            call mdparty.transformarenlider(userindex, tuser)
-        else
-            call writeconsolemsg(userindex, "el personaje no est� online.", fonttypenames.fonttype_info)
+        if userpuedeejecutarcomandos(userindex) then
+            tuser = nameindex(username)
+            if tuser > 0 then
+                'don't allow users to spoof online gms
+                if (userdarprivilegiolevel(username) and rank) <= (.flags.privilegios and rank) then
+                    call mdparty.transformarenlider(userindex, tuser)
+                else
+                    call writeconsolemsg(userindex, lcase(userlist(tuser).name) & " no pertenece a tu party.", fonttypenames.fonttype_info)
+                end if
+                
+            else
+                if instr(username, "+") then
+                    username = replace(username, "+", " ")
+                end if
+                call writeconsolemsg(userindex, lcase(username) & " no pertenece a tu party.", fonttypenames.fonttype_info)
+            end if
         end if
         
         'if we got here then packet is complete, copy data back to original queue
@@ -6730,8 +6802,9 @@ end sub
 private sub handlepartyacceptmember(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 05/05/09
+'last modification by: marco vanotti (marco)
+'- 05/05/09: now it uses "userpuedeejecutarcomandos" to check if the user can use party commands
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -6750,29 +6823,37 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         dim rank as integer
+        dim buservivo as boolean
         
         rank = playertype.admin or playertype.dios or playertype.semidios or playertype.consejero
         
         username = buffer.readasciistring()
-        
-        tuser = nameindex(username)
-        if tuser > 0 then
-            'validate administrative ranks - don't allow users to spoof online gms
-            if (userlist(tuser).flags.privilegios and rank) <= (.flags.privilegios and rank) then
-                call mdparty.aprobaringresoaparty(userindex, tuser)
-            else
-                call writeconsolemsg(userindex, "no puedes incorporar a tu party a personajes de mayor jerarqu�a.", fonttypenames.fonttype_info)
-            end if
+        if userlist(userindex).flags.muerto then
+            call writeconsolemsg(userindex, "�est�s muerto!", fonttypenames.fonttype_party)
         else
-            if instr(username, "+") then
-                username = replace(username, "+", " ")
-            end if
-            
-            'don't allow users to spoof online gms
-            if (userdarprivilegiolevel(username) and rank) <= (.flags.privilegios and rank) then
-                call writeconsolemsg(userindex, "el personaje no est� online.", fonttypenames.fonttype_info)
+            buservivo = true
+        end if
+        
+        if mdparty.userpuedeejecutarcomandos(userindex) and buservivo then
+            tuser = nameindex(username)
+            if tuser > 0 then
+                'validate administrative ranks - don't allow users to spoof online gms
+                if (userlist(tuser).flags.privilegios and rank) <= (.flags.privilegios and rank) then
+                    call mdparty.aprobaringresoaparty(userindex, tuser)
+                else
+                    call writeconsolemsg(userindex, "no puedes incorporar a tu party a personajes de mayor jerarqu�a.", fonttypenames.fonttype_info)
+                end if
             else
-                call writeconsolemsg(userindex, "no puedes incorporar a tu party a personajes de mayor jerarqu�a.", fonttypenames.fonttype_info)
+                if instr(username, "+") then
+                    username = replace(username, "+", " ")
+                end if
+                
+                'don't allow users to spoof online gms
+                if (userdarprivilegiolevel(username) and rank) <= (.flags.privilegios and rank) then
+                    call writeconsolemsg(userindex, lcase(username) & " no ha solicitado ingresar a tu party.", fonttypenames.fonttype_party)
+                else
+                    call writeconsolemsg(userindex, "no puedes incorporar a tu party a personajes de mayor jerarqu�a.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -7068,6 +7149,7 @@ on error goto errhandler
                                 if mapdata(userlist(tindex).pos.map, x, y).userindex = 0 then
                                     if legalpos(userlist(tindex).pos.map, x, y, true, true) then
                                         call warpuserchar(userindex, userlist(tindex).pos.map, x, y, true)
+                                        call loggm(.name, "/ircerca " & username & " mapa:" & userlist(tindex).pos.map & " x:" & userlist(tindex).pos.x & " y:" & userlist(tindex).pos.y)
                                         found = true
                                         exit for
                                     end if
@@ -7242,8 +7324,8 @@ end sub
 private sub handlecreaturesinmap(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 30/07/06
+'pablo (toxicwaste): modificaciones generales para simplificar la visualizaci�n.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -7255,9 +7337,12 @@ private sub handlecreaturesinmap(byval userindex as integer)
         call .incomingdata.readbyte
         
         dim map as integer
-        dim i as long
-        dim list1 as string
-        dim list2 as string
+        dim i, j as long
+        dim npccount1, npccount2 as integer
+        dim npccant1() as integer
+        dim npccant2() as integer
+        dim list1() as string
+        dim list2() as string
         
         map = .incomingdata.readinteger()
         
@@ -7269,27 +7354,71 @@ private sub handlecreaturesinmap(byval userindex as integer)
                 if npclist(i).pos.map = map then
                     '�esta vivo?
                     if npclist(i).flags.npcactive and npclist(i).hostile = 1 and npclist(i).stats.alineacion = 2 then
-                        list1 = list1 & npclist(i).name & "(" & npclist(i).pos.x & "," & npclist(i).pos.y & "), "
+                        if npccount1 = 0 then
+                            redim list1(0) as string
+                            redim npccant1(0) as integer
+                            npccount1 = 1
+                            list1(0) = npclist(i).name & ": (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                            npccant1(0) = 1
+                        else
+                            for j = 0 to npccount1 - 1
+                                if left$(list1(j), len(npclist(i).name)) = npclist(i).name then
+                                    list1(j) = list1(j) & ", (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                                    npccant1(j) = npccant1(j) + 1
+                                    exit for
+                                end if
+                            next j
+                            if j = npccount1 then
+                                redim preserve list1(0 to npccount1) as string
+                                redim preserve npccant1(0 to npccount1) as integer
+                                npccount1 = npccount1 + 1
+                                list1(j) = npclist(i).name & ": (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                                npccant1(j) = 1
+                            end if
+                        end if
                     else
-                        list2 = list2 & npclist(i).name & "(" & npclist(i).pos.x & "," & npclist(i).pos.y & "), "
+                        if npccount2 = 0 then
+                            redim list2(0) as string
+                            redim npccant2(0) as integer
+                            npccount2 = 1
+                            list2(0) = npclist(i).name & ": (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                            npccant2(0) = 1
+                        else
+                            for j = 0 to npccount2 - 1
+                                if left$(list2(j), len(npclist(i).name)) = npclist(i).name then
+                                    list2(j) = list2(j) & ", (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                                    npccant2(j) = npccant2(j) + 1
+                                    exit for
+                                end if
+                            next j
+                            if j = npccount2 then
+                                redim preserve list2(0 to npccount2) as string
+                                redim preserve npccant2(0 to npccount2) as integer
+                                npccount2 = npccount2 + 1
+                                list2(j) = npclist(i).name & ": (" & npclist(i).pos.x & "," & npclist(i).pos.y & ")"
+                                npccant2(j) = 1
+                            end if
+                        end if
                     end if
                 end if
             next i
             
-            if lenb(list1) <> 0 then
-                list1 = left$(list1, len(list1) - 2)
+            call writeconsolemsg(userindex, "npcs hostiles en mapa: ", fonttypenames.fonttype_warning)
+            if npccount1 = 0 then
+                call writeconsolemsg(userindex, "no hay npcs hostiles", fonttypenames.fonttype_info)
             else
-                list1 = "no hay npcs hostiles"
+                for j = 0 to npccount1 - 1
+                    call writeconsolemsg(userindex, npccant1(j) & " " & list1(j), fonttypenames.fonttype_info)
+                next j
             end if
-            
-            if lenb(list2) <> 0 then
-                list2 = left$(list2, len(list2) - 2)
+            call writeconsolemsg(userindex, "otros npcs en mapa: ", fonttypenames.fonttype_warning)
+            if npccount2 = 0 then
+                call writeconsolemsg(userindex, "no hay m�s npcs", fonttypenames.fonttype_info)
             else
-                list2 = "no hay m�s npcs"
+                for j = 0 to npccount2 - 1
+                    call writeconsolemsg(userindex, npccant2(j) & " " & list2(j), fonttypenames.fonttype_info)
+                next j
             end if
-            
-            call writeconsolemsg(userindex, "npcs hostiles en mapa: " & list1, fonttypenames.fonttype_info)
-            call writeconsolemsg(userindex, "otros npcs en mapa: " & list2, fonttypenames.fonttype_info)
             call loggm(.name, "numero enemigos en mapa " & map)
         end if
     end with
@@ -7303,16 +7432,23 @@ end sub
 private sub handlewarpmetotarget(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 26/03/09
+'26/03/06: zama - chequeo que no se teletransporte donde haya un char o npc
 '***************************************************
     with userlist(userindex)
         'remove packet id
         call .incomingdata.readbyte
         
+        dim x as integer
+        dim y as integer
+        
         if .flags.privilegios and playertype.user then exit sub
         
-        call warpuserchar(userindex, .flags.targetmap, .flags.targetx, .flags.targety, true)
+        x = .flags.targetx
+        y = .flags.targety
+        
+        call findlegalpos(userindex, .flags.targetmap, x, y)
+        call warpuserchar(userindex, .flags.targetmap, x, y, true)
         call loggm(.name, "/teleploc a x:" & .flags.targetx & " y:" & .flags.targety & " map:" & .pos.map)
     end with
 end sub
@@ -7325,8 +7461,8 @@ end sub
 private sub handlewarpchar(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 26/03/2009
+'26/03/2009: zama -  chequeo que no se teletransporte a un tile donde haya un char o npc.
 '***************************************************
     if userlist(userindex).incomingdata.length < 7 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -7344,8 +7480,8 @@ on error goto errhandler
         
         dim username as string
         dim map as integer
-        dim x as byte
-        dim y as byte
+        dim x as integer
+        dim y as integer
         dim tuser as integer
         
         username = buffer.readasciistring()
@@ -7366,6 +7502,7 @@ on error goto errhandler
                 if tuser <= 0 then
                     call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
                 elseif inmapbounds(map, x, y) then
+                    call findlegalpos(tuser, map, x, y)
                     call warpuserchar(tuser, map, x, y, true)
                     call writeconsolemsg(userindex, userlist(tuser).name & " transportado.", fonttypenames.fonttype_info)
                     call loggm(.name, "transport� a " & userlist(tuser).name & " hacia " & "mapa" & map & " x:" & x & " y:" & y)
@@ -7532,8 +7669,8 @@ end sub
 private sub handlegotochar(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 26/03/2009
+'26/03/2009: zama -  chequeo que no se teletransporte a un tile donde haya un char o npc.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -7551,6 +7688,8 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
+        dim x as integer
+        dim y as integer
         
         username = buffer.readasciistring()
         tuser = nameindex(username)
@@ -7561,7 +7700,11 @@ on error goto errhandler
                 if tuser <= 0 then
                     call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
                 else
-                    call warpuserchar(userindex, userlist(tuser).pos.map, userlist(tuser).pos.x, userlist(tuser).pos.y + 1, true)
+                    x = userlist(tuser).pos.x
+                    y = userlist(tuser).pos.y + 1
+                    call findlegalpos(userindex, userlist(tuser).pos.map, x, y)
+                    
+                    call warpuserchar(userindex, userlist(tuser).pos.map, x, y, true)
                     
                     if .flags.admininvisible = 0 then
                         call writeconsolemsg(tuser, .name & " se ha trasportado hacia donde te encuentras.", fonttypenames.fonttype_info)
@@ -7842,7 +7985,7 @@ end sub
 private sub handlekillnpc(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 04/22/08 (niconz)
 '
 '***************************************************
     with userlist(userindex)
@@ -7870,6 +8013,8 @@ private sub handlekillnpc(byval userindex as integer)
             auxnpc = npclist(tnpc)
             call quitarnpc(tnpc)
             call respawnnpc(auxnpc)
+            
+            .flags.targetnpc = 0
         else
             call writeconsolemsg(userindex, "debes hacer click sobre el npc antes", fonttypenames.fonttype_info)
         end if
@@ -7961,8 +8106,8 @@ end sub
 private sub handleeditchar(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/28/06
-'
+'last modification: 02/03/2009
+'02/03/2009: zama -  cuando editas nivel, chequea si el pj peude permanecer en clan faccionario
 '***************************************************
     if userlist(userindex).incomingdata.length < 8 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -8046,13 +8191,14 @@ on error goto errhandler
                     if tuser <= 0 then
                         call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
                     else
-                        if val(arg1) < 15995001 then
-                            userlist(tuser).stats.exp = userlist(tuser).stats.exp + val(arg1)
-                            call checkuserlevel(tuser)
-                            call writeupdateexp(tuser)
-                        else
-                            call writeconsolemsg(userindex, "no esta permitido utilizar valores mayores a mucho. su comando ha quedado en los logs del juego.", fonttypenames.fonttype_info)
+                        if val(arg1) > 20000000 then
+                            arg1 = 20000000
                         end if
+                            
+                        userlist(tuser).stats.exp = userlist(tuser).stats.exp + val(arg1)
+                        call checkuserlevel(tuser)
+                        call writeupdateexp(tuser)
+                        
                     end if
                 
                 case eeditoptions.eo_body
@@ -8103,6 +8249,25 @@ on error goto errhandler
                         end if
                         
                         userlist(tuser).stats.elv = val(arg1)
+                        
+                        with userlist(tuser)
+                        
+                            ' chequeamos si puede permanecer en el clan
+                            if .stats.elv >= 25 then
+                                dim gi as integer
+                                gi = .guildindex
+                                if gi > 0 then
+                                    if modguilds.guildalignment(gi) = "legi�n oscura" or modguilds.guildalignment(gi) = "armada real" then
+                                        'we get here, so guild has factionary alignment, we have to expulse the user
+                                        call modguilds.m_echarmiembrodeclan(-1, .name)
+                                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg(.name & " deja el clan.", fonttypenames.fonttype_guild))
+                                        call writeconsolemsg(tuser, "�ya tienes la madurez suficiente como para decidir bajo que estandarte pelear�s! por esta raz�n, hasta tanto no te enlistes en la facci�n bajo la cual tu clan est� alineado, estar�s exclu�do del mismo.", fonttypenames.fonttype_guild)
+                                    end if
+                                end if
+                            end if
+                        
+                        end with
+
                     end if
                     
                     call writeupdateuserstats(userindex)
@@ -8190,7 +8355,7 @@ on error goto errhandler
                         elseif (arg1 = "elfo") then
                             userlist(tuser).raza = eraza.elfo
                         elseif (arg1 = "drow") then
-                            userlist(tuser).raza = eraza.elfooscuro
+                            userlist(tuser).raza = eraza.drow
                         elseif (arg1 = "enano") then
                             userlist(tuser).raza = eraza.enano
                         elseif (arg1 = "gnomo") then
@@ -8256,7 +8421,7 @@ on error goto errhandler
         commandstring = commandstring & arg1 & " " & arg2
         
         if valido then _
-            call loggm(.name, commandstring & " " & userlist(tuser).name)
+            call loggm(.name, commandstring & " " & username)
         
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
@@ -8690,17 +8855,23 @@ on error goto errhandler
                 call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
             else
                 with userlist(tuser)
-                    .flags.muerto = 0
+                    'if dead, show him alive (naked).
+                    if .flags.muerto = 1 then
+                        .flags.muerto = 0
+                        
+                        call darcuerpodesnudo(tuser)
+                        
+                        call changeuserchar(tuser, .char.body, .origchar.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+                        
+                        call writeconsolemsg(tuser, userlist(userindex).name & " te ha resucitado.", fonttypenames.fonttype_info)
+                    else
+                        call writeconsolemsg(tuser, userlist(userindex).name & " te ha curado.", fonttypenames.fonttype_info)
+                    end if
+                    
                     .stats.minhp = .stats.maxhp
-                    
-                    call darcuerpodesnudo(tuser)
-                    
-                    call changeuserchar(tuser, .char.body, .origchar.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
                 end with
                 
                 call writeupdatehp(tuser)
-                
-                call writeconsolemsg(tuser, .name & " te ha resucitado.", fonttypenames.fonttype_info)
                 
                 call flushbuffer(tuser)
                 
@@ -8772,12 +8943,15 @@ end sub
 private sub handleonlinemap(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 23/03/2009
+'23/03/2009: zama - ahora no requiere estar en el mapa, sino que por defecto se toma en el que esta, pero se puede especificar otro
 '***************************************************
     with userlist(userindex)
         'remove packet id
         call .incomingdata.readbyte
+        
+        dim map as integer
+        map = .incomingdata.readinteger
         
         if .flags.privilegios and (playertype.user or playertype.consejero) then exit sub
         
@@ -8789,7 +8963,7 @@ private sub handleonlinemap(byval userindex as integer)
         if .flags.privilegios and (playertype.dios or playertype.admin) then priv = priv + (playertype.dios or playertype.admin)
         
         for loopc = 1 to lastuser
-            if lenb(userlist(loopc).name) <> 0 and userlist(loopc).pos.map = .pos.map then
+            if lenb(userlist(loopc).name) <> 0 and userlist(loopc).pos.map = map then
                 if userlist(loopc).flags.privilegios and priv then _
                     list = list & userlist(loopc).name & ", "
             end if
@@ -9145,8 +9319,8 @@ end sub
 private sub handlesummonchar(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 26/03/2009
+'26/03/2009: zama - chequeo que no se teletransporte donde haya un char o npc
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9164,6 +9338,8 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
+        dim x as integer
+        dim y as integer
         
         username = buffer.readasciistring()
         
@@ -9175,8 +9351,11 @@ on error goto errhandler
             else
                 if (.flags.privilegios and (playertype.dios or playertype.admin)) <> 0 or _
                   (userlist(tuser).flags.privilegios and (playertype.consejero or playertype.user)) <> 0 then
-                    call writeconsolemsg(tuser, .name & " te h� trasportado.", fonttypenames.fonttype_info)
-                    call warpuserchar(tuser, .pos.map, .pos.x, .pos.y + 1, true)
+                    call writeconsolemsg(tuser, .name & " te ha trasportado.", fonttypenames.fonttype_info)
+                    x = .pos.x
+                    y = .pos.y + 1
+                    call findlegalpos(tuser, .pos.map, x, y)
+                    call warpuserchar(tuser, .pos.map, x, y, true)
                     call loggm(.name, "/sum " & username & " map:" & .pos.map & " x:" & .pos.x & " y:" & .pos.y)
                 else
                     call writeconsolemsg(userindex, "no puedes invocar a dioses y admins.", fonttypenames.fonttype_info)
@@ -9571,7 +9750,7 @@ private sub handleteleportcreate(byval userindex as integer)
         x = .incomingdata.readbyte()
         y = .incomingdata.readbyte()
         
-        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios or playertype.rolemaster) then exit sub
+        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
         call loggm(.name, "/ct " & mapa & "," & x & "," & y)
         
@@ -9598,7 +9777,7 @@ private sub handleteleportcreate(byval userindex as integer)
         et.amount = 1
         et.objindex = 378
         
-        call makeobj(.pos.map, et, .pos.map, .pos.x, .pos.y - 1)
+        call makeobj(et, .pos.map, .pos.x, .pos.y - 1)
         
         with mapdata(.pos.map, .pos.x, .pos.y - 1)
             .tileexit.map = mapa
@@ -9628,7 +9807,7 @@ private sub handleteleportdestroy(byval userindex as integer)
         call .incomingdata.readbyte
         
         '/dt
-        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios or playertype.rolemaster) then exit sub
+        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
         mapa = .flags.targetmap
         x = .flags.targetx
@@ -9642,10 +9821,10 @@ private sub handleteleportdestroy(byval userindex as integer)
             if objdata(.objinfo.objindex).objtype = eobjtype.otteleport and .tileexit.map > 0 then
                 call loggm(userlist(userindex).name, "/dt: " & mapa & "," & x & "," & y)
                 
-                call eraseobj(mapa, .objinfo.amount, mapa, x, y)
+                call eraseobj(.objinfo.amount, mapa, x, y)
                 
                 if mapdata(.tileexit.map, .tileexit.x, .tileexit.y).objinfo.objindex = 651 then
-                    call eraseobj(.tileexit.map, 1, .tileexit.map, .tileexit.x, .tileexit.y)
+                    call eraseobj(1, .tileexit.map, .tileexit.x, .tileexit.y)
                 end if
                 
                 .tileexit.map = 0
@@ -9819,7 +9998,7 @@ private sub handleforcewavetomap(byval userindex as integer)
             end if
             
             'ponemos el pedido por el gm
-            call senddata(sendtarget.tomap, mapa, preparemessageplaywave(waveid))
+            call senddata(sendtarget.tomap, mapa, preparemessageplaywave(waveid, x, y))
         end if
     end with
 end sub
@@ -10099,7 +10278,7 @@ private sub handledestroyallitemsinarea(byval userindex as integer)
                 if x > 0 and y > 0 and x < 101 and y < 101 then
                     if mapdata(.pos.map, x, y).objinfo.objindex > 0 then
                         if itemnoesdemapa(mapdata(.pos.map, x, y).objinfo.objindex) then
-                            call eraseobj(.pos.map, max_inventory_objs, .pos.map, x, y)
+                            call eraseobj(max_inventory_objs, .pos.map, x, y)
                         end if
                     end if
                 end if
@@ -10208,7 +10387,7 @@ on error goto errhandler
             if tuser <= 0 then
                 call writeconsolemsg(userindex, "usuario offline", fonttypenames.fonttype_info)
             else
-                call senddata(sendtarget.toall, 0, preparemessageconsolemsg(username & " fue aceptado en el consejo de la legi�n oscura.", fonttypenames.fonttype_consejo))
+                call senddata(sendtarget.toall, 0, preparemessageconsolemsg(username & " fue aceptado en el concilio de las sombras.", fonttypenames.fonttype_consejo))
                 
                 with userlist(tuser)
                     if .flags.privilegios and playertype.royalcouncil then .flags.privilegios = .flags.privilegios - playertype.royalcouncil
@@ -10450,16 +10629,16 @@ on error goto errhandler
                         call writeconsolemsg(tuser, "has sido echado del consejo de banderbill", fonttypenames.fonttype_talk)
                         .flags.privilegios = .flags.privilegios - playertype.royalcouncil
                         
-                        call warpuserchar(tuser, .pos.map, .pos.x, .pos.y)
+                        call warpuserchar(tuser, .pos.map, .pos.x, .pos.y, false)
                         call senddata(sendtarget.toall, 0, preparemessageconsolemsg(username & " fue expulsado del consejo de banderbill", fonttypenames.fonttype_consejo))
                     end if
                     
                     if .flags.privilegios and playertype.chaoscouncil then
-                        call writeconsolemsg(tuser, "has sido echado del consejo de la legi�n oscura", fonttypenames.fonttype_talk)
+                        call writeconsolemsg(tuser, "has sido echado del concilio de las sombras", fonttypenames.fonttype_talk)
                         .flags.privilegios = .flags.privilegios - playertype.chaoscouncil
                         
-                        call warpuserchar(tuser, .pos.map, .pos.x, .pos.y)
-                        call senddata(sendtarget.toall, 0, preparemessageconsolemsg(username & " fue expulsado del consejo de la legi�n oscura", fonttypenames.fonttype_consejo))
+                        call warpuserchar(tuser, .pos.map, .pos.x, .pos.y, false)
+                        call senddata(sendtarget.toall, 0, preparemessageconsolemsg(username & " fue expulsado del concilio de las sombras", fonttypenames.fonttype_consejo))
                     end if
                 end with
             end if
@@ -10697,8 +10876,9 @@ end sub
 private sub handlebanip(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 12/30/06
-'
+'last modification: 05/12/08
+'agregado un copybuffer porque se producia un bucle
+'inifito al intentar banear una ip ya baneada. (niconz)
 '***************************************************
     if userlist(userindex).incomingdata.length < 6 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -10743,6 +10923,8 @@ on error goto errhandler
                 
                 if banipbuscar(bannedip) > 0 then
                     call writeconsolemsg(userindex, "la ip " & bannedip & " ya se encuentra en la lista de bans.", fonttypenames.fonttype_info)
+                    call .incomingdata.copybuffer(buffer) ' agregado porque sino no se sacaba del
+                                                          ' buffer y se hacia un bucle infinito. (niconz) 05/12/2008
                     exit sub
                 end if
                 
@@ -10857,7 +11039,7 @@ private sub handlecreateitem(byval userindex as integer)
         
         objeto.amount = 100
         objeto.objindex = tobj
-        call makeobj(.pos.map, objeto, .pos.map, .pos.x, .pos.y - 1)
+        call makeobj(objeto, .pos.map, .pos.x, .pos.y - 1)
     end with
 end sub
 
@@ -10887,7 +11069,7 @@ private sub handledestroyitems(byval userindex as integer)
             exit sub
         end if
         
-        call eraseobj(.pos.map, 10000, .pos.map, .pos.x, .pos.y)
+        call eraseobj(10000, .pos.map, .pos.x, .pos.y)
     end with
 end sub
 
@@ -11097,7 +11279,7 @@ private sub handleforcewaveall(byval userindex as integer)
         
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
-        call senddata(sendtarget.toall, 0, preparemessageplaywave(waveid))
+        call senddata(sendtarget.toall, 0, preparemessageplaywave(waveid, no_3d_sound, no_3d_sound))
     end with
 end sub
 
@@ -11403,7 +11585,7 @@ end sub
 public sub handlecheckslot(byval userindex as integer)
 '***************************************************
 'author: pablo (toxicwaste)
-'last modification: 26/01/2007
+'last modification: 09/09/2008 (niconz)
 'check one users slot in particular from inventory
 '***************************************************
     if userlist(userindex).incomingdata.length < 4 then
@@ -11427,24 +11609,27 @@ on error goto errhandler
         
         username = buffer.readasciistring() 'que username?
         slot = buffer.readbyte() 'que slot?
-        tindex = nameindex(username)  'que user index?
         
-        call loggm(.name, .name & " checkeo el slot " & slot & " de " & username)
-           
-        if tindex > 0 then
-            if slot > 0 and slot <= max_inventory_slots then
-                if userlist(tindex).invent.object(slot).objindex > 0 then
-                    call writeconsolemsg(userindex, " objeto " & slot & ") " & objdata(userlist(tindex).invent.object(slot).objindex).name & " cantidad:" & userlist(tindex).invent.object(slot).amount, fonttypenames.fonttype_info)
+        if .flags.privilegios and (playertype.admin or playertype.semidios or playertype.dios) then
+            tindex = nameindex(username)  'que user index?
+            
+            call loggm(.name, .name & " checkeo el slot " & slot & " de " & username)
+               
+            if tindex > 0 then
+                if slot > 0 and slot <= max_inventory_slots then
+                    if userlist(tindex).invent.object(slot).objindex > 0 then
+                        call writeconsolemsg(userindex, " objeto " & slot & ") " & objdata(userlist(tindex).invent.object(slot).objindex).name & " cantidad:" & userlist(tindex).invent.object(slot).amount, fonttypenames.fonttype_info)
+                    else
+                        call writeconsolemsg(userindex, "no hay objeto en slot seleccionado", fonttypenames.fonttype_info)
+                    end if
                 else
-                    call writeconsolemsg(userindex, "no hay objeto en slot seleccionado", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "slot inv�lido.", fonttypenames.fonttype_talk)
                 end if
             else
-                call writeconsolemsg(userindex, "slot inv�lido.", fonttypenames.fonttype_talk)
+                call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_talk)
             end if
-        else
-            call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_talk)
         end if
-
+        
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
     end with
@@ -11598,56 +11783,7 @@ public sub handlereloadnpcs(byval userindex as integer)
     
         call carganpcsdat
     
-        call writeconsolemsg(userindex, "npcs.dat y npcshostiles.dat recargados.", fonttypenames.fonttype_info)
-    end with
-end sub
-
-''
-' handle the "requesttcpstats" message
-' @param userindex the index of the user sending the message
-
-public sub handlerequesttcpstats(byval userindex as integer)
-'***************************************************
-'author: lucas tavolaro ortiz (tavo)
-'last modification: 12/23/06
-'last modified by: juan mart�n sotuyo dodero (maraxus)
-'send the tcp`s stadistics
-'***************************************************
-    with userlist(userindex)
-        'remove packet id
-        call .incomingdata.readbyte
-        
-        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios or playertype.rolemaster) then exit sub
-                
-        dim list as string
-        dim count as long
-        dim i as long
-        
-        call loggm(.name, .name & " ha pedido las estadisticas del tcp.")
-    
-        call writeconsolemsg(userindex, "los datos est�n en bytes.", fonttypenames.fonttype_info)
-        
-        'send the stats
-        with tcpesstats
-            call writeconsolemsg(userindex, "in/s: " & .bytesrecibidosxseg & " out/s: " & .bytesenviadosxseg, fonttypenames.fonttype_info)
-            call writeconsolemsg(userindex, "in/s max: " & .bytesrecibidosxsegmax & " -> " & .bytesrecibidosxsegcuando, fonttypenames.fonttype_info)
-            call writeconsolemsg(userindex, "out/s max: " & .bytesenviadosxsegmax & " -> " & .bytesenviadosxsegcuando, fonttypenames.fonttype_info)
-        end with
-        
-        'search for users that are working
-        for i = 1 to lastuser
-            with userlist(i)
-                if .flags.userlogged and .connid >= 0 and .connidvalida then
-                    if .outgoingdata.length > 0 then
-                        list = list & .name & " (" & cstr(.outgoingdata.length) & "), "
-                        count = count + 1
-                    end if
-                end if
-            end with
-        next i
-        
-        call writeconsolemsg(userindex, "posibles pjs trabados: " & cstr(count), fonttypenames.fonttype_info)
-        call writeconsolemsg(userindex, list, fonttypenames.fonttype_info)
+        call writeconsolemsg(userindex, "npcs.dat recargado.", fonttypenames.fonttype_info)
     end with
 end sub
 
@@ -11864,7 +12000,7 @@ public sub handlechangemapinforestricted(byval userindex as integer)
 '***************************************************
 'author: pablo (toxicwaste)
 'last modification: 26/01/2007
-'restringido -> options: "newbie", "no", "armada", "caos".
+'restringido -> options: "newbie", "no", "armada", "caos", "faccion".
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -11885,13 +12021,13 @@ on error goto errhandler
         tstr = buffer.readasciistring()
         
         if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
-            if tstr = "newbie" or tstr = "no" or tstr = "armada" or tstr = "caos" then
+            if tstr = "newbie" or tstr = "no" or tstr = "armada" or tstr = "caos" or tstr = "faccion" then
                 call loggm(.name, .name & " ha cambiado la informacion sobre si es restringido el mapa.")
                 mapinfo(userlist(userindex).pos.map).restringir = tstr
                 call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "restringir", tstr)
                 call writeconsolemsg(userindex, "mapa " & .pos.map & " restringido: " & mapinfo(.pos.map).restringir, fonttypenames.fonttype_info)
             else
-                call writeconsolemsg(userindex, "opciones para restringir: 'newbie', 'no', 'armada', 'caos'", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "opciones para restringir: 'newbie', 'no', 'armada', 'caos', 'faccion'", fonttypenames.fonttype_info)
             end if
         end if
         
@@ -12327,7 +12463,7 @@ on error goto errhandler
                                 
                                 call writevar(charpath & username & ".chr", "penas", "p" & cstr(cantpenas + 1), lcase$(.name) & ": ban por cambio de nick a " & ucase$(newname) & " " & date & " " & time)
                                 
-                                call loggm(.name, "ha cambiado de nombre al usuario " & username)
+                                call loggm(.name, "ha cambiado de nombre al usuario " & username & ". ahora se llama " & newname)
                             else
                                 call writeconsolemsg(userindex, "el nick solicitado ya existe", fonttypenames.fonttype_info)
                             end if
@@ -12393,7 +12529,6 @@ on error goto errhandler
                 else
                     call writevar(charpath & username & ".chr", "contacto", "email", newmail)
                     call writeconsolemsg(userindex, "email de " & username & " cambiado a: " & newmail, fonttypenames.fonttype_info)
-                    userlist(userindex).email = newmail
                 end if
                 
                 call loggm(.name, "le ha cambiado el mail a " & username)
@@ -12460,7 +12595,7 @@ on error goto errhandler
                     password = getvar(charpath & copyfrom & ".chr", "init", "password")
                     call writevar(charpath & username & ".chr", "init", "password", password)
                     
-                    call writeconsolemsg(userindex, "password de " & username & " cambiado a: " & password, fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "password de " & username & " ha cambiado por la de " & copyfrom, fonttypenames.fonttype_info)
                 end if
             end if
         end if
@@ -12508,7 +12643,10 @@ public sub handlecreatenpc(byval userindex as integer)
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
         npcindex = spawnnpc(npcindex, .pos, true, false)
-        call loggm(.name, "sumoneo a " & npclist(npcindex).name & " en mapa " & .pos.map)
+        
+        if npcindex <> 0 then
+            call loggm(.name, "sumoneo a " & npclist(npcindex).name & " en mapa " & .pos.map)
+        end if
     end with
 end sub
 
@@ -12540,8 +12678,10 @@ public sub handlecreatenpcwithrespawn(byval userindex as integer)
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
         npcindex = spawnnpc(npcindex, .pos, true, true)
-        call loggm(.name, "sumoneo con respawn " & npclist(npcindex).name & " en mapa " & .pos.map)
         
+        if npcindex <> 0 then
+            call loggm(.name, "sumoneo con respawn " & npclist(npcindex).name & " en mapa " & .pos.map)
+        end if
     end with
 end sub
 
@@ -13603,6 +13743,52 @@ errhandler:
 end sub
 
 ''
+' writes the "resuscitationsafeon" message to the given user's outgoing data buffer.
+'
+' @param    userindex user to which the message is intended.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeresuscitationsafeon(byval userindex as integer)
+'***************************************************
+'author: rapsodius
+'last modification: 10/10/07
+'writes the "resuscitationsafeon" message to the given user's outgoing data buffer
+'***************************************************
+on error goto errhandler
+    call userlist(userindex).outgoingdata.writebyte(serverpacketid.resuscitationsafeon)
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
+
+''
+' writes the "resuscitationsafeoff" message to the given user's outgoing data buffer.
+'
+' @param    userindex user to which the message is intended.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeresuscitationsafeoff(byval userindex as integer)
+'***************************************************
+'author: rapsodius
+'last modification: 10/10/07
+'writes the "resuscitationsafeoff" message to the given user's outgoing data buffer
+'***************************************************
+on error goto errhandler
+    call userlist(userindex).outgoingdata.writebyte(serverpacketid.resuscitationsafeoff)
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
+
+''
 ' writes the "nobilitylost" message to the given user's outgoing data buffer.
 '
 ' @param    userindex user to which the message is intended.
@@ -14226,6 +14412,23 @@ errhandler:
     end if
 end sub
 
+public sub writeforcecharmove(byval userindex, byval direccion as eheading)
+'***************************************************
+'author: zama
+'last modification: 26/03/2009
+'writes the "forcecharmove" message to the given user's outgoing data buffer
+'***************************************************
+on error goto errhandler
+    call userlist(userindex).outgoingdata.writeasciistringfixed(preparemessageforcecharmove(direccion))
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
+
 ''
 ' writes the "characterchange" message to the given user's outgoing data buffer.
 '
@@ -14372,16 +14575,19 @@ end sub
 '
 ' @param    userindex user to which the message is intended.
 ' @param    wave the wave to be played.
+' @param    x the x position in map coordinates from where the sound comes.
+' @param    y the y position in map coordinates from where the sound comes.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeplaywave(byval userindex as integer, byval wave as byte)
+public sub writeplaywave(byval userindex as integer, byval wave as byte, byval x as byte, byval y as byte)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'writes the "playwave" message to the given user's outgoing data buffer
+'last modification: 08/08/07
+'last modified by: rapsodius
+'added x and y positions for 3d sounds
 '***************************************************
 on error goto errhandler
-    call userlist(userindex).outgoingdata.writeasciistringfixed(preparemessageplaywave(wave))
+    call userlist(userindex).outgoingdata.writeasciistringfixed(preparemessageplaywave(wave, x, y))
 exit sub
 
 errhandler:
@@ -14421,29 +14627,6 @@ on error goto errhandler
         
         call .writeasciistring(tmp)
     end with
-exit sub
-
-errhandler:
-    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
-        call flushbuffer(userindex)
-        resume
-    end if
-end sub
-
-''
-' writes the "playfiresound" message to the given user's outgoing data buffer.
-'
-' @param    userindex user to which the message is intended.
-' @remarks  the data is not actually sent until the buffer is properly flushed.
-
-public sub writeplayfiresound(byval userindex as integer)
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'writes the "playfiresound" message to the given user's outgoing data buffer
-'***************************************************
-on error goto errhandler
-    call userlist(userindex).outgoingdata.writeasciistringfixed(preparemessageplayfiresound())
 exit sub
 
 errhandler:
@@ -14650,7 +14833,7 @@ on error goto errhandler
         call .writeinteger(obdata.maxhit)
         call .writeinteger(obdata.minhit)
         call .writeinteger(obdata.def)
-        call .writelong(obdata.valor \ reductor_precioventa)
+        call .writesingle(saleprice(obdata.valor))
     end with
 exit sub
 
@@ -14781,7 +14964,7 @@ end sub
 public sub writeblacksmithweapons(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 04/15/2008 (niconz) habia un error al fijarse los skills del personaje
 'writes the "blacksmithweapons" message to the given user's outgoing data buffer
 '***************************************************
 on error goto errhandler
@@ -14797,7 +14980,7 @@ on error goto errhandler
         
         for i = 1 to ubound(armasherrero())
             ' can the user create this object? if so add it to the list....
-            if objdata(armasherrero(i)).skherreria <= userlist(userindex).stats.userskills(eskill.herreria) \ modherreria(userlist(userindex).clase) then
+            if objdata(armasherrero(i)).skherreria <= round(userlist(userindex).stats.userskills(eskill.herreria) / modherreria(userlist(userindex).clase), 0) then
                 count = count + 1
                 validindexes(count) = i
             end if
@@ -14834,7 +15017,7 @@ end sub
 public sub writeblacksmitharmors(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 04/15/2008 (niconz) habia un error al fijarse los skills del personaje
 'writes the "blacksmitharmors" message to the given user's outgoing data buffer
 '***************************************************
 on error goto errhandler
@@ -14850,7 +15033,7 @@ on error goto errhandler
         
         for i = 1 to ubound(armadurasherrero())
             ' can the user create this object? if so add it to the list....
-            if objdata(armadurasherrero(i)).skherreria <= userlist(userindex).stats.userskills(eskill.herreria) \ modherreria(userlist(userindex).clase) then
+            if objdata(armadurasherrero(i)).skherreria <= round(userlist(userindex).stats.userskills(eskill.herreria) / modherreria(userlist(userindex).clase), 0) then
                 count = count + 1
                 validindexes(count) = i
             end if
@@ -15053,15 +15236,17 @@ end sub
 ''
 ' writes the "changenpcinventoryslot" message to the given user's outgoing data buffer.
 '
-' @param    userindex user to which the message is intended.
-' @param    obj the object to be set in the npc's inventory window.
-' @param    price the value the npc asks for the object.
+' @param    userindex   user to which the message is intended.
+' @param    slot        the inventory slot in which this item is to be placed.
+' @param    obj         the object to be set in the npc's inventory window.
+' @param    price       the value the npc asks for the object.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writechangenpcinventoryslot(byval userindex as integer, byref obj as obj, byval price as long)
+public sub writechangenpcinventoryslot(byval userindex as integer, byval slot as byte, byref obj as obj, byval price as single)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 06/13/08
+'last modified by: nicolas ezequiel bouhid (niconz)
 'writes the "changenpcinventoryslot" message to the given user's outgoing data buffer
 '***************************************************
 on error goto errhandler
@@ -15073,9 +15258,10 @@ on error goto errhandler
     
     with userlist(userindex).outgoingdata
         call .writebyte(serverpacketid.changenpcinventoryslot)
+        call .writebyte(slot)
         call .writeasciistring(objinfo.name)
         call .writeinteger(obj.amount)
-        call .writelong(price)
+        call .writesingle(price)
         call .writeinteger(objinfo.grhindex)
         call .writeinteger(obj.objindex)
         call .writebyte(objinfo.objtype)
@@ -15495,6 +15681,7 @@ on error goto errhandler
         
         call .writeasciistring(tmp)
         
+        tmp = vbnullstring
         'prepare allies' list
         for i = lbound(allies()) to ubound(allies())
             tmp = tmp & allies(i) & separator
@@ -15855,11 +16042,14 @@ end sub
 public sub writeparalizeok(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 08/12/07
+'last modified by: lucas tavolaro ortiz (tavo)
 'writes the "paralizeok" message to the given user's outgoing data buffer
+'and updates user position
 '***************************************************
 on error goto errhandler
     call userlist(userindex).outgoingdata.writebyte(serverpacketid.paralizeok)
+    call writeposupdate(userindex)
 exit sub
 
 errhandler:
@@ -15969,7 +16159,7 @@ on error goto errhandler
         call .writeinteger(objdata(objindex).maxhit)
         call .writeinteger(objdata(objindex).minhit)
         call .writeinteger(objdata(objindex).def)
-        call .writelong(objdata(objindex).valor / reductor_precioventa)
+        call .writelong(saleprice(objdata(objindex).valor))
     end with
 exit sub
 
@@ -16324,18 +16514,23 @@ end function
 ' prepares the "playwave" message and returns it.
 '
 ' @param    wave the wave to be played.
+' @param    x the x position in map coordinates from where the sound comes.
+' @param    y the y position in map coordinates from where the sound comes.
 ' @return   the formated message ready to be writen as is on outgoing buffers.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public function preparemessageplaywave(byval wave as byte) as string
+public function preparemessageplaywave(byval wave as byte, byval x as byte, byval y as byte) as string
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'prepares the "playwave" message and returns it
+'last modification: 08/08/07
+'last modified by: rapsodius
+'added x and y positions for 3d sounds
 '***************************************************
     with auxiliarbuffer
         call .writebyte(serverpacketid.playwave)
         call .writebyte(wave)
+        call .writebyte(x)
+        call .writebyte(y)
         
         preparemessageplaywave = .readasciistringfixed(.length)
     end with
@@ -16441,25 +16636,6 @@ public function preparemessageraintoggle() as string
         call .writebyte(serverpacketid.raintoggle)
         
         preparemessageraintoggle = .readasciistringfixed(.length)
-    end with
-end function
-
-''
-' prepares the "playfiresound" message and returns it.
-'
-' @return   the formated message ready to be writen as is on outgoing buffers.
-' @remarks  the data is not actually sent until the buffer is properly flushed.
-
-public function preparemessageplayfiresound() as string
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'prepares the "playfiresound" and returns it
-'***************************************************
-    with auxiliarbuffer
-        call .writebyte(serverpacketid.playfiresound)
-        
-        preparemessageplayfiresound = .readasciistringfixed(.length)
     end with
 end function
 
@@ -16692,6 +16868,20 @@ public function preparemessagecharactermove(byval charindex as integer, byval x 
         call .writebyte(y)
         
         preparemessagecharactermove = .readasciistringfixed(.length)
+    end with
+end function
+
+public function preparemessageforcecharmove(byval direccion as eheading) as string
+'***************************************************
+'author: zama
+'last modification: 26/03/2009
+'prepares the "forcecharmove" message and returns it
+'***************************************************
+    with auxiliarbuffer
+        call .writebyte(serverpacketid.forcecharmove)
+        call .writebyte(direccion)
+        
+        preparemessageforcecharmove = .readasciistringfixed(.length)
     end with
 end function
 

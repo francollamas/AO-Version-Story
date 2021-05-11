@@ -405,7 +405,7 @@ private sub sendtouserguildarea(byval userindex as integer, byval sddata as stri
         
         if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
             if userlist(tempindex).areasinfo.arearecivey and areay then
-                if userlist(tempindex).connidvalida and userlist(tempindex).guildindex = userlist(userindex).guildindex then
+                if userlist(tempindex).connidvalida and (userlist(tempindex).guildindex = userlist(userindex).guildindex or ((userlist(tempindex).flags.privilegios and playertype.dios) and (userlist(tempindex).flags.privilegios and playertype.rolemaster) = 0)) then
                     call enviardatosaslot(tempindex, sddata)
                 end if
             end if

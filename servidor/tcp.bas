@@ -1,5 +1,5 @@
 attribute vb_name = "tcp"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -172,7 +172,7 @@ select case usergenero
             case eraza.elfo
                 newhead = randomnumber(101, 112)
                 newbody = 2
-            case eraza.elfooscuro
+            case eraza.drow
                 newhead = randomnumber(200, 210)
                 newbody = 3
             case eraza.enano
@@ -190,7 +190,7 @@ select case usergenero
             case eraza.elfo
                 newhead = randomnumber(170, 178)
                 newbody = 2
-            case eraza.elfooscuro
+            case eraza.drow
                 newhead = randomnumber(270, 278)
                 newbody = 3
             case eraza.gnomo
@@ -285,10 +285,21 @@ sub connectnewuser(byval userindex as integer, byref name as string, byref passw
 '24/01/2007 pablo (toxicwaste) - agregu� el nuevo mana inicial de los magos.
 '12/02/2007 pablo (toxicwaste) - puse + 1 de const al elfo normal.
 '20/04/2007 pablo (toxicwaste) - puse -1 de fuerza al elfo.
+'09/01/2008 pablo (toxicwaste) - ahora los modificadores de raza se controlan desde balance.dat
 '*************************************************
 
 if not asciivalidos(name) or lenb(name) = 0 then
     call writeerrormsg(userindex, "nombre invalido.")
+    exit sub
+end if
+
+if userlist(userindex).flags.userlogged then
+    call logcheating("el usuario " & userlist(userindex).name & " ha intentado crear a " & name & " desde la ip " & userlist(userindex).ip)
+    
+    'kick player ( and leave character inside :d )!
+    call closesocketsl(userindex)
+    call cerrar_usuario(userindex)
+    
     exit sub
 end if
 
@@ -329,35 +340,13 @@ userlist(userindex).genero = usersexo
 userlist(userindex).email = useremail
 userlist(userindex).hogar = hogar
 
-select case userraza
-    case eraza.humano
-        userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) + 1
-        userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + 1
-        userlist(userindex).stats.useratributos(eatributos.constitucion) = userlist(userindex).stats.useratributos(eatributos.constitucion) + 2
-    case eraza.elfo
-        userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) - 1
-        userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + 4
-        userlist(userindex).stats.useratributos(eatributos.inteligencia) = userlist(userindex).stats.useratributos(eatributos.inteligencia) + 2
-        userlist(userindex).stats.useratributos(eatributos.carisma) = userlist(userindex).stats.useratributos(eatributos.carisma) + 2
-        userlist(userindex).stats.useratributos(eatributos.constitucion) = userlist(userindex).stats.useratributos(eatributos.constitucion) + 1
-    case eraza.elfooscuro
-        userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) + 2
-        userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + 2
-        userlist(userindex).stats.useratributos(eatributos.inteligencia) = userlist(userindex).stats.useratributos(eatributos.inteligencia) + 2
-        userlist(userindex).stats.useratributos(eatributos.carisma) = userlist(userindex).stats.useratributos(eatributos.carisma) - 3
-    case eraza.enano
-        userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) + 3
-        userlist(userindex).stats.useratributos(eatributos.constitucion) = userlist(userindex).stats.useratributos(eatributos.constitucion) + 3
-        userlist(userindex).stats.useratributos(eatributos.inteligencia) = userlist(userindex).stats.useratributos(eatributos.inteligencia) - 6
-        userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) - 1
-        userlist(userindex).stats.useratributos(eatributos.carisma) = userlist(userindex).stats.useratributos(eatributos.carisma) - 2
-    case eraza.gnomo
-        userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) - 4
-        userlist(userindex).stats.useratributos(eatributos.inteligencia) = userlist(userindex).stats.useratributos(eatributos.inteligencia) + 3
-        userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + 3
-        userlist(userindex).stats.useratributos(eatributos.carisma) = userlist(userindex).stats.useratributos(eatributos.carisma) + 1
-end select
-
+'[pablo (toxic waste) 9/01/08]
+userlist(userindex).stats.useratributos(eatributos.fuerza) = userlist(userindex).stats.useratributos(eatributos.fuerza) + modraza(userraza).fuerza
+userlist(userindex).stats.useratributos(eatributos.agilidad) = userlist(userindex).stats.useratributos(eatributos.agilidad) + modraza(userraza).agilidad
+userlist(userindex).stats.useratributos(eatributos.inteligencia) = userlist(userindex).stats.useratributos(eatributos.inteligencia) + modraza(userraza).inteligencia
+userlist(userindex).stats.useratributos(eatributos.carisma) = userlist(userindex).stats.useratributos(eatributos.carisma) + modraza(userraza).carisma
+userlist(userindex).stats.useratributos(eatributos.constitucion) = userlist(userindex).stats.useratributos(eatributos.constitucion) + modraza(userraza).constitucion
+'[/pablo (toxic waste)]
 
 for loopc = 1 to numskills
     userlist(userindex).stats.userskills(loopc) = skills(loopc - 1)
@@ -453,7 +442,7 @@ select case userraza
         userlist(userindex).invent.object(4).objindex = 463
     case eraza.elfo
         userlist(userindex).invent.object(4).objindex = 464
-    case eraza.elfooscuro
+    case eraza.drow
         userlist(userindex).invent.object(4).objindex = 465
     case eraza.enano
         userlist(userindex).invent.object(4).objindex = 466
@@ -489,8 +478,7 @@ end sub
 
 #if usarquesocket = 1 or usarquesocket = 2 then
 
-sub closesocket(byval userindex as integer, optional byval cerrarlo as boolean = true)
-dim loopc as integer
+sub closesocket(byval userindex as integer)
 
 on error goto errhandler
     
@@ -538,14 +526,12 @@ on error goto errhandler
     
     userlist(userindex).connid = -1
     userlist(userindex).connidvalida = false
-    userlist(userindex).numeropaquetespormilisec = 0
     
 exit sub
 
 errhandler:
     userlist(userindex).connid = -1
     userlist(userindex).connidvalida = false
-    userlist(userindex).numeropaquetespormilisec = 0
     call resetuserslot(userindex)
 
     call logerror("closesocket - error = " & err.number & " - descripci�n = " & err.description & " - userindex = " & userindex)
@@ -559,7 +545,6 @@ on error goto errhandler
     
     
     userlist(userindex).connid = -1
-    userlist(userindex).numeropaquetespormilisec = 0
 
     if userindex = lastuser and lastuser > 1 then
         do until userlist(lastuser).flags.userlogged
@@ -581,7 +566,6 @@ exit sub
 
 errhandler:
     userlist(userindex).connid = -1
-    userlist(userindex).numeropaquetespormilisec = 0
     call resetuserslot(userindex)
 end sub
 
@@ -609,7 +593,6 @@ dim connectionid as long
     
   
     userlist(userindex).connid = -1 'inabilitamos operaciones en socket
-    userlist(userindex).numeropaquetespormilisec = 0
 
     if userindex = lastuser and lastuser > 1 then
         do
@@ -637,7 +620,6 @@ dim connectionid as long
 exit sub
 
 errhandler:
-    userlist(userindex).numeropaquetespormilisec = 0
     call logerror("closesocketerr: " & err.description & " ui:" & userindex)
     
     if not nurestados then
@@ -716,7 +698,6 @@ public function enviardatosaslot(byval userindex as integer, byref datos as stri
 exit function
     
 err:
-        'if frmmain.superlog.value = 1 then logcustom ("enviardatosaslot:: err handler. userindex=" & userindex & " datos=" & datos & " ul?/cid/cidv?=" & userlist(userindex).flags.userlogged & "/" & userlist(userindex).connid & "/" & userlist(userindex).connidvalida & " err: " & err.description)
 
 #elseif usarquesocket = 0 then '**********************************************
     
@@ -762,7 +743,7 @@ err:
             exit function
         end if
         
-        if frmmain.tcpserv.enviar(userlist(userindex).connid, datos, len(datos)) = 2 then call closesocket(userindex, true)
+        if frmmain.tcpserv.enviar(userlist(userindex).connid, datos, len(datos)) = 2 then call closesocket(userindex)
 
 exit function
 errorhandler:
@@ -828,8 +809,23 @@ validatechr = userlist(userindex).char.head <> 0 _
 end function
 
 sub connectuser(byval userindex as integer, byref name as string, byref password as string)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 26/03/2009
+'26/03/2009: zama - agrego por default que el color de dialogo de los dioses, sea como el de su nick.
+'***************************************************
 dim n as integer
 dim tstr as string
+
+if userlist(userindex).flags.userlogged then
+    call logcheating("el usuario " & userlist(userindex).name & " ha intentado loguear a " & name & " desde la ip " & userlist(userindex).ip)
+    
+    'kick player ( and leave character inside :d )!
+    call closesocketsl(userindex)
+    call cerrar_usuario(userindex)
+    
+    exit sub
+end if
 
 'reseteamos los flags
 userlist(userindex).flags.escondido = 0
@@ -878,11 +874,46 @@ if checkforsamename(name) then
     if userlist(nameindex(name)).counters.saliendo then
         call writeerrormsg(userindex, "el usuario est� saliendo.")
     else
-        call writeerrormsg(userindex, "perdon, un usuario con el mismo nombre se h� logoeado.")
+        call writeerrormsg(userindex, "perdon, un usuario con el mismo nombre se ha logoeado.")
     end if
     call flushbuffer(userindex)
     call closesocket(userindex)
     exit sub
+end if
+
+'reseteamos los privilegios
+userlist(userindex).flags.privilegios = 0
+
+'vemos que clase de user es (se lo usa para setear los privilegios al loguear el pj)
+if esadmin(name) then
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.admin
+    call loggm(name, "se conecto con ip:" & userlist(userindex).ip)
+elseif esdios(name) then
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.dios
+    call loggm(name, "se conecto con ip:" & userlist(userindex).ip)
+elseif essemidios(name) then
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.semidios
+    call loggm(name, "se conecto con ip:" & userlist(userindex).ip)
+elseif esconsejero(name) then
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.consejero
+    call loggm(name, "se conecto con ip:" & userlist(userindex).ip)
+else
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.user
+    userlist(userindex).flags.adminperseguible = true
+end if
+
+'add rm flag if needed
+if esrolesmaster(name) then
+    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.rolemaster
+end if
+
+if serversologms > 0 then
+    if (userlist(userindex).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero)) = 0 then
+        call writeerrormsg(userindex, "servidor restringido a administradores. por favor reintente en unos momentos.")
+        call flushbuffer(userindex)
+        call closesocket(userindex)
+        exit sub
+    end if
 end if
 
 'cargamos el personaje
@@ -909,6 +940,13 @@ if userlist(userindex).invent.escudoeqpslot = 0 then userlist(userindex).char.sh
 if userlist(userindex).invent.cascoeqpslot = 0 then userlist(userindex).char.cascoanim = ninguncasco
 if userlist(userindex).invent.weaponeqpslot = 0 then userlist(userindex).char.weaponanim = ningunarma
 
+if (userlist(userindex).flags.muerto = 0) then
+    userlist(userindex).flags.seguroresu = false
+    call writeresuscitationsafeoff(userindex)
+else
+    userlist(userindex).flags.seguroresu = true
+    call writeresuscitationsafeon(userindex)
+end if
 
 call updateuserinv(true, userindex, 0)
 call updateuserhechizos(true, userindex, 0)
@@ -953,17 +991,27 @@ end if
 'codigo por pablo (toxicwaste) y revisado por nacho (integer), corregido para que realmetne ande y no tire el server por juan mart�n sotuyo dodero (maraxus)
 if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex <> 0 or mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).npcindex <> 0 then
     dim foundplace as boolean
+    dim esagua as boolean
     dim tx as long
     dim ty as long
     
     foundplace = false
+    esagua = hayagua(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
     
     for ty = userlist(userindex).pos.y - 1 to userlist(userindex).pos.y + 1
         for tx = userlist(userindex).pos.x - 1 to userlist(userindex).pos.x + 1
-            'reviso que sea pos legal en tierra, que no haya user ni npc para poder loguear.
-            if legalpos(userlist(userindex).pos.map, tx, ty, false, true) then
-                foundplace = true
-                exit for
+            if esagua then
+                'reviso que sea pos legal en agua, que no haya user ni npc para poder loguear.
+                if legalpos(userlist(userindex).pos.map, tx, ty, true, false) then
+                    foundplace = true
+                    exit for
+                end if
+            else
+                'reviso que sea pos legal en tierra, que no haya user ni npc para poder loguear.
+                if legalpos(userlist(userindex).pos.map, tx, ty, false, true) then
+                    foundplace = true
+                    exit for
+                end if
             end if
         next tx
         
@@ -993,7 +1041,7 @@ if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(user
                 end if
             end if
             
-            call closesocket(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex, true)
+            call closesocket(mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex)
         end if
     end if
 end if
@@ -1008,13 +1056,36 @@ userlist(userindex).name = name
 userlist(userindex).showname = true 'por default los nombres son visibles
 
 'if in the water, and has a boat, equip it!
-if userlist(userindex).invent.barcoobjindex > 0 and hayagua(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y) then
-     userlist(userindex).char.body = objdata(userlist(userindex).invent.barcoobjindex).ropaje
-     userlist(userindex).char.head = 0
-     userlist(userindex).char.weaponanim = ningunarma
-     userlist(userindex).char.shieldanim = ningunescudo
-     userlist(userindex).char.cascoanim = ninguncasco
-     userlist(userindex).flags.navegando = 1
+if userlist(userindex).invent.barcoobjindex > 0 and _
+        (hayagua(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y) or bodyisboat(userlist(userindex).char.body)) then
+    dim barco as objdata
+    barco = objdata(userlist(userindex).invent.barcoobjindex)
+    userlist(userindex).char.head = 0
+    if userlist(userindex).flags.muerto = 0 then
+
+        if userlist(userindex).faccion.armadareal = 1 then
+            userlist(userindex).char.body = ifragatareal
+        elseif userlist(userindex).faccion.fuerzascaos = 1 then
+            userlist(userindex).char.body = ifragatacaos
+        else
+            if criminal(userindex) then
+                if barco.ropaje = ibarca then userlist(userindex).char.body = ibarcapk
+                if barco.ropaje = igalera then userlist(userindex).char.body = igalerapk
+                if barco.ropaje = igaleon then userlist(userindex).char.body = igaleonpk
+            else
+                if barco.ropaje = ibarca then userlist(userindex).char.body = ibarcaciuda
+                if barco.ropaje = igalera then userlist(userindex).char.body = igaleraciuda
+                if barco.ropaje = igaleon then userlist(userindex).char.body = igaleonciuda
+            end if
+        end if
+    else
+        userlist(userindex).char.body = ifragatafantasmal
+    end if
+    
+    userlist(userindex).char.shieldanim = ningunescudo
+    userlist(userindex).char.weaponanim = ningunarma
+    userlist(userindex).char.cascoanim = ninguncasco
+    userlist(userindex).flags.navegando = 1
 end if
 
 
@@ -1023,37 +1094,18 @@ call writeuserindexinserver(userindex) 'enviamos el user index
 call writechangemap(userindex, userlist(userindex).pos.map, mapinfo(userlist(userindex).pos.map).mapversion) 'carga el mapa
 call writeplaymidi(userindex, val(readfield(1, mapinfo(userlist(userindex).pos.map).music, 45)))
 
-'reseteamos los privilegios
-userlist(userindex).flags.privilegios = 0
-
-'vemos que clase de user es (se lo usa para setear los privilegios alcrear el pj)
-if esadmin(name) then
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.admin
-    call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip)
-elseif esdios(name) then
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.dios
-    call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip)
-elseif essemidios(name) then
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.semidios
-    call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip)
-elseif esconsejero(name) then
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.consejero
-    call loggm(userlist(userindex).name, "se conecto con ip:" & userlist(userindex).ip)
-else
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.user
-    userlist(userindex).flags.adminperseguible = true
-end if
-
-'add rm flag if needed
-if esrolesmaster(name) then
-    userlist(userindex).flags.privilegios = userlist(userindex).flags.privilegios or playertype.rolemaster
-end if
-
-if userlist(userindex).flags.privilegios <> playertype.user and userlist(userindex).flags.privilegios <> playertype.chaoscouncil and userlist(userindex).flags.privilegios <> playertype.royalcouncil then
+if userlist(userindex).flags.privilegios = playertype.dios then
+    userlist(userindex).flags.chatcolor = rgb(250, 250, 150)
+elseif userlist(userindex).flags.privilegios <> playertype.user and userlist(userindex).flags.privilegios <> (playertype.user or playertype.chaoscouncil) and userlist(userindex).flags.privilegios <> (playertype.user or playertype.royalcouncil) then
     userlist(userindex).flags.chatcolor = rgb(0, 255, 0)
+elseif userlist(userindex).flags.privilegios = (playertype.user or playertype.royalcouncil) then
+    userlist(userindex).flags.chatcolor = rgb(0, 255, 255)
+elseif userlist(userindex).flags.privilegios = (playertype.user or playertype.chaoscouncil) then
+    userlist(userindex).flags.chatcolor = rgb(255, 128, 64)
 else
     userlist(userindex).flags.chatcolor = vbwhite
 end if
+
 
 ''[el oso]: traigo esto aca arriba para darle el ip!
 #if conuptime then
@@ -1106,17 +1158,15 @@ if userlist(userindex).stats.skillpts > 0 then
     call writelevelup(userindex, userlist(userindex).stats.skillpts)
 end if
 
-if numusers > daystats.maxusuarios then daystats.maxusuarios = numusers
-
 if numusers > recordusuarios then
-    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("record de usuarios conectados simultaniamente." & "hay " & numusers & " usuarios.", fonttypenames.fonttype_info))
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("record de usuarios conectados simultaneamente." & "hay " & numusers & " usuarios.", fonttypenames.fonttype_info))
     recordusuarios = numusers
     call writevar(inipath & "server.ini", "init", "record", str(recordusuarios))
     
     call estadisticasweb.informar(record_usuarios, recordusuarios)
 end if
 
-if userlist(userindex).nromacotas > 0 then
+if userlist(userindex).nromascotas > 0 and mapinfo(userlist(userindex).pos.map).pk then
     dim i as integer
     for i = 1 to maxmascotas
         if userlist(userindex).mascotastype(i) > 0 then
@@ -1142,15 +1192,6 @@ if criminal(userindex) then
 else
     userlist(userindex).flags.seguro = true
     call writesafemodeon(userindex)
-end if
-
-if serversologms > 0 then
-    if (userlist(userindex).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero)) = 0 then
-        call writeerrormsg(userindex, "servidor restringido a administradores de jerarquia mayor o igual a: " & serversologms & ". por favor intente en unos momentos.")
-        call flushbuffer(userindex)
-        call closesocket(userindex)
-        exit sub
-    end if
 end if
 
 if userlist(userindex).guildindex > 0 then
@@ -1257,7 +1298,6 @@ sub resetcontadores(byval userindex as integer)
         .idlecount = 0
         .invisibilidad = 0
         .paralisis = 0
-        .pasos = 0
         .pena = 0
         .piquetec = 0
         .stacounter = 0
@@ -1310,7 +1350,6 @@ sub resetbasicuserinfo(byval userindex as integer)
 '*************************************************
     with userlist(userindex)
         .name = vbnullstring
-        .modname = vbnullstring
         .desc = vbnullstring
         .descrm = vbnullstring
         .pos.map = 0
@@ -1386,10 +1425,11 @@ end sub
 sub resetuserflags(byval userindex as integer)
 '*************************************************
 'author: unknown
-'last modified: 03/29/2006
+'last modified: 06/28/2008
 'resetea todos los valores generales y las stats
 '03/15/2006 maraxus - uso de with para mayor performance y claridad.
 '03/29/2006 maraxus - reseteo el centinelaok tambi�n.
+'06/28/2008 niconz - agrego el flag inmovilizado
 '*************************************************
     with userlist(userindex).flags
         .comerciando = false
@@ -1418,6 +1458,7 @@ sub resetuserflags(byval userindex as integer)
         .envenenado = 0
         .invisible = 0
         .paralizado = 0
+        .inmovilizado = 0
         .maldicion = 0
         .bendicion = 0
         .meditando = 0
@@ -1448,7 +1489,7 @@ end sub
 sub resetuserpets(byval userindex as integer)
     dim loopc as long
     
-    userlist(userindex).nromacotas = 0
+    userlist(userindex).nromascotas = 0
         
     for loopc = 1 to maxmascotas
         userlist(userindex).mascotasindex(loopc) = 0
@@ -1509,13 +1550,9 @@ sub closeuser(byval userindex as integer)
 on error goto errhandler
 
 dim n as integer
-dim x as integer
-dim y as integer
 dim loopc as integer
 dim map as integer
 dim name as string
-dim raza as eraza
-dim clase as eclass
 dim i as integer
 
 dim an as integer
@@ -1535,14 +1572,8 @@ end if
 userlist(userindex).flags.atacadopornpc = 0
 userlist(userindex).flags.npcatacado = 0
 
-
-'check:: aca se guardan un monton de cosas que no se ocupan para nada :s
 map = userlist(userindex).pos.map
-x = userlist(userindex).pos.x
-y = userlist(userindex).pos.y
 name = ucase$(userlist(userindex).name)
-raza = userlist(userindex).raza
-clase = userlist(userindex).clase
 
 userlist(userindex).char.fx = 0
 userlist(userindex).char.loops = 0
@@ -1608,7 +1639,7 @@ call mostrarnumusers
 
 n = freefile(1)
 open app.path & "\logs\connect.log" for append shared as #n
-print #n, name & " h� dejado el juego. " & "user index:" & userindex & " " & time & " " & date
+print #n, name & " ha dejado el juego. " & "user index:" & userindex & " " & time & " " & date
 close #n
 
 exit sub

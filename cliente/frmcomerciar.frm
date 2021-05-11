@@ -239,6 +239,7 @@ option explicit
 public lastindex1 as integer
 public lastindex2 as integer
 public lasactionbuy as boolean
+private lindex as byte
 
 private sub cantidad_change()
     if val(cantidad.text) < 1 then
@@ -247,6 +248,12 @@ private sub cantidad_change()
     
     if val(cantidad.text) > max_inventory_objs then
         cantidad.text = 1
+    end if
+    
+    if lindex = 0 then
+        label1(1).caption = round(npcinventory(list1(0).listindex + 1).valor * val(cantidad.text), 0) 'no mostramos numeros reales
+    else
+        label1(1).caption = round(inventario.valor(list1(1).listindex + 1) * val(cantidad.text), 0) 'no mostramos numeros reales
     end if
 end sub
 
@@ -288,12 +295,14 @@ call audio.playwave(snd_click)
 if list1(index).list(list1(index).listindex) = "" or _
    list1(index).listindex < 0 then exit sub
 
+if not isnumeric(cantidad.text) or cantidad.text = 0 then exit sub
+
 select case index
     case 0
         frmcomerciar.list1(0).setfocus
         lastindex1 = list1(0).listindex
         lasactionbuy = true
-        if usergld >= npcinventory(list1(0).listindex + 1).valor * val(cantidad) then
+        if usergld >= round(npcinventory(list1(0).listindex + 1).valor * val(cantidad), 0) then
             call writecommercebuy(list1(0).listindex + 1, cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no ten�s suficiente oro.", 2, 51, 223, 1, 1
@@ -303,18 +312,10 @@ select case index
    case 1
         lastindex2 = list1(1).listindex
         lasactionbuy = false
-        if not inventario.equipped(list1(1).listindex + 1) then
-            call writecommercesell(list1(1).listindex + 1, cantidad.text)
-        else
-            addtorichtextbox frmmain.rectxt, "no podes vender el item porque lo estas usando.", 2, 51, 223, 1, 1
-            exit sub
-        end if
+        
+        call writecommercesell(list1(1).listindex + 1, cantidad.text)
 end select
 
-list1(0).clear
-list1(1).clear
-
-npcinvdim = 0
 end sub
 
 private sub image1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
@@ -351,11 +352,16 @@ dr.top = 0
 dr.right = 32
 dr.bottom = 32
 
+lindex = index
+
 select case index
     case 0
+        
         label1(0).caption = npcinventory(list1(0).listindex + 1).name
-        label1(1).caption = npcinventory(list1(0).listindex + 1).valor
+        label1(1).caption = round(npcinventory(list1(0).listindex + 1).valor * val(cantidad.text), 0) 'no mostramos numeros reales
         label1(2).caption = npcinventory(list1(0).listindex + 1).amount
+        
+        if label1(2).caption <> 0 then
         
         select case npcinventory(list1(0).listindex + 1).objtype
             case eobjtype.otweapon
@@ -372,12 +378,16 @@ select case index
                 label1(4).visible = false
         end select
         
-        call drawgrhtohdc(picture1.hwnd, picture1.hdc, npcinventory(list1(0).listindex + 1).grhindex, sr, dr)
+        call drawgrhtohdc(picture1.hdc, npcinventory(list1(0).listindex + 1).grhindex, sr, dr)
+        
+        end if
     
     case 1
         label1(0).caption = inventario.itemname(list1(1).listindex + 1)
-        label1(1).caption = inventario.valor(list1(1).listindex + 1)
+        label1(1).caption = round(inventario.valor(list1(1).listindex + 1) * val(cantidad.text), 0) 'no mostramos numeros reales
         label1(2).caption = inventario.amount(list1(1).listindex + 1)
+        
+        if label1(2).caption <> 0 then
         
         select case inventario.objtype(list1(1).listindex + 1)
             case eobjtype.otweapon
@@ -394,7 +404,10 @@ select case index
                 label1(4).visible = false
         end select
         
-        call drawgrhtohdc(picture1.hwnd, picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
+        call drawgrhtohdc(picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
+        
+        end if
+        
 end select
 
 if label1(2).caption = 0 then ' 27/08/2006 - gs > no mostrar imagen ni nada, cuando no ahi nada que mostrar.

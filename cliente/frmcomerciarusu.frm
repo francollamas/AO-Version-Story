@@ -354,7 +354,7 @@ dr.top = 0
 dr.right = 32
 dr.bottom = 32
 
-call drawgrhtohdc(picture1.hwnd, picture1.hdc, grh, sr, dr)
+call drawgrhtohdc(picture1.hdc, grh, sr, dr)
 
 end sub
 

@@ -1,5 +1,5 @@
 attribute vb_name = "modhexastrings"
-'argentum online 0.11.6
+'argentum online 0.12.2
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez

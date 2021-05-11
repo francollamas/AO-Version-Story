@@ -274,6 +274,8 @@ attribute vb_exposed = false
 
 option explicit
 
+private const max_news_length as integer = 512
+
 private sub cmdelecciones_click()
     call writeguildopenelections
     unload me
@@ -282,7 +284,7 @@ end sub
 private sub command1_click()
     if solicitudes.listindex = -1 then exit sub
     
-    frmcharinfo.frmsolicitudes = true
+    frmcharinfo.frmtype = charinfofrmtype.frmmembershiprequests
     call writeguildmemberinfo(solicitudes.list(solicitudes.listindex))
 
     'unload me
@@ -291,7 +293,7 @@ end sub
 private sub command2_click()
     if members.listindex = -1 then exit sub
     
-    frmcharinfo.frmmiembros = true
+    frmcharinfo.frmtype = charinfofrmtype.frmmembers
     call writeguildmemberinfo(members.list(members.listindex))
 
     'unload me
@@ -333,4 +335,9 @@ end sub
 private sub command8_click()
     unload me
     frmmain.setfocus
+end sub
+
+private sub txtguildnews_change()
+    if len(txtguildnews.text) > max_news_length then _
+        txtguildnews.text = left$(txtguildnews.text, max_news_length)
 end sub

@@ -38,8 +38,14 @@ attribute vb_exposed = false
 ' used to create and manipulate the byte arrays to be sent and received by both client and server
 '
 ' @author juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
-' @version 1.0.0
+' @version 1.1.0
 ' @date 20060427
+
+'**************************************************************************
+' - history
+'       v1.0.0  -   initial release ( 2006/04/27 - juan mart�n sotuyo dodero )
+'       v1.1.0  -   added single and double support ( 2007/10/28 - juan mart�n sotuyo dodero )
+'**************************************************************************
 
 option explicit
 option base 0       'it's the default, but we make it explicit just in case...
@@ -323,6 +329,50 @@ public function writelong(byval value as long) as long
 end function
 
 ''
+' writes a single at the end of the queue
+'
+' @param value the value to be written
+' @return   the number of bytes written
+' @see peeksingle
+' @see readsingle
+
+public function writesingle(byval value as single) as long
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'writes a single to the queue
+'***************************************************
+    dim buf(3) as byte
+    
+    'copy data to temp buffer
+    call copymemory(buf(0), value, 4)
+    
+    writesingle = writedata(buf, 4)
+end function
+
+''
+' writes a double at the end of the queue
+'
+' @param value the value to be written
+' @return   the number of bytes written
+' @see peekdouble
+' @see readdouble
+
+public function writedouble(byval value as double) as long
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'writes a double to the queue
+'***************************************************
+    dim buf(7) as byte
+    
+    'copy data to temp buffer
+    call copymemory(buf(0), value, 8)
+    
+    writedouble = writedata(buf, 8)
+end function
+
+''
 ' writes a boolean value at the end of the queue
 '
 ' @param value the value to be written
@@ -536,6 +586,54 @@ public function readlong() as long
     
     'copy data to temp buffer
     call copymemory(readlong, buf(0), 4)
+end function
+
+''
+' reads a single from the begining of the queue and removes it
+'
+' @return   the read value
+' @remarks  read methods removes the data from the queue.
+' data removed can't be recovered by the queue in any way
+' @see peeksingle
+' @see writesingle
+
+public function readsingle() as single
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'reads a single from the queue and removes it
+'***************************************************
+    dim buf(3) as byte
+    
+    'read the data and remove it
+    call removedata(readdata(buf, 4))
+    
+    'copy data to temp buffer
+    call copymemory(readsingle, buf(0), 4)
+end function
+
+''
+' reads a double from the begining of the queue and removes it
+'
+' @return   the read value
+' @remarks  read methods removes the data from the queue.
+' data removed can't be recovered by the queue in any way
+' @see peekdouble
+' @see writedouble
+
+public function readdouble() as double
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'reads a double from the queue and removes it
+'***************************************************
+    dim buf(7) as byte
+    
+    'read the data and remove it
+    call removedata(readdata(buf, 8))
+    
+    'copy data to temp buffer
+    call copymemory(readdouble, buf(0), 8)
 end function
 
 ''
@@ -807,6 +905,52 @@ public function peeklong() as long
     
     'copy data to temp buffer
     call copymemory(peeklong, buf(0), 4)
+end function
+
+''
+' reads a single from the begining of the queue but does not remove it.
+'
+' @return   the read value.
+' @remarks  peek methods, unlike read methods, don't remove the data from the queue.
+' @see readsingle
+' @see writesingle
+
+public function peeksingle() as single
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'reads a single from the queue but doesn't removes it
+'***************************************************
+    dim buf(3) as byte
+    
+    'read the data and remove it
+    call readdata(buf, 4)
+    
+    'copy data to temp buffer
+    call copymemory(peeksingle, buf(0), 4)
+end function
+
+''
+' reads a double from the begining of the queue but does not remove it.
+'
+' @return   the read value.
+' @remarks  peek methods, unlike read methods, don't remove the data from the queue.
+' @see readdouble
+' @see writedouble
+
+public function peekdouble() as double
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/28/07
+'reads a double from the queue but doesn't removes it
+'***************************************************
+    dim buf(7) as byte
+    
+    'read the data and remove it
+    call readdata(buf, 8)
+    
+    'copy data to temp buffer
+    call copymemory(peekdouble, buf(0), 8)
 end function
 
 ''

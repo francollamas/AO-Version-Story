@@ -186,84 +186,72 @@ sub updateventanabanco(byval userindex as integer)
 end sub
 
 sub userdepositaitem(byval userindex as integer, byval item as integer, byval cantidad as integer)
-
 on error goto errhandler
-
-'el usuario deposita un item
-call writeupdateuserstats(userindex)
-   
-if userlist(userindex).invent.object(item).amount > 0 and userlist(userindex).invent.object(item).equipped = 0 then
-            
-            if cantidad > 0 and cantidad > userlist(userindex).invent.object(item).amount then cantidad = userlist(userindex).invent.object(item).amount
-            'agregamos el obj que compro al inventario
-            call userdejaobj(userindex, cint(item), cantidad)
-            'actualizamos el inventario del usuario
-            call updateuserinv(true, userindex, 0)
-            'actualizamos el inventario del banco
-            call updatebanuserinv(true, userindex, 0)
-end if
-            'actualizamos la ventana del banco
-            call updateventanabanco(userindex)
-
+    if userlist(userindex).invent.object(item).amount > 0 and cantidad > 0 then
+        if cantidad > userlist(userindex).invent.object(item).amount then cantidad = userlist(userindex).invent.object(item).amount
+        
+        'agregamos el obj que deposita al banco
+        call userdejaobj(userindex, cint(item), cantidad)
+        
+        'actualizamos el inventario del usuario
+        call updateuserinv(true, userindex, 0)
+        
+        'actualizamos el inventario del banco
+        call updatebanuserinv(true, userindex, 0)
+    end if
+    
+    'actualizamos la ventana del banco
+    call updateventanabanco(userindex)
 errhandler:
-
 end sub
 
 sub userdejaobj(byval userindex as integer, byval objindex as integer, byval cantidad as integer)
-
-dim slot as integer
-dim obji as integer
-
-if cantidad < 1 then exit sub
-
-obji = userlist(userindex).invent.object(objindex).objindex
-
-'�ya tiene un objeto de este tipo?
-slot = 1
-do until userlist(userindex).bancoinvent.object(slot).objindex = obji and _
-         userlist(userindex).bancoinvent.object(slot).amount + cantidad <= max_inventory_objs
-            slot = slot + 1
+    dim slot as integer
+    dim obji as integer
+    
+    if cantidad < 1 then exit sub
+    
+    obji = userlist(userindex).invent.object(objindex).objindex
+    
+    '�ya tiene un objeto de este tipo?
+    slot = 1
+    do until userlist(userindex).bancoinvent.object(slot).objindex = obji and _
+        userlist(userindex).bancoinvent.object(slot).amount + cantidad <= max_inventory_objs
+        slot = slot + 1
         
-            if slot > max_bancoinventory_slots then
-                exit do
-            end if
-loop
-
-'sino se fija por un slot vacio antes del slot devuelto
-if slot > max_bancoinventory_slots then
+        if slot > max_bancoinventory_slots then
+            exit do
+        end if
+    loop
+    
+    'sino se fija por un slot vacio antes del slot devuelto
+    if slot > max_bancoinventory_slots then
         slot = 1
         do until userlist(userindex).bancoinvent.object(slot).objindex = 0
             slot = slot + 1
-
+            
             if slot > max_bancoinventory_slots then
                 call writeconsolemsg(userindex, "no tienes mas espacio en el banco!!", fonttypenames.fonttype_info)
                 exit sub
-                exit do
             end if
         loop
-        if slot <= max_bancoinventory_slots then userlist(userindex).bancoinvent.nroitems = userlist(userindex).bancoinvent.nroitems + 1
         
-        
-end if
-
-if slot <= max_bancoinventory_slots then 'slot valido
-    'mete el obj en el slot
-    if userlist(userindex).bancoinvent.object(slot).amount + cantidad <= max_inventory_objs then
-        
-        'menor que max_inv_objs
-        userlist(userindex).bancoinvent.object(slot).objindex = obji
-        userlist(userindex).bancoinvent.object(slot).amount = userlist(userindex).bancoinvent.object(slot).amount + cantidad
-        
-        call quitaruserinvitem(userindex, cbyte(objindex), cantidad)
-
-    else
-        call writeconsolemsg(userindex, "el banco no puede cargar tantos objetos.", fonttypenames.fonttype_info)
+        userlist(userindex).bancoinvent.nroitems = userlist(userindex).bancoinvent.nroitems + 1
     end if
-
-else
-    call quitaruserinvitem(userindex, cbyte(objindex), cantidad)
-end if
-
+    
+    if slot <= max_bancoinventory_slots then 'slot valido
+        'mete el obj en el slot
+        if userlist(userindex).bancoinvent.object(slot).amount + cantidad <= max_inventory_objs then
+            
+            'menor que max_inv_objs
+            userlist(userindex).bancoinvent.object(slot).objindex = obji
+            userlist(userindex).bancoinvent.object(slot).amount = userlist(userindex).bancoinvent.object(slot).amount + cantidad
+            
+            call quitaruserinvitem(userindex, cbyte(objindex), cantidad)
+        else
+            call writeconsolemsg(userindex, "el banco no puede cargar tantos objetos.", fonttypenames.fonttype_info)
+        end if
+    end if
 end sub
 
 sub senduserbovedatxt(byval sendindex as integer, byval userindex as integer)

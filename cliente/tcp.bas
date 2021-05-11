@@ -57,9 +57,9 @@ puedoquitarfoco = true
 end function
 
 sub login()
-    if estadologin = normal then
+    if estadologin = e_modo.normal then
         call writeloginexistingchar
-    elseif estadologin = crearnuevopj then
+    elseif estadologin = e_modo.crearnuevopj then
         call writeloginnewchar
     end if
     

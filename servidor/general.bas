@@ -1,5 +1,5 @@
 attribute vb_name = "general"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -27,13 +27,9 @@ attribute vb_name = "general"
 'c�digo postal 1900
 'pablo ignacio m�rquez
 
-'global anpc as long
-'global anpc_host as long
-
 option explicit
 
 global leernpcs as new clsinireader
-'global leernpcshostiles as new clsinireader
 
 sub darcuerpodesnudo(byval userindex as integer, optional byval mimetizado as boolean = false)
 '***************************************************
@@ -47,7 +43,7 @@ select case userlist(userindex).genero
         select case userlist(userindex).raza
             case eraza.humano
                 cuerpodesnudo = 21
-            case eraza.elfooscuro
+            case eraza.drow
                 cuerpodesnudo = 32
             case eraza.elfo
                 cuerpodesnudo = 210
@@ -60,7 +56,7 @@ select case userlist(userindex).genero
         select case userlist(userindex).raza
             case eraza.humano
                 cuerpodesnudo = 39
-            case eraza.elfooscuro
+            case eraza.drow
                 cuerpodesnudo = 40
             case eraza.elfo
                 cuerpodesnudo = 259
@@ -136,24 +132,30 @@ end function
 
 
 sub limpiarmundo()
-
-on error resume next
+'***************************************************
+'author: unknow
+'last modification: 04/15/2008
+'01/14/2008: marcos martinez (byval) - la funcion for estaba mal. en ves de i habia un 1.
+'04/15/2008: (niconz) - la funcion for estaba mal, de la forma que se hacia tiraba error.
+'***************************************************
+on error goto errhandler
 
 dim i as integer
+dim d as new cgarbage
 
-
-for i = 1 to trashcollector.count
-    dim d as cgarbage
-    set d = trashcollector(1)
-    call eraseobj(d.map, 1, d.map, d.x, d.y)
-    call trashcollector.remove(1)
+for i = trashcollector.count to 1 step -1
+    set d = trashcollector(i)
+    call eraseobj(1, d.map, d.x, d.y)
+    call trashcollector.remove(i)
     set d = nothing
 next i
 
 call securityip.ipsecuritymantenimientolista
 
+exit sub
 
-
+errhandler:
+    call logerror("error producido en el sub limpiarmundo: " & err.description)
 end sub
 
 sub enviarspawnlist(byval userindex as integer)
@@ -270,7 +272,7 @@ levelskill(50).levelvalue = 100
 
 listarazas(eraza.humano) = "humano"
 listarazas(eraza.elfo) = "elfo"
-listarazas(eraza.elfooscuro) = "elfo oscuro"
+listarazas(eraza.drow) = "drow"
 listarazas(eraza.gnomo) = "gnomo"
 listarazas(eraza.enano) = "enano"
 
@@ -313,6 +315,12 @@ skillsnames(eskill.proyectiles) = "armas de proyectiles"
 skillsnames(eskill.wrestling) = "wrestling"
 skillsnames(eskill.navegacion) = "navegacion"
 
+listaatributos(eatributos.fuerza) = "fuerza"
+listaatributos(eatributos.agilidad) = "agilidad"
+listaatributos(eatributos.inteligencia) = "inteligencia"
+listaatributos(eatributos.carisma) = "carisma"
+listaatributos(eatributos.constitucion) = "constitucion"
+
 
 frmcargando.show
 
@@ -344,6 +352,7 @@ call loadsini
 call cargaapuestas
 
 '*************************************************
+frmcargando.label1(2).caption = "cargando npcs.dat"
 call carganpcsdat
 '*************************************************
 
@@ -355,9 +364,15 @@ frmcargando.label1(2).caption = "cargando hechizos.dat"
 call cargarhechizos
     
     
+frmcargando.label1(2).caption = "cargando objetos de herrer�a"
 call loadarmasherreria
 call loadarmadurasherreria
+
+frmcargando.label1(2).caption = "cargando objetos de carpinter�a"
 call loadobjcarpintero
+
+frmcargando.label1(2).caption = "cargando balance.dat"
+call loadbalance    '4/01/08 pablo toxicwaste
 
 if bootdelbackup then
     
@@ -670,31 +685,6 @@ exit sub
 errhandler:
 
 end sub
-
-public sub savedaystats()
-''on error goto errhandler
-''
-''dim nfile as integer
-''nfile = freefile ' obtenemos un canal
-''open app.path & "\logs\" & replace(date, "/", "-") & ".log" for append shared as #nfile
-''
-''print #nfile, "<stats>"
-''print #nfile, "<ao>"
-''print #nfile, "<dia>" & date & "</dia>"
-''print #nfile, "<hora>" & time & "</hora>"
-''print #nfile, "<segundos_total>" & daystats.segundos & "</segundos_total>"
-''print #nfile, "<max_user>" & daystats.maxusuarios & "</max_user>"
-''print #nfile, "</ao>"
-''print #nfile, "</stats>"
-''
-''
-''close #nfile
-exit sub
-
-errhandler:
-
-end sub
-
 
 public sub logasesinato(texto as string)
 on error goto errhandler
@@ -1023,27 +1013,68 @@ public sub efectolava(byval userindex as integer)
     end if
 end sub
 
+''
+' maneja el tiempo y el efecto del mimetismo
+'
+' @param userindex  el index del usuario a ser afectado por el mimetismo
+'
 
 public sub efectomimetismo(byval userindex as integer)
-
-if userlist(userindex).counters.mimetismo < intervaloinvisible then
-    userlist(userindex).counters.mimetismo = userlist(userindex).counters.mimetismo + 1
-else
-    'restore old char
-    call writeconsolemsg(userindex, "recuperas tu apariencia normal.", fonttypenames.fonttype_info)
+'******************************************************
+'author: unknown
+'last update: 04/11/2008 (niconz)
+'
+'******************************************************
+    dim barco as objdata
     
-    userlist(userindex).char.body = userlist(userindex).charmimetizado.body
-    userlist(userindex).char.head = userlist(userindex).charmimetizado.head
-    userlist(userindex).char.cascoanim = userlist(userindex).charmimetizado.cascoanim
-    userlist(userindex).char.shieldanim = userlist(userindex).charmimetizado.shieldanim
-    userlist(userindex).char.weaponanim = userlist(userindex).charmimetizado.weaponanim
-        
-    
-    userlist(userindex).counters.mimetismo = 0
-    userlist(userindex).flags.mimetizado = 0
-    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-end if
+    with userlist(userindex)
+        if .counters.mimetismo < intervaloinvisible then
+            .counters.mimetismo = .counters.mimetismo + 1
+        else
+            'restore old char
+            call writeconsolemsg(userindex, "recuperas tu apariencia normal.", fonttypenames.fonttype_info)
             
+            if .flags.navegando then
+                if .flags.muerto = 0 then
+                    if .faccion.armadareal = 1 then
+                        .char.body = ifragatareal
+                    elseif .faccion.fuerzascaos = 1 then
+                        .char.body = ifragatacaos
+                    else
+                        barco = objdata(userlist(userindex).invent.barcoobjindex)
+                        if criminal(userindex) then
+                            if barco.ropaje = ibarca then .char.body = ibarcapk
+                            if barco.ropaje = igalera then .char.body = igalerapk
+                            if barco.ropaje = igaleon then .char.body = igaleonpk
+                        else
+                            if barco.ropaje = ibarca then .char.body = ibarcaciuda
+                            if barco.ropaje = igalera then .char.body = igaleraciuda
+                            if barco.ropaje = igaleon then .char.body = igaleonciuda
+                        end if
+                    end if
+                else
+                    .char.body = ifragatafantasmal
+                end if
+                
+                .char.shieldanim = ningunescudo
+                .char.weaponanim = ningunarma
+                .char.cascoanim = ninguncasco
+            else
+                .char.body = .charmimetizado.body
+                .char.head = .charmimetizado.head
+                .char.cascoanim = .charmimetizado.cascoanim
+                .char.shieldanim = .charmimetizado.shieldanim
+                .char.weaponanim = .charmimetizado.weaponanim
+            end if
+            
+            with .char
+                call changeuserchar(userindex, .body, .head, .heading, .weaponanim, .shieldanim, .cascoanim)
+            end with
+            
+            .counters.mimetismo = 0
+            .flags.mimetizado = 0
+        end if
+    end with
 end sub
 
 public sub efectoinvisibilidad(byval userindex as integer)
@@ -1099,6 +1130,7 @@ if userlist(userindex).counters.paralisis > 0 then
     userlist(userindex).counters.paralisis = userlist(userindex).counters.paralisis - 1
 else
     userlist(userindex).flags.paralizado = 0
+    userlist(userindex).flags.inmovilizado = 0
     'userlist(userindex).flags.administrativeparalisis = 0
     call writeparalizeok(userindex)
 end if
@@ -1114,15 +1146,16 @@ if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(user
 
 dim massta as integer
 if userlist(userindex).stats.minsta < userlist(userindex).stats.maxsta then
-   if userlist(userindex).counters.stacounter < intervalo then
-       userlist(userindex).counters.stacounter = userlist(userindex).counters.stacounter + 1
-   else
-       enviarstats = true
-       userlist(userindex).counters.stacounter = 0
-       if userlist(userindex).flags.desnudo then exit sub 'desnudo no sube energ�a. (toxicwaste)
-       massta = randomnumber(1, porcentaje(userlist(userindex).stats.maxsta, 5))
-       userlist(userindex).stats.minsta = userlist(userindex).stats.minsta + massta
-       if userlist(userindex).stats.minsta > userlist(userindex).stats.maxsta then
+    if userlist(userindex).counters.stacounter < intervalo then
+        userlist(userindex).counters.stacounter = userlist(userindex).counters.stacounter + 1
+    else
+        enviarstats = true
+        userlist(userindex).counters.stacounter = 0
+        if userlist(userindex).flags.desnudo then exit sub 'desnudo no sube energ�a. (toxicwaste)
+       
+        massta = randomnumber(1, porcentaje(userlist(userindex).stats.maxsta, 5))
+        userlist(userindex).stats.minsta = userlist(userindex).stats.minsta + massta
+        if userlist(userindex).stats.minsta > userlist(userindex).stats.maxsta then
             userlist(userindex).stats.minsta = userlist(userindex).stats.maxsta
         end if
     end if
@@ -1130,13 +1163,13 @@ end if
 
 end sub
 
-public sub efectoveneno(byval userindex as integer, byref enviarstats as boolean)
+public sub efectoveneno(byval userindex as integer)
 dim n as integer
 
 if userlist(userindex).counters.veneno < intervaloveneno then
   userlist(userindex).counters.veneno = userlist(userindex).counters.veneno + 1
 else
-  call writeconsolemsg(userindex, "est�s envenenado, si no te curas moriras.", fonttypenames.fonttype_veneno)
+  call writeconsolemsg(userindex, "est�s envenenado, si no te curas morir�s.", fonttypenames.fonttype_veneno)
   userlist(userindex).counters.veneno = 0
   n = randomnumber(1, 5)
   userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - n
@@ -1211,16 +1244,16 @@ if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(user
 dim mashit as integer
 'con el paso del tiempo va sanando....pero muy lentamente ;-)
 if userlist(userindex).stats.minhp < userlist(userindex).stats.maxhp then
-   if userlist(userindex).counters.hpcounter < intervalo then
-      userlist(userindex).counters.hpcounter = userlist(userindex).counters.hpcounter + 1
-   else
-      mashit = randomnumber(2, porcentaje(userlist(userindex).stats.maxsta, 5))
-                           
-      userlist(userindex).counters.hpcounter = 0
-      userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + mashit
-      if userlist(userindex).stats.minhp > userlist(userindex).stats.maxhp then userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
-      call writeconsolemsg(userindex, "has sanado.", fonttypenames.fonttype_info)
-      enviarstats = true
+    if userlist(userindex).counters.hpcounter < intervalo then
+        userlist(userindex).counters.hpcounter = userlist(userindex).counters.hpcounter + 1
+    else
+        mashit = randomnumber(2, porcentaje(userlist(userindex).stats.maxsta, 5))
+        
+        userlist(userindex).counters.hpcounter = 0
+        userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + mashit
+        if userlist(userindex).stats.minhp > userlist(userindex).stats.maxhp then userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
+        call writeconsolemsg(userindex, "has sanado.", fonttypenames.fonttype_info)
+        enviarstats = true
     end if
 end if
 
@@ -1231,9 +1264,6 @@ public sub carganpcsdat()
     
     npcfile = datpath & "npcs.dat"
     call leernpcs.initialize(npcfile)
-    
-    'npcfile = datpath & "npcs-hostiles.dat"
-    'call leernpcshostiles.initialize(npcfile)
 end sub
 
 sub pasarsegundo()
@@ -1361,8 +1391,6 @@ public sub freecharindexes()
 'last modification: 05/17/06
 'releases all char indexes
 '***************************************************
-    dim loopc as long
-    
     ' free all char indexes (set them all to 0)
     call zeromemory(charlist(1), maxchars * len(charlist(1)))
 end sub

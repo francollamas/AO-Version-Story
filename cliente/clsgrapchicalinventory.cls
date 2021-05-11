@@ -149,7 +149,7 @@ public property get grhindex(byval slot as byte) as integer
     grhindex = userinventory(slot).grhindex
 end property
 
-public property get valor(byval slot as byte) as long
+public property get valor(byval slot as byte) as single
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modify date: 27/07/04
@@ -209,7 +209,7 @@ end property
 
 public sub setitem(byval slot as byte, byval eobjindex as integer, byval eamount as integer, byval eequipped as byte, _
                         byval egrhindex as integer, byval eobjtype as integer, byval emaxhit as integer, byval eminhit as integer, _
-                        byval edef as integer, byval evalor as long, byval ename as string)
+                        byval edef as integer, byval evalor as single, byval ename as string)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modify date: 12/04/06
@@ -339,7 +339,6 @@ private sub drawinventoryslot(byval slot as integer)
 'last modify date: 12/04/06
 'renders a inventory slot to the given picturebox
 '***************************************************
-    dim loopc as long
     dim srcrect as rect
     dim temprect as rect
     dim destrect as rect

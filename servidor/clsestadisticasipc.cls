@@ -33,11 +33,7 @@ attribute vb_exposed = false
 option explicit
 
 private declare function registerwindowmessage lib "user32" alias "registerwindowmessagea" (byval lpstring as string) as long
-private declare function sendnotifymessage lib "user32" alias "sendnotifymessagea" (byval hwnd as long, byval msg as long, byval wparam as long, byval lparam as long) as long
-private declare function sendmessage lib "user32" alias "sendmessagea" (byval hwnd as long, byval wmsg as long, byval wparam as long, lparam as any) as long
 private declare function sendmessagelong lib "user32" alias "sendmessagea" (byval hwnd as long, byval wmsg as long, byval wparam as long, byval lparam as long) as long
-
-private const wm_user = &h400
 
 private smensaje as long, hventana as long, hventanamia as long
 
@@ -98,7 +94,6 @@ end if
 end function
 
 public function estadisticasandando() as boolean
-dim ret as long
 
 call buscawndestadisticas
 'ret = sendnotifymessage(hventana, smensaje, 0, 0)

@@ -196,10 +196,3 @@ private function opcionvalida(byval opcion as integer) as boolean
     opcionvalida = opcion > 0 and opcion <= ubound(popciones)
 end function
 
-private function dameopcion(byval opcion as integer) as string
-    if opcionvalida(opcion) then
-        dameopcion = getvar(app.path & archivoconfig, "encuesta" & pencuestaactualnum, "opcion" & opcion)
-    else
-        dameopcion = "error"
-    end if
-end function

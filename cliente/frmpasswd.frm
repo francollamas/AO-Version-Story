@@ -214,6 +214,7 @@ end if
 checkdatos = true
 
 end function
+
 private sub command1_click()
 
 if checkdatos() then
@@ -235,7 +236,7 @@ if checkdatos() then
     frmmain.socket1.remoteport = curserverport
 #end if
     
-    estadologin = crearnuevopj
+    estadologin = e_modo.crearnuevopj
     
 #if usarwrench = 1 then
     if not frmmain.socket1.connected then

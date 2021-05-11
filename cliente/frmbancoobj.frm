@@ -241,7 +241,8 @@ public lastindex2 as integer
 
 
 private sub cantidad_change()
-if val(cantidad.text) < 0 then
+
+if val(cantidad.text) < 1 then
     cantidad.text = 1
 end if
 
@@ -294,6 +295,8 @@ call audio.playwave(snd_click)
 if list1(index).list(list1(index).listindex) = "" or _
    list1(index).listindex < 0 then exit sub
 
+if not isnumeric(cantidad.text) then exit sub
+
 select case index
     case 0
         frmbancoobj.list1(0).setfocus
@@ -304,19 +307,9 @@ select case index
    case 1
         lastindex2 = list1(1).listindex
         lasactionbuy = false
-        if not inventario.equipped(list1(1).listindex + 1) then
-            call writebankdeposit(list1(1).listindex + 1, cantidad.text)
-        else
-            addtorichtextbox frmmain.rectxt, "no podes depositar el item porque lo estas usando.", 2, 51, 223, 1, 1
-            exit sub
-        end if
-                
+        call writebankdeposit(list1(1).listindex + 1, cantidad.text)
 end select
-list1(0).clear
 
-list1(1).clear
-
-npcinvdim = 0
 end sub
 
 private sub image1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
@@ -371,7 +364,9 @@ select case index
                 label1(3).visible = false
                 label1(4).visible = false
         end select
-        call drawgrhtohdc(picture1.hwnd, picture1.hdc, userbancoinventory(list1(0).listindex + 1).grhindex, sr, dr)
+        
+        if userbancoinventory(list1(0).listindex + 1).amount <> 0 then _
+            call drawgrhtohdc(picture1.hdc, userbancoinventory(list1(0).listindex + 1).grhindex, sr, dr)
     case 1
         label1(0).caption = inventario.itemname(list1(1).listindex + 1)
         label1(2).caption = inventario.amount(list1(1).listindex + 1)
@@ -389,7 +384,9 @@ select case index
                 label1(3).visible = false
                 label1(4).visible = false
         end select
-        call drawgrhtohdc(picture1.hwnd, picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
+        
+        if inventario.amount(list1(1).listindex + 1) <> 0 then _
+            call drawgrhtohdc(picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
 end select
 
 if label1(2).caption = 0 then ' 27/08/2006 - gs > no mostrar imagen ni nada, cuando no ahi nada que mostrar.

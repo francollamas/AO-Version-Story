@@ -231,6 +231,10 @@ else
     
     mimensaje(0).visible = false
     mimensaje(1).visible = false
+    'limpio los textboxs (niconz) 04/24/08
+    mimensaje(0).text = vbnullstring
+    mimensaje(1).text = vbnullstring
+    
     command1.enabled = true
     label1.visible = false
     label2.visible = false

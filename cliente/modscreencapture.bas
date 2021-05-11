@@ -164,30 +164,6 @@ private declare function ijlinit lib "ijl11.dll" (jcprops as any) as long
 private declare function ijlfree lib "ijl11.dll" (jcprops as any) as long
 private declare function ijlread lib "ijl11.dll" (jcprops as any, byval iotype as long) as long
 private declare function ijlwrite lib "ijl11.dll" (jcprops as any, byval iotype as long) as long
-private declare function ijlgetlibversion lib "ijl11.dll" () as long
-private declare function ijlgeterrorstring lib "ijl11.dll" (byval code as long) as long
-
-' win32 declares
-private declare function globalalloc lib "kernel32" (byval wflags as long, byval dwbytes as long) as long
-private declare function globalfree lib "kernel32" (byval hmem as long) as long
-private declare function globallock lib "kernel32" (byval hmem as long) as long
-private declare function globalunlock lib "kernel32" (byval hmem as long) as long
-private const gmem_ddeshare = &h2000
-private const gmem_discardable = &h100
-private const gmem_discarded = &h4000
-private const gmem_fixed = &h0
-private const gmem_invalid_handle = &h8000
-private const gmem_lockcount = &hff
-private const gmem_modify = &h80
-private const gmem_moveable = &h2
-private const gmem_nocompact = &h10
-private const gmem_nodiscard = &h20
-private const gmem_not_banked = &h1000
-private const gmem_notify = &h4000
-private const gmem_share = &h2000
-private const gmem_valid_flags = &h7f72
-private const gmem_zeroinit = &h40
-private const gptr = (gmem_fixed or gmem_zeroinit)
 
 ' stuff for replacing a file when you have to kill the original:
 private const max_path = 260
@@ -214,14 +190,14 @@ private declare function setfiletime lib "kernel32" (byval hfile as long, lpcrea
 private declare function setfileattributes lib "kernel32" alias "setfileattributesa" (byval lpfilename as string, byval dwfileattributes as long) as long
 private const of_write = &h1
 private const of_share_deny_write = &h20
-private const generic_write = &h40000000
-private const generic_read = &h80000000
-private const file_share_write = &h2
-private const create_always = 2
-private const file_begin = 0
-private const section_map_write = &h2
 
 private const invalid_handle as long = -1
+
+'bltbit constant
+private const srccopy = &hcc0020 ' (dword) dest = source
+
+'good old bitblt
+private declare function bitblt lib "gdi32" (byval hdestdc as long, byval x as long, byval y as long, byval nwidth as long, byval nheight as long, byval hsrcdc as long, byval xsrc as long, byval ysrc as long, byval dwrop as long) as long
 
 public function loadjpg( _
       byref cdib as cdibsection, _
@@ -304,7 +280,6 @@ public function loadjpgfromptr( _
       byval lsize as long _
    ) as boolean
 dim tj as jpeg_core_properties_vb
-dim bfile() as byte
 dim lr as long
 dim ljpgwidth as long, ljpgheight as long
 
@@ -470,12 +445,8 @@ public function savejpgtoptr( _
       optional byval lquality as long = 90 _
    ) as boolean
 dim tj as jpeg_core_properties_vb
-dim bfile() as byte
 dim lr as long
-dim tfnd as win32_find_data
 dim hfile as long
-dim bfileexisted as boolean
-dim b as boolean
    
    hfile = -1
    
@@ -546,7 +517,7 @@ on error goto err:
     frmscreenshots.picture1.width = 11900
     frmscreenshots.picture1.height = 8650
     
-    bitblt frmscreenshots.picture1.hdc, 0, 0, 794, 580, hdcc, 0, 0, srccopy
+    call bitblt(frmscreenshots.picture1.hdc, 0, 0, 794, 580, hdcc, 0, 0, srccopy)
     
     call releasedc(frmmain.hwnd, hdcc)
     

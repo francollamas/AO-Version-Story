@@ -66,7 +66,7 @@ end sub
 
 public sub parseusercommand(byval rawcommand as string)
 '***************************************************
-'autor: alejandro santos (alejolp)
+'author: alejandro santos (alejolp)
 'last modification: 12/20/06
 'interpreta, valida y ejecuta el comando ingresado
 '***************************************************
@@ -375,19 +375,9 @@ public sub parseusercommand(byval rawcommand as string)
                     call showconsolemsg("faltan par�metros. utilice /penas nickname.")
                 end if
                 
-            case "/passwd"
-                if notnullarguments then
-#if seguridadalkon then
-                    call writechangepassword(md5.getmd5string(argumentosraw))
-                    call md5.md5reset
-#else
-                    call writechangepassword(argumentosraw)
-#end if
-                else
-                    'avisar que falta el parametro
-                    call showconsolemsg("password nulo. utilice /passwd password, siendo el password de su elecci�n.")
-                end if
-                
+            case "/contrase�a"
+                call frmnewpassword.show(vbmodal, frmmain)
+            
             case "/apostar"
                 if userestado = 1 then 'muerto
                     with fonttypes(fonttypenames.fonttype_info)

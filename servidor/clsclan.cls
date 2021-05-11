@@ -222,7 +222,7 @@ public function getmemberlist() as string()
     redim list(oldq - 1) as string
     
     for i = 1 to oldq
-        list(i - 1) = getvar(membersfile, "members", "member" & i)
+        list(i - 1) = ucase$(getvar(membersfile, "members", "member" & i))
     next i
     
     getmemberlist = list
@@ -244,13 +244,13 @@ end sub
 
 public sub aceptarnuevomiembro(byref nombre as string)
 dim oldq    as integer
-dim cantp   as integer
-dim cantps  as string
-dim oldqs  as string
-    
-    if lenb(dir$(charpath & nombre & ".chr")) <> 0 then
-        call writevar(charpath & nombre & ".chr", "guild", "guildindex", p_guildnumber)
-        call writevar(charpath & nombre & ".chr", "guild", "aspirantea", "0")
+dim oldqs   as string
+dim ruta    as string
+
+ruta = charpath & nombre & ".chr"
+    if fileexist(ruta) then
+        call writevar(ruta, "guild", "guildindex", p_guildnumber)
+        call writevar(ruta, "guild", "aspirantea", "0")
         'cantps = getvar(charpath & nombre & ".chr", "guild", "clanesparticipo")
         'if isnumeric(cantps) then
         '    cantp = cint(cantps)
@@ -353,7 +353,6 @@ end function
 
 public function numerodeaspirante(byref nombre as string) as integer
 dim i       as integer
-dim cantasp as integer
     
     numerodeaspirante = 0
     
@@ -521,8 +520,6 @@ dim q           as integer
 dim i           as integer
 dim temps       as string
 dim tempv       as string
-dim tempn       as string
-dim tempw       as string
 dim d           as diccionario
 
 on error goto errh

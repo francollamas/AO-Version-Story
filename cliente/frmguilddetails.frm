@@ -210,6 +210,8 @@ attribute vb_exposed = false
 
 option explicit
 
+private const max_desc_length as integer = 520
+private const max_codex_length as integer = 100
 
 private sub command1_click(index as integer)
     select case index
@@ -259,13 +261,12 @@ private sub command1_click(index as integer)
     end select
 end sub
 
-private sub form_deactivate()
-
-'if not frmguildleader.visible then
-'    me.setfocus
-'else
-'    'unload me
-'end if
-'
+private sub txtcodex1_change(index as integer)
+    if len(txtcodex1.item(index).text) > max_codex_length then _
+        txtcodex1.item(index).text = left$(txtcodex1.item(index).text, max_codex_length)
 end sub
 
+private sub txtdesc_change()
+    if len(txtdesc.text) > max_desc_length then _
+        txtdesc.text = left$(txtdesc.text, max_desc_length)
+end sub

@@ -39,7 +39,7 @@ end property
 
 public sub removedialogs()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 04/02/07
 'removes all dialogs
 '***************************************************
@@ -57,7 +57,7 @@ end sub
 
 public property get cantidaddialogos() as byte
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 04/01/07
 'retrieves the number of dialogs to be displayed on screen
 '***************************************************
@@ -89,9 +89,9 @@ y = 250
     for i = 1 to p_cantidaddialogos
         if trim$(p_dialogos(i).texto) <> vbnullstring then
             if left$(p_dialogos(i).texto, 1) = chr(3) then
-                call mod_tileengine.drawtext(260, y + (i * 10), mid(p_dialogos(i).texto, 2), vbgreen, usedfont)
+                call mod_tileengine.rendertext(260, y + (i * 10), mid(p_dialogos(i).texto, 2), vbgreen, usedfont)
             else
-                call mod_tileengine.drawtext(260, y + (i * 10), p_dialogos(i).texto, vbyellow, usedfont)
+                call mod_tileengine.rendertext(260, y + (i * 10), p_dialogos(i).texto, vbyellow, usedfont)
             end if
         end if
     next i
@@ -110,15 +110,40 @@ next i
     
 end sub
 
+''
+' splits dialogs into lines fitting properly the render area and inserts them
+
 public sub pushbacktext(byval s as string)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 04/07/08
+'splits dialogs into lines fitting properly the render area and inserts them
+'***************************************************
+    dim str as string
+    dim tmp as integer
+    
+    str = s
+    
+    ' if it's too long to fit, split it
+    do while frmmain.textwidth(str) > 500
+        tmp = instrrev(str, " ")
+        
+        if tmp = 0 then exit do
+        
+        str = left$(str, tmp - 1)
+    loop
+    
+    'show message and continue with the rest
+    call realpushbacktext(str)
+    
+    if lenb(str) <> lenb(s) then
+        call pushbacktext(right$(s, len(s) - tmp))
+    end if
+end sub
+
+private sub realpushbacktext(byval s as string)
 dim i as byte
 dim vacio as boolean
-dim multiplicador as integer
-if left$(s, 1) = chr(3) then
-    multiplicador = 7
-else
-    multiplicador = 1
-end if
 
 if p_cantidaddialogos > 0 then
     i = p_cantidaddialogos
@@ -135,10 +160,10 @@ if p_cantidaddialogos > 0 then
             i = i + 1
         wend
         p_dialogos(i).texto = s
-        p_dialogos(i).segundos = p_segundos * multiplicador
+        p_dialogos(i).segundos = p_segundos
     else
         p_dialogos(i + 1).texto = s
-        p_dialogos(i + 1).segundos = p_segundos * multiplicador
+        p_dialogos(i + 1).segundos = p_segundos
     end if
 end if
 

@@ -1,5 +1,5 @@
 attribute vb_name = "admin"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -44,15 +44,6 @@ public type tapuestas
 end type
 public apuestas as tapuestas
 
-public npcs as long
-public debugsocket as boolean
-
-public horas as long
-public dias as long
-public minsrunning as long
-
-public reiniciarserver as long
-
 public tinicioserver as long
 public estadisticasweb as new clsestadisticasipc
 
@@ -74,6 +65,7 @@ public intervalonpcai as integer
 public intervaloinvocacion as integer
 public intervalooculto as integer '[nacho]
 public intervalouserpuedeatacar as long
+public intervalogolpeusar as long
 public intervalomagiagolpe as long
 public intervalogolpemagia as long
 public intervalouserpuedecastear as long
@@ -82,7 +74,6 @@ public intervaloparaconexion as long
 public intervalocerrarconexion as long '[gonzalo]
 public intervalouserpuedeusar as long
 public intervaloflechascazadores as long
-public intervaloautoreiniciar as long   'segundos
 
 'balance
 
@@ -91,29 +82,9 @@ public porcentajerecuperomana as integer
 public minutosws as long
 public puerto as integer
 
-public maxpasos as long
-
 public bootdelbackup as byte
 public lloviendo as boolean
 public denoche as boolean
-
-public iplist as new collection
-public clientscommandsqueue as byte
-
-public type tcpesstats
-    bytesenviados as double
-    bytesrecibidos as double
-    bytesenviadosxseg as long
-    bytesrecibidosxseg as long
-    bytesenviadosxsegmax as long
-    bytesrecibidosxsegmax as long
-    bytesenviadosxsegcuando as date
-    bytesrecibidosxsegcuando as date
-end type
-
-public tcpesstats as tcpesstats
-
-'public resetthread as new clsthreading
 
 function versionok(byval ver as string) as boolean
 versionok = (ver = ultimaversion)
@@ -121,8 +92,6 @@ end function
 
 public function versionesactuales(byval v1 as integer, byval v2 as integer, byval v3 as integer, byval v4 as integer, byval v5 as integer, byval v6 as integer, byval v7 as integer) as boolean
 dim rv as boolean
-dim i as integer
-dim f as string
 
 rv = val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "graficos")) = v1
 rv = rv and val(getvar(app.path & "\autoupdater\versiones.ini", "actuales", "wavs")) = v2
@@ -408,39 +377,6 @@ if contador >= 10 then
     end if
     
     andando = tmp
-end if
-
-end sub
-
-public sub actualizastatses()
-
-static tult as single
-dim transcurrido as single
-
-transcurrido = timer - tult
-
-if transcurrido >= 5 then
-    tult = timer
-    with tcpesstats
-        .bytesenviadosxseg = clng(.bytesenviados / transcurrido)
-        .bytesrecibidosxseg = clng(.bytesrecibidos / transcurrido)
-        .bytesenviados = 0
-        .bytesrecibidos = 0
-        
-        if .bytesenviadosxseg > .bytesenviadosxsegmax then
-            .bytesenviadosxsegmax = .bytesenviadosxseg
-            .bytesenviadosxsegcuando = cdate(now)
-        end if
-        
-        if .bytesrecibidosxseg > .bytesrecibidosxsegmax then
-            .bytesrecibidosxsegmax = .bytesrecibidosxseg
-            .bytesrecibidosxsegcuando = cdate(now)
-        end if
-        
-        if frmestadisticas.visible then
-            call frmestadisticas.actualizastats
-        end if
-    end with
 end if
 
 end sub

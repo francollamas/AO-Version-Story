@@ -52,15 +52,15 @@ public sub userconnected(byval userindex as integer)
     'a new user connected, load it's trainning time count
     trainninginfo(userindex).trainningtime = val(getvar(charpath & ucase$(userlist(userindex).name) & ".chr", "research", "trainningtime", 30))
     
-    trainninginfo(userindex).starttick = gettickcount
+    trainninginfo(userindex).starttick = (gettickcount() and &h7fffffff)
 end sub
 
 public sub userdisconnected(byval userindex as integer)
     with trainninginfo(userindex)
         'update trainning time
-        .trainningtime = .trainningtime + (gettickcount() - .starttick) / 1000
-    
-        .starttick = gettickcount
+        .trainningtime = .trainningtime + ((gettickcount() and &h7fffffff) - .starttick) / 1000
+        
+        .starttick = (gettickcount() and &h7fffffff)
         
         'store info in char file
         call writevar(charpath & ucase$(userlist(userindex).name) & ".chr", "research", "trainningtime", cstr(.trainningtime))
@@ -75,13 +75,13 @@ public sub userlevelup(byval userindex as integer)
         'log the data
         open app.path & "\logs\statistics.log" for append shared as handle
         
-        print #handle, ucase$(userlist(userindex).name) & " complet� el nivel " & cstr(userlist(userindex).stats.elv) & " en " & cstr(.trainningtime + (gettickcount() - .starttick) / 1000) & " segundos."
+        print #handle, ucase$(userlist(userindex).name) & " complet� el nivel " & cstr(userlist(userindex).stats.elv) & " en " & cstr(.trainningtime + ((gettickcount() and &h7fffffff) - .starttick) / 1000) & " segundos."
         
         close handle
         
         'reset data
         .trainningtime = 0
-        .starttick = gettickcount()
+        .starttick = (gettickcount() and &h7fffffff)
     end with
 end sub
 
@@ -122,7 +122,7 @@ public sub storefrag(byval killer as integer, byval victim as integer)
         case eraza.elfo
             raza = 1
         
-        case eraza.elfooscuro
+        case eraza.drow
             raza = 2
         
         case eraza.enano

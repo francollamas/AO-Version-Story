@@ -185,33 +185,6 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-curserver = 0
-ipdelservidor = iptxt
-puertodelservidor = porttxt
-end sub
-
-
-private sub command2_click()
-
-frmmain.inet1.url = "http://ao.alkon.com.ar/admin/iplist2.txt"
-rawserverslist = frmmain.inet1.openurl
-
-
-if rawserverslist = "" then
-    serversrecibidos = false
-    call msgbox("no se pudo cargar la lista de servidores")
-    redim serverslst(1)
-    exit sub
-else
-    serversrecibidos = true
-end if
-
-call initserverslist(rawserverslist)
-
-
-end sub
-
 private sub downloadserver_click()
 '***********************************
 'importante!
@@ -224,7 +197,7 @@ private sub downloadserver_click()
 'cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo,
 'no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.
 '***********************************
-    call shellexecute(0, "open", "http://sourceforge.net/project/downloading.php?group_id=67718&use_mirror=osdn&filename=aoserversrc.zip&86289150", "", app.path, 0)
+    call shellexecute(0, "open", "http://downloads.sourceforge.net/morgoao/aoserversrc0.12.1.zip?use_mirror=osdn", "", app.path, 0)
 end sub
 
 private sub form_activate()
@@ -243,24 +216,9 @@ end if
 end sub
 
 private sub form_keydown(keycode as integer, shift as integer)
-if keycode = 27 then
-        frmcargando.show
-        frmcargando.refresh
-        addtorichtextbox frmcargando.status, "cerrando argentum online.", 0, 0, 0, 1, 0, 1
-        
-        call savegameini
-        frmconnect.mousepointer = 1
-        frmmain.mousepointer = 1
+    if keycode = 27 then
         prgrun = false
-        
-        addtorichtextbox frmcargando.status, "liberando recursos..."
-        frmcargando.refresh
-        liberarobjetosdx
-        addtorichtextbox frmcargando.status, "hecho", 0, 0, 0, 1, 0, 1
-        addtorichtextbox frmcargando.status, "��gracias por jugar argentum online!!", 0, 0, 0, 1, 0, 1
-        frmcargando.refresh
-        call unloadallforms
-end if
+    end if
 end sub
 
 private sub form_keyup(keycode as integer, shift as integer)
@@ -324,6 +282,7 @@ end sub
 
 private sub image1_click(index as integer)
 
+call audio.playwave(snd_click)
 
 if serversrecibidos then
     if not isip(iptxt) and curserver <> 0 then
@@ -342,9 +301,6 @@ end if
 curserver = 0
 ipdelservidor = iptxt
 puertodelservidor = porttxt
-
-
-call audio.playwave(snd_click)
 
 select case index
     case 0

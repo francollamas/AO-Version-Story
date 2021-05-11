@@ -91,6 +91,8 @@ attribute vb_exposed = false
 
 option explicit
 
+private const max_proposal_length as integer = 520
+
 public nombre as string
 public t as tipo
 public enum tipo
@@ -153,3 +155,7 @@ private sub command2_click()
 unload me
 end sub
 
+private sub text1_change()
+    if len(text1.text) > max_proposal_length then _
+        text1.text = left$(text1.text, max_proposal_length)
+end sub

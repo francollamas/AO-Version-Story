@@ -14,7 +14,7 @@ begin vb.form frmmessagetxt
    minbutton       =   0   'false
    scaleheight     =   4695
    scalewidth      =   4680
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton cancelcmd 
       caption         =   "cancelar"
       height          =   495

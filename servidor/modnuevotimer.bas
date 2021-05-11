@@ -1,5 +1,5 @@
 attribute vb_name = "modnuevotimer"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -60,10 +60,32 @@ tactual = gettickcount() and &h7fffffff
 if tactual - userlist(userindex).counters.timerpuedeatacar >= intervalouserpuedeatacar then
     if actualizar then
         userlist(userindex).counters.timerpuedeatacar = tactual
+        userlist(userindex).counters.timergolpeusar = tactual
     end if
     intervalopermiteatacar = true
 else
     intervalopermiteatacar = false
+end if
+end function
+
+public function intervalopermitegolpeusar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+'***************************************************
+'author: zama
+'checks if the time that passed from the last hit is enough for the user to use a potion.
+'last modification: 06/04/2009
+'***************************************************
+
+dim tactual as long
+
+tactual = gettickcount() and &h7fffffff
+
+if tactual - userlist(userindex).counters.timergolpeusar >= intervalogolpeusar then
+    if actualizar then
+        userlist(userindex).counters.timergolpeusar = tactual
+    end if
+    intervalopermitegolpeusar = true
+else
+    intervalopermitegolpeusar = false
 end if
 end function
 
@@ -80,6 +102,7 @@ public function intervalopermitemagiagolpe(byval userindex as integer, optional 
         if actualizar then
             userlist(userindex).counters.timermagiagolpe = tactual
             userlist(userindex).counters.timerpuedeatacar = tactual
+            userlist(userindex).counters.timergolpeusar = tactual
         end if
         intervalopermitemagiagolpe = true
     else
@@ -142,10 +165,21 @@ dim tactual as long
 tactual = gettickcount() and &h7fffffff
 
 if tactual - userlist(userindex).counters.timerusar >= intervalouserpuedeusar then
-    if actualizar then userlist(userindex).counters.timerusar = tactual
+    if actualizar then
+        userlist(userindex).counters.timerusar = tactual
+        userlist(userindex).counters.failedusageattempts = 0
+    end if
     intervalopermiteusar = true
 else
     intervalopermiteusar = false
+    
+    userlist(userindex).counters.failedusageattempts = userlist(userindex).counters.failedusageattempts + 1
+    
+    'tolerancia arbitraria - 20 es muy alta, la est� chiteando zarpado
+    if userlist(userindex).counters.failedusageattempts = 20 then
+        call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(userlist(userindex).name & " kicked by the server por posible modificaci�n de intervalos.", fonttypenames.fonttype_fight))
+        call closesocket(userindex)
+    end if
 end if
 
 end function

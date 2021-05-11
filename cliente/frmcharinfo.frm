@@ -294,12 +294,14 @@ attribute vb_exposed = false
 
 option explicit
 
-public frmmiembros as boolean
-public frmsolicitudes as boolean
+public enum charinfofrmtype
+    frmmembers
+    frmmembershiprequests
+end enum
+
+public frmtype as charinfofrmtype
 
 private sub aceptar_click()
-    frmmiembros = false
-    frmsolicitudes = false
     call writeguildacceptnewmember(trim$(right$(nombre, len(nombre) - 8)))
     unload frmguildleader
     call writerequestguildleaderinfo
@@ -316,8 +318,6 @@ end sub
 
 private sub echar_click()
     call writeguildkickmember(right$(nombre, len(nombre) - 8))
-    frmmiembros = false
-    frmsolicitudes = false
     unload frmguildleader
     call writerequestguildleaderinfo
     unload me

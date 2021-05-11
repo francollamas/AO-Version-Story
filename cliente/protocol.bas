@@ -72,6 +72,8 @@ private enum serverpacketid
     updateneeded            ' reau
     safemodeon              ' segon
     safemodeoff             ' segoff
+    resuscitationsafeon
+    resuscitationsafeoff
     nobilitylost            ' pn
     cantusewhilemeditating  ' m!
     updatesta               ' ass
@@ -102,7 +104,6 @@ private enum serverpacketid
     playmidi                ' tm
     playwave                ' tw
     guildlist               ' gl
-    playfiresound           ' fo
     areachanged             ' ca
     pausetoggle             ' bkw
     raintoggle              ' llu
@@ -173,6 +174,7 @@ private enum clientpacketid
     pickup                  'ag
     combatmodetoggle        'tab        - should be hanlded just by the client!!
     safetoggle              '/seg & seg  (seg's behaviour has to be coded in the client)
+    resuscitationsafetoggle
     requestguildleaderinfo  'glinfo
     requestatributes        'atr
     requestfame             'fama
@@ -264,7 +266,7 @@ private enum clientpacketid
     changedescription       '/desc
     guildvote               '/voto
     punishments             '/penas
-    changepassword          '/passwd
+    changepassword          '/contrase�a
     gamble                  '/apostar
     inquiryvote             '/encuesta ( with parameters )
     leavefaction            '/retirar ( with no arguments )
@@ -343,7 +345,7 @@ private enum clientpacketid
     itemsinthefloor         '/piso
     makedumb                '/estupido
     makedumbnomore          '/noestupido
-    dumpiptables            '/dumpsecurity"
+    dumpiptables            '/dumpsecurity
     councilkick             '/kickconse
     settrigger              '/trigger
     asktrigger              '/trigger with no arguments
@@ -439,7 +441,7 @@ public fonttypes(18) as tfont
 
 public sub initfonts()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -558,7 +560,7 @@ end sub
 
 public sub handleincomingdata()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -626,6 +628,12 @@ on error resume next
         
         case serverpacketid.safemodeoff             ' segoff
             call handlesafemodeoff
+            
+        case serverpacketid.resuscitationsafeoff
+            call handleresuscitationsafeoff
+        
+        case serverpacketid.resuscitationsafeon
+            call handleresuscitationsafeon
         
         case serverpacketid.nobilitylost            ' pn
             call handlenobilitylost
@@ -716,9 +724,6 @@ on error resume next
         
         case serverpacketid.guildlist               ' gl
             call handleguildlist
-        
-        case serverpacketid.playfiresound           ' fo
-            call handleplayfiresound
         
         case serverpacketid.areachanged             ' ca
             call handleareachanged
@@ -863,6 +868,7 @@ on error resume next
         
         case serverpacketid.updatetagandstatus
             call handleupdatetagandstatus
+
         
         '*******************
         'gm messages
@@ -904,7 +910,7 @@ end sub
 
 private sub handlelogged()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -934,7 +940,7 @@ end sub
 
 private sub handleremovedialogs()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -949,7 +955,7 @@ end sub
 
 private sub handleremovechardialog()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -970,7 +976,7 @@ end sub
 
 private sub handlenavigatetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -985,7 +991,7 @@ end sub
 
 private sub handledisconnect()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1051,7 +1057,7 @@ end sub
 
 private sub handlecommerceend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1063,7 +1069,6 @@ private sub handlecommerceend()
     frmcomerciar.list1(1).clear
     
     'reset vars
-    npcinvdim = 0
     comerciando = false
     
     'hide form
@@ -1075,7 +1080,7 @@ end sub
 
 private sub handlebankend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1084,7 +1089,7 @@ private sub handlebankend()
     
     frmbancoobj.list1(0).clear
     frmbancoobj.list1(1).clear
-    npcinvdim = 0
+    
     unload frmbancoobj
     comerciando = false
 end sub
@@ -1094,7 +1099,7 @@ end sub
 
 private sub handlecommerceinit()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1122,7 +1127,7 @@ end sub
 
 private sub handlebankinit()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1130,6 +1135,8 @@ private sub handlebankinit()
     
     'remove packet id
     call incomingdata.readbyte
+    
+    call frmbancoobj.list1(1).clear
     
     'fill the inventory list
     for i = 1 to max_inventory_slots
@@ -1139,6 +1146,8 @@ private sub handlebankinit()
             frmbancoobj.list1(1).additem ""
         end if
     next i
+    
+    call frmbancoobj.list1(0).clear
     
     'fill the bank list
     for i = 1 to max_bancoinventory_slots
@@ -1159,7 +1168,7 @@ end sub
 
 private sub handleusercommerceinit()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1193,7 +1202,7 @@ end sub
 
 private sub handleusercommerceend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1214,7 +1223,7 @@ end sub
 
 private sub handleshowblacksmithform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1233,7 +1242,7 @@ end sub
 
 private sub handleshowcarpenterform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1252,7 +1261,7 @@ end sub
 
 private sub handlenpcswing()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1267,7 +1276,7 @@ end sub
 
 private sub handlenpckilluser()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1282,7 +1291,7 @@ end sub
 
 private sub handleblockedwithshielduser()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1297,7 +1306,7 @@ end sub
 
 private sub handleblockedwithshieldother()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1312,7 +1321,7 @@ end sub
 
 private sub handleuserswing()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1327,7 +1336,7 @@ end sub
 
 private sub handleupdateneeded()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1342,7 +1351,7 @@ end sub
 
 private sub handlesafemodeon()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1358,7 +1367,7 @@ end sub
 
 private sub handlesafemodeoff()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1370,11 +1379,41 @@ private sub handlesafemodeoff()
 end sub
 
 ''
+' handles the resuscitationsafeoff message.
+
+private sub handleresuscitationsafeoff()
+'***************************************************
+'author: rapsodius
+'creation date: 10/10/07
+'***************************************************
+    'remove packet id
+    call incomingdata.readbyte
+    
+    call frmmain.controlseguroresu(false)
+    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_off, 255, 0, 0, true, false, false)
+end sub
+
+''
+' handles the resuscitationsafeon message.
+
+private sub handleresuscitationsafeon()
+'***************************************************
+'author: rapsodius
+'creation date: 10/10/07
+'***************************************************
+    'remove packet id
+    call incomingdata.readbyte
+    
+    call frmmain.controlseguroresu(true)
+    call addtorichtextbox(frmmain.rectxt, mensaje_seguro_resu_on, 0, 255, 0, true, false, false)
+end sub
+
+''
 ' handles the nobilitylost message.
 
 private sub handlenobilitylost()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1389,7 +1428,7 @@ end sub
 
 private sub handlecantusewhilemeditating()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1404,7 +1443,7 @@ end sub
 
 private sub handleupdatesta()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1427,7 +1466,7 @@ end sub
 
 private sub handleupdatemana()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1455,7 +1494,7 @@ end sub
 
 private sub handleupdatehp()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1486,8 +1525,9 @@ end sub
 private sub handleupdategold()
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 08/14/07
+'last modified by: lucas tavolaro ortiz (tavo)
+'- 08/14/07: added gldlbl color variation depending on user gold and level
 '***************************************************
     'check packet is complete
     if incomingdata.length < 5 then
@@ -1500,6 +1540,15 @@ private sub handleupdategold()
     
     'get data and update form
     usergld = incomingdata.readlong()
+    
+    if usergld >= clng(userlvl) * 10000 then
+        'changes color
+        frmmain.gldlbl.forecolor = &hff& 'red
+    else
+        'changes color
+        frmmain.gldlbl.forecolor = &hffff& 'yellow
+    end if
+    
     frmmain.gldlbl.caption = usergld
 end sub
 
@@ -1508,7 +1557,7 @@ end sub
 
 private sub handleupdateexp()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1532,7 +1581,7 @@ end sub
 
 private sub handlechangemap()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1566,10 +1615,8 @@ private sub handlechangemap()
     else
         'no encontramos el mapa en el hd
         msgbox "error en los mapas, alg�n archivo ha sido modificado o esta da�ado."
-        call liberarobjetosdx
-        call unloadallforms
-        call escribirgameini(config_inicio)
-        end
+        
+        call closeclient
     end if
 end sub
 
@@ -1578,7 +1625,7 @@ end sub
 
 private sub handleposupdate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1617,7 +1664,7 @@ end sub
 
 private sub handlenpchituser()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1650,7 +1697,7 @@ end sub
 
 private sub handleuserhitnpc()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1670,7 +1717,7 @@ end sub
 
 private sub handleuserattackedswing()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1690,7 +1737,7 @@ end sub
 
 private sub handleuserhittedbyuser()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1727,7 +1774,7 @@ end sub
 
 private sub handleuserhitteduser()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1764,7 +1811,7 @@ end sub
 
 private sub handlechatoverhead()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1818,7 +1865,7 @@ end sub
 
 private sub handleconsolemessage()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1837,12 +1884,37 @@ on error goto errhandler
     
     dim chat as string
     dim fontindex as integer
+    dim str as string
+    dim r as byte
+    dim g as byte
+    dim b as byte
     
     chat = buffer.readasciistring()
     fontindex = buffer.readbyte()
     
     if instr(1, chat, "~") then
-        call addtorichtextbox(frmmain.rectxt, left$(chat, instr(1, chat, "~") - 1), val(readfield(2, chat, 126)), val(readfield(3, chat, 126)), val(readfield(4, chat, 126)), val(readfield(5, chat, 126)), val(readfield(6, chat, 126)))
+        str = readfield(2, chat, 126)
+            if val(str) > 255 then
+                r = 255
+            else
+                r = val(str)
+            end if
+            
+            str = readfield(3, chat, 126)
+            if val(str) > 255 then
+                g = 255
+            else
+                g = val(str)
+            end if
+            
+            str = readfield(4, chat, 126)
+            if val(str) > 255 then
+                b = 255
+            else
+                b = val(str)
+            end if
+            
+        call addtorichtextbox(frmmain.rectxt, left$(chat, instr(1, chat, "~") - 1), r, g, b, val(readfield(5, chat, 126)) <> 0, val(readfield(6, chat, 126)) <> 0)
     else
         with fonttypes(fontindex)
             call addtorichtextbox(frmmain.rectxt, chat, .red, .green, .blue, .bold, .italic)
@@ -1869,8 +1941,8 @@ end sub
 
 private sub handleguildchat()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 04/07/08 (niconz)
 '
 '***************************************************
     if incomingdata.length < 3 then
@@ -1887,12 +1959,40 @@ on error goto errhandler
     call buffer.readbyte
     
     dim chat as string
+    dim str as string
+    dim r as byte
+    dim g as byte
+    dim b as byte
+    dim tmp as integer
+    dim cont as integer
+    
     
     chat = buffer.readasciistring()
     
     if not dialogosclanes.activo then
         if instr(1, chat, "~") then
-            call addtorichtextbox(frmmain.rectxt, left$(chat, instr(1, chat, "~") - 1), val(readfield(2, chat, 126)), val(readfield(3, chat, 126)), val(readfield(4, chat, 126)), val(readfield(5, chat, 126)), val(readfield(6, chat, 126)))
+            str = readfield(2, chat, 126)
+            if val(str) > 255 then
+                r = 255
+            else
+                r = val(str)
+            end if
+            
+            str = readfield(3, chat, 126)
+            if val(str) > 255 then
+                g = 255
+            else
+                g = val(str)
+            end if
+            
+            str = readfield(4, chat, 126)
+            if val(str) > 255 then
+                b = 255
+            else
+                b = val(str)
+            end if
+            
+            call addtorichtextbox(frmmain.rectxt, left$(chat, instr(1, chat, "~") - 1), r, g, b, val(readfield(5, chat, 126)) <> 0, val(readfield(6, chat, 126)) <> 0)
         else
             with fonttypes(fonttypenames.fonttype_guildmsg)
                 call addtorichtextbox(frmmain.rectxt, chat, .red, .green, .blue, .bold, .italic)
@@ -1922,7 +2022,7 @@ end sub
 
 private sub handleshowmessagebox()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1962,7 +2062,7 @@ end sub
 
 private sub handleuserindexinserver()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -1982,7 +2082,7 @@ end sub
 
 private sub handleusercharindexinserver()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2010,7 +2110,7 @@ end sub
 
 private sub handlecharactercreate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2050,8 +2150,8 @@ on error goto errhandler
     
     
     with charlist(charindex)
-        .fx = buffer.readinteger()
-        .fxlooptimes = buffer.readinteger()
+        call setcharacterfx(charindex, buffer.readinteger(), buffer.readinteger())
+        
         .nombre = buffer.readasciistring()
         .criminal = buffer.readbyte()
         
@@ -2059,11 +2159,11 @@ on error goto errhandler
         
         if privs <> 0 then
             'if the player belongs to a council and is an admin, only whos as an admin
-            if (privs and playertype.chaoscouncil) <> 0 and (privs xor playertype.chaoscouncil) <> 0 then
+            if (privs and playertype.chaoscouncil) <> 0 and (privs and playertype.user) = 0 then
                 privs = privs xor playertype.chaoscouncil
             end if
             
-            if (privs and playertype.royalcouncil) <> 0 and (privs xor playertype.royalcouncil) <> 0 then
+            if (privs and playertype.royalcouncil) <> 0 and (privs and playertype.user) = 0 then
                 privs = privs xor playertype.royalcouncil
             end if
             
@@ -2103,7 +2203,7 @@ end sub
 
 private sub handlecharacterremove()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2128,7 +2228,7 @@ end sub
 
 private sub handlecharactermove()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2149,9 +2249,8 @@ private sub handlecharactermove()
     y = incomingdata.readbyte()
     
     with charlist(charindex)
-        if .fx >= 40 and .fx <= 49 then   'if it's meditating, we remove the fx
-            .fx = 0
-            .fxlooptimes = 0
+        if .fxindex >= 40 and .fxindex <= 49 then   'if it's meditating, we remove the fx
+            .fxindex = 0
         end if
         
         ' play steps sounds if the user is not an admin of any kind
@@ -2170,7 +2269,7 @@ end sub
 
 private sub handlecharacterchange()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2219,8 +2318,7 @@ private sub handlecharacterchange()
         tempint = incomingdata.readinteger()
         if tempint <> 0 then .casco = cascoanimdata(tempint)
         
-        .fx = incomingdata.readinteger()
-        .fxlooptimes = incomingdata.readinteger()
+        call setcharacterfx(charindex, incomingdata.readinteger(), incomingdata.readinteger())
     end with
     
     call refreshallchars
@@ -2231,7 +2329,7 @@ end sub
 
 private sub handleobjectcreate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2259,7 +2357,7 @@ end sub
 
 private sub handleobjectdelete()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2284,7 +2382,7 @@ end sub
 
 private sub handleblockposition()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2314,7 +2412,7 @@ end sub
 
 private sub handleplaymidi()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2344,18 +2442,27 @@ end sub
 private sub handleplaywave()
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 08/14/07
+'last modified by: rapsodius
+'added support for 3d sounds.
 '***************************************************
-    if incomingdata.length < 2 then
+    if incomingdata.length < 3 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
     end if
     
     'remove packet id
     call incomingdata.readbyte
+        
+    dim wave as byte
+    dim srcx as byte
+    dim srcy as byte
     
-    call audio.playwave(cstr(incomingdata.readbyte()) & ".wav")
+    wave = incomingdata.readbyte()
+    srcx = incomingdata.readbyte()
+    srcy = incomingdata.readbyte()
+        
+    call audio.playwave(cstr(wave) & ".wav", srcx, srcy)
 end sub
 
 ''
@@ -2363,7 +2470,7 @@ end sub
 
 private sub handleguildlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2409,28 +2516,11 @@ on error goto 0
 end sub
 
 ''
-' handles the playfiresound message.
-
-private sub handleplayfiresound()
-'***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
-'***************************************************
-    'remove packet id
-    call incomingdata.readbyte
-    
-    if fogatabufferindex = 0 then
-        fogatabufferindex = audio.playwave("fuego.wav", loopstyle.enabled)
-    end if
-end sub
-
-''
 ' handles the areachanged message.
 
 private sub handleareachanged()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2456,7 +2546,7 @@ end sub
 
 private sub handlepausetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2471,7 +2561,7 @@ end sub
 
 private sub handleraintoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2489,9 +2579,9 @@ private sub handleraintoggle()
             call audio.stopwave(rainbufferindex)
             rainbufferindex = 0
             if btecho then
-                call audio.playwave("lluviainend.wav", loopstyle.disabled)
+                call audio.playwave("lluviainend.wav", 0, 0, loopstyle.disabled)
             else
-                call audio.playwave("lluviaoutend.wav", loopstyle.disabled)
+                call audio.playwave("lluviaoutend.wav", 0, 0, loopstyle.disabled)
             end if
             frmmain.isplaying = playloop.plnone
         end if
@@ -2505,7 +2595,7 @@ end sub
 
 private sub handlecreatefx()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2518,10 +2608,14 @@ private sub handlecreatefx()
     call incomingdata.readbyte
     
     dim charindex as integer
+    dim fx as integer
+    dim loops as integer
     
     charindex = incomingdata.readinteger()
-    charlist(charindex).fx = incomingdata.readinteger()
-    charlist(charindex).fxlooptimes = incomingdata.readinteger()
+    fx = incomingdata.readinteger()
+    loops = incomingdata.readinteger()
+    
+    call setcharacterfx(charindex, fx, loops)
 end sub
 
 ''
@@ -2529,7 +2623,7 @@ end sub
 
 private sub handleupdateuserstats()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2578,6 +2672,14 @@ private sub handleupdateuserstats()
     else
         userestado = 0
     end if
+    
+    if usergld >= clng(userlvl) * 10000 then
+        'changes color
+        frmmain.gldlbl.forecolor = &hff& 'red
+    else
+        'changes color
+        frmmain.gldlbl.forecolor = &hffff& 'yellow
+    end if
 end sub
 
 ''
@@ -2585,7 +2687,7 @@ end sub
 
 private sub handleworkrequesttarget()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2624,7 +2726,7 @@ end sub
 
 private sub handlechangeinventoryslot()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2663,7 +2765,7 @@ on error goto errhandler
     maxhit = buffer.readinteger()
     minhit = buffer.readinteger()
     defense = buffer.readinteger()
-    value = buffer.readlong()
+    value = buffer.readsingle()
     
     call inventario.setitem(slot, objindex, amount, equipped, grhindex, objtype, maxhit, minhit, defense, value, name)
     
@@ -2687,7 +2789,7 @@ end sub
 
 private sub handlechangebankslot()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2719,6 +2821,11 @@ on error goto errhandler
         .valor = buffer.readlong()
     end with
     
+    if frmbancoobj.list1(0).listcount >= slot then _
+        call frmbancoobj.list1(0).removeitem(slot - 1)
+    
+    call frmbancoobj.list1(0).additem(userbancoinventory(slot).name, slot - 1)
+    
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
     
@@ -2739,7 +2846,7 @@ end sub
 
 private sub handlechangespellslot()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2787,7 +2894,7 @@ end sub
 
 private sub handleatributes()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2826,7 +2933,7 @@ end sub
 
 private sub handleblacksmithweapons()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2848,6 +2955,8 @@ on error goto errhandler
     dim tmp as string
     
     count = buffer.readinteger()
+    
+    call frmherrero.lstarmas.clear
     
     for i = 1 to count
         tmp = buffer.readasciistring() & " ("           'get the object's name
@@ -2883,7 +2992,7 @@ end sub
 
 private sub handleblacksmitharmors()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2905,6 +3014,8 @@ on error goto errhandler
     dim tmp as string
     
     count = buffer.readinteger()
+    
+    call frmherrero.lstarmaduras.clear
     
     for i = 1 to count
         tmp = buffer.readasciistring() & " ("           'get the object's name
@@ -2940,7 +3051,7 @@ end sub
 
 private sub handlecarpenterobjects()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -2997,7 +3108,7 @@ end sub
 
 private sub handlerestok()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3012,7 +3123,7 @@ end sub
 
 private sub handleerrormessage()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3063,7 +3174,7 @@ end sub
 
 private sub handleblind()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3071,8 +3182,6 @@ private sub handleblind()
     call incomingdata.readbyte
     
     userciego = true
-    dim r as rect
-    backbuffersurface.bltcolorfill r, 0
 end sub
 
 ''
@@ -3080,7 +3189,7 @@ end sub
 
 private sub handledumb()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3095,7 +3204,7 @@ end sub
 
 private sub handleshowsignal()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3137,11 +3246,11 @@ end sub
 
 private sub handlechangenpcinventoryslot()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
-    if incomingdata.length < 20 then
+    if incomingdata.length < 21 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
     end if
@@ -3154,10 +3263,13 @@ on error goto errhandler
     'remove packet id
     call buffer.readbyte
     
-    with npcinventory(npcinvdim + 1)
+    dim slot as byte
+    slot = buffer.readbyte()
+    
+    with npcinventory(slot)
         .name = buffer.readasciistring()
         .amount = buffer.readinteger()
-        .valor = buffer.readlong()
+        .valor = buffer.readsingle()
         .grhindex = buffer.readinteger()
         .objindex = buffer.readinteger()
         .objtype = buffer.readbyte()
@@ -3166,9 +3278,10 @@ on error goto errhandler
         .def = buffer.readinteger()
     end with
     
-    npcinvdim = npcinvdim + 1
+    if frmcomerciar.list1(0).listcount >= slot then _
+        call frmcomerciar.list1(0).removeitem(slot - 1)
     
-    call frmcomerciar.list1(0).additem(npcinventory(npcinvdim).name)
+    call frmcomerciar.list1(0).additem(npcinventory(slot).name, slot - 1)
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -3190,7 +3303,7 @@ end sub
 
 private sub handleupdatehungerandthirst()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3215,7 +3328,7 @@ end sub
 
 private sub handlefame()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3245,7 +3358,7 @@ end sub
 
 private sub handleministats()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3272,7 +3385,7 @@ end sub
 
 private sub handlelevelup()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3293,7 +3406,7 @@ end sub
 
 private sub handleaddforummessage()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3340,7 +3453,7 @@ end sub
 
 private sub handleshowforumform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3357,7 +3470,7 @@ end sub
 
 private sub handlesetinvisible()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3389,7 +3502,7 @@ end sub
 
 private sub handlediceroll()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3419,7 +3532,7 @@ end sub
 
 private sub handlemeditatetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3434,7 +3547,7 @@ end sub
 
 private sub handleblindnomore()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3449,7 +3562,7 @@ end sub
 
 private sub handledumbnomore()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3464,7 +3577,7 @@ end sub
 
 private sub handlesendskills()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3489,7 +3602,7 @@ end sub
 
 private sub handletrainercreaturelist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3536,7 +3649,7 @@ end sub
 
 private sub handleguildnews()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3595,7 +3708,7 @@ end sub
 
 private sub handleofferdetails()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3634,7 +3747,7 @@ end sub
 
 private sub handlealianceproposalslist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3683,7 +3796,7 @@ end sub
 
 private sub handlepeaceproposalslist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3732,7 +3845,7 @@ end sub
 
 private sub handlecharacterinfo()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3750,7 +3863,7 @@ on error goto errhandler
     call buffer.readbyte
     
     with frmcharinfo
-        if .frmmiembros then
+        if .frmtype = charinfofrmtype.frmmembers then
             .rechazar.visible = false
             .aceptar.visible = false
             .echar.visible = true
@@ -3831,7 +3944,7 @@ end sub
 
 private sub handleguildleaderinfo()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3908,7 +4021,7 @@ end sub
 
 private sub handleguilddetails()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -3988,7 +4101,7 @@ end sub
 
 private sub handleshowguildfundationform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4004,7 +4117,7 @@ end sub
 
 private sub handleparalizeok()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4019,7 +4132,7 @@ end sub
 
 private sub handleshowuserrequest()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4059,7 +4172,7 @@ end sub
 
 private sub handletradeok()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4068,6 +4181,8 @@ private sub handletradeok()
     
     if frmcomerciar.visible then
         dim i as long
+        
+        call frmcomerciar.list1(1).clear
         
         for i = 1 to max_inventory_slots
             if inventario.objindex(i) <> 0 then
@@ -4093,7 +4208,7 @@ end sub
 
 private sub handlebankok()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4103,19 +4218,14 @@ private sub handlebankok()
     dim i as long
     
     if frmbancoobj.visible then
+        
+        call frmbancoobj.list1(1).clear
+        
         for i = 1 to max_inventory_slots
             if inventario.objindex(i) <> 0 then
                 call frmbancoobj.list1(1).additem(inventario.itemname(i))
             else
                 call frmbancoobj.list1(1).additem("")
-            end if
-        next i
-        
-        for i = 1 to max_bancoinventory_slots
-            if userbancoinventory(i).objindex <> 0 then
-                call frmbancoobj.list1(0).additem(userbancoinventory(i).name)
-            else
-                call frmbancoobj.list1(0).additem("")
             end if
         next i
         
@@ -4135,7 +4245,7 @@ end sub
 
 private sub handlechangeusertradeslot()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4191,7 +4301,7 @@ end sub
 
 private sub handlesendnight()
 '***************************************************
-'autor: fredy horacio treboux (liquid)
+'author: fredy horacio treboux (liquid)
 'last modification: 01/08/07
 '
 '***************************************************
@@ -4212,7 +4322,7 @@ end sub
 
 private sub handlespawnlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4259,7 +4369,7 @@ end sub
 
 private sub handleshowsosform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4307,7 +4417,7 @@ end sub
 
 private sub handleshowmotdeditionform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4347,7 +4457,7 @@ end sub
 
 private sub handleshowgmpanelform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4362,7 +4472,7 @@ end sub
 
 private sub handleusernamelist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4412,7 +4522,7 @@ end sub
 
 private sub handlepong()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4428,7 +4538,7 @@ end sub
 
 private sub handleupdatetagandstatus()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 '
 '***************************************************
@@ -4479,6 +4589,7 @@ on error goto 0
         err.raise error
 end sub
 
+
 ''
 ' writes the "loginexistingchar" message to the outgoing data buffer.
 '
@@ -4486,7 +4597,7 @@ end sub
 
 public sub writeloginexistingchar()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "loginexistingchar" message to the outgoing data buffer
 '***************************************************
@@ -4524,7 +4635,7 @@ end sub
 
 public sub writethrowdices()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "throwdices" message to the outgoing data buffer
 '***************************************************
@@ -4538,7 +4649,7 @@ end sub
 
 public sub writeloginnewchar()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "loginnewchar" message to the outgoing data buffer
 '***************************************************
@@ -4589,7 +4700,7 @@ end sub
 
 public sub writetalk(byval chat as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "talk" message to the outgoing data buffer
 '***************************************************
@@ -4608,7 +4719,7 @@ end sub
 
 public sub writeyell(byval chat as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "yell" message to the outgoing data buffer
 '***************************************************
@@ -4628,7 +4739,7 @@ end sub
 
 public sub writewhisper(byval charindex as integer, byval chat as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "whisper" message to the outgoing data buffer
 '***************************************************
@@ -4649,7 +4760,7 @@ end sub
 
 public sub writewalk(byval heading as e_heading)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "walk" message to the outgoing data buffer
 '***************************************************
@@ -4667,7 +4778,7 @@ end sub
 
 public sub writerequestpositionupdate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestpositionupdate" message to the outgoing data buffer
 '***************************************************
@@ -4681,7 +4792,7 @@ end sub
 
 public sub writeattack()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "attack" message to the outgoing data buffer
 '***************************************************
@@ -4695,7 +4806,7 @@ end sub
 
 public sub writepickup()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "pickup" message to the outgoing data buffer
 '***************************************************
@@ -4709,7 +4820,7 @@ end sub
 
 public sub writecombatmodetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "combatmodetoggle" message to the outgoing data buffer
 '***************************************************
@@ -4723,11 +4834,25 @@ end sub
 
 public sub writesafetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "safetoggle" message to the outgoing data buffer
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.safetoggle)
+end sub
+
+''
+' writes the "resuscitationsafetoggle" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeresuscitationtoggle()
+'**************************************************************
+'author: rapsodius
+'creation date: 10/10/07
+'writes the resuscitation safe toggle packet to the outgoing data buffer.
+'**************************************************************
+    call outgoingdata.writebyte(clientpacketid.resuscitationsafetoggle)
 end sub
 
 ''
@@ -4737,7 +4862,7 @@ end sub
 
 public sub writerequestguildleaderinfo()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestguildleaderinfo" message to the outgoing data buffer
 '***************************************************
@@ -4751,7 +4876,7 @@ end sub
 
 public sub writerequestatributes()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestatributes" message to the outgoing data buffer
 '***************************************************
@@ -4765,7 +4890,7 @@ end sub
 
 public sub writerequestfame()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestfame" message to the outgoing data buffer
 '***************************************************
@@ -4779,7 +4904,7 @@ end sub
 
 public sub writerequestskills()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestskills" message to the outgoing data buffer
 '***************************************************
@@ -4793,7 +4918,7 @@ end sub
 
 public sub writerequestministats()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestministats" message to the outgoing data buffer
 '***************************************************
@@ -4807,7 +4932,7 @@ end sub
 
 public sub writecommerceend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "commerceend" message to the outgoing data buffer
 '***************************************************
@@ -4821,7 +4946,7 @@ end sub
 
 public sub writeusercommerceend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "usercommerceend" message to the outgoing data buffer
 '***************************************************
@@ -4835,7 +4960,7 @@ end sub
 
 public sub writebankend()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankend" message to the outgoing data buffer
 '***************************************************
@@ -4849,7 +4974,7 @@ end sub
 
 public sub writeusercommerceok()
 '***************************************************
-'autor: fredy horacio treboux (liquid)
+'author: fredy horacio treboux (liquid)
 'last modification: 01/10/07
 'writes the "usercommerceok" message to the outgoing data buffer
 '***************************************************
@@ -4863,7 +4988,7 @@ end sub
 
 public sub writeusercommercereject()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "usercommercereject" message to the outgoing data buffer
 '***************************************************
@@ -4879,7 +5004,7 @@ end sub
 
 public sub writedrop(byval slot as byte, byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "drop" message to the outgoing data buffer
 '***************************************************
@@ -4899,7 +5024,7 @@ end sub
 
 public sub writecastspell(byval slot as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "castspell" message to the outgoing data buffer
 '***************************************************
@@ -4919,7 +5044,7 @@ end sub
 
 public sub writeleftclick(byval x as byte, byval y as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "leftclick" message to the outgoing data buffer
 '***************************************************
@@ -4940,7 +5065,7 @@ end sub
 
 public sub writedoubleclick(byval x as byte, byval y as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "doubleclick" message to the outgoing data buffer
 '***************************************************
@@ -4960,7 +5085,7 @@ end sub
 
 public sub writework(byval skill as eskill)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "work" message to the outgoing data buffer
 '***************************************************
@@ -4978,7 +5103,7 @@ end sub
 
 public sub writeusespellmacro()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "usespellmacro" message to the outgoing data buffer
 '***************************************************
@@ -4993,7 +5118,7 @@ end sub
 
 public sub writeuseitem(byval slot as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "useitem" message to the outgoing data buffer
 '***************************************************
@@ -5012,7 +5137,7 @@ end sub
 
 public sub writecraftblacksmith(byval item as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "craftblacksmith" message to the outgoing data buffer
 '***************************************************
@@ -5031,7 +5156,7 @@ end sub
 
 public sub writecraftcarpenter(byval item as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "craftcarpenter" message to the outgoing data buffer
 '***************************************************
@@ -5052,7 +5177,7 @@ end sub
 
 public sub writeworkleftclick(byval x as byte, byval y as byte, byval skill as eskill)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "workleftclick" message to the outgoing data buffer
 '***************************************************
@@ -5077,7 +5202,7 @@ end sub
 
 public sub writecreatenewguild(byval desc as string, byval name as string, byval site as string, byref codex() as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "createnewguild" message to the outgoing data buffer
 '***************************************************
@@ -5110,7 +5235,7 @@ end sub
 
 public sub writespellinfo(byval slot as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "spellinfo" message to the outgoing data buffer
 '***************************************************
@@ -5129,7 +5254,7 @@ end sub
 
 public sub writeequipitem(byval slot as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "equipitem" message to the outgoing data buffer
 '***************************************************
@@ -5148,7 +5273,7 @@ end sub
 
 public sub writechangeheading(byval heading as e_heading)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "changeheading" message to the outgoing data buffer
 '***************************************************
@@ -5167,7 +5292,7 @@ end sub
 
 public sub writemodifyskills(byref skilledt() as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "modifyskills" message to the outgoing data buffer
 '***************************************************
@@ -5190,7 +5315,7 @@ end sub
 
 public sub writetrain(byval creature as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "train" message to the outgoing data buffer
 '***************************************************
@@ -5210,7 +5335,7 @@ end sub
 
 public sub writecommercebuy(byval slot as byte, byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "commercebuy" message to the outgoing data buffer
 '***************************************************
@@ -5231,7 +5356,7 @@ end sub
 
 public sub writebankextractitem(byval slot as byte, byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankextractitem" message to the outgoing data buffer
 '***************************************************
@@ -5252,7 +5377,7 @@ end sub
 
 public sub writecommercesell(byval slot as byte, byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "commercesell" message to the outgoing data buffer
 '***************************************************
@@ -5273,7 +5398,7 @@ end sub
 
 public sub writebankdeposit(byval slot as byte, byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankdeposit" message to the outgoing data buffer
 '***************************************************
@@ -5294,7 +5419,7 @@ end sub
 
 public sub writeforumpost(byval title as string, byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forumpost" message to the outgoing data buffer
 '***************************************************
@@ -5315,7 +5440,7 @@ end sub
 
 public sub writemovespell(byval upwards as boolean, byval slot as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "movespell" message to the outgoing data buffer
 '***************************************************
@@ -5336,7 +5461,7 @@ end sub
 
 public sub writeclancodexupdate(byval desc as string, byref codex() as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "clancodexupdate" message to the outgoing data buffer
 '***************************************************
@@ -5368,7 +5493,7 @@ end sub
 
 public sub writeusercommerceoffer(byval slot as byte, byval amount as long)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "usercommerceoffer" message to the outgoing data buffer
 '***************************************************
@@ -5388,7 +5513,7 @@ end sub
 
 public sub writeguildacceptpeace(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildacceptpeace" message to the outgoing data buffer
 '***************************************************
@@ -5407,7 +5532,7 @@ end sub
 
 public sub writeguildrejectalliance(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrejectalliance" message to the outgoing data buffer
 '***************************************************
@@ -5426,7 +5551,7 @@ end sub
 
 public sub writeguildrejectpeace(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrejectpeace" message to the outgoing data buffer
 '***************************************************
@@ -5445,7 +5570,7 @@ end sub
 
 public sub writeguildacceptalliance(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildacceptalliance" message to the outgoing data buffer
 '***************************************************
@@ -5465,7 +5590,7 @@ end sub
 
 public sub writeguildofferpeace(byval guild as string, byval proposal as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildofferpeace" message to the outgoing data buffer
 '***************************************************
@@ -5486,7 +5611,7 @@ end sub
 
 public sub writeguildofferalliance(byval guild as string, byval proposal as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildofferalliance" message to the outgoing data buffer
 '***************************************************
@@ -5506,7 +5631,7 @@ end sub
 
 public sub writeguildalliancedetails(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildalliancedetails" message to the outgoing data buffer
 '***************************************************
@@ -5525,7 +5650,7 @@ end sub
 
 public sub writeguildpeacedetails(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildpeacedetails" message to the outgoing data buffer
 '***************************************************
@@ -5544,7 +5669,7 @@ end sub
 
 public sub writeguildrequestjoinerinfo(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrequestjoinerinfo" message to the outgoing data buffer
 '***************************************************
@@ -5562,7 +5687,7 @@ end sub
 
 public sub writeguildallianceproplist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildallianceproplist" message to the outgoing data buffer
 '***************************************************
@@ -5576,7 +5701,7 @@ end sub
 
 public sub writeguildpeaceproplist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildpeaceproplist" message to the outgoing data buffer
 '***************************************************
@@ -5591,7 +5716,7 @@ end sub
 
 public sub writeguilddeclarewar(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guilddeclarewar" message to the outgoing data buffer
 '***************************************************
@@ -5610,7 +5735,7 @@ end sub
 
 public sub writeguildnewwebsite(byval url as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildnewwebsite" message to the outgoing data buffer
 '***************************************************
@@ -5629,7 +5754,7 @@ end sub
 
 public sub writeguildacceptnewmember(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildacceptnewmember" message to the outgoing data buffer
 '***************************************************
@@ -5649,7 +5774,7 @@ end sub
 
 public sub writeguildrejectnewmember(byval username as string, byval reason as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrejectnewmember" message to the outgoing data buffer
 '***************************************************
@@ -5669,7 +5794,7 @@ end sub
 
 public sub writeguildkickmember(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildkickmember" message to the outgoing data buffer
 '***************************************************
@@ -5688,7 +5813,7 @@ end sub
 
 public sub writeguildupdatenews(byval news as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildupdatenews" message to the outgoing data buffer
 '***************************************************
@@ -5707,7 +5832,7 @@ end sub
 
 public sub writeguildmemberinfo(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildmemberinfo" message to the outgoing data buffer
 '***************************************************
@@ -5725,7 +5850,7 @@ end sub
 
 public sub writeguildopenelections()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildopenelections" message to the outgoing data buffer
 '***************************************************
@@ -5741,7 +5866,7 @@ end sub
 
 public sub writeguildrequestmembership(byval guild as string, byval application as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrequestmembership" message to the outgoing data buffer
 '***************************************************
@@ -5761,7 +5886,7 @@ end sub
 
 public sub writeguildrequestdetails(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrequestdetails" message to the outgoing data buffer
 '***************************************************
@@ -5779,7 +5904,7 @@ end sub
 
 public sub writeonline()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "online" message to the outgoing data buffer
 '***************************************************
@@ -5793,7 +5918,7 @@ end sub
 
 public sub writequit()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "quit" message to the outgoing data buffer
 '***************************************************
@@ -5807,7 +5932,7 @@ end sub
 
 public sub writeguildleave()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildleave" message to the outgoing data buffer
 '***************************************************
@@ -5821,7 +5946,7 @@ end sub
 
 public sub writerequestaccountstate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestaccountstate" message to the outgoing data buffer
 '***************************************************
@@ -5835,7 +5960,7 @@ end sub
 
 public sub writepetstand()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "petstand" message to the outgoing data buffer
 '***************************************************
@@ -5849,7 +5974,7 @@ end sub
 
 public sub writepetfollow()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "petfollow" message to the outgoing data buffer
 '***************************************************
@@ -5863,7 +5988,7 @@ end sub
 
 public sub writetrainlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "trainlist" message to the outgoing data buffer
 '***************************************************
@@ -5877,7 +6002,7 @@ end sub
 
 public sub writerest()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "rest" message to the outgoing data buffer
 '***************************************************
@@ -5891,7 +6016,7 @@ end sub
 
 public sub writemeditate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "meditate" message to the outgoing data buffer
 '***************************************************
@@ -5905,7 +6030,7 @@ end sub
 
 public sub writeresucitate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "resucitate" message to the outgoing data buffer
 '***************************************************
@@ -5919,7 +6044,7 @@ end sub
 
 public sub writeheal()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "heal" message to the outgoing data buffer
 '***************************************************
@@ -5933,7 +6058,7 @@ end sub
 
 public sub writehelp()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "help" message to the outgoing data buffer
 '***************************************************
@@ -5947,7 +6072,7 @@ end sub
 
 public sub writerequeststats()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requeststats" message to the outgoing data buffer
 '***************************************************
@@ -5961,7 +6086,7 @@ end sub
 
 public sub writecommercestart()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "commercestart" message to the outgoing data buffer
 '***************************************************
@@ -5975,7 +6100,7 @@ end sub
 
 public sub writebankstart()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankstart" message to the outgoing data buffer
 '***************************************************
@@ -5989,7 +6114,7 @@ end sub
 
 public sub writeenlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "enlist" message to the outgoing data buffer
 '***************************************************
@@ -6003,7 +6128,7 @@ end sub
 
 public sub writeinformation()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "information" message to the outgoing data buffer
 '***************************************************
@@ -6017,7 +6142,7 @@ end sub
 
 public sub writereward()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "reward" message to the outgoing data buffer
 '***************************************************
@@ -6031,7 +6156,7 @@ end sub
 
 public sub writerequestmotd()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestmotd" message to the outgoing data buffer
 '***************************************************
@@ -6045,7 +6170,7 @@ end sub
 
 public sub writeuptime()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "uptime" message to the outgoing data buffer
 '***************************************************
@@ -6059,7 +6184,7 @@ end sub
 
 public sub writepartyleave()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partyleave" message to the outgoing data buffer
 '***************************************************
@@ -6073,7 +6198,7 @@ end sub
 
 public sub writepartycreate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partycreate" message to the outgoing data buffer
 '***************************************************
@@ -6087,7 +6212,7 @@ end sub
 
 public sub writepartyjoin()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partyjoin" message to the outgoing data buffer
 '***************************************************
@@ -6101,7 +6226,7 @@ end sub
 
 public sub writeinquiry()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "inquiry" message to the outgoing data buffer
 '***************************************************
@@ -6116,7 +6241,7 @@ end sub
 
 public sub writeguildmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildrequestdetails" message to the outgoing data buffer
 '***************************************************
@@ -6135,7 +6260,7 @@ end sub
 
 public sub writepartymessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partymessage" message to the outgoing data buffer
 '***************************************************
@@ -6154,7 +6279,7 @@ end sub
 
 public sub writecentinelreport(byval number as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "centinelreport" message to the outgoing data buffer
 '***************************************************
@@ -6172,7 +6297,7 @@ end sub
 
 public sub writeguildonline()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildonline" message to the outgoing data buffer
 '***************************************************
@@ -6186,7 +6311,7 @@ end sub
 
 public sub writepartyonline()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partyonline" message to the outgoing data buffer
 '***************************************************
@@ -6201,7 +6326,7 @@ end sub
 
 public sub writecouncilmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "councilmessage" message to the outgoing data buffer
 '***************************************************
@@ -6220,7 +6345,7 @@ end sub
 
 public sub writerolemasterrequest(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "rolemasterrequest" message to the outgoing data buffer
 '***************************************************
@@ -6238,7 +6363,7 @@ end sub
 
 public sub writegmrequest()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gmrequest" message to the outgoing data buffer
 '***************************************************
@@ -6253,7 +6378,7 @@ end sub
 
 public sub writebugreport(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bugreport" message to the outgoing data buffer
 '***************************************************
@@ -6272,7 +6397,7 @@ end sub
 
 public sub writechangedescription(byval desc as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "changedescription" message to the outgoing data buffer
 '***************************************************
@@ -6291,7 +6416,7 @@ end sub
 
 public sub writeguildvote(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildvote" message to the outgoing data buffer
 '***************************************************
@@ -6310,7 +6435,7 @@ end sub
 
 public sub writepunishments(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "punishments" message to the outgoing data buffer
 '***************************************************
@@ -6324,22 +6449,28 @@ end sub
 ''
 ' writes the "changepassword" message to the outgoing data buffer.
 '
-' @param    pass the new user's password.
+' @param    oldpass previous password.
+' @param    newpass new password.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writechangepassword(byval pass as string)
+public sub writechangepassword(byref oldpass as string, byref newpass as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 10/10/07
+'last modified by: rapsodius
 'writes the "changepassword" message to the outgoing data buffer
 '***************************************************
     with outgoingdata
         call .writebyte(clientpacketid.changepassword)
         
 #if seguridadalkon then
-        call .writeasciistringfixed(pass)
+        call .writeasciistringfixed(md5.getmd5string(oldpass))
+        call md5.md5reset
+        call .writeasciistringfixed(md5.getmd5string(newpass))
+        call md5.md5reset
 #else
-        call .writeasciistring(pass)
+        call .writeasciistring(oldpass)
+        call .writeasciistring(newpass)
 #end if
     end with
 end sub
@@ -6352,7 +6483,7 @@ end sub
 
 public sub writegamble(byval amount as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gamble" message to the outgoing data buffer
 '***************************************************
@@ -6371,7 +6502,7 @@ end sub
 
 public sub writeinquiryvote(byval opt as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "inquiryvote" message to the outgoing data buffer
 '***************************************************
@@ -6389,7 +6520,7 @@ end sub
 
 public sub writeleavefaction()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "leavefaction" message to the outgoing data buffer
 '***************************************************
@@ -6404,7 +6535,7 @@ end sub
 
 public sub writebankextractgold(byval amount as long)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankextractgold" message to the outgoing data buffer
 '***************************************************
@@ -6423,7 +6554,7 @@ end sub
 
 public sub writebankdepositgold(byval amount as long)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bankdepositgold" message to the outgoing data buffer
 '***************************************************
@@ -6442,7 +6573,7 @@ end sub
 
 public sub writedenounce(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "denounce" message to the outgoing data buffer
 '***************************************************
@@ -6461,7 +6592,7 @@ end sub
 
 public sub writeguildfundate(byval clantype as eclantype)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildfundate" message to the outgoing data buffer
 '***************************************************
@@ -6480,7 +6611,7 @@ end sub
 
 public sub writepartykick(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partykick" message to the outgoing data buffer
 '***************************************************
@@ -6499,7 +6630,7 @@ end sub
 
 public sub writepartysetleader(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partysetleader" message to the outgoing data buffer
 '***************************************************
@@ -6518,7 +6649,7 @@ end sub
 
 public sub writepartyacceptmember(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "partyacceptmember" message to the outgoing data buffer
 '***************************************************
@@ -6537,7 +6668,7 @@ end sub
 
 public sub writeguildmemberlist(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildmemberlist" message to the outgoing data buffer
 '***************************************************
@@ -6556,7 +6687,7 @@ end sub
 
 public sub writegmmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gmmessage" message to the outgoing data buffer
 '***************************************************
@@ -6574,7 +6705,7 @@ end sub
 
 public sub writeshowname()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "showname" message to the outgoing data buffer
 '***************************************************
@@ -6588,7 +6719,7 @@ end sub
 
 public sub writeonlineroyalarmy()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "onlineroyalarmy" message to the outgoing data buffer
 '***************************************************
@@ -6602,7 +6733,7 @@ end sub
 
 public sub writeonlinechaoslegion()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "onlinechaoslegion" message to the outgoing data buffer
 '***************************************************
@@ -6617,7 +6748,7 @@ end sub
 
 public sub writegonearby(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gonearby" message to the outgoing data buffer
 '***************************************************
@@ -6636,7 +6767,7 @@ end sub
 
 public sub writecomment(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "comment" message to the outgoing data buffer
 '***************************************************
@@ -6654,7 +6785,7 @@ end sub
 
 public sub writeservertime()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "servertime" message to the outgoing data buffer
 '***************************************************
@@ -6669,7 +6800,7 @@ end sub
 
 public sub writewhere(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "where" message to the outgoing data buffer
 '***************************************************
@@ -6688,7 +6819,7 @@ end sub
 
 public sub writecreaturesinmap(byval map as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "creaturesinmap" message to the outgoing data buffer
 '***************************************************
@@ -6706,7 +6837,7 @@ end sub
 
 public sub writewarpmetotarget()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "warpmetotarget" message to the outgoing data buffer
 '***************************************************
@@ -6724,7 +6855,7 @@ end sub
 
 public sub writewarpchar(byval username as string, byval map as integer, byval x as byte, byval y as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "warpchar" message to the outgoing data buffer
 '***************************************************
@@ -6748,7 +6879,7 @@ end sub
 
 public sub writesilence(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "silence" message to the outgoing data buffer
 '***************************************************
@@ -6766,7 +6897,7 @@ end sub
 
 public sub writesosshowlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "sosshowlist" message to the outgoing data buffer
 '***************************************************
@@ -6781,7 +6912,7 @@ end sub
 
 public sub writesosremove(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "sosremove" message to the outgoing data buffer
 '***************************************************
@@ -6800,7 +6931,7 @@ end sub
 
 public sub writegotochar(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gotochar" message to the outgoing data buffer
 '***************************************************
@@ -6818,7 +6949,7 @@ end sub
 
 public sub writeinvisible()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "invisible" message to the outgoing data buffer
 '***************************************************
@@ -6832,7 +6963,7 @@ end sub
 
 public sub writegmpanel()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "gmpanel" message to the outgoing data buffer
 '***************************************************
@@ -6846,7 +6977,7 @@ end sub
 
 public sub writerequestuserlist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestuserlist" message to the outgoing data buffer
 '***************************************************
@@ -6860,7 +6991,7 @@ end sub
 
 public sub writeworking()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "working" message to the outgoing data buffer
 '***************************************************
@@ -6874,7 +7005,7 @@ end sub
 
 public sub writehiding()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "hiding" message to the outgoing data buffer
 '***************************************************
@@ -6891,7 +7022,7 @@ end sub
 
 public sub writejail(byval username as string, byval reason as string, byval time as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "jail" message to the outgoing data buffer
 '***************************************************
@@ -6912,7 +7043,7 @@ end sub
 
 public sub writekillnpc()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "killnpc" message to the outgoing data buffer
 '***************************************************
@@ -6928,7 +7059,7 @@ end sub
 
 public sub writewarnuser(byval username as string, byval reason as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "warnuser" message to the outgoing data buffer
 '***************************************************
@@ -6951,7 +7082,7 @@ end sub
 
 public sub writeeditchar(byval username as string, byval editoption as eeditoptions, byval arg1 as string, byval arg2 as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "editchar" message to the outgoing data buffer
 '***************************************************
@@ -6975,7 +7106,7 @@ end sub
 
 public sub writerequestcharinfo(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharinfo" message to the outgoing data buffer
 '***************************************************
@@ -6994,7 +7125,7 @@ end sub
 
 public sub writerequestcharstats(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharstats" message to the outgoing data buffer
 '***************************************************
@@ -7013,7 +7144,7 @@ end sub
 
 public sub writerequestchargold(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestchargold" message to the outgoing data buffer
 '***************************************************
@@ -7032,7 +7163,7 @@ end sub
 
 public sub writerequestcharinventory(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharinventory" message to the outgoing data buffer
 '***************************************************
@@ -7051,7 +7182,7 @@ end sub
 
 public sub writerequestcharbank(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharbank" message to the outgoing data buffer
 '***************************************************
@@ -7070,7 +7201,7 @@ end sub
 
 public sub writerequestcharskills(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharskills" message to the outgoing data buffer
 '***************************************************
@@ -7089,7 +7220,7 @@ end sub
 
 public sub writerevivechar(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "revivechar" message to the outgoing data buffer
 '***************************************************
@@ -7107,7 +7238,7 @@ end sub
 
 public sub writeonlinegm()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "onlinegm" message to the outgoing data buffer
 '***************************************************
@@ -7121,7 +7252,7 @@ end sub
 
 public sub writeonlinemap()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "onlinemap" message to the outgoing data buffer
 '***************************************************
@@ -7136,7 +7267,7 @@ end sub
 
 public sub writeforgive(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forgive" message to the outgoing data buffer
 '***************************************************
@@ -7155,7 +7286,7 @@ end sub
 
 public sub writekick(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "kick" message to the outgoing data buffer
 '***************************************************
@@ -7174,7 +7305,7 @@ end sub
 
 public sub writeexecute(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "execute" message to the outgoing data buffer
 '***************************************************
@@ -7194,7 +7325,7 @@ end sub
 
 public sub writebanchar(byval username as string, byval reason as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "banchar" message to the outgoing data buffer
 '***************************************************
@@ -7215,7 +7346,7 @@ end sub
 
 public sub writeunbanchar(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "unbanchar" message to the outgoing data buffer
 '***************************************************
@@ -7233,7 +7364,7 @@ end sub
 
 public sub writenpcfollow()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "npcfollow" message to the outgoing data buffer
 '***************************************************
@@ -7248,7 +7379,7 @@ end sub
 
 public sub writesummonchar(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "summonchar" message to the outgoing data buffer
 '***************************************************
@@ -7266,7 +7397,7 @@ end sub
 
 public sub writespawnlistrequest()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "spawnlistrequest" message to the outgoing data buffer
 '***************************************************
@@ -7281,7 +7412,7 @@ end sub
 
 public sub writespawncreature(byval creatureindex as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "spawncreature" message to the outgoing data buffer
 '***************************************************
@@ -7299,7 +7430,7 @@ end sub
 
 public sub writeresetnpcinventory()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "resetnpcinventory" message to the outgoing data buffer
 '***************************************************
@@ -7313,7 +7444,7 @@ end sub
 
 public sub writecleanworld()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "cleanworld" message to the outgoing data buffer
 '***************************************************
@@ -7328,7 +7459,7 @@ end sub
 
 public sub writeservermessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "servermessage" message to the outgoing data buffer
 '***************************************************
@@ -7347,7 +7478,7 @@ end sub
 
 public sub writenicktoip(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "nicktoip" message to the outgoing data buffer
 '***************************************************
@@ -7366,7 +7497,7 @@ end sub
 
 public sub writeiptonick(byref ip() as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "iptonick" message to the outgoing data buffer
 '***************************************************
@@ -7391,7 +7522,7 @@ end sub
 
 public sub writeguildonlinemembers(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildonlinemembers" message to the outgoing data buffer
 '***************************************************
@@ -7412,7 +7543,7 @@ end sub
 
 public sub writeteleportcreate(byval map as integer, byval x as byte, byval y as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "teleportcreate" message to the outgoing data buffer
 '***************************************************
@@ -7433,7 +7564,7 @@ end sub
 
 public sub writeteleportdestroy()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "teleportdestroy" message to the outgoing data buffer
 '***************************************************
@@ -7447,7 +7578,7 @@ end sub
 
 public sub writeraintoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "raintoggle" message to the outgoing data buffer
 '***************************************************
@@ -7462,7 +7593,7 @@ end sub
 
 public sub writesetchardescription(byval desc as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "setchardescription" message to the outgoing data buffer
 '***************************************************
@@ -7482,7 +7613,7 @@ end sub
 
 public sub writeforcemiditomap(byval midiid as byte, byval map as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forcemiditomap" message to the outgoing data buffer
 '***************************************************
@@ -7506,7 +7637,7 @@ end sub
 
 public sub writeforcewavetomap(byval waveid as byte, byval map as integer, byval x as byte, byval y as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forcewavetomap" message to the outgoing data buffer
 '***************************************************
@@ -7530,7 +7661,7 @@ end sub
 
 public sub writeroyalarmymessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "royalarmymessage" message to the outgoing data buffer
 '***************************************************
@@ -7549,7 +7680,7 @@ end sub
 
 public sub writechaoslegionmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "chaoslegionmessage" message to the outgoing data buffer
 '***************************************************
@@ -7568,7 +7699,7 @@ end sub
 
 public sub writecitizenmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "citizenmessage" message to the outgoing data buffer
 '***************************************************
@@ -7587,7 +7718,7 @@ end sub
 
 public sub writecriminalmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "criminalmessage" message to the outgoing data buffer
 '***************************************************
@@ -7606,7 +7737,7 @@ end sub
 
 public sub writetalkasnpc(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "talkasnpc" message to the outgoing data buffer
 '***************************************************
@@ -7624,7 +7755,7 @@ end sub
 
 public sub writedestroyallitemsinarea()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "destroyallitemsinarea" message to the outgoing data buffer
 '***************************************************
@@ -7639,7 +7770,7 @@ end sub
 
 public sub writeacceptroyalcouncilmember(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "acceptroyalcouncilmember" message to the outgoing data buffer
 '***************************************************
@@ -7658,7 +7789,7 @@ end sub
 
 public sub writeacceptchaoscouncilmember(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "acceptchaoscouncilmember" message to the outgoing data buffer
 '***************************************************
@@ -7676,7 +7807,7 @@ end sub
 
 public sub writeitemsinthefloor()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "itemsinthefloor" message to the outgoing data buffer
 '***************************************************
@@ -7691,7 +7822,7 @@ end sub
 
 public sub writemakedumb(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "makedumb" message to the outgoing data buffer
 '***************************************************
@@ -7710,7 +7841,7 @@ end sub
 
 public sub writemakedumbnomore(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "makedumbnomore" message to the outgoing data buffer
 '***************************************************
@@ -7728,7 +7859,7 @@ end sub
 
 public sub writedumpiptables()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "dumpiptables" message to the outgoing data buffer
 '***************************************************
@@ -7743,7 +7874,7 @@ end sub
 
 public sub writecouncilkick(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "councilkick" message to the outgoing data buffer
 '***************************************************
@@ -7762,7 +7893,7 @@ end sub
 
 public sub writesettrigger(byval trigger as etrigger)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "settrigger" message to the outgoing data buffer
 '***************************************************
@@ -7780,7 +7911,7 @@ end sub
 
 public sub writeasktrigger()
 '***************************************************
-'autor: nicolas matias gonzalez (nigo)
+'author: nicolas matias gonzalez (nigo)
 'last modification: 04/13/07
 'writes the "asktrigger" message to the outgoing data buffer
 '***************************************************
@@ -7794,7 +7925,7 @@ end sub
 
 public sub writebannediplist()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bannediplist" message to the outgoing data buffer
 '***************************************************
@@ -7808,7 +7939,7 @@ end sub
 
 public sub writebannedipreload()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "bannedipreload" message to the outgoing data buffer
 '***************************************************
@@ -7823,7 +7954,7 @@ end sub
 
 public sub writeguildban(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "guildban" message to the outgoing data buffer
 '***************************************************
@@ -7846,7 +7977,7 @@ end sub
 
 public sub writebanip(byval byip as boolean, byref ip() as byte, byval nick as string, byval reason as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "banip" message to the outgoing data buffer
 '***************************************************
@@ -7879,7 +8010,7 @@ end sub
 
 public sub writeunbanip(byref ip() as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "unbanip" message to the outgoing data buffer
 '***************************************************
@@ -7904,7 +8035,7 @@ end sub
 
 public sub writecreateitem(byval itemindex as long)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "createitem" message to the outgoing data buffer
 '***************************************************
@@ -7922,7 +8053,7 @@ end sub
 
 public sub writedestroyitems()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "destroyitems" message to the outgoing data buffer
 '***************************************************
@@ -7937,7 +8068,7 @@ end sub
 
 public sub writechaoslegionkick(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "chaoslegionkick" message to the outgoing data buffer
 '***************************************************
@@ -7956,7 +8087,7 @@ end sub
 
 public sub writeroyalarmykick(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "royalarmykick" message to the outgoing data buffer
 '***************************************************
@@ -7975,7 +8106,7 @@ end sub
 
 public sub writeforcemidiall(byval midiid as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forcemidiall" message to the outgoing data buffer
 '***************************************************
@@ -7994,7 +8125,7 @@ end sub
 
 public sub writeforcewaveall(byval waveid as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "forcewaveall" message to the outgoing data buffer
 '***************************************************
@@ -8014,7 +8145,7 @@ end sub
 
 public sub writeremovepunishment(byval username as string, byval punishment as byte, byval newtext as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "removepunishment" message to the outgoing data buffer
 '***************************************************
@@ -8034,7 +8165,7 @@ end sub
 
 public sub writetileblockedtoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "tileblockedtoggle" message to the outgoing data buffer
 '***************************************************
@@ -8048,7 +8179,7 @@ end sub
 
 public sub writekillnpcnorespawn()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "killnpcnorespawn" message to the outgoing data buffer
 '***************************************************
@@ -8062,7 +8193,7 @@ end sub
 
 public sub writekillallnearbynpcs()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "killallnearbynpcs" message to the outgoing data buffer
 '***************************************************
@@ -8077,7 +8208,7 @@ end sub
 
 public sub writelastip(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "lastip" message to the outgoing data buffer
 '***************************************************
@@ -8095,7 +8226,7 @@ end sub
 
 public sub writechangemotd()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "changemotd" message to the outgoing data buffer
 '***************************************************
@@ -8110,7 +8241,7 @@ end sub
 
 public sub writesetmotd(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "setmotd" message to the outgoing data buffer
 '***************************************************
@@ -8129,7 +8260,7 @@ end sub
 
 public sub writesystemmessage(byval message as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "systemmessage" message to the outgoing data buffer
 '***************************************************
@@ -8148,7 +8279,7 @@ end sub
 
 public sub writecreatenpc(byval npcindex as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "createnpc" message to the outgoing data buffer
 '***************************************************
@@ -8167,7 +8298,7 @@ end sub
 
 public sub writecreatenpcwithrespawn(byval npcindex as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "createnpcwithrespawn" message to the outgoing data buffer
 '***************************************************
@@ -8187,7 +8318,7 @@ end sub
 
 public sub writeimperialarmour(byval armourindex as byte, byval objectindex as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "imperialarmour" message to the outgoing data buffer
 '***************************************************
@@ -8209,7 +8340,7 @@ end sub
 
 public sub writechaosarmour(byval armourindex as byte, byval objectindex as integer)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "chaosarmour" message to the outgoing data buffer
 '***************************************************
@@ -8229,7 +8360,7 @@ end sub
 
 public sub writenavigatetoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "navigatetoggle" message to the outgoing data buffer
 '***************************************************
@@ -8243,7 +8374,7 @@ end sub
 
 public sub writeserveropentouserstoggle()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "serveropentouserstoggle" message to the outgoing data buffer
 '***************************************************
@@ -8257,7 +8388,7 @@ end sub
 
 public sub writeturnoffserver()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "turnoffserver" message to the outgoing data buffer
 '***************************************************
@@ -8272,7 +8403,7 @@ end sub
 
 public sub writeturncriminal(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "turncriminal" message to the outgoing data buffer
 '***************************************************
@@ -8291,7 +8422,7 @@ end sub
 
 public sub writeresetfactions(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "resetfactions" message to the outgoing data buffer
 '***************************************************
@@ -8310,7 +8441,7 @@ end sub
 
 public sub writeremovecharfromguild(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "removecharfromguild" message to the outgoing data buffer
 '***************************************************
@@ -8329,7 +8460,7 @@ end sub
 
 public sub writerequestcharmail(byval username as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requestcharmail" message to the outgoing data buffer
 '***************************************************
@@ -8349,7 +8480,7 @@ end sub
 
 public sub writealterpassword(byval username as string, byval copyfrom as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "alterpassword" message to the outgoing data buffer
 '***************************************************
@@ -8370,7 +8501,7 @@ end sub
 
 public sub writealtermail(byval username as string, byval newmail as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "altermail" message to the outgoing data buffer
 '***************************************************
@@ -8391,7 +8522,7 @@ end sub
 
 public sub writealtername(byval username as string, byval newname as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "altername" message to the outgoing data buffer
 '***************************************************
@@ -8410,7 +8541,7 @@ end sub
 
 public sub writetogglecentinelactivated()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "togglecentinelactivated" message to the outgoing data buffer
 '***************************************************
@@ -8424,7 +8555,7 @@ end sub
 
 public sub writedobackup()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "dobackup" message to the outgoing data buffer
 '***************************************************
@@ -8439,7 +8570,7 @@ end sub
 
 public sub writeshowguildmessages(byval guild as string)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "showguildmessages" message to the outgoing data buffer
 '***************************************************
@@ -8457,7 +8588,7 @@ end sub
 
 public sub writesavemap()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "savemap" message to the outgoing data buffer
 '***************************************************
@@ -8472,7 +8603,7 @@ end sub
 
 public sub writechangemapinfopk(byval ispk as boolean)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "changemapinfopk" message to the outgoing data buffer
 '***************************************************
@@ -8491,7 +8622,7 @@ end sub
 
 public sub writechangemapinfobackup(byval backup as boolean)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "changemapinfobackup" message to the outgoing data buffer
 '***************************************************
@@ -8505,12 +8636,12 @@ end sub
 ''
 ' writes the "changemapinforestricted" message to the outgoing data buffer.
 '
-' @param    restrict si (only newbies), no (everyone), armada (just armadas) or caos (just caos)
+' @param    restrict newbies (only newbies), no (everyone), armada (just armadas), caos (just caos) or faccion (armadas & caos only)
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
 public sub writechangemapinforestricted(byval restrict as string)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinforestricted" message to the outgoing data buffer
 '***************************************************
@@ -8529,7 +8660,7 @@ end sub
 
 public sub writechangemapinfonomagic(byval nomagic as boolean)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinfonomagic" message to the outgoing data buffer
 '***************************************************
@@ -8548,7 +8679,7 @@ end sub
 
 public sub writechangemapinfonoinvi(byval noinvi as boolean)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinfonoinvi" message to the outgoing data buffer
 '***************************************************
@@ -8567,7 +8698,7 @@ end sub
 
 public sub writechangemapinfonoresu(byval noresu as boolean)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinfonoresu" message to the outgoing data buffer
 '***************************************************
@@ -8586,7 +8717,7 @@ end sub
 
 public sub writechangemapinfoland(byval land as string)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinfoland" message to the outgoing data buffer
 '***************************************************
@@ -8605,7 +8736,7 @@ end sub
 
 public sub writechangemapinfozone(byval zone as string)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "changemapinfozone" message to the outgoing data buffer
 '***************************************************
@@ -8623,7 +8754,7 @@ end sub
 
 public sub writesavechars()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "savechars" message to the outgoing data buffer
 '***************************************************
@@ -8637,7 +8768,7 @@ end sub
 
 public sub writecleansos()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "cleansos" message to the outgoing data buffer
 '***************************************************
@@ -8651,7 +8782,7 @@ end sub
 
 public sub writeshowserverform()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "showserverform" message to the outgoing data buffer
 '***************************************************
@@ -8665,7 +8796,7 @@ end sub
 
 public sub writenight()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "night" message to the outgoing data buffer
 '***************************************************
@@ -8679,7 +8810,7 @@ end sub
 
 public sub writekickallchars()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "kickallchars" message to the outgoing data buffer
 '***************************************************
@@ -8693,7 +8824,7 @@ end sub
 
 public sub writerequesttcpstats()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "requesttcpstats" message to the outgoing data buffer
 '***************************************************
@@ -8707,7 +8838,7 @@ end sub
 
 public sub writereloadnpcs()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "reloadnpcs" message to the outgoing data buffer
 '***************************************************
@@ -8721,7 +8852,7 @@ end sub
 
 public sub writereloadserverini()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "reloadserverini" message to the outgoing data buffer
 '***************************************************
@@ -8735,7 +8866,7 @@ end sub
 
 public sub writereloadspells()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "reloadspells" message to the outgoing data buffer
 '***************************************************
@@ -8749,7 +8880,7 @@ end sub
 
 public sub writereloadobjects()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "reloadobjects" message to the outgoing data buffer
 '***************************************************
@@ -8763,7 +8894,7 @@ end sub
 
 public sub writerestart()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "restart" message to the outgoing data buffer
 '***************************************************
@@ -8777,7 +8908,7 @@ end sub
 
 public sub writeresetautoupdate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "resetautoupdate" message to the outgoing data buffer
 '***************************************************
@@ -8794,7 +8925,7 @@ end sub
 
 public sub writechatcolor(byval r as byte, byval g as byte, byval b as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "chatcolor" message to the outgoing data buffer
 '***************************************************
@@ -8814,7 +8945,7 @@ end sub
 
 public sub writeignored()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
 'writes the "ignored" message to the outgoing data buffer
 '***************************************************
@@ -8830,7 +8961,7 @@ end sub
 
 public sub writecheckslot(byval username as string, byval slot as byte)
 '***************************************************
-'autor: pablo (toxicwaste)
+'author: pablo (toxicwaste)
 'last modification: 26/01/2007
 'writes the "checkslot" message to the outgoing data buffer
 '***************************************************
@@ -8848,7 +8979,7 @@ end sub
 
 public sub writeping()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 26/01/2007
 'writes the "ping" message to the outgoing data buffer
 '***************************************************
@@ -8893,6 +9024,20 @@ end sub
 ' @param    sddata  the data to be sent to the server.
 
 private sub senddata(byref sddata as string)
+    
+    'no enviamos nada si no estamos conectados
+#if usarwrench = 1 then
+    if not frmmain.socket1.iswritable then
+        'put data back in the bytequeue
+        call outgoingdata.writeasciistringfixed(sddata)
+        
+        exit sub
+    end if
+    
+    if not frmmain.socket1.connected then exit sub
+#else
+    if frmmain.winsock1.state <> sckconnected then exit sub
+#end if
 
 #if seguridadalkon then
     dim data() as byte
@@ -8904,20 +9049,10 @@ private sub senddata(byref sddata as string)
     sddata = strconv(data, vbunicode)
 #end if
     
-    'no enviamos nada si no estamos conectados
+    'send data!
 #if usarwrench = 1 then
-    if not frmmain.socket1.iswritable then
-        'put data back in the bytequeue
-        call outgoingdata.writeasciistringfixed(sddata)
-        exit sub
-    end if
-    
-    if not frmmain.socket1.connected then exit sub
-    
     call frmmain.socket1.write(sddata, len(sddata))
 #else
-    if frmmain.winsock1.state <> sckconnected then exit sub
-    
     call frmmain.winsock1.senddata(sddata)
 #end if
 

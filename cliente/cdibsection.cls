@@ -70,10 +70,7 @@ private declare function selectobject lib "gdi32" (byval hdc as long, byval hobj
 private declare function deleteobject lib "gdi32" (byval hobject as long) as long
 private declare function deletedc lib "gdi32" (byval hdc as long) as long
 private declare function releasedc lib "user32" (byval hwnd as long, byval hdc as long) as long
-private declare function loadimage lib "user32" alias "loadimagea" (byval hinst as long, byval lpsz as string, byval un1 as long, byval n1 as long, byval n2 as long, byval un2 as long) as long
 private const bi_rgb = 0&
-private const bi_rle4 = 2&
-private const bi_rle8 = 1&
 private const dib_rgb_colors = 0 '  color table in rgbs
 
 private type bitmap
@@ -86,7 +83,6 @@ private type bitmap
     bmbits as long
 end type
 private declare function getobjectapi lib "gdi32" alias "getobjecta" (byval hobject as long, byval ncount as long, lpobject as any) as long
-private declare function timegettime lib "winmm.dll" () as long
 private declare function createcompatiblebitmap lib "gdi32" (byval hdc as long, byval nwidth as long, byval nheight as long) as long
 
 ' clipboard functions:
@@ -95,7 +91,6 @@ private declare function closeclipboard lib "user32" () as long
 private declare function setclipboarddata lib "user32" (byval wformat as long, byval hmem as long) as long
 private declare function emptyclipboard lib "user32" () as long
 private const cf_bitmap = 2
-private const cf_dib = 8
 
 ' handle to the current dibsection:
 private m_hdib as long
@@ -116,10 +111,6 @@ dim lhdc as long
 dim lhbmpold as long
 dim hobj as long
 dim lfmt as long
-dim b() as byte
-dim tbi as bitmapinfo
-dim lptr as long
-dim hdibcopy as long
 
     lhdcdesktop = getdc(getdesktopwindow())
     if (lhdcdesktop <> 0) then

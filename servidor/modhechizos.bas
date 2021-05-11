@@ -1,5 +1,5 @@
 attribute vb_name = "modhechizos"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -34,9 +34,16 @@ public const helemental_tierra as integer = 28
 public const superanillo as integer = 700
 
 sub npclanzaspellsobreuser(byval npcindex as integer, byval userindex as integer, byval spell as integer)
-
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 13/02/2009
+'13/02/2009: zama - los npcs que tiren magias, no podran hacerlo en mapas donde no se permita usarla.
+'***************************************************
 if npclist(npcindex).canattack = 0 then exit sub
 if userlist(userindex).flags.invisible = 1 or userlist(userindex).flags.oculto = 1 then exit sub
+
+' si no se peude usar magia en el mapa, no le deja hacerlo.
+if mapinfo(userlist(userindex).pos.map).magiasinefecto > 0 then exit sub
 
 npclist(npcindex).canattack = 0
 dim da�o as integer
@@ -44,7 +51,7 @@ dim da�o as integer
 if hechizos(spell).subehp = 1 then
 
     da�o = randomnumber(hechizos(spell).minhp, hechizos(spell).maxhp)
-    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav, userlist(userindex).pos.x, userlist(userindex).pos.y))
     call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
 
     userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + da�o
@@ -69,7 +76,7 @@ elseif hechizos(spell).subehp = 2 then
         
         if da�o < 0 then da�o = 0
         
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav, userlist(userindex).pos.x, userlist(userindex).pos.y))
         call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
     
         userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - da�o
@@ -99,25 +106,43 @@ elseif hechizos(spell).subehp = 2 then
     
 end if
 
-if hechizos(spell).paraliza = 1 then
-     if userlist(userindex).flags.paralizado = 0 then
-          call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+if hechizos(spell).paraliza = 1 or hechizos(spell).inmoviliza = 1 then
+    if userlist(userindex).flags.paralizado = 0 then
+        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav, userlist(userindex).pos.x, userlist(userindex).pos.y))
+        call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
+          
+        if userlist(userindex).invent.anilloeqpobjindex = superanillo then
+            call writeconsolemsg(userindex, " tu anillo rechaza los efectos del hechizo.", fonttypenames.fonttype_fight)
+            exit sub
+        end if
+        
+        if hechizos(spell).inmoviliza = 1 then
+            userlist(userindex).flags.inmovilizado = 1
+        end if
+          
+        userlist(userindex).flags.paralizado = 1
+        userlist(userindex).counters.paralisis = intervaloparalizado
+          
+        call writeparalizeok(userindex)
+    end if
+end if
+
+if hechizos(spell).estupidez = 1 then   ' turbacion
+     if userlist(userindex).flags.estupidez = 0 then
+          call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav, userlist(userindex).pos.x, userlist(userindex).pos.y))
           call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
           
             if userlist(userindex).invent.anilloeqpobjindex = superanillo then
                 call writeconsolemsg(userindex, " tu anillo rechaza los efectos del hechizo.", fonttypenames.fonttype_fight)
                 exit sub
             end if
-          userlist(userindex).flags.paralizado = 1
-          userlist(userindex).counters.paralisis = intervaloparalizado
           
-          call writeparalizeok(userindex)
-
+          userlist(userindex).flags.estupidez = 1
+          userlist(userindex).counters.ceguera = intervaloinvisible
+                  
+        call writedumb(userindex)
      end if
-     
-     
 end if
-
 
 end sub
 
@@ -133,7 +158,7 @@ dim da�o as integer
 if hechizos(spell).subehp = 2 then
     
         da�o = randomnumber(hechizos(spell).minhp, hechizos(spell).maxhp)
-        call senddata(sendtarget.tonpcarea, targetnpc, preparemessageplaywave(hechizos(spell).wav))
+        call senddata(sendtarget.tonpcarea, targetnpc, preparemessageplaywave(hechizos(spell).wav, npclist(targetnpc).pos.x, npclist(targetnpc).pos.y))
         call senddata(sendtarget.tonpcarea, targetnpc, preparemessagecreatefx(npclist(targetnpc).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
         
         npclist(targetnpc).stats.minhp = npclist(targetnpc).stats.minhp - da�o
@@ -202,19 +227,32 @@ on error resume next
     exit sub
 end sub
 
+''
+' check if an user can cast a certain spell
+'
+' @param userindex specifies reference to user
+' @param hechizoindex specifies reference to spell
+' @return   true if the user can cast the spell, otherwise returns false
 function puedelanzar(byval userindex as integer, byval hechizoindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 11/09/08
+'last modification by: marco vanotti (marco)
+' - 11/09/08 now druid have mana bonus while casting summoning spells having a magic flute equipped (marco)
+'***************************************************
+dim druidmanabonus as single
 
-if userlist(userindex).flags.muerto = 0 then
-    dim wp2 as worldpos
-    wp2.map = userlist(userindex).flags.targetmap
-    wp2.x = userlist(userindex).flags.targetx
-    wp2.y = userlist(userindex).flags.targety
-    
+    if userlist(userindex).flags.muerto then
+        call writeconsolemsg(userindex, "no podes lanzar hechizos porque estas muerto.", fonttypenames.fonttype_info)
+        puedelanzar = false
+        exit function
+    end if
+        
     if hechizos(hechizoindex).needstaff > 0 then
         if userlist(userindex).clase = eclass.mage then
             if userlist(userindex).invent.weaponeqpobjindex > 0 then
                 if objdata(userlist(userindex).invent.weaponeqpobjindex).staffpower < hechizos(hechizoindex).needstaff then
-                    call writeconsolemsg(userindex, "tu b�culo no es lo suficientemente poderoso para que puedas lanzar el conjuro.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "no posees un b�culo lo suficientemente poderoso para que puedas lanzar el conjuro.", fonttypenames.fonttype_info)
                     puedelanzar = false
                     exit function
                 end if
@@ -226,28 +264,40 @@ if userlist(userindex).flags.muerto = 0 then
         end if
     end if
         
-    if userlist(userindex).stats.minman >= hechizos(hechizoindex).manarequerido then
-        if userlist(userindex).stats.userskills(eskill.magia) >= hechizos(hechizoindex).minskill then
-            if userlist(userindex).stats.minsta >= hechizos(hechizoindex).starequerido then
-                puedelanzar = true
-            else
-                call writeconsolemsg(userindex, "est�s muy cansado para lanzar este hechizo.", fonttypenames.fonttype_info)
-                puedelanzar = false
-            end if
-                
+    if userlist(userindex).stats.userskills(eskill.magia) < hechizos(hechizoindex).minskill then
+        call writeconsolemsg(userindex, "no tenes suficientes puntos de magia para lanzar este hechizo.", fonttypenames.fonttype_info)
+        puedelanzar = false
+        exit function
+    end if
+    
+    if userlist(userindex).stats.minsta < hechizos(hechizoindex).starequerido then
+        if userlist(userindex).genero = egenero.hombre then
+            call writeconsolemsg(userindex, "est�s muy cansado para lanzar este hechizo.", fonttypenames.fonttype_info)
         else
-            call writeconsolemsg(userindex, "no tenes suficientes puntos de magia para lanzar este hechizo.", fonttypenames.fonttype_info)
-            puedelanzar = false
+            call writeconsolemsg(userindex, "est�s muy cansada para lanzar este hechizo.", fonttypenames.fonttype_info)
+        end if
+        puedelanzar = false
+        exit function
+    end if
+
+    if hechizos(hechizoindex).tipo = uinvocacion then
+    'if it is a summoning spell and we are druids, having a magic flute equipped then we will need less mana
+        if userlist(userindex).clase = eclass.druid and userlist(userindex).invent.anilloeqpobjindex = flautamagica then
+            druidmanabonus = 0.7
+        else
+            druidmanabonus = 1
         end if
     else
-            call writeconsolemsg(userindex, "no tenes suficiente mana.", fonttypenames.fonttype_info)
-            puedelanzar = false
+        druidmanabonus = 1
     end if
-else
-   call writeconsolemsg(userindex, "no podes lanzar hechizos porque estas muerto.", fonttypenames.fonttype_info)
-   puedelanzar = false
-end if
-
+    
+    if userlist(userindex).stats.minman < hechizos(hechizoindex).manarequerido * druidmanabonus then
+        call writeconsolemsg(userindex, "no tenes suficiente mana.", fonttypenames.fonttype_info)
+        puedelanzar = false
+        exit function
+    end if
+        
+    puedelanzar = true
 end function
 
 sub hechizoterrenoestado(byval userindex as integer, byref b as boolean)
@@ -285,9 +335,19 @@ dim tempy as integer
 
 end sub
 
-sub hechizoinvocacion(byval userindex as integer, byref b as boolean)
+''
+' le da propiedades al nuevo npc
+'
+' @param userindex  indice del usuario que invoca.
+' @param b  indica si se termino la operaci�n.
 
-if userlist(userindex).nromacotas >= maxmascotas then exit sub
+sub hechizoinvocacion(byval userindex as integer, byref b as boolean)
+'***************************************************
+'author: uknown
+'last modification: 06/15/2008 (niconz)
+'sale del sub si no hay una posici�n valida.
+'***************************************************
+if userlist(userindex).nromascotas >= maxmascotas then exit sub
 
 'no permitimos se invoquen criaturas en zonas seguras
 if mapinfo(userlist(userindex).pos.map).pk = false or mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = etrigger.zonasegura then
@@ -308,10 +368,10 @@ h = userlist(userindex).stats.userhechizos(userlist(userindex).flags.hechizo)
     
 for j = 1 to hechizos(h).cant
     
-    if userlist(userindex).nromacotas < maxmascotas then
+    if userlist(userindex).nromascotas < maxmascotas then
         ind = spawnnpc(hechizos(h).numnpc, targetpos, true, false)
         if ind > 0 then
-            userlist(userindex).nromacotas = userlist(userindex).nromacotas + 1
+            userlist(userindex).nromascotas = userlist(userindex).nromascotas + 1
             
             index = freemascotaindex(userindex)
             
@@ -323,6 +383,8 @@ for j = 1 to hechizos(h).cant
             npclist(ind).givegld = 0
             
             call followamo(ind)
+        else
+            exit sub
         end if
             
     else
@@ -341,10 +403,8 @@ end sub
 sub handlehechizoterreno(byval userindex as integer, byval uh as integer)
 '***************************************************
 'author: unknown
-'last modification: 01/10/07
-'last modified by: lucas tavolaro ortiz (tavo)
-'antes de procesar cualquier hechizo chequea de que este en modo de combate el
-'usuario
+'last modification: 05/01/08
+'
 '***************************************************
 if userlist(userindex).flags.modocombate = false then
     call writeconsolemsg(userindex, "debes estar en modo de combate para lanzar este hechizo.", fonttypenames.fonttype_info)
@@ -364,7 +424,12 @@ end select
 if b then
     call subirskill(userindex, magia)
     'if hechizos(uh).resis = 1 then call subirskill(userlist(userindex).flags.targetuser, resis)
-    userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    if userlist(userindex).clase = eclass.druid and userlist(userindex).invent.anilloeqpobjindex = flautamagica then
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido * 0.7
+    else
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    end if
+
     if userlist(userindex).stats.minman < 0 then userlist(userindex).stats.minman = 0
     userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - hechizos(uh).starequerido
     if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
@@ -377,10 +442,8 @@ end sub
 sub handlehechizousuario(byval userindex as integer, byval uh as integer)
 '***************************************************
 'author: unknown
-'last modification: 01/10/07
-'last modified by: lucas tavolaro ortiz (tavo)
-'antes de procesar cualquier hechizo chequea de que este en modo de combate el
-'usuario
+'last modification: 05/01/08
+'
 '***************************************************
 if userlist(userindex).flags.modocombate = false then
     call writeconsolemsg(userindex, "debes estar en modo de combate para lanzar este hechizo.", fonttypenames.fonttype_info)
@@ -399,7 +462,12 @@ end select
 if b then
     call subirskill(userindex, magia)
     'if hechizos(uh).resis = 1 then call subirskill(userlist(userindex).flags.targetuser, resis)
-    userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    'agregado para que los druidas, al tener equipada la flauta magica, el coste de mana de mimetismo es de 50% menos.
+    if userlist(userindex).clase = eclass.druid and userlist(userindex).invent.anilloeqpobjindex = flautamagica and hechizos(uh).mimetiza = 1 then
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido * 0.5
+    else
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    end if
     if userlist(userindex).stats.minman < 0 then userlist(userindex).stats.minman = 0
     userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - hechizos(uh).starequerido
     if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
@@ -413,35 +481,30 @@ end sub
 sub handlehechizonpc(byval userindex as integer, byval uh as integer)
 '***************************************************
 'author: unknown
-'last modification: 01/10/07
-'last modified by: lucas tavolaro ortiz (tavo)
-'antes de procesar cualquier hechizo chequea de que este en modo de combate el
-'usuario
+'last modification: 13/02/2009
+'13/02/2009: zama - agregada 50% bonificacion en coste de mana a mimetismo para druidas
 '***************************************************
-if userlist(userindex).flags.modocombate = false then
-    call writeconsolemsg(userindex, "debes estar en modo de combate para lanzar este hechizo.", fonttypenames.fonttype_info)
-    exit sub
-end if
-
 dim b as boolean
 
-'para atacar a un npc bueno hay que quitar el seguro
-if (npclist(userlist(userindex).flags.targetnpc).stats.alineacion = 0) and userlist(userindex).flags.seguro then
-    call writeconsolemsg(userindex, "debes quitar el seguro para atacar estas criaturas.", fonttypenames.fonttype_fight)
-    b = false
-else
-    select case hechizos(uh).tipo
-        case tipohechizo.uestado ' afectan estados (por ejem : envenenamiento)
-            call hechizoestadonpc(userlist(userindex).flags.targetnpc, uh, b, userindex)
-        case tipohechizo.upropiedades ' afectan hp,mana,stamina,etc
-            call hechizopropnpc(uh, userlist(userindex).flags.targetnpc, userindex, b)
-    end select
-end if
+select case hechizos(uh).tipo
+    case tipohechizo.uestado ' afectan estados (por ejem : envenenamiento)
+        call hechizoestadonpc(userlist(userindex).flags.targetnpc, uh, b, userindex)
+    case tipohechizo.upropiedades ' afectan hp,mana,stamina,etc
+        call hechizopropnpc(uh, userlist(userindex).flags.targetnpc, userindex, b)
+end select
+
 
 if b then
     call subirskill(userindex, magia)
     userlist(userindex).flags.targetnpc = 0
-    userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    
+    ' bonificaci�n para druidas.
+    if userlist(userindex).clase = eclass.druid and userlist(userindex).invent.anilloeqpobjindex = flautamagica and hechizos(uh).mimetiza = 1 then
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido * 0.5
+    else
+        userlist(userindex).stats.minman = userlist(userindex).stats.minman - hechizos(uh).manarequerido
+    end if
+
     if userlist(userindex).stats.minman < 0 then userlist(userindex).stats.minman = 0
     userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - hechizos(uh).starequerido
     if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
@@ -454,7 +517,6 @@ end sub
 sub lanzarhechizo(index as integer, userindex as integer)
 
 dim uh as integer
-dim exito as boolean
 
 uh = userlist(userindex).stats.userhechizos(index)
 
@@ -468,7 +530,7 @@ if puedelanzar(userindex, uh) then
                     call writeconsolemsg(userindex, "estas demasiado lejos para lanzar este hechizo.", fonttypenames.fonttype_warning)
                 end if
             else
-                call writeconsolemsg(userindex, "este hechizo actua solo sobre usuarios.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "este hechizo act�a solo sobre usuarios.", fonttypenames.fonttype_info)
             end if
         
         case targettype.unpc
@@ -516,11 +578,15 @@ end sub
 sub hechizoestadousuario(byval userindex as integer, byref b as boolean)
 '***************************************************
 'autor: unknown (orginal version)
-'last modification: 24/01/2007
+'last modification: 13/02/2009
 'handles the spells that afect the stats of an user
 '24/01/2007 pablo (toxicwaste) - invisibilidad no permitida en mapas con invisinefecto
 '26/01/2007 pablo (toxicwaste) - cambios que permiten mejor manejo de ataques en los rings.
 '26/01/2007 pablo (toxicwaste) - revivir no permitido en mapas con resusinefecto
+'02/01/2008 marcos (byval) - curar veneno no permitido en usuarios muertos.
+'06/28/2008 niconz - agregu� que se le de valor al flag inmovilizado.
+'17/11/2008: niconz - agregado para quitar la penalizaci�n de vida en el ring y cambio de ecuacion.
+'13/02/2009: zama - arreglada ecuacion para quitar vida tras resucitar en rings.
 '***************************************************
 
 
@@ -537,6 +603,18 @@ if hechizos(h).invisibilidad = 1 then
         exit sub
     end if
     
+    if userlist(tu).counters.saliendo then
+        if userindex <> tu then
+            call writeconsolemsg(userindex, "�el hechizo no tiene efecto!", fonttypenames.fonttype_info)
+            b = false
+            exit sub
+        else
+            call writeconsolemsg(userindex, "�no puedes ponerte invisible mientras te encuentres saliendo!", fonttypenames.fonttype_warning)
+            b = false
+            exit sub
+        end if
+    end if
+    
     'no usar invi mapas invisinefecto
     if mapinfo(userlist(tu).pos.map).invisinefecto > 0 then
         call writeconsolemsg(userindex, "�la invisibilidad no funciona aqu�!", fonttypenames.fonttype_info)
@@ -548,7 +626,7 @@ if hechizos(h).invisibilidad = 1 then
     if (triggerzonapelea(userindex, tu) <> trigger6_permite) then
         if criminal(tu) and not criminal(userindex) then
             if esarmada(userindex) then
-                call writeconsolemsg(userindex, "los armadas no pueden ayudar a los criminales", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "los miembros de la armada real no pueden ayudar a los criminales", fonttypenames.fonttype_info)
                 b = false
                 exit sub
             end if
@@ -562,6 +640,12 @@ if hechizos(h).invisibilidad = 1 then
         end if
     end if
     
+    'si sos user, no uses este hechizo con gms.
+    if userlist(userindex).flags.privilegios and playertype.user then
+        if not userlist(tu).flags.privilegios and playertype.user then
+            exit sub
+        end if
+    end if
    
     userlist(tu).flags.invisible = 1
     call senddata(sendtarget.topcarea, tu, preparemessagesetinvisible(userlist(tu).char.charindex, true))
@@ -582,8 +666,11 @@ if hechizos(h).mimetiza = 1 then
         exit sub
     end if
     
-    if not userlist(tu).flags.privilegios and playertype.user then
-        exit sub
+    'si sos user, no uses este hechizo con gms.
+    if userlist(userindex).flags.privilegios and playertype.user then
+        if not userlist(tu).flags.privilegios and playertype.user then
+            exit sub
+        end if
     end if
     
     if userlist(userindex).flags.mimetizado = 1 then
@@ -618,18 +705,30 @@ if hechizos(h).mimetiza = 1 then
    b = true
 end if
 
-
 if hechizos(h).envenena = 1 then
-        if not puedeatacar(userindex, tu) then exit sub
-        if userindex <> tu then
-            call usuarioatacadoporusuario(userindex, tu)
-        end if
-        userlist(tu).flags.envenenado = 1
-        call infohechizo(userindex)
-        b = true
+    if userindex = tu then
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        exit sub
+    end if
+    
+    if not puedeatacar(userindex, tu) then exit sub
+    if userindex <> tu then
+        call usuarioatacadoporusuario(userindex, tu)
+    end if
+    userlist(tu).flags.envenenado = 1
+    call infohechizo(userindex)
+    b = true
 end if
 
 if hechizos(h).curaveneno = 1 then
+
+    'verificamos que el usuario no este muerto
+    if userlist(tu).flags.muerto = 1 then
+        call writeconsolemsg(userindex, "�est� muerto!", fonttypenames.fonttype_info)
+        b = false
+        exit sub
+    end if
+    
     'para poder tirar curar veneno a un pk en el ring
     if (triggerzonapelea(userindex, tu) <> trigger6_permite) then
         if criminal(tu) and not criminal(userindex) then
@@ -648,19 +747,31 @@ if hechizos(h).curaveneno = 1 then
         end if
     end if
         
+    'si sos user, no uses este hechizo con gms.
+    if userlist(userindex).flags.privilegios and playertype.user then
+        if not userlist(tu).flags.privilegios and playertype.user then
+            exit sub
+        end if
+    end if
+        
     userlist(tu).flags.envenenado = 0
     call infohechizo(userindex)
     b = true
 end if
 
 if hechizos(h).maldicion = 1 then
-        if not puedeatacar(userindex, tu) then exit sub
-        if userindex <> tu then
-            call usuarioatacadoporusuario(userindex, tu)
-        end if
-        userlist(tu).flags.maldicion = 1
-        call infohechizo(userindex)
-        b = true
+    if userindex = tu then
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        exit sub
+    end if
+    
+    if not puedeatacar(userindex, tu) then exit sub
+    if userindex <> tu then
+        call usuarioatacadoporusuario(userindex, tu)
+    end if
+    userlist(tu).flags.maldicion = 1
+    call infohechizo(userindex)
+    b = true
 end if
 
 if hechizos(h).removermaldicion = 1 then
@@ -676,6 +787,11 @@ if hechizos(h).bendicion = 1 then
 end if
 
 if hechizos(h).paraliza = 1 or hechizos(h).inmoviliza = 1 then
+    if userindex = tu then
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        exit sub
+    end if
+    
      if userlist(tu).flags.paralizado = 0 then
             if not puedeatacar(userindex, tu) then exit sub
             
@@ -692,13 +808,13 @@ if hechizos(h).paraliza = 1 or hechizos(h).inmoviliza = 1 then
                 exit sub
             end if
             
+            if hechizos(h).inmoviliza = 1 then userlist(tu).flags.inmovilizado = 1
             userlist(tu).flags.paralizado = 1
             userlist(tu).counters.paralisis = intervaloparalizado
             
             call writeparalizeok(tu)
             call flushbuffer(tu)
-
-            
+      
     end if
 end if
 
@@ -723,6 +839,7 @@ if hechizos(h).removerparalisis = 1 then
             end if
         end if
         
+        userlist(tu).flags.inmovilizado = 0
         userlist(tu).flags.paralizado = 0
         'no need to crypt this
         call writeparalizeok(tu)
@@ -763,6 +880,13 @@ end if
 
 if hechizos(h).revivir = 1 then
     if userlist(tu).flags.muerto = 1 then
+        
+        'seguro de resurreccion (solo afecta a los hechizos, no al sacerdote ni al comando de gm)
+        if userlist(tu).flags.seguroresu then
+            call writeconsolemsg(userindex, "�el esp�ritu no tiene intenciones de regresar al mundo de los vivos!", fonttypenames.fonttype_info)
+            b = false
+            exit sub
+        end if
     
         'no usar resu en mapas con resusinefecto
         if mapinfo(userlist(tu).pos.map).resusinefecto > 0 then
@@ -789,6 +913,12 @@ if hechizos(h).revivir = 1 then
             end if
         elseif userlist(userindex).clase = eclass.bard then
             if userlist(userindex).invent.anilloeqpobjindex <> laudmagico then
+                call writeconsolemsg(userindex, "necesitas un instrumento m�gico para devolver la vida", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            end if
+        elseif userlist(userindex).clase = eclass.druid then
+            if userlist(userindex).invent.anilloeqpobjindex <> flautamagica then
                 call writeconsolemsg(userindex, "necesitas un instrumento m�gico para devolver la vida", fonttypenames.fonttype_info)
                 b = false
                 exit sub
@@ -838,13 +968,15 @@ if hechizos(h).revivir = 1 then
         call infohechizo(userindex)
         userlist(tu).stats.minman = 0
         userlist(tu).stats.minsta = 0
-        dim aux as double
-        aux = userlist(tu).stats.elv / 100
-        aux = userlist(userindex).stats.maxhp * aux
-        'solo saco vida si es user. no quiero que exploten gms por ahi.
-        if userlist(userindex).flags.privilegios and playertype.user then
-            userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - aux
+        
+        'agregado para quitar la penalizaci�n de vida en el ring y cambio de ecuacion. (niconz)
+        if (triggerzonapelea(userindex, tu) <> trigger6_permite) then
+            'solo saco vida si es user. no quiero que exploten gms por ahi.
+            if userlist(userindex).flags.privilegios and playertype.user then
+                userlist(userindex).stats.minhp = userlist(userindex).stats.minhp * (1 - userlist(tu).stats.elv * 0.015)
+            end if
         end if
+        
         if (userlist(userindex).stats.minhp <= 0) then
             call userdie(userindex)
             call writeconsolemsg(userindex, "el esfuerzo de resucitar fue demasiado grande", fonttypenames.fonttype_info)
@@ -862,6 +994,11 @@ if hechizos(h).revivir = 1 then
 end if
 
 if hechizos(h).ceguera = 1 then
+    if userindex = tu then
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        exit sub
+    end if
+    
         if not puedeatacar(userindex, tu) then exit sub
         if userindex <> tu then
             call usuarioatacadoporusuario(userindex, tu)
@@ -876,6 +1013,10 @@ if hechizos(h).ceguera = 1 then
 end if
 
 if hechizos(h).estupidez = 1 then
+    if userindex = tu then
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        exit sub
+    end if
         if not puedeatacar(userindex, tu) then exit sub
         if userindex <> tu then
             call usuarioatacadoporusuario(userindex, tu)
@@ -893,190 +1034,192 @@ end if
 
 end sub
 
-sub revisoataquenpc(byval npcindex as integer, byval userindex as integer, byref b as boolean, byref exitsub as boolean)
-'***************************************************
-'autor: pablo (toxicwaste)
-'last modification: 26/01/2007
-'finds out if the userindex can attack the npcindex
-'***************************************************
-    
-    'es guardia caos y lo quiere atacar un caos?
-    if npclist(npcindex).npctype = enpctype.guardiascaos & userlist(userindex).faccion.fuerzascaos = 1 then
-        call writeconsolemsg(userindex, "no puedes atacar guardias del caos siendo legionario", fonttypenames.fonttype_warning)
-        b = false
-        exitsub = true
-        exit sub
-    end if
-    'es guardia real?
-    if npclist(npcindex).npctype = enpctype.guardiareal then
-        if userlist(userindex).faccion.armadareal = 1 then 'lo quiere atacar un armada?
-            call writeconsolemsg(userindex, "no puedes atacar guardias reales siendo armada real", fonttypenames.fonttype_warning)
-            b = false
-            exitsub = true
-            exit sub
-        end if
-        if userlist(userindex).flags.seguro then 'tienes el seguro puesto?
-            call writeconsolemsg(userindex, "debes quitarte el seguro para poder atacar guardias reales", fonttypenames.fonttype_warning)
-            b = false
-            exitsub = true
-            exit sub
-        else
-            call volvercriminal(userindex)  'si ya era criminal, suma puntos de bandidola funci�n solamente
-        end if
-    end if
-    if npclist(npcindex).maestrouser > 0 then 'es mascota?
-        'es mascota de un caos y vos sos un caos?
-        if userlist(npclist(npcindex).maestrouser).faccion.fuerzascaos and userlist(userindex).faccion.fuerzascaos then
-            call writeconsolemsg(userindex, "no puedes atacar mascotas de legionarios siendo legionario", fonttypenames.fonttype_warning)
-            b = false
-            exitsub = true
-            exit sub
-        end if
-        'es ciudadano el due�o?
-        if not criminal(npclist(npcindex).maestrouser) then
-            if userlist(userindex).faccion.armadareal = 1 then 'lo quiere atacar un armada?
-                call writeconsolemsg(userindex, "no puedes atacar mascotas de ciudadanos siendo armada real", fonttypenames.fonttype_warning)
-                b = false
-                exitsub = true
-                exit sub
-            end if
-            if userlist(userindex).flags.seguro then 'tiene el seguro puesto?
-                call writeconsolemsg(userindex, "debes quitarte el seguro para de poder atacar mascotas de ciudadanos", fonttypenames.fonttype_warning)
-                b = false
-                exitsub = true
-                exit sub
-            else
-                volvercriminal (userindex) 'si ya era criminal, suma puntos de bandidola funci�n solamente
-            end if
-        end if
-    end if
-
-    call npcatacado(npcindex, userindex)
-
-end sub
-
 sub hechizoestadonpc(byval npcindex as integer, byval hindex as integer, byref b as boolean, byval userindex as integer)
 '***************************************************
 'autor: unknown (orginal version)
-'last modification: 26/01/2007
+'last modification: 07/07/2008
 'handles the spells that afect the stats of an npc
-'26/01/2007 pablo (toxicwaste) - modificaciones por funcionamiento en los rings y ataque a guardias
+'04/13/2008 niconz - guardias faccionarios pueden ser
+'removidos por users de su misma faccion.
+'07/07/2008: niconz - solo se puede mimetizar con npcs si es druida
 '***************************************************
-dim exitsub as boolean
-
 if hechizos(hindex).invisibilidad = 1 then
-   call infohechizo(userindex)
-   npclist(npcindex).flags.invisible = 1
-   b = true
+    call infohechizo(userindex)
+    npclist(npcindex).flags.invisible = 1
+    b = true
 end if
 
 if hechizos(hindex).envenena = 1 then
-   if npclist(npcindex).attackable = 0 then
-        call writeconsolemsg(userindex, "no podes atacar a ese npc.", fonttypenames.fonttype_info)
+    if not puedeatacarnpc(userindex, npcindex) then
+        b = false
         exit sub
-   end if
-   
-   exitsub = false
-   call revisoataquenpc(npcindex, userindex, b, exitsub)
-   if exitsub = true then exit sub
-        
-   call infohechizo(userindex)
-   npclist(npcindex).flags.envenenado = 1
-   b = true
+    end if
+    call npcatacado(npcindex, userindex)
+    call infohechizo(userindex)
+    npclist(npcindex).flags.envenenado = 1
+    b = true
 end if
 
 if hechizos(hindex).curaveneno = 1 then
-   call infohechizo(userindex)
-   npclist(npcindex).flags.envenenado = 0
-   b = true
+    call infohechizo(userindex)
+    npclist(npcindex).flags.envenenado = 0
+    b = true
 end if
 
 if hechizos(hindex).maldicion = 1 then
-   if npclist(npcindex).attackable = 0 then
-        call writeconsolemsg(userindex, "no podes atacar a ese npc.", fonttypenames.fonttype_info)
+    if not puedeatacarnpc(userindex, npcindex) then
+        b = false
         exit sub
-   end if
-   
-   if npclist(npcindex).npctype = enpctype.guardiareal then
-        if userlist(userindex).flags.seguro then
-            call writeconsolemsg(userindex, "debes quitarte el seguro para de poder atacar guardias", fonttypenames.fonttype_warning)
-            exit sub
-        else
-            userlist(userindex).reputacion.noblerep = 0
-            userlist(userindex).reputacion.pleberep = 0
-            userlist(userindex).reputacion.asesinorep = userlist(userindex).reputacion.asesinorep + 200
-            if userlist(userindex).reputacion.asesinorep > maxrep then _
-                userlist(userindex).reputacion.asesinorep = maxrep
-        end if
     end if
-    
+    call npcatacado(npcindex, userindex)
     call infohechizo(userindex)
     npclist(npcindex).flags.maldicion = 1
     b = true
 end if
 
 if hechizos(hindex).removermaldicion = 1 then
-   call infohechizo(userindex)
-   npclist(npcindex).flags.maldicion = 0
-   b = true
+    call infohechizo(userindex)
+    npclist(npcindex).flags.maldicion = 0
+    b = true
 end if
 
 if hechizos(hindex).bendicion = 1 then
-   call infohechizo(userindex)
-   npclist(npcindex).flags.bendicion = 1
-   b = true
+    call infohechizo(userindex)
+    npclist(npcindex).flags.bendicion = 1
+    b = true
 end if
 
 if hechizos(hindex).paraliza = 1 then
     if npclist(npcindex).flags.afectaparalisis = 0 then
-        
-        exitsub = false
-        call revisoataquenpc(npcindex, userindex, b, exitsub)
-        if exitsub = true then exit sub
-        
+        if not puedeatacarnpc(userindex, npcindex) then
+            b = false
+            exit sub
+        end if
+        call npcatacado(npcindex, userindex)
         call infohechizo(userindex)
         npclist(npcindex).flags.paralizado = 1
         npclist(npcindex).flags.inmovilizado = 0
         npclist(npcindex).contadores.paralisis = intervaloparalizado
         b = true
     else
-        call writeconsolemsg(userindex, "el npc es inmune a este hechizo.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "el npc es inmune a este hechizo.", fonttypenames.fonttype_info)
+        b = false
+        exit sub
     end if
 end if
 
-'[barrin 16-2-04]
 if hechizos(hindex).removerparalisis = 1 then
-   if npclist(npcindex).flags.paralizado = 1 and npclist(npcindex).maestrouser = userindex then
+    if npclist(npcindex).flags.paralizado = 1 or npclist(npcindex).flags.inmovilizado = 1 then
+        if npclist(npcindex).maestrouser = userindex then
             call infohechizo(userindex)
             npclist(npcindex).flags.paralizado = 0
             npclist(npcindex).contadores.paralisis = 0
             b = true
+        else
+            if npclist(npcindex).npctype = enpctype.guardiareal then
+                if esarmada(userindex) then
+                    call infohechizo(userindex)
+                    npclist(npcindex).flags.paralizado = 0
+                    npclist(npcindex).contadores.paralisis = 0
+                    b = true
+                    exit sub
+                else
+                    call writeconsolemsg(userindex, "solo puedes remover la par�lisis de los guardias si perteneces a su facci�n.", fonttypenames.fonttype_info)
+                    b = false
+                    exit sub
+                end if
+                
+                call writeconsolemsg(userindex, "solo puedes remover la par�lisis de los npcs que te consideren su amo", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            else
+                if npclist(npcindex).npctype = enpctype.guardiascaos then
+                    if escaos(userindex) then
+                        call infohechizo(userindex)
+                        npclist(npcindex).flags.paralizado = 0
+                        npclist(npcindex).contadores.paralisis = 0
+                        b = true
+                        exit sub
+                    else
+                        call writeconsolemsg(userindex, "solo puedes remover la par�lisis de los guardias si perteneces a su facci�n.", fonttypenames.fonttype_info)
+                        b = false
+                        exit sub
+                    end if
+                end if
+            end if
+        end if
    else
-      call writeconsolemsg(userindex, "este hechizo solo afecta npcs que tengan amo.", fonttypenames.fonttype_warning)
+      call writeconsolemsg(userindex, "este npc no esta paralizado", fonttypenames.fonttype_info)
+      b = false
+      exit sub
    end if
 end if
-'[/barrin]
  
 if hechizos(hindex).inmoviliza = 1 then
     if npclist(npcindex).flags.afectaparalisis = 0 then
-        
-        exitsub = false
-        call revisoataquenpc(npcindex, userindex, b, exitsub)
-        if exitsub = true then exit sub
-        
+        if not puedeatacarnpc(userindex, npcindex) then
+            b = false
+            exit sub
+        end if
+        call npcatacado(npcindex, userindex)
         npclist(npcindex).flags.inmovilizado = 1
         npclist(npcindex).flags.paralizado = 0
         npclist(npcindex).contadores.paralisis = intervaloparalizado
         call infohechizo(userindex)
         b = true
     else
-        call writeconsolemsg(userindex, "el npc es inmune a este hechizo.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "el npc es inmune al hechizo.", fonttypenames.fonttype_info)
     end if
 end if
 
+if hechizos(hindex).mimetiza = 1 then
+    
+    if userlist(userindex).flags.mimetizado = 1 then
+        call writeconsolemsg(userindex, "ya te encuentras transformado. el hechizo no ha tenido efecto", fonttypenames.fonttype_info)
+        exit sub
+    end if
+    
+    if userlist(userindex).flags.admininvisible = 1 then exit sub
+    
+        
+    if userlist(userindex).clase = eclass.druid then
+        'copio el char original al mimetizado
+        with userlist(userindex)
+            .charmimetizado.body = .char.body
+            .charmimetizado.head = .char.head
+            .charmimetizado.cascoanim = .char.cascoanim
+            .charmimetizado.shieldanim = .char.shieldanim
+            .charmimetizado.weaponanim = .char.weaponanim
+            
+            .flags.mimetizado = 1
+            
+            'ahora pongo lo del npc.
+            .char.body = npclist(npcindex).char.body
+            .char.head = npclist(npcindex).char.head
+            .char.cascoanim = ninguncasco
+            .char.shieldanim = ningunescudo
+            .char.weaponanim = ningunarma
+        
+            call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+        end with
+    else
+        call writeconsolemsg(userindex, "solo los druidas pueden mimetizarse con criaturas.", fonttypenames.fonttype_info)
+        exit sub
+    end if
+
+   call infohechizo(userindex)
+   b = true
+end if
 end sub
 
 sub hechizopropnpc(byval hindex as integer, byval npcindex as integer, byval userindex as integer, byref b as boolean)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 14/08/2007
+'handles the spells that afect the life npc
+'14/08/2007 pablo (toxicwaste) - orden general.
+'***************************************************
+
 dim da�o as long
 
 'salud
@@ -1090,25 +1233,13 @@ if hechizos(hindex).subehp = 1 then
         npclist(npcindex).stats.minhp = npclist(npcindex).stats.maxhp
     call writeconsolemsg(userindex, "has curado " & da�o & " puntos de salud a la criatura.", fonttypenames.fonttype_fight)
     b = true
+    
 elseif hechizos(hindex).subehp = 2 then
-    
-    if npclist(npcindex).attackable = 0 then
-        call writeconsolemsg(userindex, "no podes atacar a ese npc.", fonttypenames.fonttype_info)
-        b = false
-        exit sub
-    end if
-    
-    if npclist(npcindex).npctype = 2 and userlist(userindex).flags.seguro then
-        call writeconsolemsg(userindex, "debes sacarte el seguro para atacar guardias del imperio.", fonttypenames.fonttype_fight)
-        b = false
-        exit sub
-    end if
-    
     if not puedeatacarnpc(userindex, npcindex) then
         b = false
         exit sub
     end if
-    
+    call npcatacado(npcindex, userindex)
     da�o = randomnumber(hechizos(hindex).minhp, hechizos(hindex).maxhp)
     da�o = da�o + porcentaje(da�o, 3 * userlist(userindex).stats.elv)
 
@@ -1117,26 +1248,29 @@ elseif hechizos(hindex).subehp = 2 then
             if userlist(userindex).invent.weaponeqpobjindex > 0 then
                 da�o = (da�o * (objdata(userlist(userindex).invent.weaponeqpobjindex).staffdamagebonus + 70)) / 100
                 'aumenta da�o segun el staff-
-                'da�o = (da�o* (80 + bonifb�culo)) / 100
+                'da�o = (da�o* (70 + bonifb�culo)) / 100
             else
                 da�o = da�o * 0.7 'baja da�o a 70% del original
             end if
         end if
     end if
-    if userlist(userindex).invent.anilloeqpobjindex = laudmagico then
+    if userlist(userindex).invent.anilloeqpobjindex = laudmagico or userlist(userindex).invent.anilloeqpobjindex = flautamagica then
         da�o = da�o * 1.04  'laud magico de los bardos
     end if
 
-
     call infohechizo(userindex)
     b = true
-    call npcatacado(npcindex, userindex)
+    
     if npclist(npcindex).flags.snd2 > 0 then
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(npclist(npcindex).flags.snd2))
+        call senddata(sendtarget.tonpcarea, npcindex, preparemessageplaywave(npclist(npcindex).flags.snd2, npclist(npcindex).pos.x, npclist(npcindex).pos.y))
     end if
     
+    'quizas tenga defenza magica el npc. pablo (toxicwaste)
+    da�o = da�o - npclist(npcindex).stats.defm
+    if da�o < 0 then da�o = 0
+    
     npclist(npcindex).stats.minhp = npclist(npcindex).stats.minhp - da�o
-    call writeconsolemsg(userindex, "le has causado " & da�o & " puntos de da�o a la criatura!", fonttypenames.fonttype_fight)
+    call writeconsolemsg(userindex, "�le has causado " & da�o & " puntos de da�o a la criatura!", fonttypenames.fonttype_fight)
     call calculardarexp(userindex, npcindex, da�o)
 
     if npclist(npcindex).stats.minhp < 1 then
@@ -1157,11 +1291,11 @@ sub infohechizo(byval userindex as integer)
     call decirpalabrasmagicas(hechizos(h).palabrasmagicas, userindex)
     
     if userlist(userindex).flags.targetuser > 0 then
-        call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userlist(userindex).flags.targetuser).char.charindex, hechizos(h).fxgrh, hechizos(h).loops))
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(h).wav)) 'esta linea faltaba. pablo (toxicwaste)
+        call senddata(sendtarget.topcarea, userlist(userindex).flags.targetuser, preparemessagecreatefx(userlist(userlist(userindex).flags.targetuser).char.charindex, hechizos(h).fxgrh, hechizos(h).loops))
+        call senddata(sendtarget.topcarea, userlist(userindex).flags.targetuser, preparemessageplaywave(hechizos(h).wav, userlist(userlist(userindex).flags.targetuser).pos.x, userlist(userlist(userindex).flags.targetuser).pos.y)) 'esta linea faltaba. pablo (toxicwaste)
     elseif userlist(userindex).flags.targetnpc > 0 then
         call senddata(sendtarget.tonpcarea, userlist(userindex).flags.targetnpc, preparemessagecreatefx(npclist(userlist(userindex).flags.targetnpc).char.charindex, hechizos(h).fxgrh, hechizos(h).loops))
-        call senddata(sendtarget.tonpcarea, userlist(userindex).flags.targetnpc, preparemessageplaywave(hechizos(h).wav))
+        call senddata(sendtarget.tonpcarea, userlist(userindex).flags.targetnpc, preparemessageplaywave(hechizos(h).wav, npclist(userlist(userindex).flags.targetnpc).pos.x, npclist(userlist(userindex).flags.targetnpc).pos.y))
     end if
     
     if userlist(userindex).flags.targetuser > 0 then
@@ -1182,15 +1316,23 @@ sub infohechizo(byval userindex as integer)
 end sub
 
 sub hechizopropusuario(byval userindex as integer, byref b as boolean)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 02/01/2008
+'02/01/2008 marcos (byval) - no permite tirar curar heridas a usuarios muertos.
+'***************************************************
 
 dim h as integer
-dim da�o as integer
+dim da�o as long
 dim tempchr as integer
-    
-    
+
 h = userlist(userindex).stats.userhechizos(userlist(userindex).flags.hechizo)
 tempchr = userlist(userindex).flags.targetuser
       
+if userlist(tempchr).flags.muerto then
+    call writeconsolemsg(userindex, "no pod�s lanzar ese hechizo a un muerto.", fonttypenames.fonttype_info)
+    exit sub
+end if
       
 'hambre
 if hechizos(h).subeham = 1 then
@@ -1228,16 +1370,12 @@ elseif hechizos(h).subeham = 2 then
     
     userlist(tempchr).stats.minham = userlist(tempchr).stats.minham - da�o
     
-    if userlist(tempchr).stats.minham < 0 then userlist(tempchr).stats.minham = 0
-    
     if userindex <> tempchr then
         call writeconsolemsg(userindex, "le has quitado " & da�o & " puntos de hambre a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
         call writeconsolemsg(tempchr, userlist(userindex).name & " te ha quitado " & da�o & " puntos de hambre.", fonttypenames.fonttype_fight)
     else
         call writeconsolemsg(userindex, "te has quitado " & da�o & " puntos de hambre.", fonttypenames.fonttype_fight)
     end if
-    
-    call writeupdatehungerandthirst(tempchr)
     
     b = true
     
@@ -1246,6 +1384,7 @@ elseif hechizos(h).subeham = 2 then
         userlist(tempchr).flags.hambre = 1
     end if
     
+    call writeupdatehungerandthirst(tempchr)
 end if
 
 'sed
@@ -1258,6 +1397,8 @@ if hechizos(h).subesed = 1 then
     userlist(tempchr).stats.minagu = userlist(tempchr).stats.minagu + da�o
     if userlist(tempchr).stats.minagu > userlist(tempchr).stats.maxagu then _
         userlist(tempchr).stats.minagu = userlist(tempchr).stats.maxagu
+    
+    call writeupdatehungerandthirst(tempchr)
          
     if userindex <> tempchr then
       call writeconsolemsg(userindex, "le has restaurado " & da�o & " puntos de sed a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
@@ -1290,21 +1431,33 @@ elseif hechizos(h).subesed = 2 then
     end if
     
     if userlist(tempchr).stats.minagu < 1 then
-            userlist(tempchr).stats.minagu = 0
-            userlist(tempchr).flags.sed = 1
+        userlist(tempchr).stats.minagu = 0
+        userlist(tempchr).flags.sed = 1
     end if
+    
+    call writeupdatehungerandthirst(tempchr)
     
     b = true
 end if
 
 ' <-------- agilidad ---------->
 if hechizos(h).subeagilidad = 1 then
-    if criminal(tempchr) and not criminal(userindex) then
-        if userlist(userindex).flags.seguro then
-            call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
-            exit sub
-        else
-            call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
+    
+    'para poder tirar cl a un pk en el ring
+    if (triggerzonapelea(userindex, tempchr) <> trigger6_permite) then
+        if criminal(tempchr) and not criminal(userindex) then
+            if esarmada(userindex) then
+                call writeconsolemsg(userindex, "los armadas no pueden ayudar a los criminales", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            end if
+            if userlist(userindex).flags.seguro then
+                call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            else
+                call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
+            end if
         end if
     end if
     
@@ -1339,12 +1492,21 @@ end if
 
 ' <-------- fuerza ---------->
 if hechizos(h).subefuerza = 1 then
-    if criminal(tempchr) and not criminal(userindex) then
-        if userlist(userindex).flags.seguro then
-            call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
-            exit sub
-        else
-            call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
+    'para poder tirar fuerza a un pk en el ring
+    if (triggerzonapelea(userindex, tempchr) <> trigger6_permite) then
+        if criminal(tempchr) and not criminal(userindex) then
+            if esarmada(userindex) then
+                call writeconsolemsg(userindex, "los armadas no pueden ayudar a los criminales", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            end if
+            if userlist(userindex).flags.seguro then
+                call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            else
+                call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
+            end if
         end if
     end if
     
@@ -1383,16 +1545,31 @@ end if
 'salud
 if hechizos(h).subehp = 1 then
     
-    if criminal(tempchr) and not criminal(userindex) then
-        if userlist(userindex).flags.seguro then
-            call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
-            exit sub
-        else
-            call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
-        end if
+    'verifica que el usuario no este muerto
+    if userlist(tempchr).flags.muerto = 1 then
+        call writeconsolemsg(userindex, "�est� muerto!", fonttypenames.fonttype_info)
+        b = false
+        exit sub
     end if
     
-    
+    'para poder tirar curar a un pk en el ring
+    if (triggerzonapelea(userindex, tempchr) <> trigger6_permite) then
+        if criminal(tempchr) and not criminal(userindex) then
+            if esarmada(userindex) then
+                call writeconsolemsg(userindex, "los armadas no pueden ayudar a los criminales", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            end if
+            if userlist(userindex).flags.seguro then
+                call writeconsolemsg(userindex, "para ayudar criminales debes sacarte el seguro ya que te volver�s criminal como ellos", fonttypenames.fonttype_info)
+                b = false
+                exit sub
+            else
+                call disnobauban(userindex, userlist(userindex).reputacion.noblerep * 0.5, 10000)
+            end if
+        end if
+    end if
+       
     da�o = randomnumber(hechizos(h).minhp, hechizos(h).maxhp)
     da�o = da�o + porcentaje(da�o, 3 * userlist(userindex).stats.elv)
     
@@ -1401,6 +1578,8 @@ if hechizos(h).subehp = 1 then
     userlist(tempchr).stats.minhp = userlist(tempchr).stats.minhp + da�o
     if userlist(tempchr).stats.minhp > userlist(tempchr).stats.maxhp then _
         userlist(tempchr).stats.minhp = userlist(tempchr).stats.maxhp
+    
+    call writeupdatehp(tempchr)
     
     if userindex <> tempchr then
         call writeconsolemsg(userindex, "le has restaurado " & da�o & " puntos de vida a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
@@ -1413,7 +1592,7 @@ if hechizos(h).subehp = 1 then
 elseif hechizos(h).subehp = 2 then
     
     if userindex = tempchr then
-        call writeconsolemsg(userindex, "no podes atacarte a vos mismo.", fonttypenames.fonttype_fight)
+        call writeconsolemsg(userindex, "no puedes atacarte a vos mismo.", fonttypenames.fonttype_fight)
         exit sub
     end if
     
@@ -1431,7 +1610,7 @@ elseif hechizos(h).subehp = 2 then
         end if
     end if
     
-    if userlist(userindex).invent.anilloeqpobjindex = laudmagico then
+    if userlist(userindex).invent.anilloeqpobjindex = laudmagico or userlist(userindex).invent.anilloeqpobjindex = flautamagica then
         da�o = da�o * 1.04  'laud magico de los bardos
     end if
     
@@ -1457,6 +1636,8 @@ elseif hechizos(h).subehp = 2 then
     
     userlist(tempchr).stats.minhp = userlist(tempchr).stats.minhp - da�o
     
+    call writeupdatehp(tempchr)
+    
     call writeconsolemsg(userindex, "le has quitado " & da�o & " puntos de vida a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
     call writeconsolemsg(tempchr, userlist(userindex).name & " te ha quitado " & da�o & " puntos de vida.", fonttypenames.fonttype_fight)
     
@@ -1481,6 +1662,8 @@ if hechizos(h).subemana = 1 then
     userlist(tempchr).stats.minman = userlist(tempchr).stats.minman + da�o
     if userlist(tempchr).stats.minman > userlist(tempchr).stats.maxman then _
         userlist(tempchr).stats.minman = userlist(tempchr).stats.maxman
+    
+    call writeupdatemana(tempchr)
     
     if userindex <> tempchr then
         call writeconsolemsg(userindex, "le has restaurado " & da�o & " puntos de mana a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
@@ -1509,8 +1692,10 @@ elseif hechizos(h).subemana = 2 then
     
     userlist(tempchr).stats.minman = userlist(tempchr).stats.minman - da�o
     if userlist(tempchr).stats.minman < 1 then userlist(tempchr).stats.minman = 0
-    b = true
     
+    call writeupdatemana(tempchr)
+    
+    b = true
 end if
 
 'stamina
@@ -1519,6 +1704,9 @@ if hechizos(h).subesta = 1 then
     userlist(tempchr).stats.minsta = userlist(tempchr).stats.minsta + da�o
     if userlist(tempchr).stats.minsta > userlist(tempchr).stats.maxsta then _
         userlist(tempchr).stats.minsta = userlist(tempchr).stats.maxsta
+    
+    call writeupdatesta(tempchr)
+    
     if userindex <> tempchr then
         call writeconsolemsg(userindex, "le has restaurado " & da�o & " puntos de vitalidad a " & userlist(tempchr).name, fonttypenames.fonttype_fight)
         call writeconsolemsg(tempchr, userlist(userindex).name & " te ha restaurado " & da�o & " puntos de vitalidad.", fonttypenames.fonttype_fight)
@@ -1526,7 +1714,7 @@ if hechizos(h).subesta = 1 then
         call writeconsolemsg(userindex, "te has restaurado " & da�o & " puntos de vitalidad.", fonttypenames.fonttype_fight)
     end if
     b = true
-elseif hechizos(h).subemana = 2 then
+elseif hechizos(h).subesta = 2 then
     if not puedeatacar(userindex, tempchr) then exit sub
     
     if userindex <> tempchr then
@@ -1545,6 +1733,9 @@ elseif hechizos(h).subemana = 2 then
     userlist(tempchr).stats.minsta = userlist(tempchr).stats.minsta - da�o
     
     if userlist(tempchr).stats.minsta < 1 then userlist(tempchr).stats.minsta = 0
+    
+    call writeupdatesta(tempchr)
+    
     b = true
 end if
 
@@ -1654,6 +1845,7 @@ public sub disnobauban(byval userindex as integer, noblepts as long, bandidopts 
     'si estamos en la arena no hacemos nada
     if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
     
+if userlist(userindex).flags.privilegios and (playertype.user or playertype.consejero) then
     'pierdo nobleza...
     userlist(userindex).reputacion.noblerep = userlist(userindex).reputacion.noblerep - noblepts
     if userlist(userindex).reputacion.noblerep < 0 then
@@ -1666,6 +1858,7 @@ public sub disnobauban(byval userindex as integer, noblepts as long, bandidopts 
         userlist(userindex).reputacion.bandidorep = maxrep
     call writenobilitylost(userindex)
     if criminal(userindex) then if userlist(userindex).faccion.armadareal = 1 then call expulsarfaccionreal(userindex)
+end if
     
     if not eracriminal and criminal(userindex) then
         call refreshcharstatus(userindex)

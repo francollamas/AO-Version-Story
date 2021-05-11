@@ -42,6 +42,10 @@ attribute vb_exposed = false
 '   - add: documentation
 '   - change: volume is no longer the db amplification / atenuation to be
 '           applied but a percentage for easier interaction with user.
+'
+'30/03/2008 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
+'   - add: 3d-like sound effects by altering frequency to emulate doppler effect,
+'           volume to emulate distance and panning for position.
 
 
 ''
@@ -49,7 +53,7 @@ attribute vb_exposed = false
 '
 ' @file     clsaudio.cls
 ' @author   juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
-' @version  1.1.0
+' @version  1.2.0
 ' @date     20070303
 
 option explicit
@@ -59,14 +63,28 @@ option explicit
 private const numsoundbuffers as byte = 30
 
 ''
+' the distance at which the sound is inaudible.
+private const max_distance_to_source as integer = 150
+
+''
+' the frequency variation coefficient for doppler effect simulation.
+private const delta_fq as integer = 600
+
+''
 ' custom sound buffer structure.
 '
 ' @param    filename    the name of the file loaded in this buffer
 ' @param    looping     set to true if the sound will loop until stopped
+' @param    x           the x position of the sound in map coordinates
+' @param    y           the y position of the sound in map coordinates
+' @param    normalfq    the frequency of the sound when not affected by doppler effect.
 ' @param    buffer      the directsoundbuffer object to wich the file is loaded
 private type soundbuffer
     filename as string
     looping as boolean
+    x as byte
+    y as byte
+    normalfq as long
     buffer as directsoundbuffer
 end type
 
@@ -139,6 +157,15 @@ dim mactivated as boolean
 dim sactivated as boolean
 
 ''
+'states the last position where the listener was in the x axis
+dim lastposx as integer
+
+''
+'states the last position where the listener was in the y axis
+dim lastposy as integer
+
+
+''
 'constructor. performs no action at all.
 
 private sub class_initialize()
@@ -193,7 +220,7 @@ end sub
 
 public function initialize(byref dx as directx7, byval hwnd as long, byval sound_path as string, byval music_path as string) as boolean
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'creates all ds and dm objects
 '***************************************************
@@ -208,7 +235,7 @@ on error goto errhandler
     'initialize directsound
     set directsound = dx.directsoundcreate("")
     
-    call directsound.setcooperativelevel(displayformhwnd, dsscl_priority)
+    call directsound.setcooperativelevel(hwnd, dsscl_priority)
     
     'set sound path
     soundpath = sound_path
@@ -249,7 +276,7 @@ end function
 
 private function initializedirectmusic(byref dx as directx7, byval hwnd as long) as boolean
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'initialize dm. returns false if music isn't supported by hw
 '***************************************************
@@ -273,16 +300,18 @@ end function
 ' plays a new wave file.
 '
 ' @param    filename    the path to the file to be loaded. must be a relative path from the default path set at initialization.
+' @param    srcx        the x position of the sound source, in map coordinates. -1 if sound should not be altered by 3d alterations.
+' @param    srcy        the y position of the sound source, in map coordinates. -1 if sound should not be altered by 3d alterations.
 ' @param    loopsound   the loop state for the sound.
 '
 ' @return   the buffer index in which the sound is playing, or 0 in case of error.
 
-public function playwave(byval filename as string, optional byval loopsound as loopstyle = loopstyle.default) as long
+public function playwave(byval filename as string, optional byval srcx as byte = 0, optional byval srcy as byte = 0, optional byval loopsound as loopstyle = loopstyle.default) as long
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 10/04/06
-'loads a new wave to memory (if it isn't already loaded) and starts playing it
-'returns the index in which the sound is playing
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/30/08
+'last modified by: juan mart�n sotuyo dodero (maraxus)
+'added support for 3d sound effects.
 '***************************************************
 on error goto errhandler
     dim bufferindex as long
@@ -302,13 +331,103 @@ on error goto errhandler
         
         'apply volume
         call .buffer.setvolume(sndvolume)
+        
+        'store position
+        .x = srcx
+        .y = srcy
+        
+        'get standard frequency
+        .normalfq = .buffer.getfrequency()
     end with
     
     playwave = bufferindex
+    
+    if srcx <> 0 and srcy <> 0 then
+        call update3dsound(bufferindex, 0, 0)
+    end if
 exit function
 
 errhandler:
 end function
+
+private sub update3dsound(byval bufferindex as long, byval deltax as integer, byval deltay as integer)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/30/08
+'refreshes the sound's arguments.
+'***************************************************
+    dim lineardistanceold as single
+    dim lineardistancenew as single
+    dim deltadistance as single
+    dim distancexold as integer
+    dim distanceyold as integer
+    dim distancexnew as integer
+    dim distanceynew as integer
+    dim perceivedfq as long
+    
+    with dsbuffers(bufferindex)
+        distancexold = .x - lastposx
+        distanceyold = .y - lastposy
+        
+        distancexnew = distancexold + deltax
+        distanceynew = distanceyold + deltay
+        
+        lineardistanceold = sqr(distancexold * distancexold + distanceyold * distanceyold)
+        lineardistancenew = sqr(distancexnew * distancexnew + distanceynew * distanceynew)
+        
+        deltadistance = lineardistancenew - lineardistanceold
+        
+        'update frequency emulating doppler effect
+        perceivedfq = .normalfq - deltadistance * delta_fq
+        if perceivedfq < dsbfrequency_min then perceivedfq = dsbfrequency_min
+        
+        call .buffer.setfrequency(perceivedfq)
+        
+        'set volumen amortiguation according to distance
+        call .buffer.setvolume(sndvolume * (1 - lineardistancenew / max_distance_to_source))
+        
+        'prevent division by zero
+        if lineardistancenew = 0 then lineardistancenew = 1
+        
+        'set panning according to relative position of the source to the listener
+        call .buffer.setpan((distancexnew / lineardistancenew) * dsbpan_right)
+    end with
+end sub
+
+''
+' updates 3d sounds based on the movement of the listener.
+'
+' @param    x   the new coordinate of the listener in the x axis (consider 0 as the furthest point to the left).
+' @param    y   the new coordinate of the listener in the y axis (consider 0 as the furthest point to the front).
+'
+' @return   the buffer index in which the sound is playing, or 0 in case of error.
+
+public sub movelistener(byval x as integer, byval y as integer)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/30/08
+'moves the position of the listener updating all 3d sounds.
+'***************************************************
+    dim i as long
+    dim deltax as integer
+    dim deltay as integer
+    
+    deltax = x - lastposx
+    deltay = y - lastposy
+    
+    for i = 1 to numsoundbuffers
+        if not dsbuffers(i).buffer is nothing then
+            if dsbuffers(i).buffer.getstatus and dsbstatus_playing then
+                if dsbuffers(i).x <> 0 and dsbuffers(i).y <> 0 then
+                    call update3dsound(i, deltax, deltay)
+                end if
+            end if
+        end if
+    next i
+    
+    lastposx = x
+    lastposy = y
+end sub
 
 ''
 ' loads a new wave file.
@@ -320,7 +439,7 @@ end function
 
 private function loadwave(byval filename as string, byval looping as loopstyle) as long
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 10/04/06
 'loads a new wave into memory (if it's not already loaded) and returns
 'the buffer index
@@ -414,7 +533,7 @@ end function
 
 public sub stopwave(optional byval bufferindex as long = 0)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'stops the sound in the given buffer index, or every sound if
 'index is 0
@@ -442,7 +561,7 @@ end sub
 
 public property get playingsound() as boolean
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'returns true if there is at least one sound playing
 '***************************************************
@@ -463,7 +582,7 @@ end property
 
 public property let soundvolume(byval volume as byte)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'sets the sound's volume as a percentage
 '***************************************************
@@ -490,7 +609,7 @@ end property
 
 public property get soundvolume() as byte
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'sets the music's volume as a percentage
 '***************************************************
@@ -617,7 +736,7 @@ end property
 
 public property let musicvolume(byval volume as long)
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'sets the music's volume as a percentage
 '***************************************************
@@ -754,8 +873,6 @@ public property let soundactivated(byval nvalue as boolean)
 'last modification: 03/03/07
 'sets wether the sound is activated or not
 '***************************************************
-    dim i as long
-    
     if sactivated = nvalue then exit property
     
     sactivated = nvalue

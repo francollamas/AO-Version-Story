@@ -44,20 +44,51 @@ private p_fundador as integer
 private p_cantmiembros as integer
 'cantidad de miembros
 
+private p_sumaniveleselevados as single
+'suma de todos los niveles elevados a la exponentenivelparty > esta variable se usa para calcular la experiencia repartida en la party.
+
 'datos en los pjs: | indexparty(indice en p_members), partyleader(userindex del lider) |
 
 'constructor de clase
 public sub class_initialize()
+'***************************************************
+'author: unknown
+'last modification: 07/04/08
+'last modification by: marco vanotti (markoxx)
+' - 09/29/07 p_sumaniveles added (tavo)
+' - 07/04/08 p_sumaniveles changed to p_sumaniveleselevados (markoxx)
+'***************************************************
     p_exptotal = 0
     p_cantmiembros = 0
+    p_sumaniveleselevados = 0
 end sub
 
 'destructor de clase
 public sub class_terminate()
 end sub
 
+''
+' sets the new p_sumaniveleselevados to the party.
+'
+' @param lvl specifies reference to user level
+' @remarks when a user level up and he is in a party, we update p_sumaniveleselavados so the formula still works.
+public sub updatesumaniveleselevados(byval lvl as integer)
+'*************************************************
+'author: marco vanotti (markoxx)
+'last modified: 28/10/08
+'
+'*************************************************
+    p_sumaniveleselevados = p_sumaniveleselevados - ((lvl - 1) ^ 1.75) + lvl ^ 1.75
+end sub
 
 public function miexperiencia(byval userindex as integer) as long
+'***************************************************
+'author: unknown
+'last modification: 09/29/07
+'last modification by: lucas tavolaro ortiz (tavo)
+' - 09/29/07 experience is round to the biggest number less than that number
+' - 09/29/07 now experience is a real-number
+'***************************************************
 'me dice cuanta experiencia tengo colectada ya en la party
 dim i as integer
 i = 0
@@ -67,7 +98,7 @@ while i <= party_maxmembers and p_members(i).userindex <> userindex
 wend
 
 if i <= party_maxmembers then
-    miexperiencia = p_members(i).experiencia
+    miexperiencia = fix(p_members(i).experiencia)
 else        'esto no deberia pasar :p
     miexperiencia = -1
 end if
@@ -75,26 +106,37 @@ end if
 end function
 
 public sub obtenerexito(byval expganada as long, byval mapa as integer, x as integer, y as integer)
+'***************************************************
+'author: unknown
+'last modification: 07/04/08
+'last modification by: marco vanotti (markoxx)
+' - 09/29/07 new formula for calculating the experience point of each user
+' - 09/29/07 experience is round to the biggest number less than that number
+' - 09/29/07 now experience is a real-number
+' - 04/04/08 ahora antes de calcular la experiencia a x usuario se fija si ese usuario existe (markoxx)
+' - 07/04/08 new formula to calculate experience for each user. (markoxx)
+'***************************************************
 'se produjo un evento que da experiencia en la wp referenciada
 dim i as integer
 dim ui as integer
-dim exppercapita as double
+dim expthisuser as double
 
 p_exptotal = p_exptotal + expganada
-
-exppercapita = clng(expganada / p_cantmiembros)
 
 for i = 1 to party_maxmembers
     ui = p_members(i).userindex
     if ui > 0 then
+        ' formula: exp* (nivel ^ exponentenivelparty) / sumadeniveleselevados
+        expthisuser = cdbl(expganada * (userlist(p_members(i).userindex).stats.elv ^ exponentenivelparty) / p_sumaniveleselevados)
+        
         if mapa = userlist(ui).pos.map and userlist(ui).flags.muerto = 0 then
             if distance(userlist(ui).pos.x, userlist(ui).pos.y, x, y) <= party_maxdistancia then
-                p_members(i).experiencia = p_members(i).experiencia + exppercapita
+                p_members(i).experiencia = p_members(i).experiencia + expthisuser
                 if p_members(i).experiencia < 0 then
                     p_members(i).experiencia = 0
                 end if
                 if party_experienciaporgolpe then
-                    userlist(ui).stats.exp = userlist(ui).stats.exp + exppercapita
+                    userlist(ui).stats.exp = userlist(ui).stats.exp + fix(expthisuser)
                     if userlist(ui).stats.exp > maxexp then _
                         userlist(ui).stats.exp = maxexp
                     call checkuserlevel(ui)
@@ -124,6 +166,14 @@ public function espartyleader(byval userindex as integer) as boolean
 end function
 
 public function nuevomiembro(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 07/04/08
+'last modification by: marco vanotti (markoxx)
+' - 09/29/07 there is no level prohibition (tavo)
+' - 07/04/08 added const exponentenivelparty. (markoxx)
+'***************************************************
+
 dim i as integer
 i = 1
 while i <= party_maxmembers and p_members(i).userindex > 0
@@ -135,6 +185,7 @@ if i <= party_maxmembers then
     p_members(i).userindex = userindex
     nuevomiembro = true
     p_cantmiembros = p_cantmiembros + 1
+    p_sumaniveleselevados = p_sumaniveleselevados + (userlist(userindex).stats.elv ^ exponentenivelparty)
 else
     nuevomiembro = false
 end if
@@ -142,6 +193,14 @@ end if
 end function
 
 public function salemiembro(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 07/04/08
+'last modification by: marco vanotti (markoxx)
+' - 09/29/07 experience is round to the biggest number less than that number
+' - 09/29/07 now experience is a real-number (tavo)
+' - 07/04/08 added const exponentenivelparty. (markoxx)
+'***************************************************
 'el valor de retorno representa si se disuelve la party
 dim i as integer
 dim j as integer
@@ -160,10 +219,10 @@ if i = 1 then
             
             call writeconsolemsg(p_members(j).userindex, " abandonas la party liderada por " & userlist(p_members(1).userindex).name, fonttypenames.fonttype_party)
     
-            call writeconsolemsg(p_members(j).userindex, " durante la misma has conseguido " & p_members(j).experiencia & " puntos de experiencia!", fonttypenames.fonttype_party)
+            call writeconsolemsg(p_members(j).userindex, " durante la misma has conseguido " & cstr(fix(p_members(j).experiencia)) & " puntos de experiencia!", fonttypenames.fonttype_party)
     
             if not party_experienciaporgolpe then
-                userlist(p_members(j).userindex).stats.exp = userlist(p_members(j).userindex).stats.exp + p_members(j).experiencia
+                userlist(p_members(j).userindex).stats.exp = userlist(p_members(j).userindex).stats.exp + fix(p_members(j).experiencia)
                 if userlist(p_members(j).userindex).stats.exp > maxexp then _
                     userlist(p_members(j).userindex).stats.exp = maxexp
                 call checkuserlevel(p_members(j).userindex)
@@ -172,6 +231,7 @@ if i = 1 then
             call mandarmensajeaconsola(userlist(p_members(j).userindex).name & " abandona la party.", "servidor")
             userlist(p_members(j).userindex).partyindex = 0
             p_cantmiembros = p_cantmiembros - 1
+            p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
             p_members(j).userindex = 0
             p_members(j).experiencia = 0
         end if
@@ -179,7 +239,7 @@ if i = 1 then
 else
     if i <= party_maxmembers then
         if not party_experienciaporgolpe then
-            userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + p_members(i).experiencia
+            userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + fix(p_members(i).experiencia)
             if userlist(p_members(i).userindex).stats.exp > maxexp then _
                 userlist(p_members(i).userindex).stats.exp = maxexp
             call checkuserlevel(p_members(i).userindex)
@@ -187,8 +247,9 @@ else
         end if
         call mandarmensajeaconsola(userlist(p_members(i).userindex).name & " abandona la party.", "servidor")
         'todo: revisar que esto este bien, y no este faltando/sobrando un mensaje, ahora solo los estoy corrigiendo
-        call writeconsolemsg(p_members(i).userindex, " durante la misma has conseguido " & p_members(i).experiencia & " puntos de experiencia!", fonttypenames.fonttype_party)
+        call writeconsolemsg(p_members(i).userindex, " durante la misma has conseguido " & cstr(fix(p_members(i).experiencia)) & " puntos de experiencia!", fonttypenames.fonttype_party)
         p_cantmiembros = p_cantmiembros - 1
+        p_sumaniveleselevados = p_sumaniveleselevados - (userlist(userindex).stats.elv ^ exponentenivelparty)
         p_members(i).userindex = 0
         p_members(i).experiencia = 0
         compactmemberlist
@@ -198,9 +259,15 @@ end if
 end function
 
 public function hacerleader(byval userindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 09/29/07
+'last modification by: lucas tavolaro ortiz (tavo)
+' - 09/29/07 there is no level prohibition
+'***************************************************
 dim i as integer
 dim oldleader as integer
-dim oldexp as long
+dim oldexp as double
 dim userindexindex as integer
 
 userindexindex = 0
@@ -210,12 +277,6 @@ for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
         if p_members(i).userindex = userindex then
             userindexindex = i
-        else
-            'chequeo la dif entre levels
-            if abs(cint(userlist(userindex).stats.elv) - cint(userlist(p_members(i).userindex).stats.elv)) > maxpartydeltalevel then
-                call writeconsolemsg(p_members(i).userindex, "no se puede hacer l�der a " & userlist(userindex).name & " pues la diferencia entre niveles de los miembros de la party ser�a mayor a " & maxpartydeltalevel, fonttypenames.fonttype_party)
-                hacerleader = false
-            end if
         end if
     end if
 next i
@@ -248,22 +309,36 @@ end function
 
 
 public sub obtenermiembrosonline(byref memberlist as string)
+'***************************************************
+'author: unknown
+'last modification: 09/29/07
+'last modification by: marco vanotti (markoxx)
+' - 09/29/07 experience is round to the biggest number less than that number
+' - 09/29/07 now experience is a real-number (tavo)
+' - 08/18/08 now totalexperience is fixed (markoxx)
+'***************************************************
 'esta funcion viola un poco la correcta forma de hacer la clase
 'pero bue...
 dim i as integer
 memberlist = "nombre(exp): "
 for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
-        memberlist = memberlist & " - " & userlist(p_members(i).userindex).name & " (" & p_members(i).experiencia & ")"
+        memberlist = memberlist & " - " & userlist(p_members(i).userindex).name & " (" & cstr(fix(p_members(i).experiencia)) & ")"
     end if
 next i
 
-memberlist = memberlist & ". experiencia total: " & p_exptotal
+memberlist = memberlist & ". experiencia total: " & cstr(p_exptotal)
 
 end sub
 
 
 public function puedeentrar(byval userindex as integer, byref razon as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 09/29/07
+'last modification by: lucas tavolaro ortiz (tavo)
+' - 09/29/07 there is no level prohibition
+'***************************************************
 'define las reglas del juego para dejar entrar a miembros
 dim esarmada as boolean
 dim escaos as boolean
@@ -305,11 +380,6 @@ if rv then
                     razon = "los miembros de la legi�n oscura no entran a una party con ciudadanos."
                     rv = false
                 end if
-                'diferencia entre niveles
-                if abs(cint(userlist(ui).stats.elv) - cint(userlist(userindex).stats.elv)) > maxpartydeltalevel then
-                    razon = "la diferencia con " & userlist(ui).name & " es mayor a " & maxpartydeltalevel & " niveles."
-                    rv = false
-                end if
             
                 if not rv then exit for 'violate una programacion estructurada
             end if
@@ -327,6 +397,13 @@ end function
 
 
 public sub flushexperiencia()
+'***************************************************
+'author: unknown
+'last modification: 09/29/07
+'last modification by: lucas tavolaro ortiz (tavo)
+' - 09/29/07 experience is round to the biggest number less than that number
+' - 09/29/07 now experience is a real-number
+'***************************************************
 'esta funcion se invoca frente a cerradas del servidor. flushea la experiencia
 'acumulada a los usuarios.
 
@@ -335,13 +412,13 @@ if not party_experienciaporgolpe then   'esto sirve solo cuando acumulamos la ex
     for i = 1 to party_maxmembers
         if p_members(i).userindex > 0 then
             if p_members(i).experiencia > 0 then
-                userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + p_members(i).experiencia
+                userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + fix(p_members(i).experiencia)
                 if userlist(p_members(i).userindex).stats.exp > maxexp then _
                     userlist(p_members(i).userindex).stats.exp = maxexp
                 call checkuserlevel(p_members(i).userindex)
             else
-                if abs(userlist(p_members(i).userindex).stats.exp) > abs(p_members(i).experiencia) then
-                    userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + p_members(i).experiencia
+                if abs(userlist(p_members(i).userindex).stats.exp) > abs(fix(p_members(i).experiencia)) then
+                    userlist(p_members(i).userindex).stats.exp = userlist(p_members(i).userindex).stats.exp + fix(p_members(i).experiencia)
                 else
                     userlist(p_members(i).userindex).stats.exp = 0
                 end if
@@ -360,7 +437,6 @@ end sub
 private sub compactmemberlist()
 dim i as integer
 dim freeindex as integer
-dim tplayer as tpartymember
 i = 1
 while i <= party_maxmembers
     if p_members(i).userindex = 0 and freeindex = 0 then

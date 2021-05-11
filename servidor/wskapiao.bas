@@ -34,12 +34,7 @@ option explicit
 'que sea).
 #const wsapi_crear_label = true
 
-private const sd_receive as long = &h0
-private const sd_send as long = &h1
 private const sd_both as long = &h2
-
-
-private const max_tiempoidle_colallena = 5 'minutos
 
 public declare sub sleep lib "kernel32" (byval dwmilliseconds as long)
 
@@ -109,7 +104,7 @@ call startwinsock(desc)
 #end if
 end sub
 
-public sub limpiawsapi(byval hwnd as long)
+public sub limpiawsapi()
 #if usarquesocket = 1 then
 
 call logapisock("limpiawsapi")
@@ -132,30 +127,25 @@ end if
 #end if
 end sub
 
-public function buscaslotsock(byval s as long, optional byval cacheind as boolean = false) as long
+public function buscaslotsock(byval s as long) as long
 #if usarquesocket = 1 then
 
 on error goto hayerror
-
-buscaslotsock = wsapisock2usr.item(cstr(s))
+    
+    buscaslotsock = wsapisock2usr.item(cstr(s))
 exit function
-
-hayerror:   ' the socket was already removed
-
-buscaslotsock = -1
-err.clear
-
+    
+hayerror:
+    buscaslotsock = -1
 #end if
+
 end function
 
 public sub agregaslotsock(byval sock as long, byval slot as long)
 debug.print "agregasockslot"
 #if (usarquesocket = 1) then
 
-'if frmmain.superlog.value = 1 then logcustom ("agregaslotsock:: sock=" & sock & " slot=" & slot)
-
 if wsapisock2usr.count > maxusers then
-    'if frmmain.superlog.value = 1 then logcustom ("imposible agregarslotsock (wsapi2usr.count>maxusers)")
     call closesocket(slot)
     exit sub
 end if
@@ -195,7 +185,7 @@ wsapisock2usr.add cstr(slot), cstr(sock)
 #end if
 end sub
 
-public sub borraslotsock(byval sock as long, optional byval cacheindice as long)
+public sub borraslotsock(byval sock as long)
 #if (usarquesocket = 1) then
 dim cant as long
 
@@ -215,209 +205,151 @@ public function wndproc(byval hwnd as long, byval msg as long, byval wparam as l
 
 on error resume next
 
-dim ret as long
-dim tmp() as byte
-
-dim s as long, e as long
-dim n as integer
+    dim ret as long
+    dim tmp() as byte
+    dim s as long
+    dim e as long
+    dim n as integer
+    dim ulterror as long
     
-dim dale as boolean
-dim ulterror as long
-
-
-wndproc = 0
-
-
-if camaralenta = 1 then
-    sleep 1
-end if
-
-
-select case msg
-case 1025
-
-    s = wparam
-    e = wsagetselectevent(lparam)
-    'debug.print "msg: " & msg & " w: " & wparam & " l: " & lparam
-    call logapisock("msg: " & msg & " w: " & wparam & " l: " & lparam)
-    
-    select case e
-    case fd_accept
-            'if frmmain.superlog.value = 1 then logcustom ("fd_accept")
-        if s = socklisten then
-            'if frmmain.superlog.value = 1 then logcustom ("socklisten = " & s & ". llamo a eventosocketaccept")
-            call eventosockaccept(s)
-        end if
-        
-'    case fd_write
-'        n = buscaslotsock(s)
-'        if n < 0 and s <> socklisten then
-'            'call apiclosesocket(s)
-'            call wsapiclosesocket(s)
-'            exit function
-'        end if
-'
-
-'        call intentarenviardatosencolados(n)
-'
-''        dale = userlist(n).colasalida.count > 0
-''        do while dale
-''            ret = wsapienviar(n, userlist(n).colasalida.item(1), false)
-''            if ret <> 0 then
-''                if ret = wsaewouldblock then
-''                    dale = false
-''                else
-''                    'y aca que hacemo' ?? help! i need somebody, help!
-''                    dale = false
-''                    debug.print "error al enviar el dato desde la cola " & ret & ": " & getwsaerrorstring(ret)
-''                end if
-''            else
-''            '    debug.print "dato de la cola enviado"
-''                userlist(n).colasalida.remove 1
-''                dale = (userlist(n).colasalida.count > 0)
-''            end if
-''        loop
-
-    case fd_read
-        
-        n = buscaslotsock(s)
-        if n < 0 and s <> socklisten then
-            'call apiclosesocket(s)
-            call wsapiclosesocket(s)
-            exit function
-        end if
-        
-        'call wsaasyncselect(s, hwndmsg, byval 1025, byval (0))
-        
-        '4k de buffer
-        redim preserve tmp(size_rcvbuf - 1) as byte
-        
-        ret = recv(s, tmp(0), size_rcvbuf, 0)
-        ' comparo por = 0 ya que esto es cuando se cierra
-        ' "gracefully". (mas abajo)
-        if ret < 0 then
-            ulterror = err.lastdllerror
-            if ulterror = wsaemsgsize then
-                debug.print "wsaemsgsize"
-                ret = size_rcvbuf
-            else
-                debug.print "error en recv: " & getwsaerrorstring(ulterror)
-                call logapisock("error en recv: n=" & n & " s=" & s & " str=" & getwsaerrorstring(ulterror))
-                
-                'no hay q llamar a closesocket() directamente,
-                'ya q pueden abusar de algun error para
-                'desconectarse sin los 10segs. creeme.
-            '    call c l o s e socket(n)
+    select case msg
+        case 1025
+            s = wparam
+            e = wsagetselectevent(lparam)
             
-                call closesocketsl(n)
-                call cerrar_usuario(n)
-                exit function
-            end if
-        elseif ret = 0 then
-            call closesocketsl(n)
-            call cerrar_usuario(n)
-        end if
+            select case e
+                case fd_accept
+                    if s = socklisten then
+                        call eventosockaccept(s)
+                    end if
+                
+            '    case fd_write
+            '        n = buscaslotsock(s)
+            '        if n < 0 and s <> socklisten then
+            '            'call apiclosesocket(s)
+            '            call wsapiclosesocket(s)
+            '            exit function
+            '        end if
+            '
+            
+            '        call intentarenviardatosencolados(n)
+            '
+            '        dale = userlist(n).colasalida.count > 0
+            '        do while dale
+            '            ret = wsapienviar(n, userlist(n).colasalida.item(1), false)
+            '            if ret <> 0 then
+            '                if ret = wsaewouldblock then
+            '                    dale = false
+            '                else
+            '                    'y aca que hacemo' ?? help! i need somebody, help!
+            '                    dale = false
+            '                    debug.print "error al enviar el dato desde la cola " & ret & ": " & getwsaerrorstring(ret)
+            '                end if
+            '            else
+            '            '    debug.print "dato de la cola enviado"
+            '                userlist(n).colasalida.remove 1
+            '                dale = (userlist(n).colasalida.count > 0)
+            '            end if
+            '        loop
         
-        'call wsaasyncselect(s, hwndmsg, byval 1025, byval (fd_read or fd_write or fd_close or fd_accept))
+                case fd_read
+                    n = buscaslotsock(s)
+                    if n < 0 and s <> socklisten then
+                        'call apiclosesocket(s)
+                        call wsapiclosesocket(s)
+                        exit function
+                    end if
+                    
+                    'create appropiate sized buffer
+                    redim preserve tmp(size_rcvbuf - 1) as byte
+                    
+                    ret = recv(s, tmp(0), size_rcvbuf, 0)
+                    ' comparo por = 0 ya que esto es cuando se cierra
+                    ' "gracefully". (mas abajo)
+                    if ret < 0 then
+                        ulterror = err.lastdllerror
+                        if ulterror = wsaemsgsize then
+                            debug.print "wsaemsgsize"
+                            ret = size_rcvbuf
+                        else
+                            debug.print "error en recv: " & getwsaerrorstring(ulterror)
+                            call logapisock("error en recv: n=" & n & " s=" & s & " str=" & getwsaerrorstring(ulterror))
+                            
+                            'no hay q llamar a closesocket() directamente,
+                            'ya q pueden abusar de algun error para
+                            'desconectarse sin los 10segs. creeme.
+                            call closesocketsl(n)
+                            call cerrar_usuario(n)
+                            exit function
+                        end if
+                    elseif ret = 0 then
+                        call closesocketsl(n)
+                        call cerrar_usuario(n)
+                    end if
+                    
+                    redim preserve tmp(ret - 1) as byte
+                    
+                    call eventosockread(n, tmp)
+                
+                case fd_close
+                    n = buscaslotsock(s)
+                    if s <> socklisten then call apiclosesocket(s)
+                    
+                    if n > 0 then
+                        call borraslotsock(s)
+                        userlist(n).connid = -1
+                        userlist(n).connidvalida = false
+                        call eventosockclose(n)
+                    end if
+            end select
         
-        redim preserve tmp(ret - 1) as byte
-        
-        'call logapisock("wndproc:fd_read:n=" & n & ":tmp=" & tmp)
-        
-        call eventosockread(n, tmp)
-        
-    case fd_close
-        'debug.print wsagetselecterror(lparam)
-        n = buscaslotsock(s)
-        if s <> socklisten then call apiclosesocket(s)
-        
-        call logapisock("wndproc:fd_close:n=" & n & ":err=" & wsagetasyncerror(lparam))
-        
-        if n > 0 then
-            call borraslotsock(s)
-            userlist(n).connid = -1
-            userlist(n).connidvalida = false
-            call eventosockclose(n)
-        end if
-        
+        case else
+            wndproc = callwindowproc(oldwproc, hwnd, msg, wparam, lparam)
     end select
-case else
-    wndproc = callwindowproc(oldwproc, hwnd, msg, wparam, lparam)
-end select
-
 #end if
 end function
 
 'retorna 0 cuando se envi� o se metio en la cola,
 'retorna <> 0 cuando no se pudo enviar o no se pudo meter en la cola
-public function wsapienviar(byval slot as integer, byref str as string, optional encolar as boolean = true) as long
+public function wsapienviar(byval slot as integer, byref str as string) as long
 #if usarquesocket = 1 then
+    dim ret as string
+    dim retorno as long
+    dim data() as byte
+    
+    redim preserve data(len(str) - 1) as byte
 
-'if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: slot=" & slot & " str=" & str & " len(str)=" & len(str) & " encolar=" & encolar)
-
-dim ret as string
-dim ulterror as long
-dim retorno as long
-dim data() as byte
-
-redim preserve data(len(str) - 1) as byte
-
-data = strconv(str, vbfromunicode)
-
+    data = strconv(str, vbfromunicode)
+    
 #if seguridadalkon then
     call security.datasent(slot, data)
 #end if
-
-retorno = 0
-
-'debug.print ">>>> " & str
-
-
-if userlist(slot).connid <> -1 and userlist(slot).connidvalida then
-    ret = send(byval userlist(slot).connid, data(0), byval ubound(data()) + 1, byval 0)
-    if ret < 0 then
-        ulterror = err.lastdllerror
-        if ulterror = wsaewouldblock then
-            
+    
+    retorno = 0
+    
+    if userlist(slot).connid <> -1 and userlist(slot).connidvalida then
+        ret = send(byval userlist(slot).connid, data(0), byval ubound(data()) + 1, byval 0)
+        if ret < 0 then
+            ret = err.lastdllerror
+            if ret = wsaewouldblock then
+                
 #if seguridadalkon then
-            call security.datastored(slot)
+                call security.datastored(slot)
 #end if
-            
-            ' wsaewouldblock, put the data again in the outgoingdata buffer
-            call userlist(slot).outgoingdata.writeasciistringfixed(str)
+                
+                ' wsaewouldblock, put the data again in the outgoingdata buffer
+                call userlist(slot).outgoingdata.writeasciistringfixed(str)
+            end if
         end if
-        retorno = ulterror
+    elseif userlist(slot).connid <> -1 and not userlist(slot).connidvalida then
+        if not userlist(slot).counters.saliendo then
+            retorno = -1
+        end if
     end if
-elseif userlist(slot).connid <> -1 and not userlist(slot).connidvalida then
-    if not userlist(slot).counters.saliendo then
-        retorno = -1
-    end if
-end if
-
-wsapienviar = retorno
-
+    
+    wsapienviar = retorno
 #end if
 end function
-
-
-public sub logcustom(byval str as string)
-#if (usarquesocket = 1) then
-
-on error goto errhandler
-
-dim nfile as integer
-nfile = freefile ' obtenemos un canal
-open app.path & "\logs\custom.log" for append shared as #nfile
-print #nfile, date & " " & time & "(" & timer & ") " & str
-close #nfile
-
-exit sub
-
-errhandler:
-
-#end if
-end sub
-
 
 public sub logapisock(byval str as string)
 #if (usarquesocket = 1) then
@@ -476,13 +408,10 @@ public sub eventosockaccept(byval sockid as long)
     '    if err.lastdllerror = 11002 then
     '        ' we couldn't decide if to accept or reject the connection
     '        'force reject so we can get it out of the queue
-    '        logcustom ("pre wsaaccept callbackdata=1")
     '        ret = wsaaccept(sockid, sa, tam, addressof condicionsocket, 1)
-    '        logcustom ("wsaccept callbackdata 1, devuelve " & ret)
     '        call logcriticevent("error en wsaaccept() api 11002: no se pudo decidir si aceptar o rechazar la conexi�n.")
     '    else
     '        i = err.lastdllerror
-    '        logcustom ("error en wsaaccept() api " & i & ": " & getwsaerrorstring(i))
     '        call logcriticevent("error en wsaaccept() api " & i & ": " & getwsaerrorstring(i))
     '        exit sub
     '    end if
@@ -550,7 +479,7 @@ public sub eventosockaccept(byval sockid as long)
         dim str as string
         dim data() as byte
         
-        str = protocol.preparemessageerrormsg("el server se haya lleno en este momento. disculpe las molestias ocasionadas.")
+        str = protocol.preparemessageerrormsg("el server se encuentra lleno en este momento. disculpe las molestias ocasionadas.")
         
         redim preserve data(len(str) - 1) as byte
         
@@ -643,7 +572,7 @@ dim i as long
     lastuser = 1
     numusers = 0
     
-    call limpiawsapi(frmmain.hwnd)
+    call limpiawsapi
     call sleep(100)
     call iniciawsapi(frmmain.hwnd)
     socklisten = listenforconnect(puerto, hwndmsg, "")

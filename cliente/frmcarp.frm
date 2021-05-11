@@ -108,8 +108,3 @@ end sub
 private sub command4_click()
     unload me
 end sub
-
-private sub form_deactivate()
-    'me.setfocus
-end sub
-

@@ -1,5 +1,5 @@
 attribute vb_name = "pathfinding"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -82,7 +82,6 @@ option explicit
 private const rows as integer = 100
 private const colums as integer = 100
 private const maxint as integer = 1000
-private const walkable as integer = 0
 
 private type tintermidiatework
     known as boolean
@@ -92,12 +91,7 @@ end type
 
 dim tmparray(1 to rows, 1 to colums) as tintermidiatework
 
-dim tileposx as integer, tileposy as integer
-
-dim myvert as tvertice
-dim myfin as tvertice
-
-dim iter as integer
+dim tileposy as integer
 
 private function limites(byval vfila as integer, byval vcolu as integer)
 limites = vcolu >= 1 and vcolu <= colums and vfila >= 1 and vfila <= rows

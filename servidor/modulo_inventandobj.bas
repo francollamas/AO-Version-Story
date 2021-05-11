@@ -1,5 +1,5 @@
 attribute vb_name = "invnpc"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ on error goto errhandler
     
     tilelibre pos, nuevapos, obj, notpirata, true
     if nuevapos.x <> 0 and nuevapos.y <> 0 then
-        call makeobj(pos.map, obj, pos.map, nuevapos.x, nuevapos.y)
+        call makeobj(obj, pos.map, nuevapos.x, nuevapos.y)
     end if
     tiraritemalpiso = nuevapos
 
@@ -97,18 +97,27 @@ end if
 quedanitems = false
 end function
 
+''
+' gets the amount of a certain item that an npc has.
+'
+' @param npcindex specifies reference to npcmerchant
+' @param objindex specifies reference to object
+' @return   the amount of the item that the npc has
+' @remarks this function reads the npc.dat file
 function encontrarcant(byval npcindex as integer, byval objindex as integer) as integer
+'***************************************************
+'author: unknown
+'last modification: 03/09/08
+'last modification by: marco vanotti (marco)
+' - 03/09/08 encontrarcant now returns 0 if the npc doesn't have it (marco)
+'***************************************************
 on error resume next
 'devuelve la cantidad original del obj de un npc
 
 dim ln as string, npcfile as string
 dim i as integer
 
-'if npclist(npcindex).numero > 499 then
-'    npcfile = datpath & "npcs-hostiles.dat"
-'else
-    npcfile = datpath & "npcs.dat"
-'end if
+npcfile = datpath & "npcs.dat"
  
 for i = 1 to max_inventory_slots
     ln = getvar(npcfile, "npc" & npclist(npcindex).numero, "obj" & i)
@@ -118,7 +127,7 @@ for i = 1 to max_inventory_slots
     end if
 next
                    
-encontrarcant = 50
+encontrarcant = 0
 
 end function
 
@@ -138,11 +147,21 @@ npclist(npcindex).invrespawn = 0
 
 end sub
 
+''
+' removes a certain amount of items from a slot of an npc's inventory
+'
+' @param npcindex specifies reference to npcmerchant
+' @param slot specifies reference to npc's inventory's slot
+' @param antidad specifies amount of items that will be removed
 sub quitarnpcinvitem(byval npcindex as integer, byval slot as byte, byval cantidad as integer)
-
-
-
+'***************************************************
+'author: unknown
+'last modification: 03/09/08
+'last modification by: marco vanotti (marco)
+' - 03/09/08 now this sub checks that te npc has an item before respawning it (marco)
+'***************************************************
 dim objindex as integer
+dim icant as integer
 objindex = npclist(npcindex).invent.object(slot).objindex
 
     'quita un obj
@@ -166,11 +185,13 @@ objindex = npclist(npcindex).invent.object(slot).objindex
             npclist(npcindex).invent.object(slot).amount = 0
             
             if not quedanitems(npcindex, objindex) then
-                   
-                   npclist(npcindex).invent.object(slot).objindex = objindex
-                   npclist(npcindex).invent.object(slot).amount = encontrarcant(npcindex, objindex)
-                   npclist(npcindex).invent.nroitems = npclist(npcindex).invent.nroitems + 1
-            
+                'check if the item is in the npc's dat.
+                icant = encontrarcant(npcindex, objindex)
+                if icant then
+                    npclist(npcindex).invent.object(slot).objindex = objindex
+                    npclist(npcindex).invent.object(slot).amount = icant
+                    npclist(npcindex).invent.nroitems = npclist(npcindex).invent.nroitems + 1
+                end if
             end if
             
             if npclist(npcindex).invent.nroitems = 0 and npclist(npcindex).invrespawn <> 1 then
@@ -190,11 +211,7 @@ dim loopc as integer
 dim ln as string
 dim npcfile as string
 
-'if npclist(npcindex).numero > 499 then
-'    npcfile = datpath & "npcs-hostiles.dat"
-'else
-    npcfile = datpath & "npcs.dat"
-'end if
+npcfile = datpath & "npcs.dat"
 
 npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npclist(npcindex).numero, "nroitems"))
 

@@ -46,16 +46,19 @@ option base 0
 
 ''
 ' maximum number of dialogs that can exist.
-private const max_dialogs as byte = 50
+private const max_dialogs as byte = 100
 
 ''
 ' maximum length of any dialog line without having to split it.
-private const max_length as byte = 15
+private const max_length as byte = 18
 
 ''
-' the number of milliseconds the dialog should be rendered.
-private const dialog_life as long = 16600
+' number of milliseconds to add to the lifetime per dialog character
+private const ms_per_char as byte = 100
 
+''
+' number of extra milliseconds to add to the lifetime of a new dialog
+private const ms_add_extra as integer = 5000
 
 ''
 ' the dialog structure
@@ -64,6 +67,7 @@ private const dialog_life as long = 16600
 ' @param    x           x coord for rendering.
 ' @param    y           y coord for rendering.
 ' @param    starttime   the time (in ms) at which the dialog was created.
+' @param    lifetime    time (in ms) this dialog should last.
 ' @param    charindex   the charindex that created this dialog.
 ' @param    color       the color to be used when rendering the text.
 ' @param    renderable  set to true if the chat should be rendered this frame, false otherwise
@@ -73,6 +77,7 @@ private type dialog
     x           as integer
     y           as integer
     starttime   as long
+    lifetime    as long
     charindex   as integer
     color       as long
     renderable  as boolean
@@ -90,13 +95,16 @@ private dialogcount as byte
 ' the size of the font being used to render
 private usedfont as stdfont
 
+''
+' a millisecond precision timer
+private declare function gettickcount lib "kernel32" () as long
 
 ''
 ' initializes the instance of the class.
 
 private sub class_initialize()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/28/07
 'initializes the dialog instance
 '***************************************************
@@ -108,7 +116,7 @@ end sub
 
 private sub class_terminate()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 07/28/07
 'clean up
 '***************************************************
@@ -144,16 +152,16 @@ private function binarysearch(byval charindex as integer) as integer
     
     'not found, return the negation of the position where it should be
     '(all higher values are to the right of the list and lower values are to the left)
-    binarysearch = not mid
+    binarysearch = not min
 end function
 
 ''
-' create sa new dialog. if the user already had a dialog, then it's replaced,
+' creates a new dialog. if the user already had a dialog, then it's replaced,
 ' otherwise a new slot is used.
 '
 ' @param    chat        the text of the chat being spoken.
 ' @param    charindex   the character saying the chat.
-' @param    color       the color being use din the chat when rendered.
+' @param    color       the color being used in the chat when rendered.
 '
 ' @remarks  if there are no more free slots, and the char didn't have a previous dialog,
 '           the chat is ignored.
@@ -161,8 +169,9 @@ end function
 public sub createdialog(byref chat as string, byval charindex as integer, byval color as long)
 '**************************************************************
 'author: juan mart�n sotuyo dodero
-'last modify date: 07/28/07
-'creates a new dialog.
+'last modification: 08/29/07 by rapsodius
+'changed life time of the dialogs to a variable amount,
+'depending on the number of chars
 '**************************************************************
     dim slot as integer
     dim i as long
@@ -186,8 +195,9 @@ public sub createdialog(byref chat as string, byval charindex as integer, byval 
         .charindex = charindex
         .color = color
         .renderable = false
-        .starttime = gettickcount
+        .starttime = gettickcount()
         .textline = formatchat(chat)
+        .lifetime = ms_add_extra + (ms_per_char * len(chat))
     end with
 end sub
 
@@ -259,7 +269,7 @@ private function formatchat(byref chat as string) as string()
     
     ' if it's only one line, center text
     if curline = 0 and length < max_length then
-        chatlines(curline) = string(max_length - length, " ") & chatlines(curline)
+        chatlines(curline) = string((max_length - length) \ 2 + 1, " ") & chatlines(curline)
     end if
     
     'resize array to fit
@@ -300,8 +310,8 @@ end sub
 public sub render()
 '**************************************************************
 'author: juan mart�n sotuyo dodero
-'last modify date: 07/28/07
-'renders all renderable dialogs and gets rid of old ones.
+'last modification: 08/29/07 by rapsodius
+'changed the way it gets rid of older dialogs.
 '**************************************************************
     dim i as long
     dim j as long
@@ -312,18 +322,21 @@ public sub render()
         'decrease index to prevent jumping over a dialog
         'crappy vb will cache the limit of the for loop, so even if it changed, it won't matter
         with dialogs(i - removeddialogs)
-            if .starttime + dialog_life < gettickcount then
+            if (gettickcount() - .starttime) >= .lifetime then
                 call removedialog(.charindex)
                 
                 removeddialogs = removeddialogs + 1
             elseif .renderable then
-                offset = -(usedfont.size + 5) * ubound(.textline())
+                offset = -(usedfont.size + 2) * ubound(.textline())
                 
                 'render it
                 for j = 0 to ubound(.textline())
-                    call drawtext(.x, .y + offset, .textline(j), .color, usedfont)
+                    call rendertext(.x, .y + offset, .textline(j), .color, usedfont)
                     offset = offset + usedfont.size + 5
                 next j
+                
+                'won't render it unless it's updated in next frmae
+                .renderable = false
             end if
         end with
     next i

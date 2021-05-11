@@ -41,8 +41,15 @@ attribute vb_exposed = false
 ' based in the idea of alejolp and his clsleerinis.
 '
 ' @author juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
-' @version 1.0.0
+' @version 1.1.0
 ' @date 20060501
+
+'01/05/2006 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
+'   - first release
+'
+'01/04/2008 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
+'   - add: keyexists method allows to check for valid section keys.
+
 
 option explicit
 option base 0
@@ -69,7 +76,6 @@ end type
 'it's the key used when searching for a main section of the ini data.
 ' @param    values array of childnodes, each containing a value entry along with it's key.
 ' @param    numvalues number of entrys in the main node.
-'
 
 private type mainnode
     name as string
@@ -79,17 +85,14 @@ end type
 
 ''
 'containts all main sections of the loaded ini file
-'
 private filedata() as mainnode
 
 ''
 'stores the total number of main sections in the loaded ini file
-'
 private mainnodes as long
 
 ''
 'default constructor. does nothing.
-'
 
 private sub class_initialize()
 '**************************************************************
@@ -128,7 +131,6 @@ end sub
 '
 ' @param    file complete path of the ini file to be loaded.
 ' @see      getvalue
-'
 
 public sub initialize(byval file as string)
 '**************************************************************
@@ -208,7 +210,6 @@ end sub
 ' @param    node the mainnode whose values are to be sorted.
 ' @param    first the first index to consider when sorting.
 ' @param    last the last index to be considered when sorting.
-'
 
 private sub sortchildnodes(byref node as mainnode, byval first as integer, byval last as integer)
 '**************************************************************
@@ -254,7 +255,6 @@ end sub
 '
 ' @param    first the first index to consider when sorting.
 ' @param    last the last index to be considered when sorting.
-'
 
 private sub sortmainnodes(byval first as integer, byval last as integer)
 '**************************************************************
@@ -299,7 +299,6 @@ end sub
 ' @param    main the name of the main section in which we will be searching.
 ' @param    key the key of the value we are looking for.
 ' @returns  the value asociated with the given key under the requeted main section of the ini file or a null string if it's not found.
-'
 
 public function getvalue(byval main as string, byval key as string) as string
 '**************************************************************
@@ -328,7 +327,6 @@ end function
 ' @param    node the mainnode among whose value entries we will be searching.
 ' @param    key the key of the value we are looking for.
 ' @returns  the index in which the value with the key we are looking for is stored or the negation of the index in which it should be if not found.
-'
 
 private function findkey(byref node as mainnode, byval key as string) as long
 '**************************************************************
@@ -368,7 +366,6 @@ end function
 '
 ' @param    name the name of the mainnode we are looking for.
 ' @returns  the index in which the main section we are looking for is stored or the negation of the index in which it should be if not found.
-'
 
 private function findmain(byval name as string) as long
 '**************************************************************
@@ -402,3 +399,19 @@ private function findmain(byval name as string) as long
     '(all higher values are to the right of the list and lower values are to the left)
     findmain = not mid
 end function
+
+''
+'checks wether a given key exists or not.
+'
+' @param    name    the name of the element whose existance is being checked.
+' @returns  true if the key exists, false otherwise.
+
+public function keyexists(byval name as string) as boolean
+'**************************************************************
+'author: juan mart�n sotuyo dodero
+'last modify date: 04/01/2008
+'returns true of the key exists, false otherwise.
+'**************************************************************
+    keyexists = findmain(ucase$(name)) >= 0
+end function
+

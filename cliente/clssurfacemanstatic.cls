@@ -62,8 +62,6 @@ private directdraw as directdraw7
 
 private usevideomemory as boolean
 
-private declare sub copymemory lib "kernel32" alias "rtlmovememory" (byref dest as any, byref source as any, byval bytecount as long)
-
 private sub class_initialize()
 '**************************************************************
 'author: juan mart�n sotuyo dodero
@@ -207,7 +205,7 @@ private function binarysearch(byval fileindex as long) as long
     
     'not found, return the negation of the position where it should be
     '(all higher values are to the right of the list and lower values are to the left)
-    binarysearch = not mid
+    binarysearch = not min
 end function
 
 private sub loadsurface(byval grhpath as string, byval fileindex as long, byval listindex as long)

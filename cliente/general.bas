@@ -176,9 +176,9 @@ sub addtorichtextbox(byref richtextbox as richtextbox, byval text as string, opt
 'automatically scrolls to new text.
 'text box must be multiline and have a 3d
 'apperance!
-'pablo (toxicwaste) 01/26/2007 : now the list refreshes properly.
+'pablo (toxicwaste) 01/26/2007 : now the list refeshes properly.
 'juan mart�n sotuyo dodero (maraxus) 03/29/2007 : replaced toxicwaste's code for extra performance.
-'******************************************
+'******************************************r
     with richtextbox
         if len(.text) > 1000 then
             'get rid of first line
@@ -336,7 +336,12 @@ sub setconnected()
     connected = true
     
     call savegameini
-
+    
+#if seguridadalkon then
+    'unprotect character creation form
+    call unprotectform
+#end if
+    
     'unload the connect form
     unload frmconnect
     unload frmpasswd
@@ -345,9 +350,9 @@ sub setconnected()
     frmmain.label8.caption = username
     'load main form
     frmmain.visible = true
+    
 #if seguridadalkon then
-    'unprotect character creation and protect the main form
-    call unprotectform
+    'protect the main form
     call protectform(frmmain)
 #end if
 
@@ -363,8 +368,11 @@ end sub
 sub moveto(byval direccion as e_heading)
 '***************************************************
 'author: alejandro santos (alejolp)
-'last modify date: 06/03/2006
+'last modify date: 06/28/2008
+'last modified by: lucas tavolaro ortiz (tavo)
 ' 06/03/2006: alejolp - elimine las funciones move[nswe] y las converti a esta
+' 12/08/2007: tavo    - si el usuario esta paralizado no se puede mover.
+' 06/28/2008: niconz - saqu� lo que imped�a que si el usuario estaba paralizado se ejecute el sub.
 '***************************************************
     dim legalok as boolean
     
@@ -381,9 +389,9 @@ sub moveto(byval direccion as e_heading)
             legalok = legalpos(userpos.x - 1, userpos.y)
     end select
     
-    if legalok then
+    if legalok and not userparalizado then
         call writewalk(direccion)
-        if not userdescansar and not usermeditar and not userparalizado then
+        if not userdescansar and not usermeditar then
             movecharbyhead usercharindex, direccion
             movescreen direccion
         end if
@@ -395,6 +403,8 @@ sub moveto(byval direccion as e_heading)
     
     if frmmain.macrotrabajo.enabled then frmmain.desactivarmacrotrabajo
     
+    ' update 3d sounds!
+    call audio.movelistener(userpos.x, userpos.y)
 end sub
 
 sub randommove()
@@ -403,7 +413,7 @@ sub randommove()
 'last modify date: 06/03/2006
 ' 06/03/2006: alejolp - ahora utiliza la funcion moveto
 '***************************************************
-    moveto randomnumber(north, west)
+    call moveto(randomnumber(north, west))
 end sub
 
 sub checkkeys()
@@ -411,14 +421,32 @@ sub checkkeys()
 'checks keys and respond
 '*****************************************************************
 on error resume next
+    static lastmovement as long
+    
     'no input allowed while argentum is not the active window
-    if not api.isappactive() then exit sub
+    if not application.isappactive() then exit sub
+    
+    'no walking when in commerce or banking.
+    if comerciando then exit sub
+    
+    'no walking while writting in the forum.
+    if frmforo.visible then exit sub
+    
+    'if game is paused, abort movement.
+    if pausa then exit sub
+    
+    'control movement interval (this enforces the 1 step loss when meditating / resting client-side)
+    if gettickcount - lastmovement > 56 then
+        lastmovement = gettickcount
+    else
+        exit sub
+    end if
     
     'don't allow any these keys during movement..
     if usermoving = 0 then
         if not userestupido then
             'move up
-            if getkeystate(vbkeyup) < 0 then
+            if getkeystate(customkeys.bindedkey(ekeytype.mkeyup)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(north)
                 frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
@@ -426,7 +454,7 @@ on error resume next
             end if
             
             'move right
-            if getkeystate(vbkeyright) < 0 then
+            if getkeystate(customkeys.bindedkey(ekeytype.mkeyright)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(east)
                 frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
@@ -434,7 +462,7 @@ on error resume next
             end if
         
             'move down
-            if getkeystate(vbkeydown) < 0 then
+            if getkeystate(customkeys.bindedkey(ekeytype.mkeydown)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(south)
                 frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
@@ -442,83 +470,34 @@ on error resume next
             end if
         
             'move left
-            if getkeystate(vbkeyleft) < 0 then
+            if getkeystate(customkeys.bindedkey(ekeytype.mkeyleft)) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
                 call moveto(west)
                 frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
                 exit sub
             end if
+            
+            ' we haven't moved - update 3d sounds!
+            call audio.movelistener(userpos.x, userpos.y)
         else
             dim kp as boolean
-            kp = (getkeystate(vbkeyup) < 0) or _
-                getkeystate(vbkeyright) < 0 or _
-                getkeystate(vbkeydown) < 0 or _
-                getkeystate(vbkeyleft) < 0
-            if kp then call randommove
+            kp = (getkeystate(customkeys.bindedkey(ekeytype.mkeyup)) < 0) or _
+                getkeystate(customkeys.bindedkey(ekeytype.mkeyright)) < 0 or _
+                getkeystate(customkeys.bindedkey(ekeytype.mkeydown)) < 0 or _
+                getkeystate(customkeys.bindedkey(ekeytype.mkeyleft)) < 0
+            
+            if kp then
+                call randommove
+            else
+                ' we haven't moved - update 3d sounds!
+                call audio.movelistener(userpos.x, userpos.y)
+            end if
+            
             if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
             frmmain.coord.caption = "(" & userpos.x & "," & userpos.y & ")"
         end if
     end if
 end sub
-
-'todo : esto no es del tileengine??
-sub movescreen(byval nheading as e_heading)
-'******************************************
-'starts the screen moving in a direction
-'******************************************
-    dim x as integer
-    dim y as integer
-    dim tx as integer
-    dim ty as integer
-    
-    'figure out which way to move
-    select case nheading
-        case e_heading.north
-            y = -1
-    
-        case e_heading.east
-            x = 1
-    
-        case e_heading.south
-            y = 1
-        
-        case e_heading.west
-            x = -1
-            
-    end select
-    
-    'fill temp pos
-    tx = userpos.x + x
-    ty = userpos.y + y
-
-    if not (tx < minxborder or tx > maxxborder or ty < minyborder or ty > maxyborder) then
-        addtouserpos.x = x
-        userpos.x = tx
-        addtouserpos.y = y
-        userpos.y = ty
-        usermoving = 1
-        
-        btecho = iif(mapdata(userpos.x, userpos.y).trigger = 1 or _
-                mapdata(userpos.x, userpos.y).trigger = 2 or _
-                mapdata(userpos.x, userpos.y).trigger = 4, true, false)
-        exit sub
-    end if
-end sub
-
-'todo : esto no es del tileengine??
-function nextopenchar()
-'******************************************
-'finds next open char
-'******************************************
-    dim loopc as long
-    
-    loopc = 1
-    do while charlist(loopc).active and loopc < ubound(charlist)
-        loopc = loopc + 1
-    loop
-    
-    nextopenchar = loopc
-end function
 
 'todo : si bien nunca estuvo all�, el mapa es algo independiente o a lo sumo dependiente del engine, no va ac�!!!
 sub switchmap(byval map as integer)
@@ -526,36 +505,38 @@ sub switchmap(byval map as integer)
 'formato de mapas optimizado para reducir el espacio que ocupan.
 'dise�ado y creado por juan mart�n sotuyo dodero (maraxus) (juansotuyo@hotmail.com)
 '**************************************************************
-    dim loopc as long
     dim y as long
     dim x as long
     dim tempint as integer
     dim byflags as byte
+    dim handle as integer
     
-    open dirmapas & "mapa" & map & ".map" for binary as #1
-    seek #1, 1
+    handle = freefile()
+    
+    open dirmapas & "mapa" & map & ".map" for binary as handle
+    seek handle, 1
             
     'map header
-    get #1, , mapinfo.mapversion
-    get #1, , micabecera
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
-    get #1, , tempint
+    get handle, , mapinfo.mapversion
+    get handle, , micabecera
+    get handle, , tempint
+    get handle, , tempint
+    get handle, , tempint
+    get handle, , tempint
     
     'load arrays
     for y = yminmapsize to ymaxmapsize
         for x = xminmapsize to xmaxmapsize
-            get #1, , byflags
+            get handle, , byflags
             
             mapdata(x, y).blocked = (byflags and 1)
             
-            get #1, , mapdata(x, y).graphic(1).grhindex
+            get handle, , mapdata(x, y).graphic(1).grhindex
             initgrh mapdata(x, y).graphic(1), mapdata(x, y).graphic(1).grhindex
             
             'layer 2 used?
             if byflags and 2 then
-                get #1, , mapdata(x, y).graphic(2).grhindex
+                get handle, , mapdata(x, y).graphic(2).grhindex
                 initgrh mapdata(x, y).graphic(2), mapdata(x, y).graphic(2).grhindex
             else
                 mapdata(x, y).graphic(2).grhindex = 0
@@ -563,7 +544,7 @@ sub switchmap(byval map as integer)
                 
             'layer 3 used?
             if byflags and 4 then
-                get #1, , mapdata(x, y).graphic(3).grhindex
+                get handle, , mapdata(x, y).graphic(3).grhindex
                 initgrh mapdata(x, y).graphic(3), mapdata(x, y).graphic(3).grhindex
             else
                 mapdata(x, y).graphic(3).grhindex = 0
@@ -571,7 +552,7 @@ sub switchmap(byval map as integer)
                 
             'layer 4 used?
             if byflags and 8 then
-                get #1, , mapdata(x, y).graphic(4).grhindex
+                get handle, , mapdata(x, y).graphic(4).grhindex
                 initgrh mapdata(x, y).graphic(4), mapdata(x, y).graphic(4).grhindex
             else
                 mapdata(x, y).graphic(4).grhindex = 0
@@ -579,7 +560,7 @@ sub switchmap(byval map as integer)
             
             'trigger used?
             if byflags and 16 then
-                get #1, , mapdata(x, y).trigger
+                get handle, , mapdata(x, y).trigger
             else
                 mapdata(x, y).trigger = 0
             end if
@@ -594,7 +575,7 @@ sub switchmap(byval map as integer)
         next x
     next y
     
-    close #1
+    close handle
     
     mapinfo.name = ""
     mapinfo.music = ""
@@ -711,10 +692,9 @@ errorh:
     call msgbox("error cargando los servidores, actualicelos de la web", vbcritical + vbokonly, "argentum online")
     
     call closeclient
-    end
 end sub
 
-public sub initserverslist(byval lst as string)
+public sub initserverslist()
 on error resume next
     dim numservers as integer
     dim i as integer
@@ -818,18 +798,21 @@ sub main()
     
     tipf = config_inicio.tip
     
+    'set resolution before the loading form is displayed, therefore it will be centered.
+    call resolution.setresolution
+    
     frmcargando.show
     frmcargando.refresh
     
     frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
-    addtorichtextbox frmcargando.status, "buscando servidores....", 0, 0, 0, 0, 0, 1
+    addtorichtextbox frmcargando.status, "buscando servidores... ", 0, 0, 0, 0, 0, 1
 
     call cargarservidores
 'todo : esto de serverrecibidos no se podr�a sacar???
     serversrecibidos = true
     
-    addtorichtextbox frmcargando.status, "encontrado", , , , 1
-    addtorichtextbox frmcargando.status, "iniciando constantes...", 0, 0, 0, 0, 0, 1
+    addtorichtextbox frmcargando.status, "hecho", , , , 1
+    addtorichtextbox frmcargando.status, "iniciando constantes... ", 0, 0, 0, 0, 0, 1
     
     call inicializarnombres
     
@@ -841,53 +824,56 @@ sub main()
     
     addtorichtextbox frmcargando.status, "hecho", , , , 1
     
-    iniciarobjetosdirectx
+    addtorichtextbox frmcargando.status, "iniciando motor gr�fico... ", 0, 0, 0, 0, 0, 1
     
-    addtorichtextbox frmcargando.status, "cargando sonidos....", 0, 0, 0, 0, 0, 1
+    if not inittileengine(frmmain.hwnd, 160, 7, 32, 32, 13, 17, 9, 8, 8, 0.018) then
+        call closeclient
+    end if
+    
     addtorichtextbox frmcargando.status, "hecho", , , , 1
-
-dim loopc as integer
-
-lasttime = gettickcount
-
-    call inittileengine(frmmain.hwnd, 160, 7, 32, 32, 13, 17, 9)
     
-    call addtorichtextbox(frmcargando.status, "creando animaciones extra....")
+    call addtorichtextbox(frmcargando.status, "creando animaciones extra... ", , , , , , 1)
     
-    call cargaranimsextra
     call cargartips
-
+    
 usermap = 1
-
+    
     call cargararraylluvia
     call cargaranimarmas
     call cargaranimescudos
     call cargarversiones
     call cargarcolores
     
-#if seguridadalkon then
-    cualmi = 0
-    call initmi
-#end if
-
-    addtorichtextbox frmcargando.status, "                    �bienvenido a argentum online!", , , , 1
+    addtorichtextbox frmcargando.status, "hecho", , , , 1
     
-    unload frmcargando
+    addtorichtextbox frmcargando.status, "iniciando directsound... ", 0, 0, 0, 0, 0, true
     
     'inicializamos el sonido
-    call addtorichtextbox(frmcargando.status, "iniciando directsound....", 0, 0, 0, 0, 0, true)
     call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
     
     'enable / disable audio
     audio.musicactivated = not clientsetup.bnomusic
     audio.soundactivated = not clientsetup.bnosound
     
-    call addtorichtextbox(frmcargando.status, "hecho", , , , 1, , false)
-    
     'inicializamos el inventario gr�fico
     call inventario.initialize(directdraw, frmmain.picinv)
     
     call audio.playmidi(midi_inicio & ".mid")
+    
+    addtorichtextbox frmcargando.status, "hecho", , , , 1, , false
+    
+#if seguridadalkon then
+    cualmi = 0
+    call initmi
+#end if
+    
+    addtorichtextbox frmcargando.status, "                    �bienvenido a argentum online!", , , , 1
+    
+    'give the user enough time to read the welcome text
+    call sleep(1750)
+    
+    unload frmcargando
+    
 
     frmpres.picture = loadpicture(app.path & "\graficos\bosquefinal.jpg")
     frmpres.show vbmodal    'es modal, as� que se detiene la ejecuci�n de main hasta que se desaparece
@@ -897,18 +883,6 @@ usermap = 1
 #end if
 
     frmconnect.visible = true
-
-'todo : esto va en engine initialization
-    mainviewrect.left = mainviewleft
-    mainviewrect.top = mainviewtop
-    mainviewrect.right = mainviewrect.left + mainviewwidth
-    mainviewrect.bottom = mainviewrect.top + mainviewheight
-    
-'todo : esto va en engine initialization
-    maindestrect.left = tilepixelwidth * tilebuffersize - tilepixelwidth
-    maindestrect.top = tilepixelheight * tilebuffersize - tilepixelheight
-    maindestrect.right = maindestrect.left + mainviewwidth
-    maindestrect.bottom = maindestrect.top + mainviewheight
     
     'inicializaci�n de variables globales
     primeravez = true
@@ -949,35 +923,20 @@ usermap = 1
     do while prgrun
         's�lo dibujamos si la ventana no est� minimizada
         if frmmain.windowstate <> 1 and frmmain.visible then
-            call shownextframe
+            call shownextframe(frmmain.top, frmmain.left, frmmain.mousex, frmmain.mousey)
             
             'play ambient sounds
             call rendersounds
         end if
         
-'todo : porque el pausado de 20 ms???
-        if gettickcount - lasttime > 20 then
-            if not pausa and frmmain.visible and not frmforo.visible and not frmcomerciar.visible and not frmcomerciarusu.visible and not frmbancoobj.visible then
-                checkkeys
-                lasttime = gettickcount
-            end if
-        end if
-        
-        'limitamos los fps a 18 (con el nuevo engine 60 es un n�mero mucho mejor)
-        while (gettickcount - lframetimer) \ 56 < framesperseccounter
-            sleep 5
-        wend
+        call checkkeys
         
         'fps counter - mostramos las fps
         if gettickcount - lframetimer >= 1000 then
-            framespersec = framesperseccounter
+            if fpsflag then frmmain.caption = mod_tileengine.fps
             
-            if fpsflag then frmmain.caption = framespersec
-            
-            framesperseccounter = 0
             lframetimer = gettickcount
         end if
-
         
 #if seguridadalkon then
         call checksecurity
@@ -989,53 +948,7 @@ usermap = 1
         doevents
     loop
     
-    ' allow new instances of the client to be opened
-    call previnstance.closeclient
-    
-    ' unload the form for screenshots
-    unload frmscreenshots
-    
-    enginerun = false
-    frmcargando.show
-    addtorichtextbox frmcargando.status, "liberando recursos...", 0, 0, 0, 0, 0, 1
-    liberarobjetosdx
-
-'todo : esto deber�a ir en otro lado como al cambair a esta res
-    if not bnoreschange then
-        dim typdevm as typdevmode
-        dim lres as long
-        
-        lres = enumdisplaysettings(0, 0, typdevm)
-        with typdevm
-            .dmfields = dm_pelswidth or dm_pelsheight
-            .dmpelswidth = oldreswidth
-            .dmpelsheight = oldresheight
-        end with
-        lres = changedisplaysettings(typdevm, cds_test)
-    end if
-
-    'destruimos los objetos p�blicos creados
-    set custommessages = nothing
-    set surfacedb = nothing
-    set dialogos = nothing
-    set dialogosclanes = nothing
-    set audio = nothing
-    set inventario = nothing
-    set maintimer = nothing
-    set incomingdata = nothing
-    set outgoingdata = nothing
-    
-#if seguridadalkon then
-    set md5 = nothing
-#end if
-    
-    call unloadallforms
-    
-    'actualizar tip
-    config_inicio.tip = tipf
-    call escribirgameini(config_inicio)
-    
-    end
+    call closeclient
 end sub
 
 sub writevar(byval file as string, byval main as string, byval var as string, byval value as string)
@@ -1232,4 +1145,47 @@ public sub cleandialogs()
     call dialogosclanes.removedialogs
     
     call dialogos.removealldialogs
+end sub
+
+public sub closeclient()
+'**************************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modify date: 8/14/2007
+'frees all used resources, cleans up and leaves
+'**************************************************************
+    ' allow new instances of the client to be opened
+    call previnstance.releaseinstance
+    
+    enginerun = false
+    frmcargando.show
+    addtorichtextbox frmcargando.status, "liberando recursos...", 0, 0, 0, 0, 0, 1
+    
+    call resolution.resetresolution
+    
+    'stop tile engine
+    call deinittileengine
+    
+    'destruimos los objetos p�blicos creados
+    set custommessages = nothing
+    set customkeys = nothing
+    set surfacedb = nothing
+    set dialogos = nothing
+    set dialogosclanes = nothing
+    set audio = nothing
+    set inventario = nothing
+    set maintimer = nothing
+    set incomingdata = nothing
+    set outgoingdata = nothing
+    
+#if seguridadalkon then
+    set md5 = nothing
+#end if
+    
+    call unloadallforms
+    
+    'actualizar tip
+    config_inicio.tip = tipf
+    call escribirgameini(config_inicio)
+    
+    end
 end sub

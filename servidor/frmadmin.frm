@@ -138,11 +138,6 @@ call echarpjsnoprivilegiados
 
 end sub
 
-private sub label1_click()
-call actualizapjinfo
-
-end sub
-
 private sub actualizapjinfo()
 dim tindex as long
 

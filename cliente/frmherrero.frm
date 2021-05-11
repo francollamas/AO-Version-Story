@@ -165,7 +165,7 @@ on error resume next
         call writecraftblacksmith(armadurasherrero(lstarmaduras.listindex + 1))
         
         if frmmain.macrotrabajo.enabled then _
-            macrobltindex = armadurasherrero(lstarmas.listindex + 1)
+            macrobltindex = armadurasherrero(lstarmaduras.listindex + 1)
     end if
 
     unload me

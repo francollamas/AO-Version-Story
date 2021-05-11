@@ -20,7 +20,6 @@ attribute vb_name = "previnstance"
 
 ''
 'prevents multiple instances of the game running on the same computer.
-
 '
 ' @author fredy horacio treboux (liquid) @and juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
 ' @version 1.0.0
@@ -50,7 +49,7 @@ private mutexhid as long
 
 private function createnamedmutex(byref mutexname as string) as boolean
 '***************************************************
-'autor: fredy horacio treboux (liquid)
+'author: fredy horacio treboux (liquid)
 'last modification: 01/04/07
 'last modified by: juan mart�n sotuyo dodero (maraxus) - changed security atributes to make it work in all os
 '***************************************************
@@ -72,7 +71,7 @@ end function
 
 public function findpreviousinstance() as boolean
 '***************************************************
-'autor: fredy horacio treboux (liquid)
+'author: fredy horacio treboux (liquid)
 'last modification: 01/04/07
 '
 '***************************************************
@@ -89,9 +88,9 @@ end function
 ''
 ' closes the client, allowing other instances to be open.
 
-public sub closeclient()
+public sub releaseinstance()
 '***************************************************
-'autor: juan mart�n sotuyo dodero (maraxus)
+'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 01/04/07
 '
 '***************************************************

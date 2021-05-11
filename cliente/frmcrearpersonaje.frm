@@ -1060,20 +1060,18 @@ next i
 lstprofesion.listindex = 1
 
 image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
+
 call tirardados
+
+#if seguridadalkon then
+    call protectform(me)
+#end if
+
 end sub
 
 private sub lstprofesion_click()
 on error resume next
     image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
-    
-'todo : esto vuela en la 0.12.1!!!
-    if lstprofesion.listindex + 1 = eclass.druid then
-        call msgbox("esta clase se encuentra deshabilitada hasta el pr�ximo parche, en el que se le realizar�n varios cambios importantes." & vbcrlf _
-            & "sepan disculpar las molestias.")
-        
-        lstprofesion.listindex = 0
-    end if
 end sub
 
 private sub txtnombre_change()

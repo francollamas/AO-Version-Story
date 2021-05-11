@@ -181,7 +181,7 @@ private function binarysearch(byval fileindex as long) as long
     
     'not found, return the negation of the position where it should be
     '(all higher values are to the right of the list and lower values are to the left)
-    binarysearch = not mid
+    binarysearch = not min
 end function
 
 private function loadsurface(byval fileindex as long, byval listindex as long) as long

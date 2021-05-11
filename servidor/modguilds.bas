@@ -37,9 +37,6 @@ private guildinfofile   as string
 private const max_guilds as integer = 1000
 'cantidad maxima de guilds en el servidor
 
-private const ordenarlistadeclanes = true
-'true si se envia la lista ordenada por alineacion
-
 public cantidaddeclanes as integer
 'cantidad actual de clanes en el servidor
 
@@ -54,8 +51,6 @@ public const maxaspirantes as byte = 10
 
 private const maxantifaccion as byte = 5
 'puntos maximos de antifaccion que un clan tolera antes de ser cambiada su alineacion
-
-private gmsescuchando as new collection
 
 public enum alineacion_guild
     alineacion_legion = 1
@@ -131,6 +126,12 @@ end function
 
 
 public function m_validarpermanencia(byval userindex as integer, byval sumaantifaccion as boolean, byref cambioalineacion as boolean, byref cambiolider as boolean) as boolean
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 25/03/2009
+'25/03/2009: zama - desequipo los items faccionarios que tenga el funda al abandonar la faccion
+'***************************************************
+
 dim guildindex  as integer
 dim ml()        as string
 dim m           as string
@@ -178,14 +179,18 @@ dim i           as integer
 
                 if sale then
                     if m_esguildfounder(m, guildindex) then 'hay que sacarlo de las armadas
+                     
                         if ui > 0 then
-                            userlist(ui).faccion.fuerzascaos = 0
-                            userlist(ui).faccion.armadareal = 0
-                            userlist(ui).faccion.reenlistadas = 200
+                            if userlist(ui).faccion.armadareal <> 0 then
+                                call expulsarfaccionreal(ui)
+                            elseif userlist(ui).faccion.fuerzascaos <> 0 then
+                                call expulsarfaccioncaos(ui)
+                            end if
+                           userlist(ui).faccion.reenlistadas = 200
                         else
                             if fileexist(charpath & m & ".chr") then
                                 call writevar(charpath & m & ".chr", "facciones", "ejercitocaos", 0)
-                                call writevar(charpath & m & ".chr", "facciones", "armadareal", 0)
+                                call writevar(charpath & m & ".chr", "facciones", "ejercitoreal", 0)
                                 call writevar(charpath & m & ".chr", "facciones", "reenlistadas", 200)
                             end if
                         end if
@@ -380,7 +385,6 @@ end function
 
 public sub sendguildnews(byval userindex as integer)
 dim guildindex  as integer
-dim enemiescount    as integer
 dim i               as integer
 dim go as integer
 
@@ -416,7 +420,7 @@ dim go as integer
     go = 0
     
     while i > 0
-        enemies(go) = guilds(i).guildname
+        allies(go) = guilds(i).guildname
         i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.aliados)
     wend
 
@@ -720,7 +724,7 @@ dim i as long
     
     list = guilds(guildindex).getmemberlist()
     for i = 0 to ubound(list())
-        if ucase$(votado) = ucase$(list(i)) then exit for
+        if ucase$(votado) = list(i) then exit for
     next i
     
     if i > ubound(list()) then
@@ -762,7 +766,6 @@ end sub
 private function getguildindexfromchar(byref playername as string) as integer
 'aca si que vamos a violar las capas deliveradamente ya que
 'visual basic no permite declarar metodos de clase
-dim i       as integer
 dim temps   as string
     if instrb(playername, "\") <> 0 then
         playername = replace(playername, "\", vbnullstring)
@@ -972,9 +975,13 @@ dim gig as integer
         referror = "no has seleccionado ning�n clan"
         exit function
     end if
-
-    gig = guildindex(guildguerra)
     
+    gig = guildindex(guildguerra)
+    if guilds(gi).getrelacion(gig) = guerra then
+        referror = "tu clan ya est� en guerra con " & guildguerra & "."
+        exit function
+    end if
+        
     if gi = gig then
         referror = "no puedes declarar la guerra a tu mismo clan"
         exit function
@@ -990,7 +997,7 @@ dim gig as integer
     call guilds(gig).anularpropuestas(gi)
     call guilds(gi).setrelacion(gig, relaciones_guild.guerra)
     call guilds(gig).setrelacion(gi, relaciones_guild.guerra)
-
+    
     r_declararguerra = gig
 
 end function
@@ -1321,10 +1328,8 @@ public function a_obtenerrechazodechar(byref aspirante as string) as string
     call writevar(charpath & aspirante & ".chr", "guild", "motivorechazo", vbnullstring)
 end function
 
-public function a_rechazaraspirante(byval userindex as integer, byref nombre as string, byref motivo as string, byref referror as string) as boolean
-'check: el par�metro motivo, no se utiliza ��
+public function a_rechazaraspirante(byval userindex as integer, byref nombre as string, byref referror as string) as boolean
 dim gi              as integer
-dim ui              as integer
 dim nroaspirante    as integer
 
     a_rechazaraspirante = false
@@ -1367,7 +1372,7 @@ dim nroaspirante    as integer
     
 end function
 
-public sub senddetallespersonaje(byval userindex as integer, byref personaje as string)
+public sub senddetallespersonaje(byval userindex as integer, byval personaje as string)
     dim gi          as integer
     dim nroasp      as integer
     dim guildname   as string
@@ -1378,6 +1383,8 @@ public sub senddetallespersonaje(byval userindex as integer, byref personaje as 
     dim i           as long
     
     gi = userlist(userindex).guildindex
+    
+    personaje = ucase$(personaje)
     
     if gi <= 0 or gi > cantidaddeclanes then
         call protocol.writeconsolemsg(userindex, "no perteneces a ning�n clan", fonttypenames.fonttype_info)
@@ -1581,4 +1588,16 @@ public function guildalignment(byval guildindex as integer) as string
         exit function
     
     guildalignment = alineacion2string(guilds(guildindex).alineacion)
+end function
+
+public function guildfounder(byval guildindex as integer) as string
+'***************************************************
+'autor: zama
+'returns the guild founder's name
+'last modification: 25/03/2009
+'***************************************************
+    if guildindex <= 0 or guildindex > cantidaddeclanes then _
+        exit function
+    
+    guildfounder = guilds(guildindex).fundador
 end function

@@ -546,7 +546,7 @@ public function getascip(byval inn as long) as string
 end function
 
 public function gethostbyaddress(byval addr as long) as string
-    dim phe&, ret&
+    dim phe&
     dim hedesthost as hostent
     dim hostname$
     phe = gethostbyaddr(addr, 4, pf_inet)

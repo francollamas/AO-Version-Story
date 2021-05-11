@@ -1,5 +1,5 @@
 attribute vb_name = "es"
-'argentum online 0.11.6
+'argentum online 0.12.2
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
@@ -511,6 +511,49 @@ next lc
 
 end sub
 
+sub loadbalance()
+    dim i as long
+    
+    'modificadores de clase
+    for i = 1 to numclases
+        modclase(i).evasion = val(getvar(datpath & "balance.dat", "modevasion", listaclases(i)))
+        modclase(i).ataquearmas = val(getvar(datpath & "balance.dat", "modataquearmas", listaclases(i)))
+        modclase(i).ataqueproyectiles = val(getvar(datpath & "balance.dat", "modataqueproyectiles", listaclases(i)))
+        modclase(i).da�oarmas = val(getvar(datpath & "balance.dat", "modda�oarmas", listaclases(i)))
+        modclase(i).da�oproyectiles = val(getvar(datpath & "balance.dat", "modda�oproyectiles", listaclases(i)))
+        modclase(i).da�owrestling = val(getvar(datpath & "balance.dat", "modda�owrestling", listaclases(i)))
+        modclase(i).escudo = val(getvar(datpath & "balance.dat", "modescudo", listaclases(i)))
+    next i
+    
+    'modificadores de raza
+    for i = 1 to numrazas
+        modraza(i).fuerza = val(getvar(datpath & "balance.dat", "modraza", listarazas(i) + "fuerza"))
+        modraza(i).agilidad = val(getvar(datpath & "balance.dat", "modraza", listarazas(i) + "agilidad"))
+        modraza(i).inteligencia = val(getvar(datpath & "balance.dat", "modraza", listarazas(i) + "inteligencia"))
+        modraza(i).carisma = val(getvar(datpath & "balance.dat", "modraza", listarazas(i) + "carisma"))
+        modraza(i).constitucion = val(getvar(datpath & "balance.dat", "modraza", listarazas(i) + "constitucion"))
+    next i
+    
+    'modificadores de vida
+    for i = 1 to numclases
+        modvida(i) = val(getvar(datpath & "balance.dat", "modvida", listaclases(i)))
+    next i
+    
+    'distribuci�n de vida
+    for i = 1 to 5
+        distribucionenteravida(i) = val(getvar(datpath & "balance.dat", "distribucion", "e" + cstr(i)))
+    next i
+    for i = 1 to 4
+        distribucionsemienteravida(i) = val(getvar(datpath & "balance.dat", "distribucion", "s" + cstr(i)))
+    next i
+    
+    'extra
+    porcentajerecuperomana = val(getvar(datpath & "balance.dat", "extra", "porcentajerecuperomana"))
+
+    'party
+    exponentenivelparty = val(getvar(datpath & "balance.dat", "party", "exponentenivelparty"))
+end sub
+
 sub loadobjcarpintero()
 
 dim n as integer, lc as integer
@@ -571,6 +614,11 @@ redim preserve objdata(1 to numobjdatas) as objdata
 for object = 1 to numobjdatas
         
     objdata(object).name = leer.getvalue("obj" & object, "name")
+    
+    'pablo (toxicwaste) log de objetos.
+    objdata(object).log = val(leer.getvalue("obj" & object, "log"))
+    objdata(object).nolog = val(leer.getvalue("obj" & object, "nolog"))
+    '07/09/07
     
     objdata(object).grhindex = val(leer.getvalue("obj" & object, "grhindex"))
     if objdata(object).grhindex = 0 then
@@ -971,7 +1019,11 @@ if userlist(userindex).invent.anilloeqpslot > 0 then
     userlist(userindex).invent.anilloeqpobjindex = userlist(userindex).invent.object(userlist(userindex).invent.anilloeqpslot).objindex
 end if
 
-userlist(userindex).nromacotas = 0
+userlist(userindex).nromascotas = cint(userfile.getvalue("mascotas", "nromascotas"))
+dim npcindex as integer
+for loopc = 1 to maxmascotas
+    userlist(userindex).mascotastype(loopc) = val(userfile.getvalue("mascotas", "mas" & loopc))
+next loopc
 
 ln = userfile.getvalue("guild", "guildindex")
 if isnumeric(ln) then
@@ -1022,9 +1074,8 @@ on error goto man
     
     redim mapdata(1 to nummaps, xminmapsize to xmaxmapsize, yminmapsize to ymaxmapsize) as mapblock
     redim mapinfo(1 to nummaps) as mapinfo
-      
+    
     for map = 1 to nummaps
-        
         if val(getvar(app.path & mappath & "mapa" & map & ".dat", "mapa" & map, "backup")) <> 0 then
             tfilename = app.path & "\worldbackup\mapa" & map
         else
@@ -1163,11 +1214,7 @@ on error goto errh
                 get freefileinf, , mapdata(map, x, y).npcindex
                 
                 if mapdata(map, x, y).npcindex > 0 then
-                    'if mapdata(map, x, y).npcindex > 499 then
-                    '    npcfile = datpath & "npcs-hostiles.dat"
-                    'else
-                        npcfile = datpath & "npcs.dat"
-                    'end if
+                    npcfile = datpath & "npcs.dat"
 
                     'si el npc debe hacer respawn en la pos
                     'original la guardamos
@@ -1179,11 +1226,11 @@ on error goto errh
                     else
                         mapdata(map, x, y).npcindex = opennpc(mapdata(map, x, y).npcindex)
                     end if
-                            
+                    
                     npclist(mapdata(map, x, y).npcindex).pos.map = map
                     npclist(mapdata(map, x, y).npcindex).pos.x = x
                     npclist(mapdata(map, x, y).npcindex).pos.y = y
-                            
+                    
                     call makenpcchar(true, 0, mapdata(map, x, y).npcindex, map, x, y)
                 end if
             end if
@@ -1224,32 +1271,24 @@ on error goto errh
 exit sub
 
 errh:
-    call logerror("error cargando mapa: " & map & "." & err.description)
+    call logerror("error cargando mapa: " & map & " - pos: " & x & "," & y & "." & err.description)
 end sub
 
 sub loadsini()
 
 dim temporal as long
-dim temporal1 as long
-dim loopc as integer
 
 if frmmain.visible then frmmain.txstatus.caption = "cargando info de inicio del server."
 
 bootdelbackup = val(getvar(inipath & "server.ini", "init", "iniciardesdebackup"))
 
 'misc
-serverip = getvar(inipath & "server.ini", "init", "serverip")
-temporal = instr(1, serverip, ".")
-temporal1 = (mid$(serverip, 1, temporal - 1) and &h7f) * 16777216
-serverip = mid$(serverip, temporal + 1, len(serverip))
-temporal = instr(1, serverip, ".")
-temporal1 = temporal1 + mid$(serverip, 1, temporal - 1) * 65536
-serverip = mid$(serverip, temporal + 1, len(serverip))
-temporal = instr(1, serverip, ".")
-temporal1 = temporal1 + mid$(serverip, 1, temporal - 1) * 256
-serverip = mid$(serverip, temporal + 1, len(serverip))
+#if seguridadalkon then
 
-mixedkey = (temporal1 + serverip) xor &h65f64b42
+call security.setserverip(getvar(inipath & "server.ini", "init", "serverip"))
+
+#end if
+
 
 puerto = val(getvar(inipath & "server.ini", "init", "startport"))
 hideme = val(getvar(inipath & "server.ini", "init", "hide"))
@@ -1259,7 +1298,6 @@ idlelimit = val(getvar(inipath & "server.ini", "init", "idlelimit"))
 ultimaversion = getvar(inipath & "server.ini", "init", "version")
 
 puedecrearpersonajes = val(getvar(inipath & "server.ini", "init", "puedecrearpersonajes"))
-camaralenta = val(getvar(inipath & "server.ini", "init", "camaralenta"))
 serversologms = val(getvar(inipath & "server.ini", "init", "serversologms"))
 
 armaduraimperial1 = val(getvar(inipath & "server.ini", "init", "armaduraimperial1"))
@@ -1292,12 +1330,6 @@ sacerdotedemoniaco = val(getvar(inipath & "server.ini", "init", "sacerdotedemoni
 mapa_pretoriano = val(getvar(inipath & "server.ini", "init", "mapapretoriano"))
 
 entesting = val(getvar(inipath & "server.ini", "init", "testing"))
-encriptarprotocoloscriticos = val(getvar(inipath & "server.ini", "init", "encriptar"))
-
-'start pos
-startpos.map = val(readfield(1, getvar(inipath & "server.ini", "init", "startpos"), 45))
-startpos.x = val(readfield(2, getvar(inipath & "server.ini", "init", "startpos"), 45))
-startpos.y = val(readfield(3, getvar(inipath & "server.ini", "init", "startpos"), 45))
 
 'intervalos
 sanaintervalosindescansar = val(getvar(inipath & "server.ini", "intervalos", "sanaintervalosindescansar"))
@@ -1360,6 +1392,7 @@ frminterv.txtpuedeatacar.text = intervalouserpuedeatacar
 'todo : agregar estos intervalos al form!!!
 intervalomagiagolpe = val(getvar(inipath & "server.ini", "intervalos", "intervalomagiagolpe"))
 intervalogolpemagia = val(getvar(inipath & "server.ini", "intervalos", "intervalogolpemagia"))
+intervalogolpeusar = val(getvar(inipath & "server.ini", "intervalos", "intervalogolpeusar"))
 
 frmmain.tlluvia.interval = val(getvar(inipath & "server.ini", "intervalos", "intervaloperdidastaminalluvia"))
 frminterv.txtintervaloperdidastaminalluvia.text = frmmain.tlluvia.interval
@@ -1371,16 +1404,9 @@ intervalocerrarconexion = val(getvar(inipath & "server.ini", "intervalos", "inte
 intervalouserpuedeusar = val(getvar(inipath & "server.ini", "intervalos", "intervalouserpuedeusar"))
 intervaloflechascazadores = val(getvar(inipath & "server.ini", "intervalos", "intervaloflechascazadores"))
 
-intervaloautoreiniciar = val(getvar(inipath & "server.ini", "intervalos", "intervaloautoreiniciar"))
-
 intervalooculto = val(getvar(inipath & "server.ini", "intervalos", "intervalooculto"))
 
 '&&&&&&&&&&&&&&&&&&&&& fin timers &&&&&&&&&&&&&&&&&&&&&&&
-
-'ressurect pos
-respos.map = val(readfield(1, getvar(inipath & "server.ini", "init", "respos"), 45))
-respos.x = val(readfield(2, getvar(inipath & "server.ini", "init", "respos"), 45))
-respos.y = val(readfield(3, getvar(inipath & "server.ini", "init", "respos"), 45))
   
 recordusuarios = val(getvar(inipath & "server.ini", "init", "record"))
   
@@ -1392,8 +1418,8 @@ if maxusers = 0 then
 end if
 
 '&&&&&&&&&&&&&&&&&&&&& balance &&&&&&&&&&&&&&&&&&&&&&&
-
-porcentajerecuperomana = val(getvar(inipath & "server.ini", "balance", "porcentajerecuperomana"))
+'se agreg� en loadbalance y en el balance.dat
+'porcentajerecuperomana = val(getvar(inipath & "server.ini", "balance", "porcentajerecuperomana"))
 
 ''&&&&&&&&&&&&&&&&&&&&& fin balance &&&&&&&&&&&&&&&&&&&&&&&
 call statistics.initialize
@@ -1670,7 +1696,7 @@ for loopc = 1 to maxuserhechizos
 next
 
 dim nromascotas as long
-nromascotas = userlist(userindex).nromacotas
+nromascotas = userlist(userindex).nromascotas
 
 for loopc = 1 to maxmascotas
     ' mascota valida?
@@ -1682,6 +1708,9 @@ for loopc = 1 to maxmascotas
             cad = "0"
             nromascotas = nromascotas - 1
         end if
+        call writevar(userfile, "mascotas", "mas" & loopc, cad)
+    else
+        cad = userlist(userindex).mascotastype(loopc)
         call writevar(userfile, "mascotas", "mas" & loopc, cad)
     end if
 
@@ -1755,7 +1784,6 @@ call writevar(npcfile, "npc" & npcnumero, "maxhit", val(npclist(npcindex).stats.
 call writevar(npcfile, "npc" & npcnumero, "maxhp", val(npclist(npcindex).stats.maxhp))
 call writevar(npcfile, "npc" & npcnumero, "minhit", val(npclist(npcindex).stats.minhit))
 call writevar(npcfile, "npc" & npcnumero, "minhp", val(npclist(npcindex).stats.minhp))
-call writevar(npcfile, "npc" & npcnumero, "def", val(npclist(npcindex).stats.usuariosmatados))
 
 
 
@@ -1819,6 +1847,7 @@ npclist(npcindex).stats.def = val(getvar(npcfile, "npc" & npcnumber, "def"))
 npclist(npcindex).stats.alineacion = val(getvar(npcfile, "npc" & npcnumber, "alineacion"))
 
 
+
 dim loopc as integer
 dim ln as string
 npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npcnumber, "nroitems"))
@@ -1839,7 +1868,6 @@ end if
 
 
 npclist(npcindex).flags.npcactive = true
-npclist(npcindex).flags.useainow = false
 npclist(npcindex).flags.respawn = val(getvar(npcfile, "npc" & npcnumber, "respawn"))
 npclist(npcindex).flags.backup = val(getvar(npcfile, "npc" & npcnumber, "backup"))
 npclist(npcindex).flags.domable = val(getvar(npcfile, "npc" & npcnumber, "domable"))

@@ -186,10 +186,6 @@ private sub cmdok_click()
     unload me
 end sub
 
-private sub command1_click()
-    unload me
-end sub
-
 'a partir de command2_click son todos buttons para agregar color al texto
 private sub cmdazul_click()
     txtmotd.text = txtmotd & "~50~70~250~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)

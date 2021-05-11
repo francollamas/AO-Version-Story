@@ -60,7 +60,7 @@ public sub calluserattention()
     if (gettickcount() and &h7fffffff) - centinela.spawntime >= 5000 then
         if centinela.revisandouserindex <> 0 and centinelaactivado then
             if not userlist(centinela.revisandouserindex).flags.centinelaok then
-                call writeplaywave(centinela.revisandouserindex, snd_warp)
+                call writeplaywave(centinela.revisandouserindex, snd_warp, npclist(centinelanpcindex).pos.x, npclist(centinelanpcindex).pos.y)
                 call writecreatefx(centinela.revisandouserindex, npclist(centinelanpcindex).char.charindex, fxids.fxwarp, 0)
                 
                 'resend the key
@@ -93,7 +93,7 @@ private sub gotonextworkingchar()
                 if centinelanpcindex then
                     'mandamos el mensaje (el centinela habla y aparece en consola para que no haya dudas)
                     call writechatoverhead(loopc, "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos.", cstr(npclist(centinelanpcindex).char.charindex), vbgreen)
-                    call writeconsolemsg(loopc, "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos.", fonttypenames.fonttype_centinela)
+                    call writeconsolemsg(loopc, "el centinela intenta llamar tu atenci�n. �resp�ndele r�pido!", fonttypenames.fonttype_centinela)
                     call flushbuffer(loopc)
                 end if
                 exit sub
@@ -213,7 +213,7 @@ public sub centinelasendclave(byval userindex as integer)
     if userindex = centinela.revisandouserindex then
         if not userlist(userindex).flags.centinelaok then
             call writechatoverhead(userindex, "�la clave que te he dicho es /centinela " & centinela.clave & ", escr�belo r�pido!", cstr(npclist(centinelanpcindex).char.charindex), vbgreen)
-            call writeconsolemsg(userindex, "�la clave correcta es /centinela " & centinela.clave & ", escr�belo r�pido!", fonttypenames.fonttype_centinela)
+            call writeconsolemsg(userindex, "el centinela intenta llamar tu atenci�n. �respondele r�pido!", fonttypenames.fonttype_centinela)
         else
             'logueamos el evento
             call logcentinela("el usuario " & userlist(centinela.revisandouserindex).name & " respondi� m�s de una vez la contrase�a correcta.")
@@ -246,7 +246,7 @@ public sub pasarminutocentinela()
             
             'el centinela habla y se manda a consola para que no quepan dudas
             call writechatoverhead(centinela.revisandouserindex, "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & ".", cstr(npclist(centinelanpcindex).char.charindex), vbred)
-            call writeconsolemsg(centinela.revisandouserindex, "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & ".", fonttypenames.fonttype_centinela)
+            call writeconsolemsg(centinela.revisandouserindex, "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder!", fonttypenames.fonttype_centinela)
             call flushbuffer(centinela.revisandouserindex)
         end if
     end if
