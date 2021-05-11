@@ -283,17 +283,29 @@ dim pi as integer
 end sub
 
 public sub onlineparty(byval userindex as integer)
+'*************************************************
+'author: unknown
+'last modified: 11/27/09 (budi)
+'adapte la funci�n a los nuevos m�todos de clsparty
+'*************************************************
+dim i as integer
 dim pi as integer
-dim texto as string
-
+dim text as string
+dim membersonline(1 to party_maxmembers) as integer
     pi = userlist(userindex).partyindex
     
     if pi > 0 then
-        call parties(pi).obtenermiembrosonline(texto)
-        call writeconsolemsg(userindex, texto, fonttypenames.fonttype_party)
+        call parties(pi).obtenermiembrosonline(membersonline)
+        text = "nombre(exp): "
+        for i = 1 to party_maxmembers
+            if membersonline(i) > 0 then
+                text = text & " - " & userlist(membersonline(i)).name & " (" & fix(parties(pi).miexperiencia(membersonline(i))) & ")"
+            end if
+        next i
+        text = text & ". experiencia total: " & parties(pi).obtenerexperienciatotal
+        call writeconsolemsg(userindex, text, fonttypenames.fonttype_party)
     end if
     
-
 end sub
 
 

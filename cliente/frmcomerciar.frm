@@ -6,6 +6,7 @@ begin vb.form frmcomerciar
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   6930
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
@@ -251,9 +252,14 @@ private sub cantidad_change()
     end if
     
     if lindex = 0 then
-        label1(1).caption = round(npcinventory(list1(0).listindex + 1).valor * val(cantidad.text), 0) 'no mostramos numeros reales
+        if list1(0).listindex <> -1 then
+            'el precio, cuando nos venden algo, lo tenemos que redondear para arriba.
+            label1(1).caption = calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) 'no mostramos numeros reales
+        end if
     else
-        label1(1).caption = round(inventario.valor(list1(1).listindex + 1) * val(cantidad.text), 0) 'no mostramos numeros reales
+        if list1(1).listindex <> -1 then
+            label1(1).caption = calculatebuyprice(inventario.valor(list1(1).listindex + 1), val(cantidad.text)) 'no mostramos numeros reales
+        end if
     end if
 end sub
 
@@ -288,6 +294,48 @@ if image1(1).tag = 0 then
 end if
 end sub
 
+''
+' calculates the selling price of an item (the price that a merchant will sell you the item)
+'
+' @param objvalue specifies value of the item.
+' @param objamount specifies amount of items that you want to buy
+' @return   the price of the item.
+
+private function calculatesellprice(byref objvalue as single, byval objamount as long) as long
+'*************************************************
+'author: marco vanotti (markoxx)
+'last modified: 19/08/2008
+'last modify by: franco zeoli (noich)
+'*************************************************
+    on error goto error
+    'we get a single value from the server, when vb uses it, by approaching, it can diff with the server value, so we do (value * 100000) and get the entire part, to discard the unwanted floating values.
+    calculatesellprice = ccur(objvalue * 1000000) / 1000000 * objamount + 0.5
+    
+    exit function
+error:
+    msgbox err.description, vbexclamation, "error: " & err.number
+end function
+''
+' calculates the buying price of an item (the price that a merchant will buy you the item)
+'
+' @param objvalue specifies value of the item.
+' @param objamount specifies amount of items that you want to buy
+' @return   the price of the item.
+private function calculatebuyprice(byref objvalue as single, byval objamount as long) as long
+'*************************************************
+'author: marco vanotti (markoxx)
+'last modified: 19/08/2008
+'last modify by: franco zeoli (noich)
+'*************************************************
+    on error goto error
+    'we get a single value from the server, when vb uses it, by approaching, it can diff with the server value, so we do (value * 100000) and get the entire part, to discard the unwanted floating values.
+    calculatebuyprice = fix(ccur(objvalue * 1000000) / 1000000 * objamount)
+    
+    exit function
+error:
+    msgbox err.description, vbexclamation, "error: " & err.number
+end function
+
 private sub image1_click(index as integer)
 
 call audio.playwave(snd_click)
@@ -302,7 +350,7 @@ select case index
         frmcomerciar.list1(0).setfocus
         lastindex1 = list1(0).listindex
         lasactionbuy = true
-        if usergld >= round(npcinventory(list1(0).listindex + 1).valor * val(cantidad), 0) then
+        if usergld >= calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) then
             call writecommercebuy(list1(0).listindex + 1, cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no ten�s suficiente oro.", 2, 51, 223, 1, 1
@@ -358,7 +406,7 @@ select case index
     case 0
         
         label1(0).caption = npcinventory(list1(0).listindex + 1).name
-        label1(1).caption = round(npcinventory(list1(0).listindex + 1).valor * val(cantidad.text), 0) 'no mostramos numeros reales
+        label1(1).caption = calculatesellprice(npcinventory(list1(0).listindex + 1).valor, val(cantidad.text)) 'no mostramos numeros reales
         label1(2).caption = npcinventory(list1(0).listindex + 1).amount
         
         if label1(2).caption <> 0 then
@@ -384,7 +432,7 @@ select case index
     
     case 1
         label1(0).caption = inventario.itemname(list1(1).listindex + 1)
-        label1(1).caption = round(inventario.valor(list1(1).listindex + 1) * val(cantidad.text), 0) 'no mostramos numeros reales
+        label1(1).caption = calculatebuyprice(inventario.valor(list1(1).listindex + 1), val(cantidad.text)) 'no mostramos numeros reales
         label1(2).caption = inventario.amount(list1(1).listindex + 1)
         
         if label1(2).caption <> 0 then

@@ -7,6 +7,7 @@ begin vb.form frmoldpersonaje
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   7200
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    scaleheight     =   251
    scalemode       =   3  'pixel

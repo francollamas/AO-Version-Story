@@ -46,14 +46,16 @@ attribute vb_exposed = false
 '30/03/2008 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
 '   - add: 3d-like sound effects by altering frequency to emulate doppler effect,
 '           volume to emulate distance and panning for position.
-
+'
+'28/07/2008 - franco zeoli (noich) - (zeolifranco@gmail.com)
+'   -add: optional sound effects
 
 ''
 ' controls all audio using directsound and directmusic 7.
 '
 ' @file     clsaudio.cls
 ' @author   juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
-' @version  1.2.0
+' @version  1.2.1
 ' @date     20070303
 
 option explicit
@@ -68,7 +70,7 @@ private const max_distance_to_source as integer = 150
 
 ''
 ' the frequency variation coefficient for doppler effect simulation.
-private const delta_fq as integer = 600
+private const delta_fq as integer = 75
 
 ''
 ' custom sound buffer structure.
@@ -164,6 +166,9 @@ dim lastposx as integer
 'states the last position where the listener was in the y axis
 dim lastposy as integer
 
+''
+'states wether sound effects are currently activated or not
+dim seffectsactivated as boolean
 
 ''
 'constructor. performs no action at all.
@@ -309,8 +314,8 @@ end function
 public function playwave(byval filename as string, optional byval srcx as byte = 0, optional byval srcy as byte = 0, optional byval loopsound as loopstyle = loopstyle.default) as long
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 03/30/08
-'last modified by: juan mart�n sotuyo dodero (maraxus)
+'last modification: 28/07/08
+'last modified by: franco zeoli (noich)
 'added support for 3d sound effects.
 '***************************************************
 on error goto errhandler
@@ -342,8 +347,10 @@ on error goto errhandler
     
     playwave = bufferindex
     
-    if srcx <> 0 and srcy <> 0 then
-        call update3dsound(bufferindex, 0, 0)
+    if seffectsactivated then
+        if srcx <> 0 and srcy <> 0 then
+            call update3dsound(bufferindex, 0, 0)
+        end if
     end if
 exit function
 
@@ -353,16 +360,19 @@ end function
 private sub update3dsound(byval bufferindex as long, byval deltax as integer, byval deltay as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 03/30/08
+'last modification: 05/09/09
+'last modified by: marco vanotti (markoxx)
+'fixed dopplers formula
 'refreshes the sound's arguments.
+'fixed the sndvolume formula
 '***************************************************
     dim lineardistanceold as single
     dim lineardistancenew as single
     dim deltadistance as single
-    dim distancexold as integer
-    dim distanceyold as integer
-    dim distancexnew as integer
-    dim distanceynew as integer
+    dim distancexold as long
+    dim distanceyold as long
+    dim distancexnew as long
+    dim distanceynew as long
     dim perceivedfq as long
     
     with dsbuffers(bufferindex)
@@ -378,13 +388,17 @@ private sub update3dsound(byval bufferindex as long, byval deltax as integer, by
         deltadistance = lineardistancenew - lineardistanceold
         
         'update frequency emulating doppler effect
-        perceivedfq = .normalfq - deltadistance * delta_fq
+        perceivedfq = .normalfq * (1 - deltadistance / delta_fq)
         if perceivedfq < dsbfrequency_min then perceivedfq = dsbfrequency_min
         
         call .buffer.setfrequency(perceivedfq)
         
         'set volumen amortiguation according to distance
-        call .buffer.setvolume(sndvolume * (1 - lineardistancenew / max_distance_to_source))
+        if lineardistancenew > max_distance_to_source then
+            call .buffer.setvolume(sndvolume + (dsbvolume_min - sndvolume))
+        else
+            call .buffer.setvolume(sndvolume + (lineardistancenew / max_distance_to_source) * (dsbvolume_min - sndvolume))
+        end if
         
         'prevent division by zero
         if lineardistancenew = 0 then lineardistancenew = 1
@@ -405,12 +419,15 @@ end sub
 public sub movelistener(byval x as integer, byval y as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 03/30/08
+'last modification: 28/07/08
+'last modification by: franco zeoli (noich)
 'moves the position of the listener updating all 3d sounds.
 '***************************************************
     dim i as long
     dim deltax as integer
     dim deltay as integer
+    
+    if not seffectsactivated then exit sub
     
     deltax = x - lastposx
     deltay = y - lastposy
@@ -440,7 +457,8 @@ end sub
 private function loadwave(byval filename as string, byval looping as loopstyle) as long
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 10/04/06
+'last modification: 04/28/09
+'last modification by: marco vanotti (markoxx)
 'loads a new wave into memory (if it's not already loaded) and returns
 'the buffer index
 '***************************************************
@@ -463,6 +481,9 @@ on error goto errhandler
                 
                 'set looping if needed
                 if looping <> loopstyle.default then dsbuffers(i).looping = (looping = loopstyle.enabled)
+                
+                'reset default sound frecuency to avoid issues.
+                call dsbuffers(i).buffer.setfrequency(dsbuffers(i).normalfq)
                 
                 exit function
             end if
@@ -880,4 +901,32 @@ public property let soundactivated(byval nvalue as boolean)
     if not nvalue then
         call stopwave
     end if
+end property
+
+''
+' sets wether sound effects are activated or not.
+'
+' @param nvalue true if sound effects should be activated, false otherwise.
+
+public property let soundeffectsactivated(byval nvalue as boolean)
+'***************************************************
+'author: franco zeoli (noich)
+'last modification: 28/07/08
+'sets wether the sound effects are activated or not
+'***************************************************
+    seffectsactivated = nvalue
+end property
+
+''
+' retrieves wether sound effects are activated or not.
+'
+' @return   true if sound effects are activated, false otherwise.
+
+public property get soundeffectsactivated() as boolean
+'***************************************************
+'author: franco zeoli (noich)
+'last modification: 28/07/08
+'retrieves wether the sound effects are activated or not
+'***************************************************
+    soundeffectsactivated = seffectsactivated
 end property

@@ -247,6 +247,9 @@ errhandler:
 end sub
 
 sub quitaruserinvitem(byval userindex as integer, byval slot as byte, byval cantidad as integer)
+
+on error goto errhandler
+
     if slot < 1 or slot > max_inventory_slots then exit sub
     
     with userlist(userindex).invent.object(slot)
@@ -263,9 +266,17 @@ sub quitaruserinvitem(byval userindex as integer, byval slot as byte, byval cant
             .amount = 0
         end if
     end with
+
+exit sub
+
+errhandler:
+    call logerror("error en quitaruserinvitem. error " & err.number & " : " & err.description)
+    
 end sub
 
 sub updateuserinv(byval updateall as boolean, byval userindex as integer, byval slot as byte)
+
+on error goto errhandler
 
 dim nullobj as userobj
 dim loopc as long
@@ -292,6 +303,11 @@ else
         end if
     next loopc
 end if
+
+exit sub
+
+errhandler:
+    call logerror("error en updateuserinv. error " & err.number & " : " & err.description)
 
 end sub
 
@@ -469,6 +485,9 @@ end if
 end sub
 
 sub desequipar(byval userindex as integer, byval slot as byte)
+
+on error goto errhandler
+
 'desequipa el item slot del inventario
 dim obj as objdata
 
@@ -530,6 +549,11 @@ end select
 call writeupdateuserstats(userindex)
 call updateuserinv(false, userindex, slot)
 
+exit sub
+
+errhandler:
+    call logerror("error en desquipar. error " & err.number & " : " & err.description)
+
 end sub
 
 function sexopuedeusaritem(byval userindex as integer, byval objindex as integer) as boolean
@@ -570,6 +594,12 @@ end if
 end function
 
 sub equiparinvitem(byval userindex as integer, byval slot as byte)
+'*************************************************
+'author: unknown
+'last modified: 01/08/2009
+'01/08/2009: zama - now it's not sent any sound made by an invisible admin
+'*************************************************
+
 on error goto errhandler
 
 'equipa un item del inventario
@@ -611,8 +641,9 @@ select case obj.objtype
             userlist(userindex).invent.weaponeqpobjindex = userlist(userindex).invent.object(slot).objindex
             userlist(userindex).invent.weaponeqpslot = slot
             
-            'sonido
-            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_sacararma, userlist(userindex).pos.x, userlist(userindex).pos.y))
+            'el sonido solo se envia si no lo produce un admin invisible
+            if not (userlist(userindex).flags.admininvisible = 1) then _
+                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_sacararma, userlist(userindex).pos.x, userlist(userindex).pos.y))
             
             if userlist(userindex).flags.mimetizado = 1 then
                 userlist(userindex).charmimetizado.weaponanim = obj.weaponanim
@@ -821,10 +852,11 @@ end function
 sub useinvitem(byval userindex as integer, byval slot as byte)
 '*************************************************
 'author: unknown
-'last modified: 24/01/2007
+'last modified: 01/08/2009
 'handels the usage of items from inventory box.
 '24/01/2007 pablo (toxicwaste) - agrego el cuerno de la armada y la legi�n.
 '24/01/2007 pablo (toxicwaste) - utilizaci�n nueva de barco en lvl 20 por clase pirata y pescador.
+'01/08/2009: zama - now it's not sent any sound made by an invisible admin, except to its own client
 '*************************************************
 
 dim obj as objdata
@@ -988,7 +1020,13 @@ select case obj.objtype
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                end if
         
             case 2 'modif la fuerza
                 .flags.duracionefecto = obj.duracionefecto
@@ -1002,7 +1040,13 @@ select case obj.objtype
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                end if
                 
             case 3 'pocion roja, restaura hp
                 'usa el item
@@ -1012,7 +1056,13 @@ select case obj.objtype
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                end if
             
             case 4 'pocion azul, restaura mana
                 'usa el item
@@ -1023,7 +1073,13 @@ select case obj.objtype
                 
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                end if
                 
             case 5 ' pocion violeta
                 if .flags.envenenado = 1 then
@@ -1032,7 +1088,14 @@ select case obj.objtype
                 end if
                 'quitamos del inv el item
                 call quitaruserinvitem(userindex, slot, 1)
-                call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+                end if
+                
             case 6  ' pocion negra
                 if .flags.privilegios and playertype.user then
                     call quitaruserinvitem(userindex, slot, 1)
@@ -1057,7 +1120,12 @@ select case obj.objtype
         'quitamos del inv el item
         call quitaruserinvitem(userindex, slot, 1)
         
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+        ' los admin invisibles solo producen sonidos a si mismos
+        if .flags.admininvisible = 1 then
+            call enviardatosaslot(userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+        else
+            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_beber, .pos.x, .pos.y))
+        end if
         
         call updateuserinv(false, userindex, slot)
     
@@ -1177,7 +1245,14 @@ select case obj.objtype
                     call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura ", fonttypenames.fonttype_info)
                     exit sub
                 end if
-                call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                end if
+                
                 exit sub
             else
                 call writeconsolemsg(userindex, "solo miembros de la armada real pueden usar este cuerno.", fonttypenames.fonttype_info)
@@ -1189,7 +1264,14 @@ select case obj.objtype
                     call writeconsolemsg(userindex, "no hay peligro aqu�. es zona segura ", fonttypenames.fonttype_info)
                     exit sub
                 end if
-                call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                
+                ' los admin invisibles solo producen sonidos a si mismos
+                if .flags.admininvisible = 1 then
+                    call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                else
+                    call senddata(sendtarget.tomap, .pos.map, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+                end if
+                
                 exit sub
             else
                 call writeconsolemsg(userindex, "solo miembros de la legi�n oscura pueden usar este cuerno.", fonttypenames.fonttype_info)
@@ -1197,7 +1279,12 @@ select case obj.objtype
             end if
         end if
         'si llega aca es porque es o laud o tambor o flauta
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+        ' los admin invisibles solo producen sonidos a si mismos
+        if .flags.admininvisible = 1 then
+            call enviardatosaslot(userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+        else
+            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(obj.snd1, .pos.x, .pos.y))
+        end if
        
     case eobjtype.otbarcos
         'verifica si esta aproximado al agua antes de permitirle navegar
@@ -1312,6 +1399,11 @@ itemnewbie = objdata(itemindex).newbie = 1
 end function
 
 sub tirartodoslositemsnonewbies(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 07/11/09
+'07/11/09: pato - fix bug #2819911
+'***************************************************
 dim i as byte
 dim nuevapos as worldpos
 dim miobj as obj
@@ -1327,13 +1419,13 @@ for i = 1 to max_inventory_slots
             nuevapos.y = 0
             
             'creo miobj
-            miobj.amount = userlist(userindex).invent.object(i).objindex
+            miobj.amount = userlist(userindex).invent.object(i).amount
             miobj.objindex = itemindex
             'pablo (toxicwaste) 24/01/2007
             'tira los items no newbies en todos lados.
             tilelibre userlist(userindex).pos, nuevapos, miobj, true, true
             if nuevapos.x <> 0 and nuevapos.y <> 0 then
-                if mapdata(nuevapos.map, nuevapos.x, nuevapos.y).objinfo.objindex = 0 then call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
+                call dropobj(userindex, i, max_inventory_objs, nuevapos.map, nuevapos.x, nuevapos.y)
             end if
         end if
     end if

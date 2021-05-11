@@ -7,6 +7,7 @@ begin vb.form frmpres
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   4680
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
@@ -77,10 +78,10 @@ static ticks as long
 ticks = ticks + 1
 
 if ticks = 1 then
-    me.picture = loadpicture(app.path & "\graficos\alkonao2.jpg")
+    me.picture = loadpicture(app.path & "\graficos\argentum.jpg")
     puedo = true
-elseif ticks = 2 then
-    me.picture = loadpicture(app.path & "\graficos\newfinal.jpg")
+'elseif ticks = 2 then
+'    me.picture = loadpicture(app.path & "\graficos\newfinal.jpg")
 else
     unload me
 end if

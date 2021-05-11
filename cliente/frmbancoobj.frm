@@ -6,6 +6,7 @@ begin vb.form frmbancoobj
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   6930
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
@@ -95,6 +96,20 @@ begin vb.form frmbancoobj
       tabindex        =   0
       top             =   1800
       width           =   2490
+   end
+   begin vb.image cmdmoverbov 
+      height          =   375
+      index           =   1
+      left            =   0
+      top             =   4200
+      width           =   570
+   end
+   begin vb.image cmdmoverbov 
+      height          =   375
+      index           =   0
+      left            =   0
+      top             =   4560
+      width           =   570
    end
    begin vb.label label2 
       autosize        =   -1  'true
@@ -236,9 +251,7 @@ option explicit
 public lasactionbuy as boolean
 public lastindex1 as integer
 public lastindex2 as integer
-
-
-
+public nopuedemover as boolean
 
 private sub cantidad_change()
 
@@ -260,8 +273,39 @@ if (keyascii <> 8) then
 end if
 end sub
 
+private sub cmdmoverbov_click(index as integer)
+if list1(0).listindex = -1 then exit sub
+
+if nopuedemover then exit sub
+
+select case index
+    case 1 'subir
+        if list1(0).listindex <= 0 then
+            with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("no puedes mover el objeto en esa direcci�n.", .red, .green, .blue, .bold, .italic)
+            end with
+            exit sub
+        end if
+        lastindex1 = list1(0).listindex - 1
+    case 0 'bajar
+        if list1(0).listindex >= list1(0).listcount - 1 then
+            with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("no puedes mover el objeto en esa direcci�n.", .red, .green, .blue, .bold, .italic)
+            end with
+            exit sub
+        end if
+        lastindex1 = list1(0).listindex + 1
+end select
+
+nopuedemover = true
+lasactionbuy = true
+lastindex2 = list1(1).listindex
+call writemovebank(index, list1(0).listindex + 1)
+end sub
+
 private sub command2_click()
     call writebankend
+    nopuedemover = false
 end sub
 
 private sub form_deactivate()
@@ -274,6 +318,9 @@ private sub form_load()
 me.picture = loadpicture(app.path & "\graficos\comerciar.jpg")
 image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
 image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
+
+cmdmoverbov(1).picture = loadpicture(app.path & "\graficos\flechasubirobjeto.jpg")
+cmdmoverbov(0).picture = loadpicture(app.path & "\graficos\flechabajarobjeto.jpg")
 
 end sub
 

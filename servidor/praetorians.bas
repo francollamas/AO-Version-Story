@@ -1205,7 +1205,8 @@ on error goto errorh
     if userlist(pjenind).flags.oculto = 1 then
         userlist(pjenind).counters.tiempooculto = 0
         userlist(pjenind).flags.oculto = 0
-        call senddata(sendtarget.topcarea, pjenind, preparemessagesetinvisible(userlist(pjenind).char.charindex, false))
+        call setinvisible(pjenind, userlist(pjenind).char.charindex, false)
+        'call senddata(sendtarget.topcarea, pjenind, preparemessagesetinvisible(userlist(pjenind).char.charindex, false))
         call writeconsolemsg(pjenind, "�has sido detectado!", fonttypenames.fonttype_veneno)
     else
     'sino, solo lo "iniciamos" en la sacada de invisibilidad.
@@ -1222,6 +1223,11 @@ errorh:
 end sub
 
 sub npclanzaspellsobreuser2(byval npcindex as integer, byval userindex as integer, byval spell as integer)
+'***************************************************
+'author: unknown
+'last modification: 05/09/09
+'05/09/09: pato - ahora actualiza la vida del usuario atacado
+'***************************************************
 on error goto errorh
 ''  igual a la otra pero ataca invisibles!!!
 '' (malditos controles de casos imposibles...)
@@ -1243,6 +1249,7 @@ if hechizos(spell).subehp = 1 then
     
     call writeconsolemsg(userindex, npclist(npcindex).name & " te ha quitado " & da�o & " puntos de vida.", fonttypenames.fonttype_fight)
 
+    call writeupdatehp(userindex)
 elseif hechizos(spell).subehp = 2 then
     
     da�o = randomnumber(hechizos(spell).minhp, hechizos(spell).maxhp)
@@ -1259,6 +1266,7 @@ elseif hechizos(spell).subehp = 2 then
         call userdie(userindex)
     end if
     
+    call writeupdatehp(userindex)
 end if
 
 if hechizos(spell).paraliza = 1 then
@@ -1468,6 +1476,9 @@ mapa = map
             else    ''random first move
                 if legalpos(mapa, npcx - 1, npcy) then  ''l
                     call moverizq(npcorig)
+                    exit sub
+                elseif legalpos(mapa, npcx, npcy - 1) then ''u
+                    call moverarr(npcorig)
                     exit sub
                 elseif legalpos(mapa, npcx, npcy + 1) then  ''d
                     call moveraba(npcorig)

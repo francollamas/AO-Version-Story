@@ -221,9 +221,15 @@ end if
 
 end sub
             
-sub decirpalabrasmagicas(byval s as string, byval userindex as integer)
+sub decirpalabrasmagicas(byval spellwords as string, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 25/07/2009
+'25/07/2009: zama - invisible admins don't say any word when casting a spell
+'***************************************************
 on error resume next
-    call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(s, userlist(userindex).char.charindex, vbcyan))
+    if userlist(userindex).flags.admininvisible <> 1 then _
+        call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(spellwords, userlist(userindex).char.charindex, vbcyan))
     exit sub
 end sub
 
@@ -236,9 +242,9 @@ end sub
 function puedelanzar(byval userindex as integer, byval hechizoindex as integer) as boolean
 '***************************************************
 'author: unknown
-'last modification: 11/09/08
-'last modification by: marco vanotti (marco)
-' - 11/09/08 now druid have mana bonus while casting summoning spells having a magic flute equipped (marco)
+'last modification: 06/11/09
+'last modification by: torres patricio (pato)
+' - 06/11/09 corregida la bonificaci�n de man� del mimetismo en el druida con flauta m�gica equipada.
 '***************************************************
 dim druidmanabonus as single
 
@@ -280,10 +286,15 @@ dim druidmanabonus as single
         exit function
     end if
 
-    if hechizos(hechizoindex).tipo = uinvocacion then
-    'if it is a summoning spell and we are druids, having a magic flute equipped then we will need less mana
-        if userlist(userindex).clase = eclass.druid and userlist(userindex).invent.anilloeqpobjindex = flautamagica then
-            druidmanabonus = 0.7
+    if userlist(userindex).clase = eclass.druid then
+        if userlist(userindex).invent.anilloeqpobjindex = flautamagica then
+            if hechizos(hechizoindex).mimetiza then
+                druidmanabonus = 0.5
+            elseif hechizos(hechizoindex).tipo = uinvocacion then
+                druidmanabonus = 0.7
+            else
+                druidmanabonus = 1
+            end if
         else
             druidmanabonus = 1
         end if
@@ -516,6 +527,8 @@ end sub
 
 sub lanzarhechizo(index as integer, userindex as integer)
 
+on error goto errhandler
+
 dim uh as integer
 
 uh = userlist(userindex).stats.userhechizos(index)
@@ -572,6 +585,15 @@ if userlist(userindex).counters.trabajando then _
 
 if userlist(userindex).counters.ocultando then _
     userlist(userindex).counters.ocultando = userlist(userindex).counters.ocultando - 1
+    
+exit sub
+
+errhandler:
+    dim usernick as string
+    
+    if userindex > 0 then usernick = userlist(userindex).name
+
+    call logerror("error en lanzarhechizo. error " & err.number & " : " & err.description & " userindex: " & userindex & " nick: " & usernick)
     
 end sub
 
@@ -648,7 +670,8 @@ if hechizos(h).invisibilidad = 1 then
     end if
    
     userlist(tu).flags.invisible = 1
-    call senddata(sendtarget.topcarea, tu, preparemessagesetinvisible(userlist(tu).char.charindex, true))
+    call setinvisible(tu, userlist(tu).char.charindex, true)
+    'call senddata(sendtarget.topcarea, tu, preparemessagesetinvisible(userlist(tu).char.charindex, true))
 
     call infohechizo(userindex)
     b = true
@@ -1282,36 +1305,52 @@ end if
 end sub
 
 sub infohechizo(byval userindex as integer)
-
-
-    dim h as integer
-    h = userlist(userindex).stats.userhechizos(userlist(userindex).flags.hechizo)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 25/07/2009
+'25/07/2009: zama - code improvements.
+'25/07/2009: zama - now invisible admins magic sounds are not sent to anyone but themselves
+'***************************************************
+    dim spellindex as integer
+    dim tuser as integer
+    dim tnpc as integer
     
-    
-    call decirpalabrasmagicas(hechizos(h).palabrasmagicas, userindex)
-    
-    if userlist(userindex).flags.targetuser > 0 then
-        call senddata(sendtarget.topcarea, userlist(userindex).flags.targetuser, preparemessagecreatefx(userlist(userlist(userindex).flags.targetuser).char.charindex, hechizos(h).fxgrh, hechizos(h).loops))
-        call senddata(sendtarget.topcarea, userlist(userindex).flags.targetuser, preparemessageplaywave(hechizos(h).wav, userlist(userlist(userindex).flags.targetuser).pos.x, userlist(userlist(userindex).flags.targetuser).pos.y)) 'esta linea faltaba. pablo (toxicwaste)
-    elseif userlist(userindex).flags.targetnpc > 0 then
-        call senddata(sendtarget.tonpcarea, userlist(userindex).flags.targetnpc, preparemessagecreatefx(npclist(userlist(userindex).flags.targetnpc).char.charindex, hechizos(h).fxgrh, hechizos(h).loops))
-        call senddata(sendtarget.tonpcarea, userlist(userindex).flags.targetnpc, preparemessageplaywave(hechizos(h).wav, npclist(userlist(userindex).flags.targetnpc).pos.x, npclist(userlist(userindex).flags.targetnpc).pos.y))
-    end if
-    
-    if userlist(userindex).flags.targetuser > 0 then
-        if userindex <> userlist(userindex).flags.targetuser then
-            if userlist(userindex).showname then
-                call writeconsolemsg(userindex, hechizos(h).hechizeromsg & " " & userlist(userlist(userindex).flags.targetuser).name, fonttypenames.fonttype_fight)
+    with userlist(userindex)
+        spellindex = .stats.userhechizos(.flags.hechizo)
+        tuser = .flags.targetuser
+        tnpc = .flags.targetnpc
+        
+        call decirpalabrasmagicas(hechizos(spellindex).palabrasmagicas, userindex)
+        
+        if tuser > 0 then
+            ' los admins invisibles no producen sonidos ni fx's
+            if .flags.admininvisible = 1 and userindex = tuser then
+                call enviardatosaslot(userindex, preparemessagecreatefx(userlist(tuser).char.charindex, hechizos(spellindex).fxgrh, hechizos(spellindex).loops))
+                call enviardatosaslot(userindex, preparemessageplaywave(hechizos(spellindex).wav, userlist(tuser).pos.x, userlist(tuser).pos.y))
             else
-                call writeconsolemsg(userindex, hechizos(h).hechizeromsg & " alguien.", fonttypenames.fonttype_fight)
+                call senddata(sendtarget.topcarea, tuser, preparemessagecreatefx(userlist(tuser).char.charindex, hechizos(spellindex).fxgrh, hechizos(spellindex).loops))
+                call senddata(sendtarget.topcarea, tuser, preparemessageplaywave(hechizos(spellindex).wav, userlist(tuser).pos.x, userlist(tuser).pos.y)) 'esta linea faltaba. pablo (toxicwaste)
             end if
-            call writeconsolemsg(userlist(userindex).flags.targetuser, userlist(userindex).name & " " & hechizos(h).targetmsg, fonttypenames.fonttype_fight)
-        else
-            call writeconsolemsg(userindex, hechizos(h).propiomsg, fonttypenames.fonttype_fight)
+        elseif tnpc > 0 then
+            call senddata(sendtarget.tonpcarea, tnpc, preparemessagecreatefx(npclist(tnpc).char.charindex, hechizos(spellindex).fxgrh, hechizos(spellindex).loops))
+            call senddata(sendtarget.tonpcarea, tnpc, preparemessageplaywave(hechizos(spellindex).wav, npclist(tnpc).pos.x, npclist(tnpc).pos.y))
         end if
-    elseif userlist(userindex).flags.targetnpc > 0 then
-        call writeconsolemsg(userindex, hechizos(h).hechizeromsg & " " & "la criatura.", fonttypenames.fonttype_fight)
-    end if
+        
+        if tuser > 0 then
+            if userindex <> tuser then
+                if .showname then
+                    call writeconsolemsg(userindex, hechizos(spellindex).hechizeromsg & " " & userlist(tuser).name, fonttypenames.fonttype_fight)
+                else
+                    call writeconsolemsg(userindex, hechizos(spellindex).hechizeromsg & " alguien.", fonttypenames.fonttype_fight)
+                end if
+                call writeconsolemsg(tuser, .name & " " & hechizos(spellindex).targetmsg, fonttypenames.fonttype_fight)
+            else
+                call writeconsolemsg(userindex, hechizos(spellindex).propiomsg, fonttypenames.fonttype_fight)
+            end if
+        elseif tnpc > 0 then
+            call writeconsolemsg(userindex, hechizos(spellindex).hechizeromsg & " " & "la criatura.", fonttypenames.fonttype_fight)
+        end if
+    end with
 
 end sub
 

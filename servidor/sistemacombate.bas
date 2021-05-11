@@ -626,6 +626,9 @@ public sub npcatacanpc(byval atacante as integer, byval victima as integer, opti
 end sub
 
 public sub usuarioatacanpc(byval userindex as integer, byval npcindex as integer)
+
+on error goto errhandler
+
     if not puedeatacarnpc(userindex, npcindex) then
         exit sub
     end if
@@ -644,6 +647,11 @@ public sub usuarioatacanpc(byval userindex as integer, byval npcindex as integer
         call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_swing, userlist(userindex).pos.x, userlist(userindex).pos.y))
         call writeuserswing(userindex)
     end if
+exit sub
+    
+errhandler:
+    call logerror("error en usuarioatacanpc. error " & err.number & " : " & err.description)
+    
 end sub
 
 public sub usuarioataca(byval userindex as integer)
@@ -723,6 +731,9 @@ public sub usuarioataca(byval userindex as integer)
 end sub
 
 public function usuarioimpacto(byval atacanteindex as integer, byval victimaindex as integer) as boolean
+    
+on error goto errhandler
+
     dim probrechazo as long
     dim rechazo as boolean
     dim probexito as long
@@ -784,9 +795,16 @@ public function usuarioimpacto(byval atacanteindex as integer, byval victimainde
     end if
     
     call flushbuffer(victimaindex)
+    
+    exit function
+    
+errhandler:
+    call logerror("error en usuarioimpacto. error " & err.number & " : " & err.description)
 end function
 
 public sub usuarioatacausuario(byval atacanteindex as integer, byval victimaindex as integer)
+
+on error goto errhandler
 
     if not puedeatacar(atacanteindex, victimaindex) then exit sub
     
@@ -815,16 +833,29 @@ public sub usuarioatacausuario(byval atacanteindex as integer, byval victimainde
             
             call userda�ouser(atacanteindex, victimaindex)
         else
-            call senddata(sendtarget.topcarea, atacanteindex, preparemessageplaywave(snd_swing, .pos.x, .pos.y))
+            ' invisible admins doesn't make sound to other clients except itself
+            if .flags.admininvisible = 1 then
+                call enviardatosaslot(atacanteindex, preparemessageplaywave(snd_swing, .pos.x, .pos.y))
+            else
+                call senddata(sendtarget.topcarea, atacanteindex, preparemessageplaywave(snd_swing, .pos.x, .pos.y))
+            end if
+            
             call writeuserswing(atacanteindex)
             call writeuserattackedswing(victimaindex, atacanteindex)
         end if
         
         if .clase = eclass.thief then call desarmar(atacanteindex, victimaindex)
     end with
+exit sub
+    
+errhandler:
+    call logerror("error en usuarioatacausuario. error " & err.number & " : " & err.description)
 end sub
 
 public sub userda�ouser(byval atacanteindex as integer, byval victimaindex as integer)
+    
+on error goto errhandler
+
     dim da�o as long
     dim lugar as integer
     dim absorbido as long
@@ -942,6 +973,16 @@ public sub userda�ouser(byval atacanteindex as integer, byval victimaindex as 
     call checkuserlevel(atacanteindex)
     
     call flushbuffer(victimaindex)
+    
+errhandler:
+    dim atacantenick as string
+    dim victimanick as string
+    
+    if atacanteindex > 0 then atacantenick = userlist(atacanteindex).name
+    if victimaindex > 0 then victimanick = userlist(victimaindex).name
+    
+    call logerror("error en usuarioimpacto. error " & err.number & " : " & err.description & " atacanteindex: " & _
+             atacanteindex & " nick: " & atacantenick & " victimaindex: " & victimaindex & " nick: " & victimanick)
 end sub
 
 sub usuarioatacadoporusuario(byval attackerindex as integer, byval victimindex as integer)
@@ -1021,6 +1062,8 @@ public function puedeatacar(byval attackerindex as integer, byval victimindex as
 '24/01/2007 pablo (toxicwaste) - ordeno todo y agrego situacion de defensa en ciudad armada y caos.
 '24/02/2009: zama - los usuarios pueden atacarse entre si.
 '***************************************************
+on error goto errhandler
+
     'muy importante el orden de estos "if"...
     
     'estas muerto no podes atacar
@@ -1113,6 +1156,10 @@ public function puedeatacar(byval attackerindex as integer, byval victimindex as
     end if
     
     puedeatacar = true
+exit function
+
+errhandler:
+    call logerror("error en puedeatacar. error " & err.number & " : " & err.description)
 end function
 
 public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as integer) as boolean
@@ -1124,6 +1171,7 @@ public function puedeatacarnpc(byval attackerindex as integer, byval npcindex as
 '14/08/2007 pablo (toxicwaste) - reescribo y agrego todos los casos posibles cosa de usar
 'esta funci�n para todo lo referente a ataque a un npc. ya sea magia, f�sico o a distancia.
 '***************************************************
+
     'estas muerto?
     if userlist(attackerindex).flags.muerto = 1 then
         call writeconsolemsg(attackerindex, "no pod�s atacar porque estas muerto", fonttypenames.fonttype_info)

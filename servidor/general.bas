@@ -1086,7 +1086,8 @@ else
     userlist(userindex).flags.invisible = 0
     if userlist(userindex).flags.oculto = 0 then
         call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-        call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
+        call setinvisible(userindex, userlist(userindex).char.charindex, false)
+        'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
     end if
 end if
 
@@ -1282,30 +1283,7 @@ on error goto errhandler
                     
                     call closesocket(i)
                 end if
-            
-            'antiempollos
-            elseif userlist(i).flags.estaempo = 1 then
-                 userlist(i).empocont = userlist(i).empocont + 1
-                 if userlist(i).empocont = 30 then
-                    'if fileexist(charpath & userlist(z).name & ".chr", vbnormal) then
-                    'esto siempre existe! sino no estaria logueado ;p
-                    
-                    'tmpp = val(getvar(charpath & userlist(z).name & ".chr", "penas", "cant"))
-                    'call writevar(charpath & userlist(z).name & ".chr", "penas", "cant", tmpp + 1)
-                    'call writevar(charpath & userlist(z).name & ".chr", "penas", "p" & tmpp + 1, lcase$(userlist(z).name) & ": carcel " & 30 & "m, motivo: empollando" & " " & date & " " & time)
-                    
-                    'call encarcelar(z, 30, "el sistema anti empollo")
-                    call writeshowmessagebox(i, "fuiste expulsado por permanecer muerto sobre un item")
-                    'call senddata(sendtarget.toadmins, z, 0, "|| " & userlist(z).name & " fue encarcelado por empollar" & fonttype_info)
-                    userlist(i).empocont = 0
-                    call flushbuffer(i)
-                    
-                    call closesocket(i)
-                elseif userlist(i).empocont = 15 then
-                    call writeconsolemsg(i, "llevas 15 segundos bloqueando el item, mu�vete o ser�s desconectado.", fonttypenames.fonttype_warning)
-                    call flushbuffer(i)
-                end if
-             end if
+            end if
         end if
     next i
 exit sub

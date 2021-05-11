@@ -322,6 +322,34 @@ public function getvalue(byval main as string, byval key as string) as string
 end function
 
 ''
+'searches for a given key within a given main section and if it exists retrieves it's value, otherwise a null string
+'
+' @param    main the name of the main section in which we will be searching.
+' @param    key the key of the value we are looking for.
+' @returns  the value asociated with the given key under the requeted main section of the ini file or a null string if it's not found.
+
+public sub changevalue(byval main as string, byval key as string, byval value as long)
+'**************************************************************
+'author: zama
+'last modify date: 27/05/2009
+'if the key and main node exist, changes the value
+'**************************************************************
+    dim i as long
+    dim j as long
+    
+    'search for the main node
+    i = findmain(ucase$(main))
+    
+    if i >= 0 then
+        'if valid, binary search among keys
+        j = findkey(filedata(i), ucase$(key))
+        
+        'if we found it we change it
+        if j >= 0 then filedata(i).values(j).value = value
+    end if
+end sub
+
+''
 'searches for a given key within a given main node and returns the index in which it's stored or the negation of the index in which it should be if not found.
 '
 ' @param    node the mainnode among whose value entries we will be searching.

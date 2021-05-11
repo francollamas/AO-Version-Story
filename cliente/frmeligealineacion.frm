@@ -6,6 +6,7 @@ begin vb.form frmeligealineacion
    clientleft      =   15
    clienttop       =   15
    clientwidth     =   6705
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false

@@ -6,6 +6,7 @@ begin vb.form frmentrenador
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4230
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"

@@ -116,8 +116,9 @@ end sub
 public sub pushbacktext(byval s as string)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 04/07/08
+'last modification: 07/04/2009
 'splits dialogs into lines fitting properly the render area and inserts them
+'07/04/2009: now cuts the string properly in spite of not fitting in the screen. this avoids an infite loop.
 '***************************************************
     dim str as string
     dim tmp as integer
@@ -137,7 +138,7 @@ public sub pushbacktext(byval s as string)
     call realpushbacktext(str)
     
     if lenb(str) <> lenb(s) then
-        call pushbacktext(right$(s, len(s) - tmp))
+        call pushbacktext(right$(s, len(s) - len(str) - 1))
     end if
 end sub
 

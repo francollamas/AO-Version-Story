@@ -38,7 +38,7 @@ function distancia(byref wp1 as worldpos, byref wp2 as worldpos) as long
     distancia = abs(wp1.x - wp2.x) + abs(wp1.y - wp2.y) + (abs(wp1.map - wp2.map) * 100)
 end function
 
-function distance(x1 as variant, y1 as variant, x2 as variant, y2 as variant) as double
+function distance(byval x1 as integer, byval y1 as integer, byval x2 as integer, byval y2 as integer) as double
 
 'encuentra la distancia entre dos puntos
 

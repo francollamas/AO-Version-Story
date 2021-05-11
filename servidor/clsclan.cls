@@ -728,17 +728,19 @@ public function iterador_proximapropuesta(byval tipo as relaciones_guild) as int
             if p_iteradorpropuesta < p_propuestasdealianza.count then
                 p_iteradorpropuesta = p_iteradorpropuesta + 1
                 iterador_proximapropuesta = p_propuestasdealianza.item(p_iteradorpropuesta)
-            else
+            end if
+            
+            if p_iteradorpropuesta >= p_propuestasdealianza.count then
                 p_iteradorpropuesta = 0
-                iterador_proximapropuesta = 0
             end if
         case relaciones_guild.paz
             if p_iteradorpropuesta < p_propuestasdepaz.count then
                 p_iteradorpropuesta = p_iteradorpropuesta + 1
                 iterador_proximapropuesta = p_propuestasdepaz.item(p_iteradorpropuesta)
-            else
+            end if
+            
+            if p_iteradorpropuesta >= p_propuestasdepaz.count then
                 p_iteradorpropuesta = 0
-                iterador_proximapropuesta = 0
             end if
     end select
     

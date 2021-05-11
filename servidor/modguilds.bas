@@ -137,7 +137,8 @@ dim ml()        as string
 dim m           as string
 dim ui          as integer
 dim sale        as boolean
-dim i           as integer
+dim i           as long
+dim totalmembers as integer
 
     m_validarpermanencia = true
     guildindex = userlist(userindex).guildindex
@@ -165,10 +166,13 @@ dim i           as integer
             'uso getmemberlist y no los iteradores pq voy a rajar gente y puedo alterar
             'internamente al iterador en el proceso
             cambiolider = false
-            i = 1
             ml = guilds(guildindex).getmemberlist()
-            m = ml(i)
-            while lenb(m) <> 0
+            totalmembers = ubound(ml)
+            
+            'el user en ml(0) es el funda, no tiene setnido verificar su permanencia!
+            for i = 1 to totalmembers
+                m = ml(i)
+                
                 'vamos a violar un poco de capas..
                 ui = nameindex(m)
                 if ui > 0 then
@@ -205,9 +209,7 @@ dim i           as integer
                         call m_echarmiembrodeclan(-1, m)
                     end if
                 end if
-                i = i + 1
-                m = ml(i)
-            wend
+            next i
         else
             'no se va el fundador, el peor caso es que se vaya el lider
             

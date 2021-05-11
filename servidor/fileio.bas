@@ -779,7 +779,7 @@ for object = 1 to numobjdatas
     objdata(object).defensamagicamin = val(leer.getvalue("obj" & object, "defensamagicamin"))
     
     objdata(object).skcarpinteria = val(leer.getvalue("obj" & object, "skcarpinteria"))
-    
+        
     if objdata(object).skcarpinteria > 0 then _
         objdata(object).madera = val(leer.getvalue("obj" & object, "madera"))
     

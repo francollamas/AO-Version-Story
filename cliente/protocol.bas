@@ -96,7 +96,9 @@ private enum serverpacketid
     usercharindexinserver   ' ip
     charactercreate         ' cc
     characterremove         ' bp
+    characterchangenick
     charactermove           ' mp, +, * and _ '
+    forcecharmove
     characterchange         ' cp
     objectcreate            ' ho
     objectdelete            ' bo
@@ -207,6 +209,7 @@ private enum clientpacketid
     bankdeposit             'depo
     forumpost               'demsg
     movespell               'desphe
+    movebank
     clancodexupdate         'descod
     usercommerceoffer       'ofrecer
     guildacceptpeace        'aceppeat
@@ -400,7 +403,6 @@ private enum clientpacketid
     showserverform          '/show int
     night                   '/noche
     kickallchars            '/echartodospjs
-    requesttcpstats         '/tcpesstats
     reloadnpcs              '/reloadnpcs
     reloadserverini         '/reloadsini
     reloadspells            '/reloadhechizos
@@ -410,6 +412,7 @@ private enum clientpacketid
     chatcolor               '/chatcolor
     ignored                 '/ignorado
     checkslot               '/slot
+    setinivar               '/setinivar llave clave valor
 end enum
 
 public enum fonttypenames
@@ -432,9 +435,12 @@ public enum fonttypenames
     fonttype_gmmsg
     fonttype_gm
     fonttype_citizen
+    fonttype_conse
+    fonttype_dios
+    
 end enum
 
-public fonttypes(18) as tfont
+public fonttypes(20) as tfont
 
 ''
 ' initializes the fonts array
@@ -545,12 +551,28 @@ public sub initfonts()
     end with
     
     with fonttypes(fonttypenames.fonttype_gm)
-        .green = 185
+        .red = 30
+        .green = 255
+        .blue = 30
         .bold = 1
     end with
     
     with fonttypes(fonttypenames.fonttype_citizen)
         .blue = 200
+        .bold = 1
+    end with
+    
+    with fonttypes(fonttypenames.fonttype_conse)
+        .red = 30
+        .green = 150
+        .blue = 30
+        .bold = 1
+    end with
+    
+    with fonttypes(fonttypenames.fonttype_dios)
+        .red = 250
+        .green = 250
+        .blue = 150
         .bold = 1
     end with
 end sub
@@ -701,8 +723,14 @@ on error resume next
         case serverpacketid.characterremove         ' bp
             call handlecharacterremove
         
+        case serverpacketid.characterchangenick
+            call handlecharacterchangenick
+            
         case serverpacketid.charactermove           ' mp, +, * and _ '
             call handlecharactermove
+            
+        case serverpacketid.forcecharmove
+            call handleforcecharmove
         
         case serverpacketid.characterchange         ' cp
             call handlecharacterchange
@@ -918,10 +946,7 @@ private sub handlelogged()
     call incomingdata.readbyte
     
     ' variable initialization
-    userciego = false
     enginerun = true
-    iscombate = false
-    userdescansar = false
     nombres = true
     
     'set connected state
@@ -1020,11 +1045,12 @@ private sub handledisconnect()
     frmconnect.visible = true
     
     'reset global vars
-    userparalizado = false
     iscombate = false
-    pausa = false
-    usermeditar = false
     userdescansar = false
+    userparalizado = false
+    pausa = false
+    userciego = false
+    usermeditar = false
     usernavegando = false
     brain = false
     bfogata = false
@@ -1194,7 +1220,7 @@ private sub handleusercommerceinit()
     
     'set state and show form
     comerciando = true
-    frmcomerciarusu.show , frmmain
+    call frmcomerciarusu.show(vbmodal, frmmain)
 end sub
 
 ''
@@ -1514,6 +1540,8 @@ private sub handleupdatehp()
     'is the user alive??
     if userminhp = 0 then
         userestado = 1
+        if frmmain.trainingmacro then frmmain.desactivarmacrohechizos
+        if frmmain.macrotrabajo then frmmain.desactivarmacrotrabajo
     else
         userestado = 0
     end if
@@ -1678,17 +1706,17 @@ private sub handlenpchituser()
     
     select case incomingdata.readbyte()
         case bcabeza
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_cabeza & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
         case bbrazoizquierdo
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
         case bbrazoderecho
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_brazo_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
         case bpiernaizquierda
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_izq & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
         case bpiernaderecha
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_pierna_der & cstr(incomingdata.readinteger()) & "!!", 255, 0, 0, true, false, false)
         case btorso
-            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & cstr(incomingdata.readinteger()), 255, 0, 0, true, false, false)
+            call addtorichtextbox(frmmain.rectxt, mensaje_golpe_torso & cstr(incomingdata.readinteger() & "!!"), 255, 0, 0, true, false, false)
     end select
 end sub
 
@@ -2198,6 +2226,25 @@ on error goto 0
         err.raise error
 end sub
 
+private sub handlecharacterchangenick()
+'***************************************************
+'author: budi
+'last modification: 07/23/09
+'
+'***************************************************
+    if incomingdata.length < 6 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    dim charindex as integer
+    charindex = incomingdata.readinteger
+    charlist(charindex).nombre = incomingdata.readasciistring
+    
+end sub
+
 ''
 ' handles the characterremove message.
 
@@ -2265,13 +2312,36 @@ private sub handlecharactermove()
 end sub
 
 ''
+' handles the forcecharmove message.
+
+private sub handleforcecharmove()
+    
+    if incomingdata.length < 2 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    'remove packet id
+    call incomingdata.readbyte
+    
+    dim direccion as byte
+    
+    direccion = incomingdata.readbyte()
+
+    call movecharbyhead(usercharindex, direccion)
+    call movescreen(direccion)
+    
+    call refreshallchars
+end sub
+
+''
 ' handles the characterchange message.
 
 private sub handlecharacterchange()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 25/08/2009
+'25/08/2009: zama - changed a variable used incorrectly.
 '***************************************************
     if incomingdata.length < 18 then
         err.raise incomingdata.notenoughdataerrcode
@@ -2292,17 +2362,21 @@ private sub handlecharacterchange()
         
         if tempint < lbound(bodydata()) or tempint > ubound(bodydata()) then
             .body = bodydata(0)
+            .ibody = 0
         else
             .body = bodydata(tempint)
+            .ibody = tempint
         end if
         
         
         headindex = incomingdata.readinteger()
         
-        if tempint < lbound(headdata()) or tempint > ubound(headdata()) then
+        if headindex < lbound(headdata()) or headindex > ubound(headdata()) then
             .head = headdata(0)
+            .ihead = 0
         else
             .head = headdata(headindex)
+            .ihead = headindex
         end if
         
         .muerto = (headindex = casper_head)
@@ -2669,6 +2743,8 @@ private sub handleupdateuserstats()
     
     if userminhp = 0 then
         userestado = 1
+        if frmmain.trainingmacro then frmmain.desactivarmacrohechizos
+        if frmmain.macrotrabajo then frmmain.desactivarmacrotrabajo
     else
         userestado = 0
     end if
@@ -2753,7 +2829,7 @@ on error goto errhandler
     dim maxhit as integer
     dim minhit as integer
     dim defense as integer
-    dim value as long
+    dim value as single
     
     slot = buffer.readbyte()
     objindex = buffer.readinteger()
@@ -3769,6 +3845,7 @@ on error goto errhandler
     
     guildlist = split(buffer.readasciistring(), separator)
     
+    call frmpeaceprop.lista.clear
     for i = 0 to ubound(guildlist())
         call frmpeaceprop.lista.additem(guildlist(i))
     next i
@@ -3818,6 +3895,7 @@ on error goto errhandler
     
     guildlist = split(buffer.readasciistring(), separator)
     
+    call frmpeaceprop.lista.clear
     for i = 0 to ubound(guildlist())
         call frmpeaceprop.lista.additem(guildlist(i))
     next i
@@ -4237,7 +4315,10 @@ private sub handlebankok()
             frmbancoobj.list1(0).listindex = frmbancoobj.lastindex1
             frmbancoobj.list1(1).listindex = frmbancoobj.lastindex2
         end if
+        
+        frmbancoobj.nopuedemover = false
     end if
+       
 end sub
 
 ''
@@ -5453,6 +5534,27 @@ public sub writemovespell(byval upwards as boolean, byval slot as byte)
 end sub
 
 ''
+' writes the "movebank" message to the outgoing data buffer.
+'
+' @param    upwards true if the item will be moved up in the list, false if it will be moved downwards.
+' @param    slot bank list slot where the item which's info is requested is.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writemovebank(byval upwards as boolean, byval slot as byte)
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 06/14/09
+'writes the "movebank" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.movebank)
+        
+        call .writeboolean(upwards)
+        call .writebyte(slot)
+    end with
+end sub
+
+''
 ' writes the "clancodexupdate" message to the outgoing data buffer.
 '
 ' @param    desc new description of the clan.
@@ -5919,7 +6021,7 @@ end sub
 public sub writequit()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 08/16/08
 'writes the "quit" message to the outgoing data buffer
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.quit)
@@ -7250,13 +7352,18 @@ end sub
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeonlinemap()
+public sub writeonlinemap(byval map as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 26/03/2009
 'writes the "onlinemap" message to the outgoing data buffer
+'26/03/2009: now you don't need to be in the map to use the comand, so you send the map to server
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.onlinemap)
+    with outgoingdata
+        call .writebyte(clientpacketid.onlinemap)
+        
+        call .writeinteger(map)
+    end with
 end sub
 
 ''
@@ -8818,20 +8925,6 @@ public sub writekickallchars()
 end sub
 
 ''
-' writes the "requesttcpstats" message to the outgoing data buffer.
-'
-' @remarks  the data is not actually sent until the buffer is properly flushed.
-
-public sub writerequesttcpstats()
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'writes the "requesttcpstats" message to the outgoing data buffer
-'***************************************************
-    call outgoingdata.writebyte(clientpacketid.requesttcpstats)
-end sub
-
-''
 ' writes the "reloadnpcs" message to the outgoing data buffer.
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
@@ -8993,6 +9086,29 @@ public sub writeping()
     doevents
     
     pingtime = gettickcount
+end sub
+
+''
+' writes the "setinivar" message to the outgoing data buffer.
+'
+' @param    sllave the name of the key which contains the value to edit
+' @param    sclave the name of the value to edit
+' @param    svalor the new value to set to sclave
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writesetinivar(byref sllave as string, byref sclave as string, byref svalor as string)
+'***************************************************
+'author: brian chaia (brianpr)
+'last modification: 21/06/2009
+'writes the "setinivar" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.setinivar)
+        
+        call .writeasciistring(sllave)
+        call .writeasciistring(sclave)
+        call .writeasciistring(svalor)
+    end with
 end sub
 
 ''

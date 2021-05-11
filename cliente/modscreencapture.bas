@@ -19,6 +19,10 @@ option explicit
 '  description: changed screencapture to use the screenshots directory.
 '               fixed a bug that caused the dc not to be allways released (added invalid_handle constant)
 '
+'  author: torres patricio (pato)
+'  date: 25 august 2009
+'  description: added fullscreencapture function.
+'
 '
 ' copyright.
 ' ijl.dll is a copyright � intel, which is a registered trade mark of the intel
@@ -543,3 +547,41 @@ err:
     if hdcc <> invalid_handle then _
         call releasedc(frmmain.hwnd, hdcc)
 end sub
+
+public function fullscreencapture(byval file as string) as boolean
+'medio desprolijo donde pongo la pic, pero es lo que hay por ahora
+    dim c as new cdibsection
+    dim hdcc as long
+    dim handle as long
+    
+    hdcc = getdc(handle)
+    
+    frmscreenshots.picture1.autoredraw = true
+    
+    if nores then
+        frmscreenshots.picture1.width = screen.width
+        frmscreenshots.picture1.height = screen.height
+        
+        call bitblt(frmscreenshots.picture1.hdc, 0, 0, screen.width / screen.twipsperpixelx, screen.height / screen.twipsperpixely, hdcc, 0, 0, srccopy)
+    else
+        frmscreenshots.picture1.width = 12000
+        frmscreenshots.picture1.height = 9000
+        
+        call bitblt(frmscreenshots.picture1.hdc, 0, 0, 800, 600, hdcc, 0, 0, srccopy)
+    end if
+    
+    call releasedc(handle, hdcc)
+    
+    hdcc = invalid_handle
+    
+    if not fileexist(app.path & "\temp", vbdirectory) then mkdir (app.path & "\temp")
+    
+    frmscreenshots.picture1.refresh
+    frmscreenshots.picture1.picture = frmscreenshots.picture1.image
+    
+    c.createfrompicture frmscreenshots.picture1.picture
+    
+    savejpg c, file
+    
+    fullscreencapture = true
+end function

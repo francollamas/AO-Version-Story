@@ -75,23 +75,24 @@ end sub
 public sub updatesumaniveleselevados(byval lvl as integer)
 '*************************************************
 'author: marco vanotti (markoxx)
-'last modified: 28/10/08
-'
+'last modified: 11/24/09
+'11/24/09: pato - change the exponent to a variable with the exponent
 '*************************************************
-    p_sumaniveleselevados = p_sumaniveleselevados - ((lvl - 1) ^ 1.75) + lvl ^ 1.75
+    p_sumaniveleselevados = p_sumaniveleselevados - ((lvl - 1) ^ exponentenivelparty) + lvl ^ exponentenivelparty
 end sub
 
 public function miexperiencia(byval userindex as integer) as long
 '***************************************************
 'author: unknown
-'last modification: 09/29/07
-'last modification by: lucas tavolaro ortiz (tavo)
+'last modification: 11/27/09
+'last modification by: budi
 ' - 09/29/07 experience is round to the biggest number less than that number
 ' - 09/29/07 now experience is a real-number
+' - 11/27/09 arregl� el out of range.
 '***************************************************
 'me dice cuanta experiencia tengo colectada ya en la party
 dim i as integer
-i = 0
+i = 1
 
 while i <= party_maxmembers and p_members(i).userindex <> userindex
     i = i + 1
@@ -308,7 +309,7 @@ p_fundador = p_members(1).userindex
 end function
 
 
-public sub obtenermiembrosonline(byref memberlist as string)
+public sub obtenermiembrosonline(byref memberlist() as integer)
 '***************************************************
 'author: unknown
 'last modification: 09/29/07
@@ -316,21 +317,27 @@ public sub obtenermiembrosonline(byref memberlist as string)
 ' - 09/29/07 experience is round to the biggest number less than that number
 ' - 09/29/07 now experience is a real-number (tavo)
 ' - 08/18/08 now totalexperience is fixed (markoxx)
+' - 11/27/09 rehice la funci�n, ahora devuelve el array con los ui online (budi)
 '***************************************************
-'esta funcion viola un poco la correcta forma de hacer la clase
-'pero bue...
+
 dim i as integer
-memberlist = "nombre(exp): "
+
 for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
-        memberlist = memberlist & " - " & userlist(p_members(i).userindex).name & " (" & cstr(fix(p_members(i).experiencia)) & ")"
+        memberlist(i) = p_members(i).userindex
     end if
 next i
 
-memberlist = memberlist & ". experiencia total: " & cstr(p_exptotal)
-
 end sub
 
+public function obtenerexperienciatotal() as long
+'***************************************************
+'author: budi
+'last modification: 11/27/09
+'retrieves the total experience acumulated in the party
+'***************************************************
+obtenerexperienciatotal = p_exptotal
+end function
 
 public function puedeentrar(byval userindex as integer, byref razon as string) as boolean
 '***************************************************
@@ -430,9 +437,6 @@ if not party_experienciaporgolpe then   'esto sirve solo cuando acumulamos la ex
 end if
 
 end sub
-
-
-
 
 private sub compactmemberlist()
 dim i as integer

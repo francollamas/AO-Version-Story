@@ -7,6 +7,7 @@ begin vb.form frmcustomkeys
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   8220
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false

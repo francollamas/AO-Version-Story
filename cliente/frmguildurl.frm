@@ -6,6 +6,7 @@ begin vb.form frmguildurl
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   6135
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"

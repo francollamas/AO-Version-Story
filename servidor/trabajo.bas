@@ -54,7 +54,8 @@ if userlist(userindex).counters.tiempooculto <= 0 then
     userlist(userindex).flags.oculto = 0
     if userlist(userindex).flags.invisible = 0 then
         call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-        call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
+        call setinvisible(userindex, userlist(userindex).char.charindex, false)
+        'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
     end if
 end if
 
@@ -91,7 +92,8 @@ if res <= suerte then
     suerte = suerte * intervalooculto
     userlist(userindex).counters.tiempooculto = suerte
   
-    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, true))
+    call setinvisible(userindex, userlist(userindex).char.charindex, true)
+    'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, true))
 
     call writeconsolemsg(userindex, "�te has escondido entre las sombras!", fonttypenames.fonttype_info)
     call subirskill(userindex, ocultarse)
@@ -193,6 +195,8 @@ end sub
 
 public sub fundirmineral(byval userindex as integer)
 
+on error goto errhandler
+
 if userlist(userindex).flags.targetobjinvindex > 0 then
    
    if objdata(userlist(userindex).flags.targetobjinvindex).objtype = eobjtype.otminerales and objdata(userlist(userindex).flags.targetobjinvindex).minskill <= userlist(userindex).stats.userskills(eskill.mineria) / modfundicion(userlist(userindex).clase) then
@@ -202,6 +206,11 @@ if userlist(userindex).flags.targetobjinvindex > 0 then
    end if
 
 end if
+
+exit sub
+
+errhandler:
+    call logerror("error en fundirmineral. error " & err.number & " : " & err.description)
 
 end sub
 function tieneobjetos(byval itemindex as integer, byval cant as integer, byval userindex as integer) as boolean
@@ -222,34 +231,39 @@ end if
         
 end function
 
-function quitarobjetos(byval itemindex as integer, byval cant as integer, byval userindex as integer) as boolean
+public sub quitarobjetos(byval itemindex as integer, byval cant as integer, byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 05/08/09
+'05/08/09: pato - cambie la funcion a procedimiento ya que se usa como procedimiento siempre, y fixie el bug 2788199
+'***************************************************
+
 'call logtarea("sub quitarobjetos")
 
 dim i as integer
 for i = 1 to max_inventory_slots
-    if userlist(userindex).invent.object(i).objindex = itemindex then
-        
-        call desequipar(userindex, i)
-        
-        userlist(userindex).invent.object(i).amount = userlist(userindex).invent.object(i).amount - cant
-        if (userlist(userindex).invent.object(i).amount <= 0) then
-            cant = abs(userlist(userindex).invent.object(i).amount)
-            userlist(userindex).invent.object(i).amount = 0
-            userlist(userindex).invent.object(i).objindex = 0
-        else
-            cant = 0
+    with userlist(userindex).invent.object(i)
+        if .objindex = itemindex then
+            if .amount <= cant and .equipped = 1 then call desequipar(userindex, i)
+            
+            .amount = .amount - cant
+            if .amount <= 0 then
+                cant = abs(.amount)
+                userlist(userindex).invent.nroitems = userlist(userindex).invent.nroitems - 1
+                .amount = 0
+                .objindex = 0
+            else
+                cant = 0
+            end if
+            
+            call updateuserinv(false, userindex, i)
+            
+            if cant = 0 then exit sub
         end if
-        
-        call updateuserinv(false, userindex, i)
-        
-        if (cant = 0) then
-            quitarobjetos = true
-            exit function
-        end if
-    end if
+    end with
 next i
 
-end function
+end sub
 
 sub herreroquitarmateriales(byval userindex as integer, byval itemindex as integer)
     if objdata(itemindex).lingh > 0 then call quitarobjetos(lingotehierro, objdata(itemindex).lingh, userindex)
@@ -301,8 +315,13 @@ function herrerotienemateriales(byval userindex as integer, byval itemindex as i
 end function
 
 public function puedeconstruir(byval userindex as integer, byval itemindex as integer) as boolean
-puedeconstruir = herrerotienemateriales(userindex, itemindex) and userlist(userindex).stats.userskills(eskill.herreria) >= _
- objdata(itemindex).skherreria
+'***************************************************
+'author: unknown
+'last modification: 24/08/2009
+'24/08/2008: zama - validates if the player has the required skill
+'***************************************************
+puedeconstruir = herrerotienemateriales(userindex, itemindex) and _
+                    round(userlist(userindex).stats.userskills(eskill.herreria) / modherreria(userlist(userindex).clase), 0) >= objdata(itemindex).skherreria
 end function
 
 public function puedeconstruirherreria(byval itemindex as integer) as boolean
@@ -398,9 +417,13 @@ puedeconstruircarpintero = false
 end function
 
 public sub carpinteroconstruiritem(byval userindex as integer, byval itemindex as integer)
-
+'***************************************************
+'author: unknown
+'last modification: 24/08/2009
+'24/08/2008: zama - validates if the player has the required skill
+'***************************************************
 if carpinterotienemateriales(userindex, itemindex) and _
-   userlist(userindex).stats.userskills(eskill.carpinteria) >= _
+   round(userlist(userindex).stats.userskills(eskill.carpinteria) \ modcarpinteria(userlist(userindex).clase), 0) >= _
    objdata(itemindex).skcarpinteria and _
    puedeconstruircarpintero(itemindex) and _
    userlist(userindex).invent.weaponeqpobjindex = serrucho_carpintero then
@@ -489,7 +512,6 @@ public sub dolingotes(byval userindex as integer)
         userlist(userindex).invent.object(slot).objindex = 0
     end if
     
-    dim npos as worldpos
     dim miobj as obj
     miobj.amount = 1
     miobj.objindex = objdata(userlist(userindex).flags.targetobjinvindex).lingoteindex
@@ -588,6 +610,8 @@ sub dodomar(byval userindex as integer, byval npcindex as integer)
 '02/03/2009: zama - las criaturas domadas en zona segura, esperan afuera (desaparecen).
 '***************************************************
 
+on error goto errhandler
+
 dim puntosdomar as integer
 dim puntosrequeridos as integer
 dim canstay as boolean
@@ -662,6 +686,12 @@ if userlist(userindex).nromascotas < maxmascotas then
 else
     call writeconsolemsg(userindex, "no puedes controlar m�s criaturas.", fonttypenames.fonttype_info)
 end if
+
+exit sub
+
+errhandler:
+    call logerror("error en dodomar. error " & err.number & " : " & err.description)
+
 end sub
 
 ''
@@ -691,42 +721,53 @@ private function puededomarmascota(byval userindex as integer, byval npcindex as
 end function
 
 sub doadmininvisible(byval userindex as integer)
+'***************************************************
+'author: unknown
+'last modification: 13/07/2009
+'makes an admin invisible o visible.
+'13/07/2009: zama - now invisible admins' chars are erased from all clients, except from themselves.
+'***************************************************
     
-    if userlist(userindex).flags.admininvisible = 0 then
-        
-        ' sacamos el mimetizmo
-        if userlist(userindex).flags.mimetizado = 1 then
-            userlist(userindex).char.body = userlist(userindex).charmimetizado.body
-            userlist(userindex).char.head = userlist(userindex).charmimetizado.head
-            userlist(userindex).char.cascoanim = userlist(userindex).charmimetizado.cascoanim
-            userlist(userindex).char.shieldanim = userlist(userindex).charmimetizado.shieldanim
-            userlist(userindex).char.weaponanim = userlist(userindex).charmimetizado.weaponanim
-            userlist(userindex).counters.mimetismo = 0
-            userlist(userindex).flags.mimetizado = 0
+    with userlist(userindex)
+        if .flags.admininvisible = 0 then
+            ' sacamos el mimetizmo
+            if .flags.mimetizado = 1 then
+                .char.body = .charmimetizado.body
+                .char.head = .charmimetizado.head
+                .char.cascoanim = .charmimetizado.cascoanim
+                .char.shieldanim = .charmimetizado.shieldanim
+                .char.weaponanim = .charmimetizado.weaponanim
+                .counters.mimetismo = 0
+                .flags.mimetizado = 0
+            end if
+            
+            .flags.admininvisible = 1
+            .flags.invisible = 1
+            .flags.oculto = 1
+            .flags.oldbody = .char.body
+            .flags.oldhead = .char.head
+            .char.body = 0
+            .char.head = 0
+            
+            ' solo el admin sabe que se hace invi
+            call enviardatosaslot(userindex, preparemessagesetinvisible(.char.charindex, true))
+            'le mandamos el mensaje para que borre el personaje a los clientes que est�n cerca
+            call senddata(sendtarget.topcareabutindex, userindex, preparemessagecharacterremove(.char.charindex))
+        else
+            .flags.admininvisible = 0
+            .flags.invisible = 0
+            .flags.oculto = 0
+            .counters.tiempooculto = 0
+            .char.body = .flags.oldbody
+            .char.head = .flags.oldhead
+            
+            'borramos el personaje en del cliente del gm
+            call enviardatosaslot(userindex, preparemessagecharacterremove(.char.charindex))
+            'le mandamos el mensaje para crear el personaje a los clientes que est�n cerca
+            call makeuserchar(true, .pos.map, userindex, .pos.map, .pos.x, .pos.y)
         end if
-        
-        userlist(userindex).flags.admininvisible = 1
-        userlist(userindex).flags.invisible = 1
-        userlist(userindex).flags.oculto = 1
-        userlist(userindex).flags.oldbody = userlist(userindex).char.body
-        userlist(userindex).flags.oldhead = userlist(userindex).char.head
-        userlist(userindex).char.body = 0
-        userlist(userindex).char.head = 0
-        
-    else
-        
-        userlist(userindex).flags.admininvisible = 0
-        userlist(userindex).flags.invisible = 0
-        userlist(userindex).flags.oculto = 0
-        userlist(userindex).counters.tiempooculto = 0
-        userlist(userindex).char.body = userlist(userindex).flags.oldbody
-        userlist(userindex).char.head = userlist(userindex).flags.oldhead
-        
-    end if
+    end with
     
-    'vuelve a ser visible por la fuerza
-    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
 end sub
 
 sub tratardehacerfogata(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
@@ -818,7 +859,6 @@ suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
 res = randomnumber(1, suerte)
 
 if res <= 6 then
-    dim npos as worldpos
     dim miobj as obj
     
     if userlist(userindex).clase = eclass.fisher then
@@ -854,7 +894,7 @@ userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajand
 exit sub
 
 errhandler:
-    call logerror("error en dopescar")
+    call logerror("error en dopescar. error " & err.number & " : " & err.description)
 end sub
 
 public sub dopescarred(byval userindex as integer)
@@ -884,7 +924,6 @@ if suerte > 0 then
     res = randomnumber(1, suerte)
     
     if res < 6 then
-        dim npos as worldpos
         dim miobj as obj
         dim pecesposibles(1 to 4) as integer
         
@@ -936,6 +975,8 @@ public sub dorobar(byval ladronindex as integer, byval victimaindex as integer)
 'last modification by: marco vanotti (markoxx)
 ' - 24/07/08 now it calls to writeupdategold(victimaindex and ladronindex) when the thief stoles gold. (markoxx)
 '*************************************************
+
+on error goto errhandler
 
 if not mapinfo(userlist(victimaindex).pos.map).pk then exit sub
 
@@ -1061,6 +1102,10 @@ if userlist(victimaindex).flags.privilegios and playertype.user then
     call subirskill(ladronindex, robar)
 end if
 
+exit sub
+
+errhandler:
+    call logerror("error en dorobar. error " & err.number & " : " & err.description)
 
 end sub
 
@@ -1248,9 +1293,18 @@ end if
 end sub
 
 public sub quitarsta(byval userindex as integer, byval cantidad as integer)
+
+on error goto errhandler
+
     userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - cantidad
     if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
     call writeupdatesta(userindex)
+    
+exit sub
+
+errhandler:
+    call logerror("error en quitarsta. error " & err.number & " : " & err.description)
+    
 end sub
 
 public sub dotalar(byval userindex as integer)
@@ -1272,7 +1326,6 @@ suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
 res = randomnumber(1, suerte)
 
 if res <= 6 then
-    dim npos as worldpos
     dim miobj as obj
     
     if userlist(userindex).clase = eclass.lumberjack then
@@ -1320,7 +1373,6 @@ on error goto errhandler
 
 dim suerte as integer
 dim res as integer
-dim metal as integer
 
 if userlist(userindex).clase = eclass.miner then
     call quitarsta(userindex, esfuerzoexcavarminero)
@@ -1336,7 +1388,6 @@ res = randomnumber(1, suerte)
 
 if res <= 5 then
     dim miobj as obj
-    dim npos as worldpos
     
     if userlist(userindex).flags.targetobj = 0 then exit sub
     

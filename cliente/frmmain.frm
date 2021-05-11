@@ -1,7 +1,6 @@
 version 5.00
 object = "{3b7c8863-d78f-101b-b9b5-04021c009402}#1.2#0"; "richtx32.ocx"
 object = "{33101c00-75c3-11cf-a8a0-444553540000}#1.0#0"; "cswsk32.ocx"
-object = "{48e59290-9880-11cf-9754-00aa00c00908}#1.0#0"; "msinet.ocx"
 object = "{248dd890-bb45-11cf-9abc-0080c7e7b78d}#1.0#0"; "mswinsck.ocx"
 begin vb.form frmmain 
    backcolor       =   &h00000000&
@@ -62,6 +61,13 @@ begin vb.form frmmain
       timeout         =   10000
       type            =   1
       urgent          =   0   'false
+   end
+   begin mswinsocklib.winsock winsock2 
+      left            =   5760
+      top             =   1920
+      _extentx        =   741
+      _extenty        =   741
+      _version        =   393216
    end
    begin vb.textbox sendtxt 
       backcolor       =   &h00000000&
@@ -153,14 +159,6 @@ begin vb.form frmmain
       interval        =   60000
       left            =   3120
       top             =   2520
-   end
-   begin inetctlsobjects.inet inet1 
-      left            =   7605
-      top             =   1905
-      _extentx        =   1005
-      _extenty        =   1005
-      _version        =   393216
-      requesttimeout  =   30
    end
    begin vb.picturebox panelder 
       autosize        =   -1  'true
@@ -833,14 +831,32 @@ private sub form_keyup(keycode as integer, shift as integer)
                     nombres = not nombres
                 
                 case customkeys.bindedkey(ekeytype.mkeytamanimal)
-                    call writework(eskill.domar)
-                
+                    if userestado = 1 then
+                        with fonttypes(fonttypenames.fonttype_info)
+                            call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                        end with
+                    else
+                        call writework(eskill.domar)
+                    end if
+                    
                 case customkeys.bindedkey(ekeytype.mkeysteal)
-                    call writework(eskill.robar)
-                            
+                    if userestado = 1 then
+                        with fonttypes(fonttypenames.fonttype_info)
+                            call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                        end with
+                    else
+                        call writework(eskill.robar)
+                    end if
+                    
                 case customkeys.bindedkey(ekeytype.mkeyhide)
-                    call writework(eskill.ocultarse)
-                
+                    if userestado = 1 then
+                        with fonttypes(fonttypenames.fonttype_info)
+                            call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                        end with
+                    else
+                        call writework(eskill.ocultarse)
+                    end if
+                                    
                 case customkeys.bindedkey(ekeytype.mkeydropobject)
                     call tiraritem
                 
@@ -902,6 +918,13 @@ private sub form_keyup(keycode as integer, shift as integer)
         case customkeys.bindedkey(ekeytype.mkeymeditate)
             if userminman = usermaxman then exit sub
             
+            if userestado = 1 then
+                with fonttypes(fonttypenames.fonttype_info)
+                    call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                end with
+                exit sub
+            end if
+                
             if not puedemacrear then
                 addtorichtextbox frmmain.rectxt, "no tan r�pido..!", 255, 255, 255, false, false, false
             else
@@ -910,6 +933,13 @@ private sub form_keyup(keycode as integer, shift as integer)
             end if
         
         case customkeys.bindedkey(ekeytype.mkeycastspellmacro)
+            if userestado = 1 then
+                with fonttypes(fonttypenames.fonttype_info)
+                    call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                end with
+                exit sub
+            end if
+            
             if trainingmacro.enabled then
                 desactivarmacrohechizos
             else
@@ -917,6 +947,13 @@ private sub form_keyup(keycode as integer, shift as integer)
             end if
         
         case customkeys.bindedkey(ekeytype.mkeyworkmacro)
+            if userestado = 1 then
+                with fonttypes(fonttypenames.fonttype_info)
+                    call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+                end with
+                exit sub
+            end if
+            
             if macrotrabajo.enabled then
                 desactivarmacrotrabajo
             else
@@ -924,6 +961,7 @@ private sub form_keyup(keycode as integer, shift as integer)
             end if
         
         case customkeys.bindedkey(ekeytype.mkeyexitgame)
+            if frmmain.macrotrabajo.enabled then desactivarmacrotrabajo
             call writequit
             
         case customkeys.bindedkey(ekeytype.mkeyattack)
@@ -970,7 +1008,6 @@ private sub form_queryunload(cancel as integer, unloadmode as integer)
         cancel = 1
     end if
 end sub
-
 
 private sub macro_timer()
     puedemacrear = true
@@ -1089,22 +1126,36 @@ end sub
 ''''''''''''''''''''''''''''''''''''''
 
 private sub tiraritem()
-    if (inventario.selecteditem > 0 and inventario.selecteditem < max_inventory_slots + 1) or (inventario.selecteditem = flagoro) then
-        if inventario.amount(inventario.selecteditem) = 1 then
-            call writedrop(inventario.selecteditem, 1)
-        else
-           if inventario.amount(inventario.selecteditem) > 1 then
+    if userestado = 1 then
+        with fonttypes(fonttypenames.fonttype_info)
+            call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+        end with
+    else
+        if (inventario.selecteditem > 0 and inventario.selecteditem < max_inventory_slots + 1) or (inventario.selecteditem = flagoro) then
+            if inventario.amount(inventario.selecteditem) = 1 then
+                call writedrop(inventario.selecteditem, 1)
+            else
+                if inventario.amount(inventario.selecteditem) > 1 then
                 frmcantidad.show , frmmain
-           end if
+                end if
+            end if
         end if
     end if
 end sub
 
 private sub agarraritem()
-    call writepickup
+    if userestado = 1 then
+        with fonttypes(fonttypenames.fonttype_info)
+            call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+        end with
+    else
+        call writepickup
+    end if
 end sub
 
 private sub usaritem()
+    if pausa then exit sub
+    
     if trainingmacro.enabled then desactivarmacrohechizos
     
     if (inventario.selecteditem > 0) and (inventario.selecteditem < max_inventory_slots + 1) then _
@@ -1112,8 +1163,14 @@ private sub usaritem()
 end sub
 
 private sub equiparitem()
-    if (inventario.selecteditem > 0) and (inventario.selecteditem < max_inventory_slots + 1) then _
+    if userestado = 1 then
+        with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("��est�s muerto!!", .red, .green, .blue, .bold, .italic)
+        end with
+    else
+        if (inventario.selecteditem > 0) and (inventario.selecteditem < max_inventory_slots + 1) then _
         call writeequipitem(inventario.selecteditem)
+    end if
 end sub
 
 ''''''''''''''''''''''''''''''''''''''
@@ -1237,7 +1294,7 @@ private sub form_click()
                                 frmmain.mousepointer = vbdefault
                                 usingskill = 0
                                 with fonttypes(fonttypenames.fonttype_talk)
-                                    call addtorichtextbox(frmmain.rectxt, "no pod�s lanzar hechizos tan rapido.", .red, .green, .blue, .bold, .italic)
+                                    call addtorichtextbox(frmmain.rectxt, "no puedes lanzar hechizos tan r�pido.", .red, .green, .blue, .bold, .italic)
                                 end with
                                 exit sub
                             end if
@@ -1310,6 +1367,20 @@ end sub
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
     mousex = x - mainviewshp.left
     mousey = y - mainviewshp.top
+    
+    'trim to fit screen
+    if mousex < 0 then
+        mousex = 0
+    elseif mousex > mainviewshp.width then
+        mousex = mainviewshp.width
+    end if
+    
+    'trim to fit screen
+    if mousey < 0 then
+        mousey = 0
+    elseif mousey > mainviewshp.height then
+        mousey = mainviewshp.height
+    end if
 end sub
 
 private sub hlst_keydown(keycode as integer, shift as integer)
@@ -1421,8 +1492,7 @@ private sub picinv_dblclick()
     
     if not maintimer.check(timersindex.useitemwithdblclick) then exit sub
     
-    if macrotrabajo.enabled then _
-                     desactivarmacrotrabajo
+    if macrotrabajo.enabled then desactivarmacrotrabajo
     
     call usaritem
 end sub
@@ -1588,10 +1658,6 @@ private sub socket1_disconnect()
     
     frmconnect.mousepointer = vbnormal
     
-    if not frmpasswd.visible and not frmcrearpersonaje.visible then
-        frmconnect.visible = true
-    end if
-    
     on local error resume next
     for i = 0 to forms.count - 1
         if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmoldpersonaje.name and forms(i).name <> frmcrearpersonaje.name and forms(i).name <> frmpasswd.name then
@@ -1599,6 +1665,10 @@ private sub socket1_disconnect()
         end if
     next i
     on local error goto 0
+    
+    if not frmpasswd.visible and not frmcrearpersonaje.visible then
+        frmconnect.visible = true
+    end if
     
     frmmain.visible = false
     
@@ -1767,10 +1837,6 @@ private sub winsock1_close()
     
     frmconnect.mousepointer = vbnormal
     
-    if not frmpasswd.visible and not frmcrearpersonaje.visible then
-        frmconnect.visible = true
-    end if
-    
     on local error resume next
     for i = 0 to forms.count - 1
         if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmoldpersonaje.name and forms(i).name <> frmcrearpersonaje.name and forms(i).name <> frmpasswd.name then
@@ -1778,6 +1844,10 @@ private sub winsock1_close()
         end if
     next i
     on local error goto 0
+    
+    if not frmpasswd.visible and not frmcrearpersonaje.visible then
+        frmconnect.visible = true
+    end if
     
     frmmain.visible = false
 
@@ -1893,8 +1963,14 @@ private function ingamearea() as boolean
 'last modification: 04/07/08
 'checks if last click was performed within or outside the game area.
 '***************************************************
-    if clicx < mainviewshp.left or clicx > mainviewshp.left + (32 * 17) then exit function
-    if clicy < mainviewshp.top or clicy > mainviewshp.top + (32 * 13) then exit function
+    if clicx < mainviewshp.left or clicx > mainviewshp.left + mainviewshp.width then exit function
+    if clicy < mainviewshp.top or clicy > mainviewshp.top + mainviewshp.height then exit function
     
     ingamearea = true
 end function
+
+private sub winsock2_connect()
+#if seguridadalkon = 1 then
+    call modurl.processrequest
+#end if
+end sub

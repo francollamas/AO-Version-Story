@@ -88,10 +88,6 @@ sub revivirusuario(byval userindex as integer)
         .flags.muerto = 0
         .stats.minhp = .stats.useratributos(eatributos.constitucion)
         
-        'no puede estar empollando
-        .flags.estaempo = 0
-        .empocont = 0
-        
         if .stats.minhp > .stats.maxhp then
             .stats.minhp = .stats.maxhp
         end if
@@ -178,7 +174,12 @@ sub enviarfama(byval userindex as integer)
     call writefame(userindex)
 end sub
 
-sub eraseuserchar(byval userindex as integer)
+sub eraseuserchar(byval userindex as integer, byval isadmininvisible as boolean)
+'*************************************************
+'author: unknown
+'last modified: 08/01/2009
+'08/01/2009: zama - no se borra el char de un admin invisible en todos los clientes excepto en su mismo cliente.
+'*************************************************
 
 on error goto errorhandler
     
@@ -192,8 +193,14 @@ on error goto errorhandler
             loop
         end if
         
-        'le mandamos el mensaje para que borre el personaje a los clientes que est�n cerca
-        call senddata(sendtarget.topcarea, userindex, preparemessagecharacterremove(.char.charindex))
+        ' si esta invisible, solo el sabe de su propia existencia, es innecesario borrarlo en los demas clientes
+        if isadmininvisible then
+            call enviardatosaslot(userindex, preparemessagecharacterremove(.char.charindex))
+        else
+            'le mandamos el mensaje para que borre el personaje a los clientes que est�n cerca
+            call senddata(sendtarget.topcarea, userindex, preparemessagecharacterremove(.char.charindex))
+        end if
+        
         call quitaruser(userindex, .pos.map)
         
         mapdata(.pos.map, .pos.x, .pos.y).userindex = 0
@@ -210,8 +217,9 @@ end sub
 sub refreshcharstatus(byval userindex as integer)
 '*************************************************
 'author: tararira
-'last modified: 04/21/2008 (niconz)
+'last modified: 04/07/2009
 'refreshes the status and tag of userindex.
+'04/07/2009: zama - ahora mantenes la fragata fantasmal si estas muerto.
 '*************************************************
     dim klan as string
     dim barco as objdata
@@ -233,92 +241,120 @@ sub refreshcharstatus(byval userindex as integer)
         
         'si esta navengando, se cambia la barca.
         if .flags.navegando then
-            barco = objdata(.invent.object(.invent.barcoslot).objindex)
-            
-            if .faccion.armadareal = 1 then
-                .char.body = ifragatareal
-            elseif userlist(userindex).faccion.fuerzascaos = 1 then
-                .char.body = ifragatacaos
+            if .flags.muerto = 1 then
+                .char.body = ifragatafantasmal
             else
-                if escriminal then
-                    select case barco.ropaje
-                        case ibarca
-                            .char.body = ibarcapk
-                        
-                        case igalera
-                            .char.body = igalerapk
-                        
-                        case igaleon
-                            .char.body = igaleonpk
-                    end select
+                barco = objdata(.invent.object(.invent.barcoslot).objindex)
+                
+                if .faccion.armadareal = 1 then
+                    .char.body = ifragatareal
+                elseif userlist(userindex).faccion.fuerzascaos = 1 then
+                    .char.body = ifragatacaos
                 else
-                    select case barco.ropaje
-                        case ibarca
-                            .char.body = ibarcaciuda
-                        
-                        case igalera
-                            .char.body = igaleraciuda
-                        
-                        case igaleon
-                            .char.body = igaleonciuda
-                    end select
+                    if escriminal then
+                        select case barco.ropaje
+                            case ibarca
+                                .char.body = ibarcapk
+                            
+                            case igalera
+                                .char.body = igalerapk
+                            
+                            case igaleon
+                                .char.body = igaleonpk
+                        end select
+                    else
+                        select case barco.ropaje
+                            case ibarca
+                                .char.body = ibarcaciuda
+                            
+                            case igalera
+                                .char.body = igaleraciuda
+                            
+                            case igaleon
+                                .char.body = igaleonciuda
+                        end select
+                    end if
                 end if
             end if
-            
             call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
         end if
     end with
 end sub
 
 sub makeuserchar(byval tomap as boolean, byval sndindex as integer, byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
+'*************************************************
+'author: unknown
+'last modified: 23/07/2009
+'
+'23/07/2009: budi - ahora se env�a el nick
+'*************************************************
 
 on error goto hayerror
     dim charindex as integer
-
-    if inmapbounds(map, x, y) then
-        'if needed make a new character in list
-        if userlist(userindex).char.charindex = 0 then
-            charindex = nextopencharindex
-            userlist(userindex).char.charindex = charindex
-            charlist(charindex) = userindex
-        end if
-        
-        'place character on map if needed
-        if tomap then mapdata(map, x, y).userindex = userindex
-        
-        'send make character command to clients
-        dim klan as string
-        if userlist(userindex).guildindex > 0 then
-            klan = modguilds.guildname(userlist(userindex).guildindex)
-        end if
-        
-        dim bcr as byte
-        
-        bcr = criminal(userindex)
-        
-        if lenb(klan) <> 0 then
-            if not tomap then
-                if userlist(userindex).showname then
-                    call writecharactercreate(sndindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.charindex, x, y, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.fx, 999, userlist(userindex).char.cascoanim, userlist(userindex).name & " <" & klan & ">", bcr, userlist(userindex).flags.privilegios)
+    
+    with userlist(userindex)
+    
+        if inmapbounds(map, x, y) then
+            'if needed make a new character in list
+            if .char.charindex = 0 then
+                charindex = nextopencharindex
+                .char.charindex = charindex
+                charlist(charindex) = userindex
+            end if
+            
+            'place character on map if needed
+            if tomap then mapdata(map, x, y).userindex = userindex
+            
+            'send make character command to clients
+            dim klan as string
+            if .guildindex > 0 then
+                klan = modguilds.guildname(.guildindex)
+            end if
+            
+            dim bcr as byte
+            dim bnick as string
+            dim bpriv as byte
+            
+            bcr = criminal(userindex)
+            bpriv = .flags.privilegios
+            'preparo el nick
+            if .showname then
+                if userlist(sndindex).flags.privilegios and playertype.user then
+                    if lenb(klan) <> 0 then
+                        bnick = .name & " <" & klan & ">"
+                    else
+                        bnick = .name
+                    end if
+'                    bpriv = .flags.privilegios
                 else
-                    'hide the name and clan - set privs as normal user
-                    call writecharactercreate(sndindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.charindex, x, y, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.fx, 999, userlist(userindex).char.cascoanim, vbnullstring, bcr, playertype.user)
+                    if .flags.invisible or .flags.oculto then
+                        bnick = .name & " " & tag_user_invisible
+                    else
+                        if lenb(klan) <> 0 then
+                            bnick = .name & " <" & klan & ">"
+                        else
+                            bnick = .name
+                        end if
+                    end if
+'                    bpriv = .flags.privilegios
                 end if
             else
-                call agregaruser(userindex, userlist(userindex).pos.map)
+                bnick = vbnullstring
+'                bpriv = playertype.user
             end if
-        else 'if tiene clan
+            
             if not tomap then
-                if userlist(userindex).showname then
-                    call writecharactercreate(sndindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.charindex, x, y, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.fx, 999, userlist(userindex).char.cascoanim, userlist(userindex).name, bcr, userlist(userindex).flags.privilegios)
-                else
-                    call writecharactercreate(sndindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.charindex, x, y, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.fx, 999, userlist(userindex).char.cascoanim, vbnullstring, bcr, playertype.user)
-                end if
+                call writecharactercreate(sndindex, .char.body, .char.head, .char.heading, _
+                            .char.charindex, x, y, _
+                            .char.weaponanim, .char.shieldanim, .char.fx, 999, .char.cascoanim, _
+                            bnick, bcr, bpriv)
             else
-                call agregaruser(userindex, userlist(userindex).pos.map)
+                'hide the name and clan - set privs as normal user
+                 call agregaruser(userindex, .pos.map)
             end if
-        end if 'if clan
-    end if
+            
+        end if
+    end with
 exit sub
 
 hayerror:
@@ -640,9 +676,12 @@ end function
 sub moveuserchar(byval userindex as integer, byval nheading as eheading)
 '*************************************************
 'author: unknown
-'last modified: 30/03/2009
+'last modified: 13/07/2009
 'moves the char, sending the message to everyone in range.
 '30/03/2009: zama - now it's legal to move where a casper is, changing its pos to where the moving char was.
+'28/05/2009: zama - when you are moved out of an arena, the resurrection safe is activated.
+'13/07/2009: zama - now all the clients don't know when an invisible admin moves, they force the admin to move.
+'13/07/2009: zama - invisible admins aren't allowed to force dead characater to move
 '*************************************************
     dim npos as worldpos
     dim sailing as boolean
@@ -654,55 +693,74 @@ sub moveuserchar(byval userindex as integer, byval nheading as eheading)
     npos = userlist(userindex).pos
     call headtopos(nheading, npos)
         
-   if movetolegalpos(userlist(userindex).pos.map, npos.x, npos.y, sailing, not sailing) then
+    if movetolegalpos(userlist(userindex).pos.map, npos.x, npos.y, sailing, not sailing) then
         'si no estoy solo en el mapa...
         if mapinfo(userlist(userindex).pos.map).numusers > 1 then
                
             casperindex = mapdata(userlist(userindex).pos.map, npos.x, npos.y).userindex
             'si hay un usuario, y paso la validacion, entonces es un casper
             if casperindex > 0 then
-                casperheading = invertheading(nheading)
-                casperpos = userlist(casperindex).pos
-                call headtopos(casperheading, casperpos)
-
-                with userlist(casperindex)
+                ' los admins invisibles no pueden patear caspers
+                if not (userlist(userindex).flags.admininvisible = 1) then
                     
-                    call senddata(sendtarget.topcareabutindex, casperindex, preparemessagecharactermove(.char.charindex, casperpos.x, casperpos.y))
-                    
-                    call writeforcecharmove(casperindex, casperheading)
+                    if triggerzonapelea(userindex, casperindex) = trigger6_prohibe then
+                        if userlist(casperindex).flags.seguroresu = false then
+                            userlist(casperindex).flags.seguroresu = true
+                            call writeresuscitationsafeon(casperindex)
+                        end if
+                    end if
+    
+                    casperheading = invertheading(nheading)
+                    casperpos = userlist(casperindex).pos
+                    call headtopos(casperheading, casperpos)
+    
+                    with userlist(casperindex)
                         
-                    'update map and user pos
-                    .pos = casperpos
-                    .char.heading = casperheading
-                    mapdata(.pos.map, casperpos.x, casperpos.y).userindex = casperindex
-                end with
-            
-                'actualizamos las �reas de ser necesario
-                call modareas.checkupdateneededuser(casperindex, casperheading)
+                        ' si es un admin invisible, no se avisa a los demas clientes
+                        if not .flags.admininvisible = 1 then _
+                            call senddata(sendtarget.topcareabutindex, casperindex, preparemessagecharactermove(.char.charindex, casperpos.x, casperpos.y))
+                        
+                        call writeforcecharmove(casperindex, casperheading)
+                            
+                        'update map and user pos
+                        .pos = casperpos
+                        .char.heading = casperheading
+                        mapdata(.pos.map, casperpos.x, casperpos.y).userindex = casperindex
+                    
+                    end with
                 
+                    'actualizamos las �reas de ser necesario
+                    call modareas.checkupdateneededuser(casperindex, casperheading)
+                end if
             end if
 
             
-            call senddata(sendtarget.topcareabutindex, userindex, _
-                    preparemessagecharactermove(userlist(userindex).char.charindex, npos.x, npos.y))
+            ' si es un admin invisible, no se avisa a los demas clientes
+            if not userlist(userindex).flags.admininvisible = 1 then _
+                call senddata(sendtarget.topcareabutindex, userindex, preparemessagecharactermove(userlist(userindex).char.charindex, npos.x, npos.y))
             
         end if
         
-        dim olduserindex as integer
-        
-        olduserindex = mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex
-        
-        ' si no hay intercambio de pos con nadie
-        if olduserindex = userindex then
-            mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = 0
+        ' los admins invisibles no pueden patear caspers
+        if not ((userlist(userindex).flags.admininvisible = 1) and casperindex <> 0) then
+            dim olduserindex as integer
+            
+            olduserindex = mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex
+            
+            ' si no hay intercambio de pos con nadie
+            if olduserindex = userindex then
+                mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = 0
+            end if
+            
+            userlist(userindex).pos = npos
+            userlist(userindex).char.heading = nheading
+            mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = userindex
+            
+            'actualizamos las �reas de ser necesario
+            call modareas.checkupdateneededuser(userindex, nheading)
+        else
+            call writeposupdate(userindex)
         end if
-        
-        userlist(userindex).pos = npos
-        userlist(userindex).char.heading = nheading
-        mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = userindex
-        
-        'actualizamos las �reas de ser necesario
-        call modareas.checkupdateneededuser(userindex, nheading)
 
     else
         call writeposupdate(userindex)
@@ -732,7 +790,6 @@ public function invertheading(byval nheading as eheading) as eheading
             invertheading = south
     end select
 end function
-
 
 sub changeuserinv(byval userindex as integer, byval slot as byte, byref object as userobj)
     userlist(userindex).invent.object(slot) = object
@@ -1067,7 +1124,6 @@ sub npcatacado(byval npcindex as integer, byval userindex as integer)
         end if
     end if
 end sub
-
 public function puedeapu�alar(byval userindex as integer) as boolean
 
     if userlist(userindex).invent.weaponeqpobjindex > 0 then
@@ -1132,9 +1188,11 @@ end sub
 sub userdie(byval userindex as integer)
 '************************************************
 'author: uknown
-'last modified: 13/02/2009
+'last modified: 21/07/2009
 '04/15/2008: niconz - ahora se resetea el counter del invi
-'13/02/2009: ahora se borran las mascotas cuando moris en agua.
+'13/02/2009: zama - ahora se borran las mascotas cuando moris en agua.
+'27/05/2009: zama - el seguro de resu no se activa si estas en una arena.
+'21/07/2009: marco - al morir se desactiva el comercio seguro.
 '************************************************
 on error goto errorhandler
     dim i as long
@@ -1156,8 +1214,14 @@ on error goto errorhandler
         .flags.atacadoporuser = 0
         .flags.envenenado = 0
         .flags.muerto = 1
-        .flags.seguroresu = true
-        call writeresuscitationsafeon(userindex)
+        ' no se activa en arenas
+        if triggerzonapelea(userindex, userindex) <> trigger6_permite then
+            .flags.seguroresu = true
+            call writeresuscitationsafeon(userindex)
+        else
+            .flags.seguroresu = false
+            call writeresuscitationsafeoff(userindex)
+        end if
         
         an = .flags.atacadopornpc
         if an > 0 then
@@ -1206,7 +1270,8 @@ on error goto errorhandler
             .counters.tiempooculto = 0
             .counters.invisibilidad = 0
             
-            call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+            'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+            call setinvisible(userindex, userlist(userindex).char.charindex, false)
         end if
         
         if triggerzonapelea(userindex, userindex) <> etrigger6.trigger6_permite then
@@ -1303,6 +1368,9 @@ on error goto errorhandler
         if .partyindex > 0 then
             call mdparty.obtenerexito(userindex, .stats.elv * -10 * mdparty.cantmiembros(userindex), .pos.map, .pos.x, .pos.y)
         end if
+        
+        '<<cerramos comercio seguro>>
+        call limpiarcomercioseguro(userindex)
     end with
 exit sub
 
@@ -1336,6 +1404,9 @@ sub contarmuerte(byval muerto as integer, byval atacante as integer)
                     .faccion.ciudadanosmatados = .faccion.ciudadanosmatados + 1
             end if
         end if
+        
+        if .stats.usuariosmatados < maxusermatados then _
+            .stats.usuariosmatados = .stats.usuariosmatados + 1
     end with
 end sub
 
@@ -1387,6 +1458,11 @@ sub tilelibre(byref pos as worldpos, byref npos as worldpos, byref obj as obj, b
 end sub
 
 sub warpuserchar(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer, byval fx as boolean)
+'**************************************************************
+'author: unknown
+'last modify date: 15/07/2009
+'15/07/2009 - zama: automatic toogle navigate after warping to water.
+'**************************************************************
     dim oldmap as integer
     dim oldx as integer
     dim oldy as integer
@@ -1400,8 +1476,8 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         oldmap = .pos.map
         oldx = .pos.x
         oldy = .pos.y
-        
-        call eraseuserchar(userindex)
+
+        call eraseuserchar(userindex, .flags.admininvisible = 1)
         
         if oldmap <> map then
             call writechangemap(userindex, map, mapinfo(.pos.map).mapversion)
@@ -1429,7 +1505,8 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         
         'seguis invisible al pasar de mapa
         if (.flags.invisible = 1 or .flags.oculto = 1) and (not .flags.admininvisible = 1) then
-            call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, true))
+            call setinvisible(userindex, .char.charindex, true)
+            'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, true))
         end if
         
         if fx and .flags.admininvisible = 0 then 'fx
@@ -1438,15 +1515,37 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         end if
         
         if .nromascotas then call warpmascotas(userindex)
+        
+        
+        ' automatic toogle navigate
+        if (.flags.privilegios and (playertype.user or playertype.consejero)) = 0 then
+            if hayagua(.pos.map, .pos.x, .pos.y) then
+                if .flags.navegando = 0 then
+                    .flags.navegando = 1
+                        
+                    'tell the client that we are navigating.
+                    call writenavigatetoggle(userindex)
+                end if
+            else
+                if .flags.navegando = 1 then
+                    .flags.navegando = 0
+                            
+                    'tell the client that we are navigating.
+                    call writenavigatetoggle(userindex)
+                end if
+            end if
+        end if
+      
     end with
 end sub
 
 private sub warpmascotas(byval userindex as integer)
 '************************************************
 'author: uknown
-'last modified: 13/02/2009
+'last modified: 11/05/2009
 '13/02/2009: zama - arreglado respawn de mascotas al cambiar de mapa.
 '13/02/2009: zama - las mascotas no regeneran su vida al cambiar de mapa (solo entre mapas inseguros).
+'11/05/2009: zama - chequeo si la mascota pueden spwnear para asiganrle los stats.
 '************************************************
     dim i as integer
     dim pettype as integer
@@ -1499,22 +1598,24 @@ private sub warpmascotas(byval userindex as integer)
         
         if pettype > 0 and canwarp then
             index = spawnnpc(pettype, userlist(userindex).pos, false, petrespawn)
-            userlist(userindex).mascotasindex(i) = index
-
-            ' nos aseguramos de que conserve el hp, si estaba da�ado
-            npclist(index).stats.minhp = iif(iminhp = 0, npclist(index).stats.minhp, iminhp)
             
             'controlamos que se sumoneo ok - should never happen. continue to allow removal of other pets if not alone
+            ' exception: pets don't spawn in water if they can't swim
             if index = 0 then
                 call writeconsolemsg(userindex, "tus mascotas no pueden transitar este mapa.", fonttypenames.fonttype_info)
-            end if
+            else
+                userlist(userindex).mascotasindex(i) = index
+
+                ' nos aseguramos de que conserve el hp, si estaba da�ado
+                npclist(index).stats.minhp = iif(iminhp = 0, npclist(index).stats.minhp, iminhp)
             
-            npclist(index).maestrouser = userindex
-            npclist(index).movement = tipoai.sigueamo
-            npclist(index).target = 0
-            npclist(index).targetnpc = 0
-            npclist(index).contadores.tiempoexistencia = pettiempodevida
-            call followamo(index)
+                npclist(index).maestrouser = userindex
+                npclist(index).movement = tipoai.sigueamo
+                npclist(index).target = 0
+                npclist(index).targetnpc = 0
+                npclist(index).contadores.tiempoexistencia = pettiempodevida
+                call followamo(index)
+            end if
         end if
     next i
     
@@ -1551,7 +1652,8 @@ sub cerrar_usuario(byval userindex as integer)
             userlist(userindex).flags.oculto = 0
             userlist(userindex).flags.invisible = 0
             call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-            call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
+            call setinvisible(userindex, userlist(userindex).char.charindex, false)
+            'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
         end if
         
         call writeconsolemsg(userindex, "cerrando...se cerrar� el juego en " & userlist(userindex).counters.salir & " segundos...", fonttypenames.fonttype_info)
@@ -1598,15 +1700,6 @@ public sub cambiarnick(byval userindex as integer, byval userindexdestino as int
         'hace un backup del char
         viejocharbackup = charpath & viejonick & ".chr.old-"
         name charpath & viejonick & ".chr" as viejocharbackup
-    end if
-end sub
-
-public sub empollando(byval userindex as integer)
-    if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).objinfo.objindex > 0 then
-        userlist(userindex).flags.estaempo = 1
-    else
-        userlist(userindex).flags.estaempo = 0
-        userlist(userindex).empocont = 0
     end if
 end sub
 
@@ -1708,3 +1801,20 @@ public function bodyisboat(byval body as integer) as boolean
         bodyisboat = true
     end if
 end function
+
+public sub setinvisible(byval userindex as integer, byval usercharindex as integer, byval invisible as boolean)
+dim sndnick as string
+dim klan as string
+call senddata(sendtarget.tousersareabutgms, userindex, preparemessagesetinvisible(usercharindex, invisible))
+
+if invisible then
+    sndnick = userlist(userindex).name & " " & tag_user_invisible
+else
+    sndnick = userlist(userindex).name
+    if userlist(userindex).guildindex > 0 then
+        sndnick = sndnick & " <" & modguilds.guildname(userlist(userindex).guildindex) & ">"
+    end if
+end if
+
+call senddata(sendtarget.togmsarea, userindex, preparemessagecharacterchangenick(usercharindex, sndnick))
+end sub

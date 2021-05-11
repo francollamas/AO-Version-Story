@@ -132,8 +132,9 @@ end sub
 public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
+'last modify date: 15/07/2009
 'es la funci�n clave del sistema de areas... es llamada al mover un user
+'15/07/2009: zama - now it doesn't send an invisible admin char info
 '**************************************************************
     if userlist(userindex).areasinfo.areaid = areasinfo(userlist(userindex).pos.x, userlist(userindex).pos.y) then exit sub
     
@@ -206,15 +207,28 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
                     tempint = mapdata(map, x, y).userindex
                     
                     if userindex <> tempint then
-                        call makeuserchar(false, userindex, tempint, map, x, y)
-                        call makeuserchar(false, tempint, userindex, .pos.map, .pos.x, .pos.y)
                         
-                        'si el user estaba invisible le avisamos al nuevo cliente de eso
-                        if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
-                            call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
+                        ' solo avisa al otro cliente si no es un admin invisible
+                        if not (userlist(tempint).flags.admininvisible = 1) then
+                            call makeuserchar(false, userindex, tempint, map, x, y)
+                            
+                            'si el user estaba invisible le avisamos al nuevo cliente de eso
+                            if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
+                                if userlist(userindex).flags.privilegios and playertype.user then
+                                    call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
+                                end if
+                            end if
                         end if
-                        if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
-                            call writesetinvisible(tempint, userlist(userindex).char.charindex, true)
+                        
+                        ' solo avisa al otro cliente si no es un admin invisible
+                        if not (userlist(userindex).flags.admininvisible = 1) then
+                            call makeuserchar(false, tempint, userindex, .pos.map, .pos.x, .pos.y)
+                            
+                            if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
+                                if userlist(tempint).flags.privilegios and playertype.user then
+                                    call writesetinvisible(tempint, userlist(userindex).char.charindex, true)
+                                end if
+                            end if
                         end if
                         
                         call flushbuffer(tempint)

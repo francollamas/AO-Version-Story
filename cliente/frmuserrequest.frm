@@ -5,6 +5,7 @@ begin vb.form frmuserrequest
    clientleft      =   60
    clienttop       =   345
    clientwidth     =   4650
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"

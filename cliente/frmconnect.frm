@@ -18,7 +18,6 @@ begin vb.form frmconnect
    scaleheight     =   600
    scalemode       =   3  'pixel
    scalewidth      =   800
-   showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    visible         =   0   'false
    begin vb.commandbutton downloadserver 
@@ -197,7 +196,7 @@ private sub downloadserver_click()
 'cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo,
 'no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.
 '***********************************
-    call shellexecute(0, "open", "http://downloads.sourceforge.net/morgoao/aoserversrc0.12.1.zip?use_mirror=osdn", "", app.path, 0)
+    call shellexecute(0, "open", "https://sourceforge.net/project/downloading.php?group_id=67718&filename=aoserversrc0.12.2.zip&a=42868900", "", app.path, sw_shownormal)
 end sub
 
 private sub form_activate()

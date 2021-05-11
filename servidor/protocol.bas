@@ -40,7 +40,7 @@ private const separator as string * 1 = vbnullchar
 
 ''
 'the last existing client packet id.
-private const last_client_packet_id as byte = 244
+private const last_client_packet_id as byte = 246
 
 ''
 'auxiliar bytequeue used as buffer to generate messages not intended to be sent right away.
@@ -94,6 +94,7 @@ private enum serverpacketid
     usercharindexinserver   ' ip
     charactercreate         ' cc
     characterremove         ' bp
+    characterchangenick
     charactermove           ' mp, +, * and _ '
     forcecharmove
     characterchange         ' cp
@@ -206,6 +207,7 @@ private enum clientpacketid
     bankdeposit             'depo
     forumpost               'demsg
     movespell               'desphe
+    movebank
     clancodexupdate         'descod
     usercommerceoffer       'ofrecer
     guildacceptpeace        'aceppeat
@@ -408,6 +410,7 @@ private enum clientpacketid
     chatcolor               '/chatcolor
     ignored                 '/ignorado
     checkslot               '/slot
+    setinivar               '/setinivar llave clave valor
 end enum
 
 public enum fonttypenames
@@ -449,7 +452,10 @@ public enum eeditoptions
     eo_asesino
     eo_sex
     eo_raza
+    eo_addgold
 end enum
+
+
 
 ''
 ' handles incoming data.
@@ -626,6 +632,9 @@ on error resume next
         
         case clientpacketid.movespell               'desphe
             call handlemovespell(userindex)
+            
+        case clientpacketid.movebank
+            call handlemovebank(userindex)
         
         case clientpacketid.clancodexupdate         'descod
             call handleclancodexupdate(userindex)
@@ -1228,7 +1237,10 @@ on error resume next
         
         case clientpacketid.checkslot               '/slot
             call handlecheckslot(userindex)
-        
+            
+        case clientpacketid.setinivar               '/setinivar llave clave valor
+            call handlesetinivar(userindex)
+            
 #if seguridadalkon then
         case else
             call handleincomingdataex(userindex)
@@ -1510,8 +1522,9 @@ end sub
 private sub handletalk(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 23/09/2009
+'15/07/2009: zama - now invisible admins talk by console.
+'23/09/2009: zama - now invisible admins can't send empty chat.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -1542,7 +1555,8 @@ on error goto errhandler
             .flags.oculto = 0
             .counters.tiempooculto = 0
             if .flags.invisible = 0 then
-                call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                call usuarios.setinvisible(userindex, userlist(userindex).char.charindex, false)
+                'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
                 call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
             end if
         end if
@@ -1551,10 +1565,16 @@ on error goto errhandler
             'analize chat...
             call statistics.parsechat(chat)
             
-            if .flags.muerto = 1 then
-                call senddata(sendtarget.todeadarea, userindex, preparemessagechatoverhead(chat, .char.charindex, chat_color_dead_char))
+            if not (.flags.admininvisible = 1) then
+                if .flags.muerto = 1 then
+                    call senddata(sendtarget.todeadarea, userindex, preparemessagechatoverhead(chat, .char.charindex, chat_color_dead_char))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(chat, .char.charindex, .flags.chatcolor))
+                end if
             else
-                call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(chat, .char.charindex, .flags.chatcolor))
+                if rtrim(chat) <> "" then
+                    call senddata(sendtarget.topcarea, userindex, preparemessageconsolemsg("gm> " & chat, fonttypenames.fonttype_gm))
+                end if
             end if
         end if
         
@@ -1582,8 +1602,8 @@ end sub
 private sub handleyell(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 15/07/2009
+'15/07/2009: zama - now invisible admins yell by console.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -1604,35 +1624,42 @@ on error goto errhandler
         
         chat = buffer.readasciistring()
         
-        if userlist(userindex).flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos.", fonttypenames.fonttype_info)
-        else
-            '[consejeros & gms]
-            if .flags.privilegios and (playertype.consejero or playertype.semidios) then
-                call loggm(.name, "grito: " & chat)
-            end if
+
+        '[consejeros & gms]
+        if .flags.privilegios and (playertype.consejero or playertype.semidios) then
+            call loggm(.name, "grito: " & chat)
+        end if
             
-            'i see you....
-            if .flags.oculto > 0 then
-                .flags.oculto = 0
-                .counters.tiempooculto = 0
-                if .flags.invisible = 0 then
-                    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
-                    call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
-                end if
+        'i see you....
+        if .flags.oculto > 0 then
+            .flags.oculto = 0
+            .counters.tiempooculto = 0
+            if .flags.invisible = 0 then
+                'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                call usuarios.setinvisible(userindex, .char.charindex, false)
+                call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
             end if
+        end if
             
-            if lenb(chat) <> 0 then
-                'analize chat...
-                call statistics.parsechat(chat)
+        if lenb(chat) <> 0 then
+            'analize chat...
+            call statistics.parsechat(chat)
                 
-                if .flags.privilegios and playertype.user then
-                    call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(chat, .char.charindex, vbred))
+            if .flags.privilegios and playertype.user then
+                if userlist(userindex).flags.muerto = 1 then
+                    call senddata(sendtarget.todeadarea, userindex, preparemessagechatoverhead(chat, .char.charindex, chat_color_dead_char))
                 else
+                    call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(chat, .char.charindex, vbred))
+                end if
+            else
+                if not (.flags.admininvisible = 1) then
                     call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(chat, .char.charindex, chat_color_gm_yell))
+                else
+                    call senddata(sendtarget.topcarea, userindex, preparemessageconsolemsg("gm> " & chat, fonttypenames.fonttype_gm))
                 end if
             end if
         end if
+        
         
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
@@ -1658,8 +1685,9 @@ end sub
 private sub handlewhisper(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 15/07/2009
+'28/05/2009: zama - now it doesn't appear any message when private talking to an invisible admin
+'15/07/2009: zama - now invisible admins wisper by console.
 '***************************************************
     if userlist(userindex).incomingdata.length < 5 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -1685,22 +1713,25 @@ on error goto errhandler
         
         targetuserindex = charindextouserindex(targetcharindex)
         
-        targetpriv = userlist(targetuserindex).flags.privilegios
-        
         if .flags.muerto then
             call writeconsolemsg(userindex, "��estas muerto!! los muertos no pueden comunicarse con el mundo de los vivos. ", fonttypenames.fonttype_info)
         else
             if targetuserindex = invalid_index then
                 call writeconsolemsg(userindex, "usuario inexistente.", fonttypenames.fonttype_info)
             else
+                targetpriv = userlist(targetuserindex).flags.privilegios
+                'a los dioses y admins no vale susurrarles si no sos uno vos mismo (as� no pueden ver si est�n conectados o no)
                 if (targetpriv and (playertype.dios or playertype.admin)) <> 0 and (.flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 then
-                    'a los dioses y admins no vale susurrarles si no sos uno vos mismo (as� no pueden ver si est�n conectados o no)
-                    call writeconsolemsg(userindex, "no puedes susurrarle a los dioses y admins.", fonttypenames.fonttype_info)
-                
+                    ' controlamos que no este invisible
+                    if userlist(targetuserindex).flags.admininvisible <> 1 then
+                        call writeconsolemsg(userindex, "no puedes susurrarle a los dioses y admins.", fonttypenames.fonttype_info)
+                    end if
+                'a los consejeros y semidioses no vale susurrarles si sos un pj com�n.
                 elseif (.flags.privilegios and playertype.user) <> 0 and (not targetpriv and playertype.user) <> 0 then
-                    'a los consejeros y semidioses no vale susurrarles si sos un pj com�n.
-                    call writeconsolemsg(userindex, "no puedes susurrarle a los gms.", fonttypenames.fonttype_info)
-                
+                    ' controlamos que no este invisible
+                    if userlist(targetuserindex).flags.admininvisible <> 1 then
+                        call writeconsolemsg(userindex, "no puedes susurrarle a los gms.", fonttypenames.fonttype_info)
+                    end if
                 elseif not estapcarea(userindex, targetuserindex) then
                     call writeconsolemsg(userindex, "estas muy lejos del usuario.", fonttypenames.fonttype_info)
                 
@@ -1714,13 +1745,22 @@ on error goto errhandler
                         'analize chat...
                         call statistics.parsechat(chat)
                         
-                        call writechatoverhead(userindex, chat, .char.charindex, vbblue)
-                        call writechatoverhead(targetuserindex, chat, .char.charindex, vbblue)
-                        call flushbuffer(targetuserindex)
-                        
-                        '[cdt 17-02-2004]
-                        if .flags.privilegios and (playertype.user or playertype.consejero) then
-                            call senddata(sendtarget.toadminsareabutconsejeros, userindex, preparemessagechatoverhead("a " & userlist(targetuserindex).name & "> " & chat, .char.charindex, vbyellow))
+                        if not (.flags.admininvisible = 1) then
+                            call writechatoverhead(userindex, chat, .char.charindex, vbblue)
+                            call writechatoverhead(targetuserindex, chat, .char.charindex, vbblue)
+                            call flushbuffer(targetuserindex)
+                            
+                            '[cdt 17-02-2004]
+                            if .flags.privilegios and (playertype.user or playertype.consejero) then
+                                call senddata(sendtarget.toadminsareabutconsejeros, userindex, preparemessagechatoverhead("a " & userlist(targetuserindex).name & "> " & chat, .char.charindex, vbyellow))
+                            end if
+                        else
+                            call writeconsolemsg(userindex, "susurraste> " & chat, fonttypenames.fonttype_gm)
+                            if userindex <> targetuserindex then call writeconsolemsg(targetuserindex, "gm susurra> " & chat, fonttypenames.fonttype_gm)
+                            
+                            if .flags.privilegios and (playertype.user or playertype.consejero) then
+                                call senddata(sendtarget.toadminsareabutconsejeros, userindex, preparemessageconsolemsg("gm dijo a " & userlist(targetuserindex).name & "> " & chat, fonttypenames.fonttype_gm))
+                            end if
                         end if
                     end if
                 end if
@@ -1845,16 +1885,10 @@ private sub handlewalk(byval userindex as integer)
                 'if not under a spell effect, show char
                 if .flags.invisible = 0 then
                     call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-                    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                    'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                    call usuarios.setinvisible(userindex, .char.charindex, false)
                 end if
             end if
-        end if
-        
-        if .flags.muerto = 1 then
-            call empollando(userindex)
-        else
-            .flags.estaempo = 0
-            .empocont = 0
         end if
     end with
 end sub
@@ -1928,7 +1962,8 @@ private sub handleattack(byval userindex as integer)
             .flags.oculto = 0
             .counters.tiempooculto = 0
             if .flags.invisible = 0 then
-                call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                call usuarios.setinvisible(userindex, .char.charindex, false)
                 call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
             end if
         end if
@@ -1943,18 +1978,18 @@ end sub
 private sub handlepickup(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 07/25/09
+'02/26/2006: marco - agregu� un checkeo por si el usuario trata de agarrar un item mientras comercia.
 '***************************************************
     with userlist(userindex)
         'remove packet id
         call .incomingdata.readbyte
         
         'if dead, it can't pick up objects
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��est�s muerto!! los muertos no pueden tomar objetos.", fonttypenames.fonttype_info)
-            exit sub
-        end if
+        if .flags.muerto = 1 then exit sub
+        
+        'if user is trading items and attempts to pickup an item, he's cheating, so we kick him.
+        if .flags.comerciando then exit sub
         
         'lower rank administrators can't pick up items
         if .flags.privilegios and playertype.consejero then
@@ -2255,8 +2290,8 @@ end sub
 private sub handledrop(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 07/25/09
+'07/25/09: marco - agregu� un checkeo para patear a los usuarios que tiran items mientras comercian.
 '***************************************************
     if userlist(userindex).incomingdata.length < 4 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -2273,10 +2308,14 @@ private sub handledrop(byval userindex as integer)
         slot = .incomingdata.readbyte()
         amount = .incomingdata.readinteger()
         
+
         'low rank admins can't drop item. neither can the dead nor those sailing.
         if .flags.navegando = 1 or _
            .flags.muerto = 1 or _
            ((.flags.privilegios and playertype.consejero) <> 0 and (not .flags.privilegios and playertype.rolemaster) <> 0) then exit sub
+
+        'if the user is trading, he can't drop items => he's cheating, we kick him.
+        if .flags.comerciando then exit sub
 
         'are we dropping gold or other items??
         if slot = flagoro then
@@ -2421,10 +2460,7 @@ private sub handlework(byval userindex as integer)
         
         skill = .incomingdata.readbyte()
         
-        if userlist(userindex).flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��est�s muerto!!.", fonttypenames.fonttype_info)
-            exit sub
-        end if
+        if userlist(userindex).flags.muerto = 1 then exit sub
         
         'if exiting, cancel
         call cancelexit(userindex)
@@ -2614,10 +2650,8 @@ private sub handleworkleftclick(byval userindex as integer)
         
         
         if .flags.muerto = 1 or .flags.descansar or .flags.meditando _
-                        or not inmapbounds(.pos.map, x, y) then
-            exit sub
-        end if
-        
+        or not inmapbounds(.pos.map, x, y) then exit sub
+
         if not inrangovision(userindex, x, y) then
             call writeposupdate(userindex)
             exit sub
@@ -2671,9 +2705,9 @@ private sub handleworkleftclick(byval userindex as integer)
                     call quitarsta(userindex, randomnumber(1, 10))
                 else
                     if .genero = egenero.hombre then
-                        call writeconsolemsg(userindex, "estas muy cansado para luchar.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "est�s muy cansado para luchar.", fonttypenames.fonttype_info)
                     else
-                        call writeconsolemsg(userindex, "estas muy cansada para luchar.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "est�s muy cansada para luchar.", fonttypenames.fonttype_info)
                     end if
                     exit sub
                 end if
@@ -2805,7 +2839,7 @@ private sub handleworkleftclick(byval userindex as integer)
                     'play sound!
                     call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_pescar, .pos.x, .pos.y))
                 else
-                    call writeconsolemsg(userindex, "no hay agua donde pescar. busca un lago, rio o mar.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "no hay agua donde pescar. busca un lago, r�o o mar.", fonttypenames.fonttype_info)
                 end if
             
             case eskill.robar
@@ -2869,7 +2903,7 @@ private sub handleworkleftclick(byval userindex as integer)
                 
                 if dummyint > 0 then
                     if abs(.pos.x - x) + abs(.pos.y - y) > 2 then
-                        call writeconsolemsg(userindex, "estas demasiado lejos.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
                         exit sub
                     end if
                     
@@ -2918,7 +2952,7 @@ private sub handleworkleftclick(byval userindex as integer)
                         call writeconsolemsg(userindex, "ah� no hay ning�n yacimiento.", fonttypenames.fonttype_info)
                     end if
                 else
-                    call writeconsolemsg(userindex, "ah� no hay ningun yacimiento.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "ah� no hay ning�n yacimiento.", fonttypenames.fonttype_info)
                 end if
             
             case eskill.domar
@@ -2947,7 +2981,7 @@ private sub handleworkleftclick(byval userindex as integer)
                         call writeconsolemsg(userindex, "no pod�s domar a esa criatura.", fonttypenames.fonttype_info)
                     end if
                 else
-                    call writeconsolemsg(userindex, "no hay ninguna criatura alli!.", fonttypenames.fonttype_info)
+                    call writeconsolemsg(userindex, "no hay ninguna criatura all�!.", fonttypenames.fonttype_info)
                 end if
             
             case fundirmetal    'ugly!!! this is a constant, not a skill!!
@@ -3011,8 +3045,8 @@ end sub
 private sub handlecreatenewguild(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 05/11/09
+'05/11/09: pato - ahora se quitan los espacios del principio y del fin del nombre del clan
 '***************************************************
     if userlist(userindex).incomingdata.length < 9 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -3035,7 +3069,7 @@ on error goto errhandler
         dim errorstr as string
         
         desc = buffer.readasciistring()
-        guildname = buffer.readasciistring()
+        guildname = trim$(buffer.readasciistring())
         site = buffer.readasciistring()
         codex = split(buffer.readasciistring(), separator)
         
@@ -3139,10 +3173,7 @@ private sub handleequipitem(byval userindex as integer)
         itemslot = .incomingdata.readbyte()
         
         'dead users can't equip items
-        if .flags.muerto = 1 then
-            call writeconsolemsg(userindex, "��est�s muerto!! s�lo pod�s usar items cuando est�s vivo.", fonttypenames.fonttype_info)
-            exit sub
-        end if
+        if .flags.muerto = 1 then exit sub
         
         'validate item slot
         if itemslot > max_inventory_slots or itemslot < 1 then exit sub
@@ -3615,6 +3646,59 @@ private sub handlemovespell(byval userindex as integer)
         
         call desplazarhechizo(userindex, dir, .readbyte())
     end with
+end sub
+
+''
+' handles the "movebank" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handlemovebank(byval userindex as integer)
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 06/14/09
+'
+'***************************************************
+    if userlist(userindex).incomingdata.length < 3 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    with userlist(userindex).incomingdata
+        'remove packet id
+        call .readbyte
+        
+        dim dir as integer
+        dim slot as byte
+        dim tempitem as obj
+        
+        if .readboolean() then
+            dir = 1
+        else
+            dir = -1
+        end if
+        
+        slot = .readbyte()
+    end with
+        
+    with userlist(userindex)
+        tempitem.objindex = .bancoinvent.object(slot).objindex
+        tempitem.amount = .bancoinvent.object(slot).amount
+        
+        if dir = 1 then 'mover arriba
+            .bancoinvent.object(slot) = .bancoinvent.object(slot - 1)
+            .bancoinvent.object(slot - 1).objindex = tempitem.objindex
+            .bancoinvent.object(slot - 1).amount = tempitem.amount
+        else 'mover abajo
+            .bancoinvent.object(slot) = .bancoinvent.object(slot + 1)
+            .bancoinvent.object(slot + 1).objindex = tempitem.objindex
+            .bancoinvent.object(slot + 1).amount = tempitem.amount
+        end if
+    end with
+    
+    call updatebanuserinv(true, userindex, 0)
+    call updateventanabanco(userindex)
+
 end sub
 
 ''
@@ -5697,8 +5781,9 @@ end sub
 private sub handleguildmessage(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 02/03/09
-'02/03/09: zama - arreglado un indice mal pasado a la funcion de cartel de clanes overhead.
+'last modification: 15/07/2009
+'02/03/2009: zama - arreglado un indice mal pasado a la funcion de cartel de clanes overhead.
+'15/07/2009: zama - now invisible admins only speak by console
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -5724,7 +5809,9 @@ on error goto errhandler
             
             if .guildindex > 0 then
                 call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & "> " & chat))
-                call senddata(sendtarget.toclanarea, userindex, preparemessagechatoverhead("< " & chat & " >", .char.charindex, vbyellow))
+                
+                if not (.flags.admininvisible = 1) then _
+                    call senddata(sendtarget.toclanarea, userindex, preparemessagechatoverhead("< " & chat & " >", .char.charindex, vbyellow))
             end if
         end if
         
@@ -6169,8 +6256,8 @@ end sub
 private sub handlepunishments(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 25/08/2009
+'25/08/2009: zama - now only admins can see other admins' punishment list
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -6205,18 +6292,22 @@ on error goto errhandler
                 name = replace(name, "|", "")
             end if
             
-            if fileexist(charpath & name & ".chr", vbnormal) then
-                count = val(getvar(charpath & name & ".chr", "penas", "cant"))
-                if count = 0 then
-                    call writeconsolemsg(userindex, "sin prontuario..", fonttypenames.fonttype_info)
-                else
-                    while count > 0
-                        call writeconsolemsg(userindex, count & " - " & getvar(charpath & name & ".chr", "penas", "p" & count), fonttypenames.fonttype_info)
-                        count = count - 1
-                    wend
-                end if
+            if (esadmin(name) or esdios(name) or essemidios(name) or esconsejero(name) or esrolesmaster(name)) and (userlist(userindex).flags.privilegios and playertype.user) then
+                call writeconsolemsg(userindex, "no puedes ver las penas de los administradores", fonttypenames.fonttype_info)
             else
-                call writeconsolemsg(userindex, "personaje """ & name & """ inexistente.", fonttypenames.fonttype_info)
+                if fileexist(charpath & name & ".chr", vbnormal) then
+                    count = val(getvar(charpath & name & ".chr", "penas", "cant"))
+                    if count = 0 then
+                        call writeconsolemsg(userindex, "sin prontuario..", fonttypenames.fonttype_info)
+                    else
+                        while count > 0
+                            call writeconsolemsg(userindex, count & " - " & getvar(charpath & name & ".chr", "penas", "p" & count), fonttypenames.fonttype_info)
+                            count = count - 1
+                        wend
+                    end if
+                else
+                    call writeconsolemsg(userindex, "personaje """ & name & """ inexistente.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -8106,8 +8197,9 @@ end sub
 private sub handleeditchar(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 02/03/2009
-'02/03/2009: zama -  cuando editas nivel, chequea si el pj peude permanecer en clan faccionario
+'last modification: 11/06/2009
+'02/03/2009: zama - cuando editas nivel, chequea si el pj puede permanecer en clan faccionario
+'11/06/2009: zama - todos los comandos se pueden usar aunque el pj este offline
 '***************************************************
     if userlist(userindex).incomingdata.length < 8 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -8132,6 +8224,9 @@ on error goto errhandler
         dim loopc as byte
         dim commandstring as string
         dim n as byte
+        dim usercharpath as string
+        dim var as long
+        
         
         username = replace(buffer.readasciistring(), "+", " ")
         
@@ -8166,263 +8261,305 @@ on error goto errhandler
                             opcion = eeditoptions.eo_citicenskilled or _
                             opcion = eeditoptions.eo_criminalskilled or _
                             opcion = eeditoptions.eo_class or _
-                            opcion = eeditoptions.eo_skills
+                            opcion = eeditoptions.eo_skills or _
+                            opcion = eeditoptions.eo_addgold
             end select
             
         elseif .flags.privilegios and (playertype.admin or playertype.dios) then   'si no es rm debe ser dios para poder usar este comando
             valido = true
         end if
-        
+
         if valido then
-            select case opcion
-                case eeditoptions.eo_gold
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        if val(arg1) < 5000000 then
-                            userlist(tuser).stats.gld = val(arg1)
-                            call writeupdategold(tuser)
+            usercharpath = charpath & username & ".chr"
+            if tuser <= 0 and not fileexist(usercharpath) then
+                call writeconsolemsg(userindex, "esta intentando editar un usuario inexistente.", fonttypenames.fonttype_info)
+                call loggm(.name, "intento editar un usuario inexistente.")
+            else
+                'for making the log
+                commandstring = "/mod "
+                
+                select case opcion
+                    case eeditoptions.eo_gold
+                        if val(arg1) < max_oro_edit then
+                            if tuser <= 0 then ' esta offline?
+                                call writevar(usercharpath, "stats", "gld", val(arg1))
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else ' online
+                                userlist(tuser).stats.gld = val(arg1)
+                                call writeupdategold(tuser)
+                            end if
                         else
                             call writeconsolemsg(userindex, "no esta permitido utilizar valores mayores. su comando ha quedado en los logs del juego.", fonttypenames.fonttype_info)
                         end if
-                    end if
+                    
+                        ' log it
+                        commandstring = commandstring & "oro "
                 
-                case eeditoptions.eo_experience
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
+                    case eeditoptions.eo_experience
                         if val(arg1) > 20000000 then
-                            arg1 = 20000000
+                                arg1 = 20000000
                         end if
-                            
-                        userlist(tuser).stats.exp = userlist(tuser).stats.exp + val(arg1)
-                        call checkuserlevel(tuser)
-                        call writeupdateexp(tuser)
                         
-                    end if
-                
-                case eeditoptions.eo_body
-                    if tuser <= 0 then
-                        call writevar(charpath & username & ".chr", "init", "body", arg1)
-                        call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
-                    else
-                        call changeuserchar(tuser, val(arg1), userlist(tuser).char.head, userlist(tuser).char.heading, userlist(tuser).char.weaponanim, userlist(tuser).char.shieldanim, userlist(tuser).char.cascoanim)
-                    end if
-                
-                case eeditoptions.eo_head
-                    if tuser <= 0 then
-                        call writevar(charpath & username & ".chr", "init", "head", arg1)
-                        call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
-                    else
-                        call changeuserchar(tuser, userlist(tuser).char.body, val(arg1), userlist(tuser).char.heading, userlist(tuser).char.weaponanim, userlist(tuser).char.shieldanim, userlist(tuser).char.cascoanim)
-                    end if
-                
-                case eeditoptions.eo_criminalskilled
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        if val(arg1) > maxusermatados then
-                            userlist(tuser).faccion.criminalesmatados = maxusermatados
-                        else
-                            userlist(tuser).faccion.criminalesmatados = val(arg1)
+                        if tuser <= 0 then ' offline
+                            var = getvar(usercharpath, "stats", "exp")
+                            call writevar(usercharpath, "stats", "exp", var + val(arg1))
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).stats.exp = userlist(tuser).stats.exp + val(arg1)
+                            call checkuserlevel(tuser)
+                            call writeupdateexp(tuser)
                         end if
-                    end if
-                
-                case eeditoptions.eo_citicenskilled
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        if val(arg1) > maxusermatados then
-                            userlist(tuser).faccion.ciudadanosmatados = maxusermatados
+                        
+                        ' log it
+                        commandstring = commandstring & "exp "
+                    
+                    case eeditoptions.eo_body
+                        if tuser <= 0 then
+                            call writevar(usercharpath, "init", "body", arg1)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
                         else
-                            userlist(tuser).faccion.ciudadanosmatados = val(arg1)
+                            call changeuserchar(tuser, val(arg1), userlist(tuser).char.head, userlist(tuser).char.heading, userlist(tuser).char.weaponanim, userlist(tuser).char.shieldanim, userlist(tuser).char.cascoanim)
                         end if
-                    end if
-                
-                case eeditoptions.eo_level
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
+                        
+                        ' log it
+                        commandstring = commandstring & "body "
+                    
+                    case eeditoptions.eo_head
+                        if tuser <= 0 then
+                            call writevar(usercharpath, "init", "head", arg1)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else
+                            call changeuserchar(tuser, userlist(tuser).char.body, val(arg1), userlist(tuser).char.heading, userlist(tuser).char.weaponanim, userlist(tuser).char.shieldanim, userlist(tuser).char.cascoanim)
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "head "
+                    
+                    case eeditoptions.eo_criminalskilled
+                        var = iif(val(arg1) > maxusermatados, maxusermatados, val(arg1))
+                        
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "facciones", "crimmatados", var)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).faccion.criminalesmatados = var
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "cri "
+                    
+                    case eeditoptions.eo_citicenskilled
+                        var = iif(val(arg1) > maxusermatados, maxusermatados, val(arg1))
+                        
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "facciones", "ciudmatados", var)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).faccion.ciudadanosmatados = var
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "ciu "
+                    
+                    case eeditoptions.eo_level
                         if val(arg1) > stat_maxelv then
                             arg1 = cstr(stat_maxelv)
                             call writeconsolemsg(userindex, "no puedes tener un nivel superior a " & stat_maxelv & ".", fonttype_info)
                         end if
                         
-                        userlist(tuser).stats.elv = val(arg1)
-                        
-                        with userlist(tuser)
-                        
-                            ' chequeamos si puede permanecer en el clan
-                            if .stats.elv >= 25 then
-                                dim gi as integer
-                                gi = .guildindex
-                                if gi > 0 then
-                                    if modguilds.guildalignment(gi) = "legi�n oscura" or modguilds.guildalignment(gi) = "armada real" then
-                                        'we get here, so guild has factionary alignment, we have to expulse the user
-                                        call modguilds.m_echarmiembrodeclan(-1, .name)
-                                        call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg(.name & " deja el clan.", fonttypenames.fonttype_guild))
+                        ' chequeamos si puede permanecer en el clan
+                        if val(arg1) >= 25 then
+                            
+                            dim gi as integer
+                            if tuser <= 0 then
+                                gi = getvar(usercharpath, "guild", "guildindex")
+                            else
+                                gi = userlist(tuser).guildindex
+                            end if
+                            
+                            if gi > 0 then
+                                if modguilds.guildalignment(gi) = "legi�n oscura" or modguilds.guildalignment(gi) = "armada real" then
+                                    'we get here, so guild has factionary alignment, we have to expulse the user
+                                    call modguilds.m_echarmiembrodeclan(-1, username)
+                                    
+                                    call senddata(sendtarget.toguildmembers, gi, preparemessageconsolemsg(username & " deja el clan.", fonttypenames.fonttype_guild))
+                                    ' si esta online le avisamos
+                                    if tuser > 0 then _
                                         call writeconsolemsg(tuser, "�ya tienes la madurez suficiente como para decidir bajo que estandarte pelear�s! por esta raz�n, hasta tanto no te enlistes en la facci�n bajo la cual tu clan est� alineado, estar�s exclu�do del mismo.", fonttypenames.fonttype_guild)
-                                    end if
                                 end if
                             end if
+                        end if
                         
-                        end with
-
-                    end if
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "stats", "elv", val(arg1))
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).stats.elv = val(arg1)
+                            call writeupdateuserstats(tuser)
+                        end if
                     
-                    call writeupdateuserstats(userindex)
-                
-                case eeditoptions.eo_class
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
+                        ' log it
+                        commandstring = commandstring & "level "
+                    
+                    case eeditoptions.eo_class
                         for loopc = 1 to numclases
                             if ucase$(listaclases(loopc)) = ucase$(arg1) then exit for
                         next loopc
-                        
+                            
                         if loopc > numclases then
                             call writeconsolemsg(userindex, "clase desconocida. intente nuevamente.", fonttypenames.fonttype_info)
                         else
-                            userlist(tuser).clase = loopc
+                            if tuser <= 0 then ' offline
+                                call writevar(usercharpath, "init", "clase", loopc)
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else ' online
+                                userlist(tuser).clase = loopc
+                            end if
                         end if
-                    end if
-                
-                case eeditoptions.eo_skills
-                    for loopc = 1 to numskills
-                        if ucase$(replace$(skillsnames(loopc), " ", "+")) = ucase$(arg1) then exit for
-                    next loopc
                     
-                    if loopc > numskills then
-                        call writeconsolemsg(userindex, "skill inexistente!", fonttypenames.fonttype_info)
-                    else
-                        if tuser <= 0 then
-                            call writevar(charpath & username & ".chr", "skills", "sk" & loopc, arg2)
+                        ' log it
+                        commandstring = commandstring & "clase "
+                        
+                    case eeditoptions.eo_skills
+                        for loopc = 1 to numskills
+                            if ucase$(replace$(skillsnames(loopc), " ", "+")) = ucase$(arg1) then exit for
+                        next loopc
+                        
+                        if loopc > numskills then
+                            call writeconsolemsg(userindex, "skill inexistente!", fonttypenames.fonttype_info)
+                        else
+                            if tuser <= 0 then ' offline
+                                call writevar(usercharpath, "skills", "sk" & loopc, arg2)
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else ' online
+                                userlist(tuser).stats.userskills(loopc) = val(arg2)
+                            end if
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "skills "
+                    
+                    case eeditoptions.eo_skillpointsleft
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "stats", "skillptslibres", arg1)
                             call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
-                        else
-                            userlist(tuser).stats.userskills(loopc) = val(arg2)
+                        else ' online
+                            userlist(tuser).stats.skillpts = val(arg1)
                         end if
-                    end if
-                
-                case eeditoptions.eo_skillpointsleft
-                    if tuser <= 0 then
-                        call writevar(charpath & username & ".chr", "stats", "skillptslibres", arg1)
-                        call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
-                    else
-                        userlist(tuser).stats.skillpts = val(arg1)
-                    end if
-                
-                case eeditoptions.eo_nobleza
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        if val(arg1) > maxrep then
-                            userlist(tuser).reputacion.noblerep = maxrep
-                        else
-                            userlist(tuser).reputacion.noblerep = val(arg1)
+                        
+                        ' log it
+                        commandstring = commandstring & "skillslibres "
+                    
+                    case eeditoptions.eo_nobleza
+                        var = iif(val(arg1) > maxrep, maxrep, val(arg1))
+                        
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "rep", "nobles", var)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).reputacion.noblerep = var
                         end if
-                    end if
-                
-                case eeditoptions.eo_asesino
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        if val(arg1) > maxrep then
-                            userlist(tuser).reputacion.asesinorep = maxrep
-                        else
-                            userlist(tuser).reputacion.asesinorep = val(arg1)
+                    
+                        ' log it
+                        commandstring = commandstring & "nob "
+                        
+                    case eeditoptions.eo_asesino
+                        var = iif(val(arg1) > maxrep, maxrep, val(arg1))
+                        
+                        if tuser <= 0 then ' offline
+                            call writevar(usercharpath, "rep", "asesino", var)
+                            call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                        else ' online
+                            userlist(tuser).reputacion.asesinorep = var
                         end if
-                    end if
-                
-                case eeditoptions.eo_sex
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
+                        
+                        ' log it
+                        commandstring = commandstring & "ase "
+                    
+                    case eeditoptions.eo_sex
+                        dim sex as byte
+                        sex = iif(ucase(arg1) = "mujer", egenero.mujer, 0) ' mujer?
+                        sex = iif(ucase(arg1) = "hombre", egenero.hombre, sex) ' hombre?
+                        
+                        if sex <> 0 then ' es hombre o mujer?
+                            if tuser <= 0 then ' offline
+                                call writevar(usercharpath, "init", "genero", sex)
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else ' online
+                                userlist(tuser).genero = sex
+                            end if
+                        else
+                            call writeconsolemsg(userindex, "genero desconocido. intente nuevamente.", fonttypenames.fonttype_info)
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "sex "
+                    
+                    case eeditoptions.eo_raza
+                        dim raza as byte
+                        
                         arg1 = ucase$(arg1)
-                        if (arg1 = "mujer") then
-                            userlist(tuser).genero = egenero.mujer
-                        elseif (arg1 = "hombre") then
-                            userlist(tuser).genero = egenero.hombre
+                        select case arg1
+                            case "humano"
+                                raza = eraza.humano
+                            case "elfo"
+                                raza = eraza.elfo
+                            case "drow"
+                                raza = eraza.drow
+                            case "enano"
+                                raza = eraza.enano
+                            case "gnomo"
+                                raza = eraza.gnomo
+                            case else
+                                raza = 0
+                        end select
+                        
+                            
+                        if raza = 0 then
+                            call writeconsolemsg(userindex, "raza desconocida. intente nuevamente.", fonttypenames.fonttype_info)
+                        else
+                            if tuser <= 0 then
+                                call writevar(usercharpath, "init", "raza", raza)
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else
+                                userlist(tuser).raza = raza
+                            end if
                         end if
-                    end if
-                
-                case eeditoptions.eo_raza
-                    if tuser <= 0 then
-                        call writeconsolemsg(userindex, "usuario offline: " & username, fonttypenames.fonttype_info)
-                    else
-                        arg1 = ucase$(arg1)
-                        if (arg1 = "humano") then
-                            userlist(tuser).raza = eraza.humano
-                        elseif (arg1 = "elfo") then
-                            userlist(tuser).raza = eraza.elfo
-                        elseif (arg1 = "drow") then
-                            userlist(tuser).raza = eraza.drow
-                        elseif (arg1 = "enano") then
-                            userlist(tuser).raza = eraza.enano
-                        elseif (arg1 = "gnomo") then
-                            userlist(tuser).raza = eraza.gnomo
+                            
+                        ' log it
+                        commandstring = commandstring & "raza "
+                        
+                    case eeditoptions.eo_addgold
+                    
+                        dim bankgold as long
+                        
+                        if abs(arg1) > max_oro_edit then
+                            call writeconsolemsg(userindex, "no est� permitido utilizar valores mayores a " & max_oro_edit & ".", fonttypenames.fonttype_info)
+                        else
+                            if tuser <= 0 then
+                                bankgold = getvar(charpath & username & ".chr", "stats", "banco")
+                                call writevar(usercharpath, "stats", "banco", iif(bankgold + val(arg1) <= 0, 0, bankgold + val(arg1)))
+                                call writeconsolemsg(userindex, "se le ha agregado " & arg1 & " monedas de oro a " & username & ".", fonttype_talk)
+                            else
+                                userlist(tuser).stats.banco = iif(userlist(tuser).stats.banco + val(arg1) <= 0, 0, userlist(tuser).stats.banco + val(arg1))
+                                call writeconsolemsg(tuser, standard_bounty_hunter_message, fonttype_talk)
+                            end if
                         end if
-                    end if
+                        
+                        ' log it
+                        commandstring = commandstring & "agregar "
+                        
+                    case else
+                        call writeconsolemsg(userindex, "comando no permitido.", fonttypenames.fonttype_info)
+                        commandstring = commandstring & "unkown "
+                        
+                end select
                 
-                case else
-                    call writeconsolemsg(userindex, "comando no permitido.", fonttypenames.fonttype_info)
-            end select
+                commandstring = commandstring & arg1 & " " & arg2
+                call loggm(.name, commandstring & " " & username)
+                
+            end if
         end if
-        
-        'log it!
-        commandstring = "/mod "
-        
-        select case opcion
-            case eeditoptions.eo_gold
-                commandstring = commandstring & "oro "
-            
-            case eeditoptions.eo_experience
-                commandstring = commandstring & "exp "
-            
-            case eeditoptions.eo_body
-                commandstring = commandstring & "body "
-            
-            case eeditoptions.eo_head
-                commandstring = commandstring & "head "
-            
-            case eeditoptions.eo_criminalskilled
-                commandstring = commandstring & "cri "
-            
-            case eeditoptions.eo_citicenskilled
-                commandstring = commandstring & "ciu "
-            
-            case eeditoptions.eo_level
-                commandstring = commandstring & "level "
-            
-            case eeditoptions.eo_class
-                commandstring = commandstring & "clase "
-            
-            case eeditoptions.eo_skills
-                commandstring = commandstring & "skills "
-            
-            case eeditoptions.eo_skillpointsleft
-                commandstring = commandstring & "skillslibres "
-                
-            case eeditoptions.eo_nobleza
-                commandstring = commandstring & "nob "
-                
-            case eeditoptions.eo_asesino
-                commandstring = commandstring & "ase "
-                
-            case eeditoptions.eo_sex
-                commandstring = commandstring & "sex "
-                
-            case eeditoptions.eo_raza
-                commandstring = commandstring & "raza "
-                
-            case else
-                commandstring = commandstring & "unkown "
-        end select
-        
-        commandstring = commandstring & arg1 & " " & arg2
-        
-        if valido then _
-            call loggm(.name, commandstring & " " & username)
-        
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
     end with
@@ -8438,6 +8575,7 @@ on error goto 0
     if error <> 0 then _
         err.raise error
 end sub
+
 
 ''
 ' handles the "requestcharinfo" message.
@@ -10479,7 +10617,7 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) then
+        if ((.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 or ((.flags.privilegios and (playertype.semidios or playertype.rolemaster)) = (playertype.semidios or playertype.rolemaster))) then
             tuser = nameindex(username)
             'para deteccion de aoice
             if tuser <= 0 then
@@ -10535,7 +10673,7 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) then
+        if ((.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 or ((.flags.privilegios and (playertype.semidios or playertype.rolemaster)) = (playertype.semidios or playertype.rolemaster))) then
             tuser = nameindex(username)
             'para deteccion de aoice
             if tuser <= 0 then
@@ -10876,9 +11014,10 @@ end sub
 private sub handlebanip(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/12/08
+'last modification: 07/02/09
 'agregado un copybuffer porque se producia un bucle
 'inifito al intentar banear una ip ya baneada. (niconz)
+'07/02/09 pato - ahora no es posible saber si un gm est� o no online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 6 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -10908,37 +11047,33 @@ on error goto errhandler
         else
             tuser = nameindex(buffer.readasciistring())
             
-            if tuser <= 0 then
-                call writeconsolemsg(userindex, "el personaje no est� online.", fonttypenames.fonttype_info)
-            else
-                bannedip = userlist(tuser).ip
-            end if
+            if tuser > 0 then bannedip = userlist(tuser).ip
         end if
         
         reason = buffer.readasciistring()
         
-        if lenb(bannedip) > 0 then
-            if .flags.privilegios and (playertype.admin or playertype.dios) then
+        
+        if .flags.privilegios and (playertype.admin or playertype.dios) then
+            if lenb(bannedip) > 0 then
                 call loggm(.name, "/banip " & bannedip & " por " & reason)
                 
                 if banipbuscar(bannedip) > 0 then
                     call writeconsolemsg(userindex, "la ip " & bannedip & " ya se encuentra en la lista de bans.", fonttypenames.fonttype_info)
-                    call .incomingdata.copybuffer(buffer) ' agregado porque sino no se sacaba del
-                                                          ' buffer y se hacia un bucle infinito. (niconz) 05/12/2008
-                    exit sub
-                end if
-                
-                call banipagrega(bannedip)
-                call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " bane� la ip " & bannedip & " por " & reason, fonttypenames.fonttype_fight))
-                
-                'find every player with that ip and ban him!
-                for i = 1 to lastuser
-                    if userlist(i).connidvalida then
-                        if userlist(i).ip = bannedip then
-                            call bancharacter(userindex, userlist(i).name, "ip por " & reason)
+                else
+                    call banipagrega(bannedip)
+                    call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " bane� la ip " & bannedip & " por " & reason, fonttypenames.fonttype_fight))
+                    
+                    'find every player with that ip and ban him!
+                    for i = 1 to lastuser
+                        if userlist(i).connidvalida then
+                            if userlist(i).ip = bannedip then
+                                call bancharacter(userindex, userlist(i).name, "ip por " & reason)
+                            end if
                         end if
-                    end if
-                next i
+                    next i
+                end if
+            elseif tuser <= 0 then
+                call writeconsolemsg(userindex, "el personaje no est� online.", fonttypenames.fonttype_info)
             end if
         end if
         
@@ -11935,7 +12070,7 @@ public sub handlechangemapinfobackup(byval userindex as integer)
         
         dothebackup = .incomingdata.readboolean()
         
-        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios or playertype.rolemaster) then exit sub
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) = 0 then exit sub
         
         call loggm(.name, .name & " ha cambiado la informaci�n sobre el backup")
         
@@ -11978,7 +12113,7 @@ public sub handlechangemapinfopk(byval userindex as integer)
         
         ismappk = .incomingdata.readboolean()
         
-        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios or playertype.rolemaster) then exit sub
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) = 0 then exit sub
         
         call loggm(.name, .name & " ha cambiado la informacion sobre si es pk el mapa.")
         
@@ -12020,7 +12155,7 @@ on error goto errhandler
         
         tstr = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             if tstr = "newbie" or tstr = "no" or tstr = "armada" or tstr = "caos" or tstr = "faccion" then
                 call loggm(.name, .name & " ha cambiado la informacion sobre si es restringido el mapa.")
                 mapinfo(userlist(userindex).pos.map).restringir = tstr
@@ -12071,7 +12206,7 @@ public sub handlechangemapinfonomagic(byval userindex as integer)
         
         nomagic = .incomingdata.readboolean
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             call loggm(.name, .name & " ha cambiado la informacion sobre si esta permitido usar la magia el mapa.")
             mapinfo(userlist(userindex).pos.map).magiasinefecto = nomagic
             call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "magiasinefecto", nomagic)
@@ -12104,7 +12239,7 @@ public sub handlechangemapinfonoinvi(byval userindex as integer)
         
         noinvi = .incomingdata.readboolean()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             call loggm(.name, .name & " ha cambiado la informacion sobre si esta permitido usar invisibilidad el mapa.")
             mapinfo(userlist(userindex).pos.map).invisinefecto = noinvi
             call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "invisinefecto", noinvi)
@@ -12137,7 +12272,7 @@ public sub handlechangemapinfonoresu(byval userindex as integer)
         
         noresu = .incomingdata.readboolean()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             call loggm(.name, .name & " ha cambiado la informacion sobre si esta permitido usar resucitar el mapa.")
             mapinfo(userlist(userindex).pos.map).resusinefecto = noresu
             call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "resusinefecto", noresu)
@@ -12175,7 +12310,7 @@ on error goto errhandler
         
         tstr = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             if tstr = "bosque" or tstr = "nieve" or tstr = "desierto" or tstr = "ciudad" or tstr = "campo" or tstr = "dungeon" then
                 call loggm(.name, .name & " ha cambiado la informacion del terreno del mapa.")
                 mapinfo(userlist(userindex).pos.map).terreno = tstr
@@ -12232,7 +12367,7 @@ on error goto errhandler
         
         tstr = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             if tstr = "bosque" or tstr = "nieve" or tstr = "desierto" or tstr = "ciudad" or tstr = "campo" or tstr = "dungeon" then
                 call loggm(.name, .name & " ha cambiado la informacion de la zona del mapa.")
                 mapinfo(userlist(userindex).pos.map).zona = tstr
@@ -12924,7 +13059,7 @@ end sub
 public sub handleresetfactions(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 12/26/06
+'last modification: 06/09/09
 '
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
@@ -12943,6 +13078,7 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
+        dim char as string
         
         username = buffer.readasciistring()
         
@@ -12951,8 +13087,31 @@ on error goto errhandler
             
             tuser = nameindex(username)
             
-            if tuser > 0 then _
+            if tuser > 0 then
                 call resetfacciones(tuser)
+            else
+                char = charpath & username & ".chr"
+                
+                if fileexist(char, vbnormal) then
+                    call writevar(char, "facciones", "ejercitoreal", 0)
+                    call writevar(char, "facciones", "ciudmatados", 0)
+                    call writevar(char, "facciones", "crimmatados", 0)
+                    call writevar(char, "facciones", "ejercitocaos", 0)
+                    call writevar(char, "facciones", "fechaingreso", "no ingres� a ninguna facci�n")
+                    call writevar(char, "facciones", "rarcaos", 0)
+                    call writevar(char, "facciones", "rarreal", 0)
+                    call writevar(char, "facciones", "rexcaos", 0)
+                    call writevar(char, "facciones", "rexreal", 0)
+                    call writevar(char, "facciones", "reccaos", 0)
+                    call writevar(char, "facciones", "recreal", 0)
+                    call writevar(char, "facciones", "reenlistadas", 0)
+                    call writevar(char, "facciones", "nivelingreso", 0)
+                    call writevar(char, "facciones", "matadosingreso", 0)
+                    call writevar(char, "facciones", "nextrecompensa", 0)
+                else
+                    call writeconsolemsg(userindex, "el personaje " & username & " no existe.", fonttypenames.fonttype_info)
+                end if
+            end if
         end if
         
         'if we got here then packet is complete, copy data back to original queue
@@ -13256,6 +13415,71 @@ public sub handleping(byval userindex as integer)
         
         call writepong(userindex)
     end with
+end sub
+
+''
+' handle the "setinivar" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handlesetinivar(byval userindex as integer)
+'***************************************************
+'author: brian chaia (brianpr)
+'last modification: 21/06/09
+'modify server.ini
+'***************************************************
+    if userlist(userindex).incomingdata.length < 6 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+
+on error goto errhandler
+    with userlist(userindex)
+        'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+        dim buffer as new clsbytequeue
+        call buffer.copybuffer(.incomingdata)
+        
+        'remove packet id
+        call buffer.readbyte
+        
+        dim sllave as string
+        dim sclave as string
+        dim svalor as string
+        
+        'obtengo los par�metros
+        sllave = buffer.readasciistring()
+        sclave = buffer.readasciistring()
+        svalor = buffer.readasciistring()
+    
+        if .flags.privilegios and (playertype.admin or playertype.dios) then
+            dim stmp as string
+            'obtengo el valor seg�n llave y clave
+            stmp = getvar(inipath & "server.ini", sllave, sclave)
+            
+            'si obtengo un valor escribo en el server.ini
+            if lenb(stmp) then
+                call writevar(inipath & "server.ini", sllave, sclave, svalor)
+                call loggm(.name, "modific� en server.ini (" & sllave & " " & sclave & ") el valor " & stmp & " por " & svalor)
+                call writeconsolemsg(userindex, "modific� " & sllave & " " & sclave & " a " & svalor & ". valor anterior " & stmp, fonttypenames.fonttype_info)
+            else
+                call writeconsolemsg(userindex, "no existe la llave y/o clave", fonttypenames.fonttype_info)
+            end if
+        end if
+        
+        'if we got here then packet is complete, copy data back to original queue
+        call .incomingdata.copybuffer(buffer)
+    end with
+
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+    
+    if error <> 0 then _
+        err.raise error
 end sub
 
 ''
@@ -16429,6 +16653,22 @@ public function preparemessagesetinvisible(byval charindex as integer, byval inv
         call .writeboolean(invisible)
         
         preparemessagesetinvisible = .readasciistringfixed(.length)
+    end with
+end function
+
+public function preparemessagecharacterchangenick(byval charindex as integer, byval newnick as string) as string
+'***************************************************
+'author: budi
+'last modification: 07/23/09
+'prepares the "change nick" message and returns it.
+'***************************************************
+    with auxiliarbuffer
+        call .writebyte(serverpacketid.characterchangenick)
+        
+        call .writeinteger(charindex)
+        call .writeasciistring(newnick)
+        
+        preparemessagecharacterchangenick = .readasciistringfixed(.length)
     end with
 end function
 

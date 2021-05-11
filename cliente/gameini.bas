@@ -63,6 +63,8 @@ public type tsetupmods
     bnomusic    as boolean
     bnosound    as boolean
     bnores      as boolean ' 24/06/2006 - ^[gs]^
+    bnosoundeffects as boolean
+    sgraficos   as string * 13
 end type
 
 public clientsetup as tsetupmods

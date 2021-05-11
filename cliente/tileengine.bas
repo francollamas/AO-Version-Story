@@ -701,11 +701,13 @@ sub movecharbyhead(byval charindex as integer, byval nheading as e_heading)
         .scrolldirectiony = addy
     end with
     
-    if userestado <> 1 then call dopasosfx(charindex)
+    if userestado = 0 then call dopasosfx(charindex)
     
     'areas viejos
     if (ny < minlimitey) or (ny > maxlimitey) or (nx < minlimitex) or (nx > maxlimitex) then
-        call erasechar(charindex)
+        if charindex <> usercharindex then
+            call erasechar(charindex)
+        end if
     end if
 end sub
 
@@ -768,22 +770,15 @@ on error resume next
         
         if sgn(addx) = 1 then
             nheading = e_heading.east
-        end if
-        
-        if sgn(addx) = -1 then
+        elseif sgn(addx) = -1 then
             nheading = e_heading.west
-        end if
-        
-        if sgn(addy) = -1 then
+        elseif sgn(addy) = -1 then
             nheading = e_heading.north
-        end if
-        
-        if sgn(addy) = 1 then
+        elseif sgn(addy) = 1 then
             nheading = e_heading.south
         end if
         
         mapdata(nx, ny).charindex = charindex
-        
         
         .pos.x = nx
         .pos.y = ny
@@ -905,7 +900,8 @@ on error goto errorhandler
     
     'open files
     handle = freefile()
-    open inipath & "graficos.ind" for binary access read as handle
+    
+    open inipath & graphicsfile for binary access read as handle
     seek #1, 1
     
     'get file version
@@ -1013,6 +1009,62 @@ function legalpos(byval x as integer, byval y as integer) as boolean
     legalpos = true
 end function
 
+function movetolegalpos(byval x as integer, byval y as integer) as boolean
+'*****************************************************************
+'author: zama
+'last modify date: 01/08/2009
+'checks to see if a tile position is legal, including if there is a casper in the tile
+'10/05/2009: zama - now you can't change position with a casper which is in the shore.
+'01/08/2009: zama - now invisible admins can't change position with caspers.
+'*****************************************************************
+    dim charindex as integer
+    
+    'limites del mapa
+    if x < minxborder or x > maxxborder or y < minyborder or y > maxyborder then
+        exit function
+    end if
+    
+    'tile bloqueado?
+    if mapdata(x, y).blocked = 1 then
+        exit function
+    end if
+    
+    charindex = mapdata(x, y).charindex
+    '�hay un personaje?
+    if charindex > 0 then
+    
+        if mapdata(userpos.x, userpos.y).blocked = 1 then
+            exit function
+        end if
+        
+        with charlist(charindex)
+            ' si no es casper, no puede pasar
+            if .ihead <> casper_head and .ibody <> fragata_fantasmal then
+                exit function
+            else
+                ' no puedo intercambiar con un casper que este en la orilla (lado tierra)
+                if hayagua(userpos.x, userpos.y) then
+                    if not hayagua(x, y) then exit function
+                else
+                    ' no puedo intercambiar con un casper que este en la orilla (lado agua)
+                    if hayagua(x, y) then exit function
+                end if
+                
+                ' los admins no pueden intercambiar pos con caspers cuando estan invisibles
+                if charlist(usercharindex).priv > 0 and charlist(usercharindex).priv < 6 then
+                    if charlist(usercharindex).invisible = true then exit function
+                end if
+            end if
+        end with
+    end if
+   
+    if usernavegando <> hayagua(x, y) then
+        exit function
+    end if
+    
+    movetolegalpos = true
+end function
+
 function inmapbounds(byval x as integer, byval y as integer) as boolean
 '*****************************************************************
 'checks to see if a tile position is in the maps bounds
@@ -1027,7 +1079,8 @@ end function
 private sub ddrawgrhtosurface(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte)
     dim currentgrhindex as integer
     dim sourcerect as rect
-    
+on error goto error
+        
     if animate then
         if grh.started = 1 then
             grh.framecounter = grh.framecounter + (timerelapsedtime * grhdata(grh.grhindex).numframes / grh.speed)
@@ -1048,51 +1101,62 @@ private sub ddrawgrhtosurface(byref grh as grh, byval x as integer, byval y as i
     'figure out what frame to draw (always 1 if not animated)
     currentgrhindex = grhdata(grh.grhindex).frames(grh.framecounter)
     
-    'center grh over x,y pos
-    if center then
-        if grhdata(currentgrhindex).tilewidth <> 1 then
-            x = x - int(grhdata(currentgrhindex).tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+    with grhdata(currentgrhindex)
+        'center grh over x,y pos
+        if center then
+            if .tilewidth <> 1 then
+                x = x - int(.tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+            end if
+            
+            if .tileheight <> 1 then
+                y = y - int(.tileheight * tilepixelheight) + tilepixelheight
+            end if
         end if
         
-        if grhdata(currentgrhindex).tileheight <> 1 then
-            y = y - int(grhdata(currentgrhindex).tileheight * tilepixelheight) + tilepixelheight
-        end if
-    end if
-    
-    with sourcerect
-        .left = grhdata(currentgrhindex).sx
-        .top = grhdata(currentgrhindex).sy
-        .right = .left + grhdata(currentgrhindex).pixelwidth
-        .bottom = .top + grhdata(currentgrhindex).pixelheight
+        sourcerect.left = .sx
+        sourcerect.top = .sy
+        sourcerect.right = sourcerect.left + .pixelwidth
+        sourcerect.bottom = sourcerect.top + .pixelheight
+        
+        'draw
+        call backbuffersurface.bltfast(x, y, surfacedb.surface(.filenum), sourcerect, ddbltfast_wait)
     end with
-    
-    'draw
-    call backbuffersurface.bltfast(x, y, surfacedb.surface(grhdata(currentgrhindex).filenum), sourcerect, ddbltfast_wait)
+exit sub
+
+error:
+    if err.number = 9 and grh.framecounter < 1 then
+        grh.framecounter = 1
+        resume
+    else
+        msgbox "ocurri� un error inesperado, por favor comuniquelo a los administradores del juego." & vbcrlf & "descripci�n del error: " & _
+        vbcrlf & err.description, vbexclamation, "[ " & err.number & " ] error"
+        end
+    end if
 end sub
 
 sub ddrawtransgrhindextosurface(byval grhindex as integer, byval x as integer, byval y as integer, byval center as byte)
     dim sourcerect as rect
     
-    'center grh over x,y pos
-    if center then
-        if grhdata(grhindex).tilewidth <> 1 then
-            x = x - int(grhdata(grhindex).tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+    with grhdata(grhindex)
+        'center grh over x,y pos
+        if center then
+            if .tilewidth <> 1 then
+                x = x - int(.tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+            end if
+            
+            if .tileheight <> 1 then
+                y = y - int(.tileheight * tilepixelheight) + tilepixelheight
+            end if
         end if
         
-        if grhdata(grhindex).tileheight <> 1 then
-            y = y - int(grhdata(grhindex).tileheight * tilepixelheight) + tilepixelheight
-        end if
-    end if
-    
-    with sourcerect
-        .left = grhdata(grhindex).sx
-        .top = grhdata(grhindex).sy
-        .right = .left + grhdata(grhindex).pixelwidth
-        .bottom = .top + grhdata(grhindex).pixelheight
+        sourcerect.left = .sx
+        sourcerect.top = .sy
+        sourcerect.right = sourcerect.left + .pixelwidth
+        sourcerect.bottom = sourcerect.top + .pixelheight
+        
+        'draw
+        call backbuffersurface.bltfast(x, y, surfacedb.surface(.filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait)
     end with
-    
-    'draw
-    call backbuffersurface.bltfast(x, y, surfacedb.surface(grhdata(grhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait)
 end sub
 
 sub ddrawtransgrhtosurface(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte)
@@ -1101,6 +1165,8 @@ sub ddrawtransgrhtosurface(byref grh as grh, byval x as integer, byval y as inte
 '*****************************************************************
     dim currentgrhindex as integer
     dim sourcerect as rect
+    
+on error goto error
     
     if animate then
         if grh.started = 1 then
@@ -1123,26 +1189,37 @@ sub ddrawtransgrhtosurface(byref grh as grh, byval x as integer, byval y as inte
     'figure out what frame to draw (always 1 if not animated)
     currentgrhindex = grhdata(grh.grhindex).frames(grh.framecounter)
     
-    'center grh over x,y pos
-    if center then
-        if grhdata(currentgrhindex).tilewidth <> 1 then
-            x = x - int(grhdata(currentgrhindex).tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+    with grhdata(currentgrhindex)
+        'center grh over x,y pos
+        if center then
+            if .tilewidth <> 1 then
+                x = x - int(.tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+            end if
+            
+            if .tileheight <> 1 then
+                y = y - int(.tileheight * tilepixelheight) + tilepixelheight
+            end if
         end if
+                
+        sourcerect.left = .sx
+        sourcerect.top = .sy
+        sourcerect.right = sourcerect.left + .pixelwidth
+        sourcerect.bottom = sourcerect.top + .pixelheight
         
-        if grhdata(currentgrhindex).tileheight <> 1 then
-            y = y - int(grhdata(currentgrhindex).tileheight * tilepixelheight) + tilepixelheight
-        end if
-    end if
-    
-    with sourcerect
-        .left = grhdata(currentgrhindex).sx
-        .top = grhdata(currentgrhindex).sy
-        .right = .left + grhdata(currentgrhindex).pixelwidth
-        .bottom = .top + grhdata(currentgrhindex).pixelheight
+        'draw
+        call backbuffersurface.bltfast(x, y, surfacedb.surface(.filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait)
     end with
-    
-    'draw
-    call backbuffersurface.bltfast(x, y, surfacedb.surface(grhdata(currentgrhindex).filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait)
+exit sub
+
+error:
+    if err.number = 9 and grh.framecounter < 1 then
+        grh.framecounter = 1
+        resume
+    else
+        msgbox "ocurri� un error inesperado, por favor comuniquelo a los administradores del juego." & vbcrlf & "descripci�n del error: " & _
+        vbcrlf & err.description, vbexclamation, "[ " & err.number & " ] error"
+        end
+    end if
 end sub
 
 #if conalfab = 1 then
@@ -1153,6 +1230,11 @@ sub ddrawtransgrhtosurfacealpha(byref grh as grh, byval x as integer, byval y as
 '*****************************************************************
     dim currentgrhindex as integer
     dim sourcerect as rect
+    dim src as directdrawsurface7
+    dim rdest as rect
+    dim darray() as byte, sarray() as byte
+    dim ddsdsrc as ddsurfacedesc2, ddsddest as ddsurfacedesc2
+    dim modo as long
     
     if animate then
         if grh.started = 1 then
@@ -1175,45 +1257,37 @@ sub ddrawtransgrhtosurfacealpha(byref grh as grh, byval x as integer, byval y as
     'figure out what frame to draw (always 1 if not animated)
     currentgrhindex = grhdata(grh.grhindex).frames(grh.framecounter)
     
-    'center grh over x,y pos
-    if center then
-        if grhdata(currentgrhindex).tilewidth <> 1 then
-            x = x - int(grhdata(currentgrhindex).tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+    with grhdata(currentgrhindex)
+        'center grh over x,y pos
+        if center then
+            if .tilewidth <> 1 then
+                x = x - int(.tilewidth * tilepixelwidth / 2) + tilepixelwidth \ 2
+            end if
+            if .tileheight <> 1 then
+                y = y - int(.tileheight * tilepixelheight) + tilepixelheight
+            end if
         end if
-        if grhdata(currentgrhindex).tileheight <> 1 then
-            y = y - int(grhdata(currentgrhindex).tileheight * tilepixelheight) + tilepixelheight
-        end if
-    end if
-    
-    with sourcerect
-        .left = grhdata(currentgrhindex).sx
-        .top = grhdata(currentgrhindex).sy
-        .right = .left + grhdata(currentgrhindex).pixelwidth
-        .bottom = .top + grhdata(currentgrhindex).pixelheight
-    end with
-    
-    dim src as directdrawsurface7
-    dim rdest as rect
-    dim darray() as byte, sarray() as byte
-    dim ddsdsrc as ddsurfacedesc2, ddsddest as ddsurfacedesc2
-    dim modo as long
-    
-    set src = surfacedb.surface(grhdata(currentgrhindex).filenum)
-    
-    src.getsurfacedesc ddsdsrc
-    backbuffersurface.getsurfacedesc ddsddest
-    
-    with rdest
-        .left = x
-        .top = y
-        .right = x + grhdata(currentgrhindex).pixelwidth
-        .bottom = y + grhdata(currentgrhindex).pixelheight
         
-        if .right > ddsddest.lwidth then
-            .right = ddsddest.lwidth
+        sourcerect.left = .sx
+        sourcerect.top = .sy
+        sourcerect.right = sourcerect.left + .pixelwidth
+        sourcerect.bottom = sourcerect.top + .pixelheight
+        
+        set src = surfacedb.surface(.filenum)
+        
+        src.getsurfacedesc ddsdsrc
+        backbuffersurface.getsurfacedesc ddsddest
+        
+        rdest.left = x
+        rdest.top = y
+        rdest.right = x + .pixelwidth
+        rdest.bottom = y + .pixelheight
+        
+        if rdest.right > ddsddest.lwidth then
+            rdest.right = ddsddest.lwidth
         end if
-        if .bottom > ddsddest.lheight then
-            .bottom = ddsddest.lheight
+        if rdest.bottom > ddsddest.lheight then
+            rdest.bottom = ddsddest.lheight
         end if
     end with
     
@@ -1541,10 +1615,6 @@ sub loadgraphics()
     rlluvia(4).left = 0:     rlluvia(5).left = 128:   rlluvia(6).left = 256:   rlluvia(7).left = 384
     rlluvia(4).right = 128:  rlluvia(5).right = 256:  rlluvia(6).right = 384:  rlluvia(7).right = 512
     rlluvia(4).bottom = 256: rlluvia(5).bottom = 256: rlluvia(6).bottom = 256: rlluvia(7).bottom = 256
-    
-    'we are done!
-    'saco esto porque el texto del cargar queda horrible
-    'addtorichtextbox frmcargando.status, "hecho.", , , , 1, , false
 end sub
 
 public function inittileengine(byval setdisplayformhwnd as long, byval setmainviewtop as integer, byval setmainviewleft as integer, byval settilepixelheight as integer, byval settilepixelwidth as integer, byval setwindowtileheight as integer, byval setwindowtilewidth as integer, byval settilebuffersize as integer, byval pixelstoscrollperframex as integer, pixelstoscrollperframey as integer, byval enginespeed as single) as boolean
@@ -1694,9 +1764,6 @@ on error goto 0
     ltlluvia(3) = 608
     ltlluvia(4) = 736
     
-    'saco esto porque el texto del cargar queda horrible
-    'addtorichtextbox frmcargando.status, "cargando gr�ficos....", 0, 0, 0, , , true
-    
     call loadgraphics
     
     inittileengine = true
@@ -1729,12 +1796,10 @@ sub shownextframe(byval displayformtop as integer, byval displayformleft as inte
     static offsetcountery as single
     
     '****** set main view rectangle ******
-    with mainviewrect
-        .left = (displayformleft / screen.twipsperpixelx) + mainviewleft
-        .top = (displayformtop / screen.twipsperpixely) + mainviewtop
-        .right = .left + mainviewwidth
-        .bottom = .top + mainviewheight
-    end with
+    mainviewrect.left = (displayformleft / screen.twipsperpixelx) + mainviewleft
+    mainviewrect.top = (displayformtop / screen.twipsperpixely) + mainviewtop
+    mainviewrect.right = mainviewrect.left + mainviewwidth
+    mainviewrect.bottom = mainviewrect.top + mainviewheight
     
     if enginerun then
         if usermoving then
@@ -2005,9 +2070,10 @@ private sub charrender(byval charindex as long, byval pixeloffsetx as integer, b
                 
                     'draw name over head
                     if lenb(.nombre) > 0 then
-                        if nombres and abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2 then
-                            pos = instr(.nombre, "<")
-                            if pos = 0 then pos = len(.nombre) + 2
+                        if nombres and esgm(usercharindex) or abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2 then
+                            pos = gettagposition(.nombre)
+                            'pos = instr(.nombre, "<")
+                            'if pos = 0 then pos = len(.nombre) + 2
                             
                             if .priv = 0 then
                                 if .criminal then

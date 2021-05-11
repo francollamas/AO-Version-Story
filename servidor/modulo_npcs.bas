@@ -88,8 +88,12 @@ on error goto errhandler
                 
                     npci = mapdata(npclist(npcindex).pos.map, i, j).npcindex
                     if npci > 0 then
-                        if espretoriano(npci) > 0 then
-                            npclist(npci).invent.armoureqpslot = iif(npclist(npcindex).pos.x > 50, 1, 5)
+                        if espretoriano(npci) > 0 and npci <> npcindex then
+                            if npclist(npcindex).pos.x > 50 then
+                                if npclist(npci).pos.x > 50 then npclist(npci).invent.armoureqpslot = 1
+                            else
+                                if npclist(npci).pos.x <= 50 then npclist(npci).invent.armoureqpslot = 5
+                            end if
                         end if
                     end if
                 next j
@@ -545,6 +549,7 @@ public sub movenpcchar(byval npcindex as integer, byval nheading as byte)
 'autor: unknown (orginal version)
 'last modification: 06/04/2009
 '06/04/2009: zama - now npcs can force to change position with dead character
+'01/08/2009: zama - now npcs can't force to chance position with a dead character if that means to change the terrain the character is in
 '***************************************************
 
 on error goto errh
@@ -556,29 +561,35 @@ on error goto errh
         call headtopos(nheading, npos)
         
         ' es una posicion legal
-        if legalposnpc(.pos.map, npos.x, npos.y, .flags.aguavalida = 1) then
+        if legalposnpc(.pos.map, npos.x, npos.y, .flags.aguavalida = 1, .maestrouser <> 0) then
             
             if .flags.aguavalida = 0 and hayagua(.pos.map, npos.x, npos.y) then exit sub
             if .flags.tierrainvalida = 1 and not hayagua(.pos.map, npos.x, npos.y) then exit sub
             
-            call senddata(sendtarget.tonpcarea, npcindex, preparemessagecharactermove(.char.charindex, npos.x, npos.y))
-            
             userindex = mapdata(.pos.map, npos.x, npos.y).userindex
-            ' si hay un usuario a dodne se mueve el npc, entonces esta muerto
+            ' si hay un usuario a donde se mueve el npc, entonces esta muerto
             if userindex > 0 then
+                
+                ' no se traslada caspers de agua a tierra
+                if hayagua(.pos.map, npos.x, npos.y) and not hayagua(.pos.map, .pos.x, .pos.y) then exit sub
+                ' no se traslada caspers de tierra a agua
+                if not hayagua(.pos.map, npos.x, npos.y) and hayagua(.pos.map, .pos.x, .pos.y) then exit sub
+                
                 with userlist(userindex)
                     ' actualizamos posicion y mapa
                     mapdata(.pos.map, .pos.x, .pos.y).userindex = 0
                     .pos.x = npclist(npcindex).pos.x
                     .pos.y = npclist(npcindex).pos.y
                     mapdata(.pos.map, .pos.x, .pos.y).userindex = userindex
-                    
+                        
                     ' avisamos a los usuarios del area, y al propio usuario lo forzamos a moverse
                     call senddata(sendtarget.topcareabutindex, userindex, preparemessagecharactermove(userlist(userindex).char.charindex, .pos.x, .pos.y))
                     call writeforcecharmove(userindex, invertheading(nheading))
                 end with
             end if
             
+            call senddata(sendtarget.tonpcarea, npcindex, preparemessagecharactermove(.char.charindex, npos.x, npos.y))
+
             'update map and user pos
             mapdata(.pos.map, .pos.x, .pos.y).npcindex = 0
             .pos = npos

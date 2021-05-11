@@ -50,17 +50,21 @@ private const bytes_per_mb as long = 1048576                        '1mb = 1024 
 private const min_memory_to_use as long = 4 * bytes_per_mb          '4 mb
 private const default_memory_to_use as long = 16 * bytes_per_mb     '16 mb
 
+'number of buckets in our hash table. must be a nice prime number.
+const hash_table_size as long = 337
+
 private type surface_entry_dyn
     fileindex as long
     lastaccess as long
     surface as directdrawsurface7
 end type
 
-private surfacelist() as surface_entry_dyn
-private surfacecount as long
+private type hashnode
+    surfacecount as integer
+    surfaceentry() as surface_entry_dyn
+end type
 
-private surfaceindexes() as long
-private surfaceindexcount as long
+private surfacelist(hash_table_size - 1) as hashnode
 
 private directdraw as directdraw7
 
@@ -69,10 +73,17 @@ private usedbytes as long
 
 private usevideomemory as boolean
 
-private grhpath as string
+private resourcepath as string
 
 private declare function gettickcount lib "kernel32" () as long
-private declare sub copymemory lib "kernel32" alias "rtlmovememory" (byref dest as any, byref source as any, byval bytecount as long)
+
+private const dib_pal_colors as long = 1
+private const dib_rgb_colors as long = 0
+private declare function setdibitstodevice lib "gdi32.dll" _
+    (byval hdc as long, byval xdest as long, byval ydest as long, _
+    byval dwwidth as long, byval dwheight as long, byval xsrc as long, _
+    byval ysrc as long, byval ustartscan as long, byval cscanline as long, _
+    lpbits as any, lpbmi as bitmapinfo, byval fucoloruse as long) as long
 
 private sub class_initialize()
 '**************************************************************
@@ -81,10 +92,6 @@ private sub class_initialize()
 '
 '**************************************************************
     usedbytes = 0
-    surfacecount = 0
-    surfaceindexcount = 0
-    redim surfacelist(0) as surface_entry_dyn
-    redim surfaceindexes(0) as long
     maxbytestouse = min_memory_to_use
 end sub
 
@@ -94,16 +101,20 @@ private sub class_terminate()
 'last modify date: 3/06/2006
 'clean up
 '**************************************************************
-    dim i  as long
+    dim i as long
+    dim j as long
     
     'destroy every surface in memory
-    for i = 0 to surfacecount - 1
-        set surfacelist(i).surface = nothing
+    for i = 0 to hash_table_size - 1
+        with surfacelist(i)
+            for j = 1 to .surfacecount
+                set .surfaceentry(j).surface = nothing
+            next j
+            
+            'destroy the arrays
+            erase .surfaceentry
+        end with
     next i
-    
-    'destroy the arrays
-    erase surfacelist
-    erase surfaceindexes
 end sub
 
 private sub clssurfacemanager_initialize(byref dd as directdraw7, byval videomemory as boolean, byval graphicpath as string, optional byval maxmemoryusageinmb as long = -1)
@@ -116,7 +127,7 @@ private sub clssurfacemanager_initialize(byref dd as directdraw7, byval videomem
     
     usevideomemory = videomemory
     
-    grhpath = graphicpath
+    resourcepath = graphicpath
     
     if maxmemoryusageinmb = -1 then
         maxbytestouse = default_memory_to_use   ' 16 mb by default
@@ -133,61 +144,27 @@ private property get clssurfacemanager_surface(byval fileindex as long) as direc
 'last modify date: 3/06/2006
 'retrieves the requested texture
 '**************************************************************
-    dim index as long
+    dim i as long
     
     ' search the index on the list
-    index = binarysearch(fileindex)
-    
-    if index < 0 then
-        'not found, we have to load the file and add it in the position given by the negation of the index
-        '(it may be changed by the removal of indexes though, so we let the loadsurface method notify us)
-        index = loadsurface(fileindex, not index)
-    end if
-    
-    'return it
-    with surfacelist(surfaceindexes(index))
-        .lastaccess = gettickcount
-        set clssurfacemanager_surface = .surface
+    with surfacelist(fileindex mod hash_table_size)
+        for i = 1 to .surfacecount
+            if .surfaceentry(i).fileindex = fileindex then
+                .surfaceentry(i).lastaccess = gettickcount
+                set clssurfacemanager_surface = .surfaceentry(i).surface
+                exit function
+            end if
+        next i
     end with
+    
+    'not in memory, load it!
+    set clssurfacemanager_surface = loadsurface(fileindex)
 end property
 
-private function binarysearch(byval fileindex as long) as long
+private function loadsurface(byval fileindex as long) as directdrawsurface7
 '**************************************************************
-'author: juan mart�n sotuyo dodero
-'last modify date: 3/06/2006
-'returns the index of the surface in the list, or the negation
-'of the position were it should be if not found (for binary insertion)
-'**************************************************************
-    dim min as long
-    dim max as long
-    dim mid as long
-    
-    min = 0
-    max = surfaceindexcount - 1
-    
-    do while min <= max
-        mid = (min + max) \ 2
-        
-        if surfacelist(surfaceindexes(mid)).fileindex < fileindex then
-            min = mid + 1
-        elseif surfacelist(surfaceindexes(mid)).fileindex > fileindex then
-            max = mid - 1
-        else
-            'we found it
-            binarysearch = mid
-            exit function
-        end if
-    loop
-    
-    'not found, return the negation of the position where it should be
-    '(all higher values are to the right of the list and lower values are to the left)
-    binarysearch = not min
-end function
-
-private function loadsurface(byval fileindex as long, byval listindex as long) as long
-'**************************************************************
-'author: juan mart�n sotuyo dodero
-'last modify date: 3/06/2006
+'author: nicolas matias gonzalez (nigo)
+'last modify date: 05/11/2009
 'loads the surface named fileindex + ".bmp" and inserts it to the
 'surface list in the listindex position
 '**************************************************************
@@ -196,22 +173,23 @@ on error goto errhandler
     dim newsurface as surface_entry_dyn
     dim ddsd as ddsurfacedesc2
     dim ddck as ddcolorkey
-    dim filepath as string
+    dim data() as byte
+    dim bmpinfo as bitmapinfo
+    dim sdc as long
     
-    'store complete file path
-    filepath = grhpath & cstr(fileindex) & ".bmp"
-    
+    'get bitmap
+    call get_bitmap(resourcepath, cstr(fileindex) & ".bmp", bmpinfo, data)
+
     'set up the surface desc
     ddsd.lflags = ddsd_caps or ddsd_height or ddsd_width
-    
     if usevideomemory then
-        ddsd.ddscaps.lcaps = ddscaps_offscreenplain
+        ddsd.ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_videomemory
     else
         ddsd.ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_systemmemory
     end if
-    
-    call surfacedimensions(filepath, ddsd.lheight, ddsd.lwidth)
-    
+    ddsd.lwidth = bmpinfo.bmiheader.biwidth
+    ddsd.lheight = bmpinfo.bmiheader.biheight
+        
     with newsurface
         .fileindex = fileindex
         
@@ -219,7 +197,13 @@ on error goto errhandler
         .lastaccess = gettickcount
         
         'load surface
-        set .surface = directdraw.createsurfacefromfile(filepath, ddsd)
+        set .surface = directdraw.createsurface(ddsd)
+        
+        sdc = .surface.getdc
+        
+        call setdibitstodevice(sdc, 0, 0, bmpinfo.bmiheader.biwidth, bmpinfo.bmiheader.biheight, 0, 0, 0, bmpinfo.bmiheader.biheight, data(0), bmpinfo, dib_rgb_colors)
+        
+        call .surface.releasedc(sdc)
         
         'set colorkey
         ddck.high = 0
@@ -230,164 +214,98 @@ on error goto errhandler
         call .surface.getsurfacedesc(ddsd)
     end with
     
-    'insert surface to the list at the given pos
-    call insertsurface(newsurface, listindex)
+    'insert surface to the list
+    with surfacelist(fileindex mod hash_table_size)
+        .surfacecount = .surfacecount + 1
+        
+        redim preserve .surfaceentry(1 to .surfacecount) as surface_entry_dyn
+        
+        .surfaceentry(.surfacecount) = newsurface
+        
+        set loadsurface = newsurface.surface
+    end with
     
     'update used bytes
     usedbytes = usedbytes + ddsd.lheight * ddsd.lpitch
     
-    dim removedfile as integer
     'check if we have exceeded our allowed share of memory usage
-    do while usedbytes > maxbytestouse and surfacecount > 1
-        'remove a file
-        removedfile = removelru
-        
-        'if no file could be removed we continue, if the file was previous to our surface we update the index
-        if removedfile = 0 then
+    do while usedbytes > maxbytestouse
+        'remove a file. if no file could be removed we continue, if the file was previous to our surface we update the index
+        if not removelru() then
             exit do
-        elseif removedfile < listindex then
-            listindex = listindex - 1
         end if
     loop
-    
-    'return the real index in wich it ended after removing any necessary files
-    loadsurface = listindex
 exit function
 
 errhandler:
     if err.number = dderr_outofmemory or err.number = dderr_outofvideomemory then
-        if surfacecount then
-            'remove a surface and try again
-            call removelru
-            resume next
+        'remove a surface and try again
+        if removelru() then
+            resume
         else
             msgbox "no hay memoria disponible! el programa abortar�. cierra algunos programas e intenta de nuevo"
             end
         end if
     else
-        msgbox "un error inesperado ocurri� al intentar cargar el gr�fico " & filepath & ". " & vbcrlf & _
-                "el c�digo de error es " & cstr(err.number) & " - " & err.description & vbcrlf & "copia este mensaje y notifica a los administradores.", _
+        msgbox "un error inesperado ocurri� al intentar cargar el gr�fico " & cstr(fileindex) & ".bmp" & ". " & vbcrlf & _
+                "el c�digo de error es " & cstr(err.number) & " - " & err.description & vbcrlf & vbcrlf & "copia este mensaje y notifica a los administradores.", _
                 vbokonly or vbcritical or vbexclamation, "error"
         end
     end if
 end function
 
-private sub surfacedimensions(byval archivo as string, byref height as long, byref width as long)
-'**************************************************************
-'author: juan mart�n sotuyo dodero
-'last modify date: 3/06/2006
-'loads the headers of a bmp file to retrieve it's dimensions at rt
-'**************************************************************
-    dim handle as integer
-    dim bmpfilehead as bitmapfileheader
-    dim bmpinfohead as bitmapinfoheader
-    
-    handle = freefile()
-    open archivo for binary access read lock write as handle
-        get handle, , bmpfilehead
-        get handle, , bmpinfohead
-    close handle
-    
-    height = bmpinfohead.biheight
-    width = bmpinfohead.biwidth
-end sub
-
-private sub insertsurface(byref surface as surface_entry_dyn, byval listindex as long)
-'**************************************************************
-'author: juan mart�n sotuyo dodero
-'last modify date: 3/06/2006
-'inserts the given surface in the requested position of the surface list
-'**************************************************************
-on error goto errhandler
-    dim i as long
-    
-    'search for an empty spot in the list
-    for i = 0 to surfacecount - 1
-        if surfacelist(i).surface is nothing then exit for
-    next i
-    
-    'enlarge the list if no empty spot was found
-    if i = surfacecount then
-        redim preserve surfacelist(surfacecount) as surface_entry_dyn
-        
-        'increase surface count
-        surfacecount = surfacecount + 1
-    end if
-    
-    'insert the new surface
-    surfacelist(i) = surface
-    
-    'resize the list
-    redim preserve surfaceindexes(surfaceindexcount) as long
-    
-    'update the index list
-    if surfaceindexcount > listindex then
-        'move back the list - copying this way is up to 6 times faster than a for
-        dim templist() as long
-        redim templist(surfaceindexcount - listindex) as long
-        
-        copymemory templist(0), surfaceindexes(listindex), (surfaceindexcount - listindex) * 4
-        surfaceindexes(listindex) = i
-        copymemory surfaceindexes(listindex + 1), templist(0), (surfaceindexcount - listindex) * 4
-    else
-        'we are inserting at the bottom of the list
-        surfaceindexes(listindex) = i
-    end if
-    
-    surfaceindexcount = surfaceindexcount + 1
-exit sub
-
-errhandler:
-    msgbox "un error irreparable ocurri� al insertar un nuevo gr�fico en la lista." & vbcrlf _
-            & "el cliente se cerrar�" & vbcrlf _
-            & "intente usar el cliente no din�mico"
-    end
-end sub
-
-private function removelru() as integer
+private function removelru() as boolean
 '**************************************************************
 'author: juan mart�n sotuyo dodero
 'last modify date: 3/06/2006
 'removes the least recently used surface to make some room for new ones
 '**************************************************************
-    dim lru as long
+    dim lrui as long
+    dim lruj as long
+    dim lrutime as long
     dim i as long
+    dim j as long
     dim ddsd as ddsurfacedesc2
     
-    'should never happen, but just in case....
-    if surfacecount = 0 then exit function
-    
-    'initialize with the first element of the list
-    lru = 0
+    lrutime = gettickcount
     
     'check out through the whole list for the least recently used
-    for i = 1 to surfaceindexcount - 1
-        if surfacelist(surfaceindexes(lru)).lastaccess > surfacelist(surfaceindexes(i)).lastaccess then
-            lru = i
-        end if
+    for i = 0 to hash_table_size - 1
+        with surfacelist(i)
+            for j = 1 to .surfacecount
+                if lrutime > .surfaceentry(j).lastaccess then
+                    lrui = i
+                    lruj = j
+                    lrutime = .surfaceentry(j).lastaccess
+                end if
+            next j
+        end with
     next i
     
-    'store the index of the surface removed
-    removelru = lru
-    
-    'retrieve the surface desc
-    call surfacelist(surfaceindexes(lru)).surface.getsurfacedesc(ddsd)
-    
-    'remove it
-    set surfacelist(surfaceindexes(lru)).surface = nothing
-    surfacelist(surfaceindexes(lru)).fileindex = 0
-    
-    'move back the list (if necessary)
-    if lru < surfaceindexcount - 1 then
-        copymemory surfaceindexes(lru), surfaceindexes(lru + 1), (surfaceindexcount - lru - 1) * 4
+    if lruj then
+        removelru = true
+        'retrieve the surface desc
+        call surfacelist(lrui).surfaceentry(lruj).surface.getsurfacedesc(ddsd)
+        
+        'remove it
+        set surfacelist(lrui).surfaceentry(lruj).surface = nothing
+        surfacelist(lrui).surfaceentry(lruj).fileindex = 0
+        
+        'move back the list (if necessary)
+        with surfacelist(lrui)
+            for j = lruj to .surfacecount - 1
+                .surfaceentry(j) = .surfaceentry(j + 1)
+            next j
+            
+            .surfacecount = .surfacecount - 1
+            if .surfacecount then
+                redim preserve .surfaceentry(1 to .surfacecount) as surface_entry_dyn
+            else
+                erase .surfaceentry
+            end if
+        end with
+        
+        'update the used bytes
+        usedbytes = usedbytes - ddsd.lheight * ddsd.lpitch
     end if
-    
-    'resize the list
-    redim preserve surfaceindexes(surfaceindexcount - 1) as long
-    
-    'decrease index count
-    surfaceindexcount = surfaceindexcount - 1
-    
-    'update the used bytes
-    usedbytes = usedbytes - ddsd.lheight * ddsd.lpitch
 end function

@@ -3,10 +3,11 @@ object = "{831fdd16-0c5c-11d2-a9fc-0000f8754da1}#2.0#0"; "mscomctl.ocx"
 begin vb.form frmopciones 
    backcolor       =   &h00000000&
    borderstyle     =   3  'fixed dialog
-   clientheight    =   5325
+   clientheight    =   6315
    clientleft      =   45
    clienttop       =   45
-   clientwidth     =   4740
+   clientwidth     =   4695
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"
@@ -21,16 +22,43 @@ begin vb.form frmopciones
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   5325
-   scalewidth      =   4740
+   scaleheight     =   6315
+   scalewidth      =   4695
    showintaskbar   =   0   'false
    startupposition =   1  'centerowner
+   begin vb.commandbutton cmdradioao 
+      caption         =   "escuchar radio ao"
+      height          =   375
+      left            =   960
+      tabindex        =   18
+      top             =   4800
+      width           =   2775
+   end
+   begin vb.checkbox check1 
+      backcolor       =   &h00000000&
+      caption         =   "efectos de sonido"
+      forecolor       =   &h00ffffff&
+      height          =   255
+      index           =   2
+      left            =   345
+      tabindex        =   17
+      top             =   1515
+      width           =   1695
+   end
+   begin vb.commandbutton cmdviewmap 
+      caption         =   "mapa del juego"
+      height          =   375
+      left            =   960
+      tabindex        =   16
+      top             =   4320
+      width           =   2775
+   end
    begin vb.commandbutton cmdchangepassword 
       caption         =   "cambiar contrase�a"
       height          =   375
       left            =   960
       tabindex        =   15
-      top             =   3600
+      top             =   3825
       width           =   2775
    end
    begin vb.commandbutton cmdcustomkeys 
@@ -38,7 +66,7 @@ begin vb.form frmopciones
       height          =   375
       left            =   960
       tabindex        =   14
-      top             =   3120
+      top             =   3345
       width           =   2775
    end
    begin vb.commandbutton custommsgcmd 
@@ -46,7 +74,7 @@ begin vb.form frmopciones
       height          =   375
       left            =   960
       tabindex        =   13
-      top             =   2640
+      top             =   2865
       width           =   2775
    end
    begin vb.commandbutton cmdmanual 
@@ -54,14 +82,14 @@ begin vb.form frmopciones
       height          =   375
       left            =   960
       tabindex        =   12
-      top             =   4320
+      top             =   5280
       width           =   2775
    end
    begin vb.frame frame2 
       backcolor       =   &h00000000&
       caption         =   "audio"
       forecolor       =   &h00ffffff&
-      height          =   975
+      height          =   1260
       left            =   240
       tabindex        =   7
       top             =   600
@@ -123,9 +151,9 @@ begin vb.form frmopciones
       caption         =   "di�logos de clan"
       forecolor       =   &h00ffffff&
       height          =   750
-      left            =   255
+      left            =   240
       tabindex        =   2
-      top             =   1665
+      top             =   1860
       width           =   4230
       begin vb.textbox txtcantmensajes 
          alignment       =   2  'center
@@ -176,7 +204,7 @@ begin vb.form frmopciones
       mouseicon       =   "frmopciones.frx":0152
       mousepointer    =   99  'custom
       tabindex        =   0
-      top             =   4800
+      top             =   5760
       width           =   2790
    end
    begin vb.label label1 
@@ -267,6 +295,13 @@ private sub check1_click(index as integer)
                 slider1(1).enabled = true
                 slider1(1).value = audio.soundvolume
             end if
+            
+        case 2
+            if check1(2).value = vbunchecked then
+                audio.soundeffectsactivated = false
+            else
+                audio.soundeffectsactivated = true
+            end if
     end select
 end sub
 
@@ -279,11 +314,21 @@ end sub
 private sub cmdmanual_click()
     if not loading then _
         call audio.playwave(snd_click)
-    call shellexecute(0, "open", "http://ao.alkon.com.ar/aomanual/", "", app.path, 0)
+    call shellexecute(0, "open", "http://ao.alkon.com.ar/aomanual/", "", app.path, sw_shownormal)
 end sub
 
 private sub cmdchangepassword_click()
     call frmnewpassword.show(vbmodal, me)
+end sub
+
+private sub cmdradioao_click()
+    if not loading then _
+        call audio.playwave(snd_click)
+        call shellexecute(0, "open", "http://radio.radioargentum.com/", "", app.path, sw_shownormal)
+end sub
+
+private sub cmdviewmap_click()
+    call frmmapa.show(vbmodal, me)
 end sub
 
 private sub command2_click()
@@ -314,6 +359,12 @@ private sub form_load()
     else
         check1(1).value = vbunchecked
         slider1(1).enabled = false
+    end if
+    
+    if audio.soundeffectsactivated then
+        check1(2).value = vbchecked
+    else
+        check1(2).value = vbunchecked
     end if
     
     txtcantmensajes.text = cstr(dialogosclanes.cantidaddialogos)

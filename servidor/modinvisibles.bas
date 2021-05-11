@@ -14,7 +14,8 @@ userlist(userindex).flags.invisible = iif(estado, 1, 0)
 userlist(userindex).flags.oculto = iif(estado, 1, 0)
 userlist(userindex).counters.invisibilidad = 0
 
-call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, not estado))
+call setinvisible(userindex, userlist(userindex).char.charindex, not estado)
+'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, not estado))
 
 
 #else

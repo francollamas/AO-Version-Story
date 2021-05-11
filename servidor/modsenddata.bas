@@ -57,6 +57,9 @@ public enum sendtarget
     tocriminalesyrms
     torealyrms
     tocaosyrms
+    tohigheradmins
+    togmsarea
+    tousersareabutgms
 end enum
 
 public sub senddata(byval sndroute as sendtarget, byval sndindex as integer, byval snddata as string)
@@ -274,6 +277,25 @@ on error resume next
                 end if
             next loopc
             exit sub
+        
+        case sendtarget.tohigheradmins
+            for loopc = 1 to lastuser
+                if userlist(loopc).connid <> -1 then
+                    if userlist(loopc).flags.privilegios and (playertype.admin or playertype.dios) then
+                        call enviardatosaslot(loopc, snddata)
+                   end if
+                end if
+            next loopc
+            exit sub
+            
+        case sendtarget.togmsarea
+            call sendtogmsarea(sndindex, snddata)
+            exit sub
+            
+        case sendtarget.tousersareabutgms
+            call sendtousersareabutgms(sndindex, snddata)
+            exit sub
+            
     end select
 end sub
 
@@ -584,6 +606,74 @@ public sub sendtomapbutindex(byval userindex as integer, byval sddata as string)
         
         if tempindex <> userindex and userlist(tempindex).connidvalida then
             call enviardatosaslot(tempindex, sddata)
+        end if
+    next loopc
+end sub
+
+private sub sendtogmsarea(byval userindex as integer, byval sddata as string)
+'**************************************************************
+'author: torres patricio(pato)
+'last modify date: 10/17/2009
+'
+'**************************************************************
+    dim loopc as long
+    dim tempindex as integer
+    
+    dim map as integer
+    dim areax as integer
+    dim areay as integer
+    
+    map = userlist(userindex).pos.map
+    areax = userlist(userindex).areasinfo.areapertenecex
+    areay = userlist(userindex).areasinfo.areapertenecey
+    
+    if not mapavalido(map) then exit sub
+    
+    for loopc = 1 to conngroups(map).countentrys
+        tempindex = conngroups(map).userentrys(loopc)
+        
+        if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
+            if userlist(tempindex).areasinfo.arearecivey and areay then
+                if userlist(tempindex).connidvalida then
+                    if userlist(tempindex).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero) then
+                        call enviardatosaslot(tempindex, sddata)
+                    end if
+                end if
+            end if
+        end if
+    next loopc
+end sub
+
+private sub sendtousersareabutgms(byval userindex as integer, byval sddata as string)
+'**************************************************************
+'author: torres patricio(pato)
+'last modify date: 10/17/2009
+'
+'**************************************************************
+    dim loopc as long
+    dim tempindex as integer
+    
+    dim map as integer
+    dim areax as integer
+    dim areay as integer
+    
+    map = userlist(userindex).pos.map
+    areax = userlist(userindex).areasinfo.areapertenecex
+    areay = userlist(userindex).areasinfo.areapertenecey
+    
+    if not mapavalido(map) then exit sub
+    
+    for loopc = 1 to conngroups(map).countentrys
+        tempindex = conngroups(map).userentrys(loopc)
+        
+        if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
+            if userlist(tempindex).areasinfo.arearecivey and areay then
+                if userlist(tempindex).connidvalida then
+                    if userlist(tempindex).flags.privilegios and playertype.user then
+                        call enviardatosaslot(tempindex, sddata)
+                    end if
+                end if
+            end if
         end if
     next loopc
 end sub

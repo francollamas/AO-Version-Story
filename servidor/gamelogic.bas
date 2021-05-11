@@ -440,12 +440,14 @@ end function
 function movetolegalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true) as boolean
 '***************************************************
 'autor: zama
-'last modification: 26/03/2009
+'last modification: 13/07/2009
 'checks if the position is legal, but considers that if there's a casper, it's a legal movement.
+'13/07/2009: zama - now it's also legal move where an invisible admin is.
 '***************************************************
 
 dim userindex as integer
 dim isdeadchar as boolean
+dim isadmininvisible as boolean
 
 
 '�es un mapa valido?
@@ -456,22 +458,24 @@ if (map <= 0 or map > nummaps) or _
         userindex = mapdata(map, x, y).userindex
         if userindex > 0 then
             isdeadchar = userlist(userindex).flags.muerto = 1
+            isadmininvisible = userlist(userindex).flags.admininvisible = 1
         else
             isdeadchar = false
+            isadmininvisible = false
         end if
     
     if puedeagua and puedetierra then
         movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
-                   (userindex = 0 or isdeadchar) and _
+                   (userindex = 0 or isdeadchar or isadmininvisible) and _
                    (mapdata(map, x, y).npcindex = 0)
     elseif puedetierra and not puedeagua then
         movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
-                   (userindex = 0 or isdeadchar) and _
+                   (userindex = 0 or isdeadchar or isadmininvisible) and _
                    (mapdata(map, x, y).npcindex = 0) and _
                    (not hayagua(map, x, y))
     elseif puedeagua and not puedetierra then
         movetolegalpos = (mapdata(map, x, y).blocked <> 1) and _
-                   (userindex = 0 or isdeadchar) and _
+                   (userindex = 0 or isdeadchar or isadmininvisible) and _
                    (mapdata(map, x, y).npcindex = 0) and _
                    (hayagua(map, x, y))
     else
@@ -479,7 +483,6 @@ if (map <= 0 or map > nummaps) or _
     end if
   
 end if
-
 
 end function
 
@@ -556,40 +559,47 @@ public sub findlegalpos(byval userindex as integer, byval map as integer, byref 
 
 end sub
 
-function legalposnpc(byval map as integer, byval x as integer, byval y as integer, byval aguavalida as byte) as boolean
+function legalposnpc(byval map as integer, byval x as integer, byval y as integer, byval aguavalida as byte, optional byval ispet as boolean = false) as boolean
 '***************************************************
 'autor: unkwnown
-'last modification: 27/04/2009
+'last modification: 09/23/2009
 'checks if it's a legal pos for the npc to move to.
+'09/23/2009: pato - if userindex is a admininvisible, then is a legal pos.
 '***************************************************
 dim isdeadchar as boolean
 dim userindex as integer
-
+dim isadmininvisible as boolean
+    
+    
     if (map <= 0 or map > nummaps) or _
         (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
         legalposnpc = false
         exit function
     end if
 
-    userindex = mapdata(map, x, y).userindex
-    if userindex > 0 then
-        isdeadchar = userlist(userindex).flags.muerto = 1
-    else
-        isdeadchar = false
-    end if
+    with mapdata(map, x, y)
+        userindex = .userindex
+        if userindex > 0 then
+            isdeadchar = userlist(userindex).flags.muerto = 1
+            isadmininvisible = (userlist(userindex).flags.admininvisible = 1)
+        else
+            isdeadchar = false
+            isadmininvisible = false
+        end if
     
-    if aguavalida = 0 then
-        legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
-        (mapdata(map, x, y).userindex = 0 or isdeadchar) and _
-        (mapdata(map, x, y).npcindex = 0) and _
-        (mapdata(map, x, y).trigger <> etrigger.posinvalida) _
-        and not hayagua(map, x, y)
-    else
-        legalposnpc = (mapdata(map, x, y).blocked <> 1) and _
-        (mapdata(map, x, y).userindex = 0 or isdeadchar) and _
-        (mapdata(map, x, y).npcindex = 0) and _
-        (mapdata(map, x, y).trigger <> etrigger.posinvalida)
-    end if
+        if aguavalida = 0 then
+            legalposnpc = (.blocked <> 1) and _
+            (.userindex = 0 or isdeadchar or isadmininvisible) and _
+            (.npcindex = 0) and _
+            (.trigger <> etrigger.posinvalida or ispet) _
+            and not hayagua(map, x, y)
+        else
+            legalposnpc = (.blocked <> 1) and _
+            (.userindex = 0 or isdeadchar or isadmininvisible) and _
+            (.npcindex = 0) and _
+            (.trigger <> etrigger.posinvalida or ispet)
+        end if
+    end with
 end function
 
 sub sendhelp(byval index as integer)
@@ -619,6 +629,7 @@ sub lookattile(byval userindex as integer, byval map as integer, byval x as inte
 '13/02/2009: zama - el nombre del gm que aparece por consola al clickearlo, tiene el color correspondiente a su rango
 '***************************************************
 
+on error goto errhandler
 
 'responde al click del usuario sobre el mapa
 dim foundchar as byte
@@ -740,13 +751,19 @@ if inmapbounds(map, x, y) then
                     if not userlist(tempcharindex).flags.privilegios and playertype.user then
                         stat = stat & " <game master>"
                         
-                        ' elijo el color segun el rango del gm
+                        ' elijo el color segun el rango del gm:
+                        ' dios
                         if userlist(tempcharindex).flags.privilegios = playertype.dios then
                             ft = fonttypenames.fonttype_dios
+                        ' gm
                         elseif userlist(tempcharindex).flags.privilegios = playertype.semidios then
                             ft = fonttypenames.fonttype_gm
+                        ' conse
                         elseif userlist(tempcharindex).flags.privilegios = playertype.consejero then
                             ft = fonttypenames.fonttype_conse
+                        ' rm o dsrm
+                        elseif userlist(tempcharindex).flags.privilegios = (playertype.rolemaster or playertype.consejero) or userlist(tempcharindex).flags.privilegios = (playertype.rolemaster or playertype.dios) then
+                            ft = fonttypenames.fonttype_ejecucion
                         end if
                         
                     elseif criminal(tempcharindex) then
@@ -885,6 +902,10 @@ else
     end if
 end if
 
+exit sub
+
+errhandler:
+    call logerror("error en lookattile. error " & err.number & " : " & err.description)
 
 end sub
 

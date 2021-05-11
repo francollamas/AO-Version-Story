@@ -5,6 +5,7 @@ begin vb.form frmpasswd
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   5010
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"

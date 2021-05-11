@@ -5,6 +5,7 @@ begin vb.form frmcomerciarusu
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   6015
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
@@ -337,8 +338,9 @@ picture1.setfocus
 end sub
 
 private sub list1_click()
-dibujagrh inventario.grhindex(list1.listindex + 1)
-
+    if inventario.grhindex(list1.listindex + 1) <> 0 then
+        dibujagrh inventario.grhindex(list1.listindex + 1)
+    end if
 end sub
 
 public sub dibujagrh(grh as integer)
@@ -359,7 +361,7 @@ call drawgrhtohdc(picture1.hdc, grh, sr, dr)
 end sub
 
 private sub list2_click()
-if list2.listindex >= 0 then
+if list2.listindex >= 0 and otroinventario(list2.listindex + 1).grhindex <> 0 then
     dibujagrh otroinventario(list2.listindex + 1).grhindex
     label3.caption = "cantidad: " & list2.itemdata(list2.listindex)
     cmdaceptar.enabled = true

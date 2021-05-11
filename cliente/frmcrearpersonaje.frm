@@ -6,6 +6,7 @@ begin vb.form frmcrearpersonaje
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   12000
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
@@ -929,6 +930,11 @@ for i = 1 to numatributos
         exit function
     end if
 next i
+
+if len(username) > 30 then
+    msgbox ("el nombre debe tener menos de 30 letras.")
+    exit function
+end if
 
 checkdata = true
 

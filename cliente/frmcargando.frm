@@ -8,6 +8,7 @@ begin vb.form frmcargando
    clientleft      =   45
    clienttop       =   45
    clientwidth     =   9630
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
@@ -38,7 +39,6 @@ begin vb.form frmcargando
       _extenty        =   4233
       _version        =   393217
       backcolor       =   16512
-      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       textrtf         =   $"frmcargando.frx":0000

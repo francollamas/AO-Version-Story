@@ -98,11 +98,11 @@ end enum
 private declare function gettickcount lib "kernel32" () as long
 
 ''
-' sets a new intrval for a timer.
+' sets a new interval for a timer.
 '
 ' @param timerindex timer�s index
 ' @param interval new lenght for the timer�s cicle in miliseconds.
-' @remarks  must be donde after creating the timer and before using it, otherwise, interval will be 0
+' @remarks  must be done after creating the timer and before using it, otherwise, interval will be 0
 
 public sub setinterval(byval timerindex as timersindex, byval interval as long)
 '*************************************************
@@ -114,6 +114,24 @@ public sub setinterval(byval timerindex as timersindex, byval interval as long)
     
     timer(timerindex).interval = interval
 end sub
+
+''
+' retrieves the interval of a timer.
+'
+' @param timerindex timer�s index
+'
+' @return the requested timer's interval.
+
+public function getinterval(byval timerindex as timersindex) as long
+'*************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modified: 13/10/2008
+'desc: retrieves the interval of a timer.
+'*************************************************
+    if timerindex < 1 or timerindex > cantidadtimers then exit function
+    
+    getinterval = timer(timerindex).interval
+end function
 
 ''
 ' starts the timer.

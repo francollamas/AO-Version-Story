@@ -6,6 +6,7 @@ begin vb.form frmguildfoundation
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4050
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    beginproperty font 
       name            =   "tahoma"

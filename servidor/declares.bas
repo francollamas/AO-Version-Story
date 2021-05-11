@@ -263,6 +263,12 @@ end enum
 
 public const guardias as integer = 6
 
+public const max_oro_edit as long = 5000000
+
+
+public const standard_bounty_hunter_message as string = "se te ha otorgado un premio por ayudar al proyecto reportando bugs, el mismo est� disponible en tu b�veda."
+public const tag_user_invisible as string = "[invisible]"
+
 public const maxrep as long = 6000000
 public const maxoro as long = 90000000
 public const maxexp as long = 99999999
@@ -781,7 +787,7 @@ public type objdata
     lingh as integer
     lingo as integer
     lingp as integer
-    madera as integer
+    madera as long
     
     skherreria as integer
     skcarpinteria as integer
@@ -907,7 +913,6 @@ end type
 
 'flags
 public type userflags
-    estaempo as byte    'empollando (by yb)
     muerto as byte '�esta muerto?
     escondido as byte '�esta escondido?
     comerciando as boolean '�esta comerciando?
@@ -1128,8 +1133,6 @@ public type user
      '[alejo]
     comusu as tcomerciousuario
     '[/alejo]
-    
-    empocont as byte
     
     guildindex as integer   'puntero al array global de guilds
     fundandoguildalineacion as alineacion_guild     'esto esta aca hasta que se parchee el cliente y se pongan cadenas de datos distintas para cada alineacion

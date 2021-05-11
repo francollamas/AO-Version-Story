@@ -6,6 +6,7 @@ begin vb.form frmguildnews
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4935
+   clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false

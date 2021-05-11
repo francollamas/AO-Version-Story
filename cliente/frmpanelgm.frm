@@ -7,6 +7,7 @@ begin vb.form frmpanelgm
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4200
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
@@ -87,7 +88,7 @@ begin vb.form frmpanelgm
          caption         =   "/ircerca"
          causesvalidation=   0   'false
          height          =   315
-         left            =   1320
+         left            =   120
          tabindex        =   52
          top             =   960
          width           =   1095
@@ -95,10 +96,10 @@ begin vb.form frmpanelgm
       begin vb.commandbutton cmddonde 
          caption         =   "/donde"
          causesvalidation=   0   'false
-         height          =   675
+         height          =   315
          left            =   120
          tabindex        =   51
-         top             =   960
+         top             =   1320
          width           =   1095
       end
       begin vb.commandbutton cmdpenas 
@@ -115,9 +116,9 @@ begin vb.form frmpanelgm
          caption         =   "/telep"
          causesvalidation=   0   'false
          height          =   315
-         left            =   2520
+         left            =   1320
          tabindex        =   49
-         top             =   1320
+         top             =   960
          width           =   1095
       end
       begin vb.commandbutton cmdsilenciar 
@@ -135,7 +136,7 @@ begin vb.form frmpanelgm
          height          =   315
          left            =   2520
          tabindex        =   47
-         top             =   960
+         top             =   1320
          width           =   1095
       end
       begin vb.commandbutton cmdcarcel 
@@ -268,9 +269,9 @@ begin vb.form frmpanelgm
          caption         =   "/sum"
          causesvalidation=   0   'false
          height          =   315
-         left            =   1320
+         left            =   2520
          tabindex        =   32
-         top             =   1320
+         top             =   960
          width           =   1095
       end
       begin vb.commandbutton cmdnick2ip 
@@ -1333,7 +1334,7 @@ end sub
 
 private sub cmdonlinemap_click()
     '/onlinemap
-    call writeonlinemap
+    call writeonlinemap(usermap)
 end sub
 
 private sub cmdonlinereal_click()

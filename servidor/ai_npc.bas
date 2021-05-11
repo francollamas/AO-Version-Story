@@ -35,6 +35,7 @@ public enum tipoai
     npcmaloatacausersbuenos = 3
     npcdefensa = 4
     guardiasatacancriminales = 5
+    npcobjeto = 6
     sigueamo = 8
     npcatacanpc = 9
     npcpathfinding = 10
@@ -648,7 +649,58 @@ private sub ainpcatacanpc(byval npcindex as integer)
     end with
 end sub
 
+public sub ainpcobjeto(byval npcindex as integer)
+'***************************************************
+'autor: zama
+'last modification: 14/09/2009 (zama)
+'***************************************************
+    dim userindex as integer
+    dim theading as byte
+    dim i as long
+    dim signons as integer
+    dim signoeo as integer
+    dim userprotected as boolean
+    
+    with npclist(npcindex)
+        for i = 1 to modareas.conngroups(.pos.map).countentrys
+            userindex = modareas.conngroups(.pos.map).userentrys(i)
+            
+            'is it in it's range of vision??
+            if abs(userlist(userindex).pos.x - .pos.x) <= rango_vision_x then
+                if abs(userlist(userindex).pos.y - .pos.y) <= rango_vision_y then
+                    
+                    with userlist(userindex)
+                        'userprotected = not intervalopermiteseratacado(userindex) and .flags.nopuedeseratacado
+                        
+                        if .flags.muerto = 0 and .flags.invisible = 0 and _
+                            .flags.oculto = 0 and .flags.adminperseguible and not userprotected then
+                            
+                            ' no quiero que ataque siempre al primero
+                            if randomnumber(1, 3) < 3 then
+                                if npclist(npcindex).flags.lanzaspells > 0 then
+                                     call npclanzaunspell(npcindex, userindex)
+                                end if
+                            
+                                exit sub
+                            end if
+                        end if
+                    end with
+               end if
+            end if
+            
+        next i
+    end with
+
+end sub
+
 sub npcai(byval npcindex as integer)
+'**************************************************************
+'author: unknown
+'last modify by: zama
+'last modify date: 15/11/2009
+'08/16/2008: markoxx - now pets that do mel� attacks have to be near the enemy to attack.
+'15/11/2009: zama - implementacion de npc objetos ai.
+'**************************************************************
 on error goto errorhandler
     with npclist(npcindex)
         '<<<<<<<<<<< ataques >>>>>>>>>>>>>>>>
@@ -713,6 +765,9 @@ on error goto errorhandler
             case tipoai.npcatacanpc
                 call ainpcatacanpc(npcindex)
             
+            case tipoai.npcobjeto
+                call ainpcobjeto(npcindex)
+                
             case tipoai.npcpathfinding
                 if .flags.inmovilizado = 1 then exit sub
                 if recalculatepath(npcindex) then

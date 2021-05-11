@@ -811,8 +811,9 @@ end function
 sub connectuser(byval userindex as integer, byref name as string, byref password as string)
 '***************************************************
 'autor: unknown (orginal version)
-'last modification: 26/03/2009
+'last modification: 12/06/2009
 '26/03/2009: zama - agrego por default que el color de dialogo de los dioses, sea como el de su nick.
+'12/06/2009: zama - agrego chequeo de nivel al loguear
 '***************************************************
 dim n as integer
 dim tstr as string
@@ -874,7 +875,7 @@ if checkforsamename(name) then
     if userlist(nameindex(name)).counters.saliendo then
         call writeerrormsg(userindex, "el usuario est� saliendo.")
     else
-        call writeerrormsg(userindex, "perdon, un usuario con el mismo nombre se ha logoeado.")
+        call writeerrormsg(userindex, "perd�n, un usuario con el mismo nombre se ha logueado.")
     end if
     call flushbuffer(userindex)
     call closesocket(userindex)
@@ -1046,10 +1047,6 @@ if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(user
     end if
 end if
 
-if userlist(userindex).flags.muerto = 1 then
-    call empollando(userindex)
-end if
-
 'nombre de sistema
 userlist(userindex).name = name
 
@@ -1118,6 +1115,7 @@ call makeuserchar(true, userlist(userindex).pos.map, userindex, userlist(userind
 call writeusercharindexinserver(userindex)
 ''[/el oso]
 
+call checkuserlevel(userindex)
 call writeupdateuserstats(userindex)
 
 call writeupdatehungerandthirst(userindex)
@@ -1362,7 +1360,6 @@ sub resetbasicuserinfo(byval userindex as integer)
         .hogar = 0
         .raza = 0
         
-        .empocont = 0
         .partyindex = 0
         .partysolicitud = 0
         
@@ -1472,7 +1469,6 @@ sub resetuserflags(byval userindex as integer)
         .timeswalk = 0
         .startwalk = 0
         .countsh = 0
-        .estaempo = 0
         .silenciado = 0
         .centinelaok = false
         .adminperseguible = false
@@ -1612,7 +1608,7 @@ end if
 
 'borrar el personaje
 if userlist(userindex).char.charindex > 0 then
-    call eraseuserchar(userindex)
+    call eraseuserchar(userindex, userlist(userindex).flags.admininvisible = 1)
 end if
 
 'borrar mascotas

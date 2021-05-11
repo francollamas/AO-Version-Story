@@ -6,6 +6,8 @@ begin vb.form frmnewpassword
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4680
+   clipcontrols    =   0   'false
+   controlbox      =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false

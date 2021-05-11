@@ -343,9 +343,11 @@ sub setconnected()
 #end if
     
     'unload the connect form
-    unload frmconnect
     unload frmpasswd
     unload frmcrearpersonaje
+    unload frmconnect
+    
+    
     
     frmmain.label8.caption = username
     'load main form
@@ -380,13 +382,13 @@ sub moveto(byval direccion as e_heading)
     
     select case direccion
         case e_heading.north
-            legalok = legalpos(userpos.x, userpos.y - 1)
+            legalok = movetolegalpos(userpos.x, userpos.y - 1)
         case e_heading.east
-            legalok = legalpos(userpos.x + 1, userpos.y)
+            legalok = movetolegalpos(userpos.x + 1, userpos.y)
         case e_heading.south
-            legalok = legalpos(userpos.x, userpos.y + 1)
+            legalok = movetolegalpos(userpos.x, userpos.y + 1)
         case e_heading.west
-            legalok = legalpos(userpos.x - 1, userpos.y)
+            legalok = movetolegalpos(userpos.x - 1, userpos.y)
     end select
     
     if legalok and not userparalizado then
@@ -416,11 +418,10 @@ sub randommove()
     call moveto(randomnumber(north, west))
 end sub
 
-sub checkkeys()
+private sub checkkeys()
 '*****************************************************************
 'checks keys and respond
 '*****************************************************************
-on error resume next
     static lastmovement as long
     
     'no input allowed while argentum is not the active window
@@ -767,14 +768,16 @@ sub main()
         set surfacedb = new clssurfacemandyn
     end if
     
-    'read command line. do it after config file is loaded to prevent this from
-    'canceling the effects of "/nores" option.
-    call leerlineacomandos
-    
     if findpreviousinstance then
         call msgbox("argentum online ya esta corriendo! no es posible correr otra instancia del juego. haga click en aceptar para salir.", vbapplicationmodal + vbinformation + vbokonly, "error al ejecutar")
         end
     end if
+    
+    'read command line. do it after config file is loaded to prevent this from
+    'canceling the effects of "/nores" option.
+    call leerlineacomandos
+    
+
     
     
     'usaremos esto para ayudar en los parches
@@ -850,11 +853,10 @@ usermap = 1
     
     'inicializamos el sonido
     call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
-    
     'enable / disable audio
     audio.musicactivated = not clientsetup.bnomusic
     audio.soundactivated = not clientsetup.bnosound
-    
+    audio.soundeffectsactivated = not clientsetup.bnosoundeffects
     'inicializamos el inventario gr�fico
     call inventario.initialize(directdraw, frmmain.picinv)
     
@@ -875,7 +877,7 @@ usermap = 1
     unload frmcargando
     
 
-    frmpres.picture = loadpicture(app.path & "\graficos\bosquefinal.jpg")
+    frmpres.picture = loadpicture(app.path & "\graficos\gs-zone.jpg")
     frmpres.show vbmodal    'es modal, as� que se detiene la ejecuci�n de main hasta que se desaparece
     
 #if usarwrench = 1 then
@@ -927,10 +929,9 @@ usermap = 1
             
             'play ambient sounds
             call rendersounds
+            
+            call checkkeys
         end if
-        
-        call checkkeys
-        
         'fps counter - mostramos las fps
         if gettickcount - lframetimer >= 1000 then
             if fpsflag then frmmain.caption = mod_tileengine.fps
@@ -1035,10 +1036,23 @@ public sub showsendcmsgtxt()
         frmmain.sendcmstxt.setfocus
     end if
 end sub
-    
+
+''
+' checks the command line parameters, if you are running ao with /nores command and checks the aoupdate parameters
+'
+'
+
 public sub leerlineacomandos()
+'*************************************************
+'author: unknown
+'last modified: 25/11/2008 (brianpr)
+'
+'*************************************************
     dim t() as string
     dim i as long
+    
+    dim uptodate as boolean
+    dim patch as string
     
     'parseo los comandos
     t = split(command, " ")
@@ -1046,8 +1060,58 @@ public sub leerlineacomandos()
         select case ucase$(t(i))
             case "/nores" 'no cambiar la resolucion
                 nores = true
+            case "/uptodate"
+                uptodate = true
         end select
     next i
+    
+    'call aoupdate(uptodate, nores) ' gs - desactivo el aoupdate
+end sub
+
+''
+' runs aoupdate if we haven't updated yet, patches aoupdate and runs client normally if we are updated.
+'
+' @param uptodate specifies if we have checked for updates or not
+' @param nores specifies if we have to set nores arg when running the client once again (if the aoupdate is executed).
+
+private sub aoupdate(byval uptodate as boolean, byval nores as boolean)
+'*************************************************
+'author: brianpr
+'created: 25/11/2008
+'last modified: 25/11/2008
+'
+'*************************************************
+on error goto error
+    dim extraargs as string
+    if not uptodate then
+        'no recibe update, ejecutar au
+        'ejecuto el aoupdate, sino me voy
+        if dir(app.path & "\aoupdate.exe", vbarchive) = vbnullstring then
+            msgbox "no se encuentra el archivo de actualizaci�n aoupdate.exe por favor descarguelo y vuelva a intentar", vbcritical
+            end
+        else
+            filecopy app.path & "\aoupdate.exe", app.path & "\aoupdatetmp.exe"
+            
+            if nores then
+                extraargs = " /nores"
+            end if
+            
+            call shellexecute(0, "open", app.path & "\aoupdatetmp.exe", app.exename & ".exe" & extraargs, app.path, sw_shownormal)
+            end
+        end if
+    else
+        if fileexist(app.path & "\aoupdatetmp.exe", vbarchive) then kill app.path & "\aoupdatetmp.exe"
+    end if
+exit sub
+
+error:
+    if err.number = 75 then 'si el archivo aoupdatetmp.exe est� en uso, entonces esperamos 5 ms y volvemos a intentarlo hasta que nos deje.
+        sleep 5
+        resume
+    else
+        msgbox err.description & vbcrlf, vbinformation, "[ " & err.number & " ]" & " error "
+        end
+    end if
 end sub
 
 private sub loadclientsetup()
@@ -1064,6 +1128,11 @@ private sub loadclientsetup()
     close fhandle
     
     nores = clientsetup.bnores
+    if clientsetup.sgraficos <> "" then
+        graphicsfile = clientsetup.sgraficos
+    else
+        graphicsfile = "graficos3.ind"
+    end if
 end sub
 
 private sub inicializarnombres()
@@ -1189,3 +1258,25 @@ public sub closeclient()
     
     end
 end sub
+
+public function esgm(charindex as integer) as boolean
+esgm = false
+if charlist(charindex).priv >= 1 and charlist(charindex).priv <= 5 or charlist(charindex).priv = 25 then _
+    esgm = true
+
+end function
+
+public function gettagposition(byval nick as string) as integer
+dim buf as integer
+buf = instr(nick, "<")
+if buf > 0 then
+    gettagposition = buf
+    exit function
+end if
+buf = instr(nick, "[")
+if buf > 0 then
+    gettagposition = buf
+    exit function
+end if
+gettagposition = len(nick) + 2
+end function

@@ -160,27 +160,33 @@ end function
 
 ' usar objetos
 public function intervalopermiteusar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
-dim tactual as long
+'***************************************************
+'author: unknown
+'last modification: 25/01/2010 (zama)
+'25/01/2010: zama - general adjustments.
+'***************************************************
 
-tactual = gettickcount() and &h7fffffff
-
-if tactual - userlist(userindex).counters.timerusar >= intervalouserpuedeusar then
-    if actualizar then
-        userlist(userindex).counters.timerusar = tactual
-        userlist(userindex).counters.failedusageattempts = 0
-    end if
-    intervalopermiteusar = true
-else
-    intervalopermiteusar = false
+    dim tactual as long
     
-    userlist(userindex).counters.failedusageattempts = userlist(userindex).counters.failedusageattempts + 1
+    tactual = gettickcount() and &h7fffffff
     
-    'tolerancia arbitraria - 20 es muy alta, la est� chiteando zarpado
-    if userlist(userindex).counters.failedusageattempts = 20 then
-        call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(userlist(userindex).name & " kicked by the server por posible modificaci�n de intervalos.", fonttypenames.fonttype_fight))
-        call closesocket(userindex)
+    if tactual - userlist(userindex).counters.timerusar >= intervalouserpuedeusar then
+        if actualizar then
+            userlist(userindex).counters.timerusar = tactual
+          '  userlist(userindex).counters.failedusageattempts = 0
+        end if
+        intervalopermiteusar = true
+    else
+        intervalopermiteusar = false
+        
+      '  userlist(userindex).counters.failedusageattempts = userlist(userindex).counters.failedusageattempts + 1
+        
+        'tolerancia arbitraria - 20 es muy alta, la est� chiteando zarpado
+      '  if userlist(userindex).counters.failedusageattempts = 20 then
+      '      call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(userlist(userindex).name & " kicked by the server por posible modificaci�n de intervalos.", fonttypenames.fonttype_fight))
+      '      call closesocket(userindex)
+      '  end if
     end if
-end if
 
 end function
 

@@ -67,8 +67,9 @@ end sub
 public sub parseusercommand(byval rawcommand as string)
 '***************************************************
 'author: alejandro santos (alejolp)
-'last modification: 12/20/06
+'last modification: 26/03/2009
 'interpreta, valida y ejecuta el comando ingresado
+'26/03/2009: zama - flexibilizo la cantidad de parametros de /nene,  /onlinemap y /telep
 '***************************************************
     dim tmpargos() as string
     
@@ -138,6 +139,7 @@ public sub parseusercommand(byval rawcommand as string)
                     end with
                     exit sub
                 end if
+                if frmmain.macrotrabajo.enabled then frmmain.desactivarmacrotrabajo
                 call writequit
                 
             case "/salirclan"
@@ -446,7 +448,11 @@ public sub parseusercommand(byval rawcommand as string)
                 end if
                 
             case "/fundarclan"
-                frmeligealineacion.show vbmodeless, frmmain
+                if userlvl >= 25 then
+                    frmeligealineacion.show vbmodeless, frmmain
+                else
+                    call showconsolemsg("para fundar un clan ten�s que ser nivel 25 y tener 90 skills en liderazgo.")
+                end if
             
             case "/fundarclangm"
                 call writeguildfundate(eclantype.ct_gm)
@@ -532,8 +538,8 @@ public sub parseusercommand(byval rawcommand as string)
                         call showconsolemsg("mapa incorrecto. utilice /nene mapa.")
                     end if
                 else
-                    'avisar que falta el parametro
-                    call showconsolemsg("faltan par�metros. utilice /nene mapa.")
+                    'por default, toma el mapa en el que esta
+                    call writecreaturesinmap(usermap)
                 end if
                 
             case "/teleploc"
@@ -545,6 +551,25 @@ public sub parseusercommand(byval rawcommand as string)
                         call writewarpchar(argumentosall(0), argumentosall(1), argumentosall(2), argumentosall(3))
                     else
                         'no es numerico
+                        call showconsolemsg("valor incorrecto. utilice /telep nickname mapa x y.")
+                    end if
+                elseif cantidadargumentos = 3 then
+                    if validnumber(argumentosall(0), enumber_types.ent_integer) and validnumber(argumentosall(1), enumber_types.ent_byte) and validnumber(argumentosall(2), enumber_types.ent_byte) then
+                        'por defecto, si no se indica el nombre, se teletransporta el mismo usuario
+                        call writewarpchar("yo", argumentosall(0), argumentosall(1), argumentosall(2))
+                    elseif validnumber(argumentosall(1), enumber_types.ent_byte) and validnumber(argumentosall(2), enumber_types.ent_byte) then
+                        'por defecto, si no se indica el mapa, se teletransporta al mismo donde esta el usuario
+                        call writewarpchar(argumentosall(0), usermap, argumentosall(1), argumentosall(2))
+                    else
+                        'no uso ningun formato por defecto
+                        call showconsolemsg("valor incorrecto. utilice /telep nickname mapa x y.")
+                    end if
+                elseif cantidadargumentos = 2 then
+                    if validnumber(argumentosall(0), enumber_types.ent_byte) and validnumber(argumentosall(1), enumber_types.ent_byte) then
+                        ' por defecto, se considera que se quiere unicamente cambiar las coordenadas del usuario, en el mismo mapa
+                        call writewarpchar("yo", usermap, argumentosall(0), argumentosall(1))
+                    else
+                        'no uso ningun formato por defecto
                         call showconsolemsg("valor incorrecto. utilice /telep nickname mapa x y.")
                     end if
                 else
@@ -673,6 +698,9 @@ public sub parseusercommand(byval rawcommand as string)
                         case "raza"
                             tmpint = eeditoptions.eo_raza
                         
+                        case "agregar"
+                            tmpint = eeditoptions.eo_addgold
+                        
                         case else
                             tmpint = -1
                     end select
@@ -691,7 +719,7 @@ public sub parseusercommand(byval rawcommand as string)
                     'avisar que falta el parametro
                     call showconsolemsg("faltan par�metros.")
                 end if
-                
+            
             case "/info"
                 if notnullarguments then
                     call writerequestcharinfo(argumentosraw)
@@ -752,7 +780,15 @@ public sub parseusercommand(byval rawcommand as string)
                 call writeonlinegm
                 
             case "/onlinemap"
-                call writeonlinemap
+                if notnullarguments then
+                    if validnumber(argumentosall(0), enumber_types.ent_integer) then
+                        call writeonlinemap(argumentosall(0))
+                    else
+                        call showconsolemsg("mapa incorrecto.")
+                    end if
+                else
+                    call writeonlinemap(usermap)
+                end if
                 
             case "/perdon"
                 if notnullarguments then
@@ -1401,9 +1437,6 @@ public sub parseusercommand(byval rawcommand as string)
             case "/echartodospjs"
                 call writekickallchars
                 
-            case "/tcpesstats"
-                call writerequesttcpstats
-                
             case "/reloadnpcs"
                 call writereloadnpcs
                 
@@ -1442,6 +1475,14 @@ public sub parseusercommand(byval rawcommand as string)
             
             case "/ping"
                 call writeping
+                
+            case "/setinivar"
+                if cantidadargumentos = 3 then
+                    argumentosall(2) = replace(argumentosall(2), "+", " ")
+                    call writesetinivar(argumentosall(0), argumentosall(1), argumentosall(2))
+                else
+                    call showconsolemsg("pr�metros incorrectos. utilice /setinivar llave clave valor")
+                end if
             
 #if seguridadalkon then
             case else

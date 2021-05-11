@@ -7,6 +7,7 @@ begin vb.form frmestadisticas
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   6900
+   clipcontrols    =   0   'false
    icon            =   "frmestadisticas.frx":0000
    linktopic       =   "form1"
    maxbutton       =   0   'false

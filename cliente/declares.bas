@@ -75,12 +75,13 @@ public const int_cast_spell as integer = 1400
 public const int_cast_attack as integer = 1000
 public const int_work as integer = 700
 public const int_useitemu as integer = 450
-public const int_useitemdck as integer = 220
+public const int_useitemdck as integer = 125
 public const int_sentrpu as integer = 2000
 
 public macrobltindex as integer
 
 public const casper_head as integer = 500
+public const fragata_fantasmal as integer = 87
 
 public const numatributes as byte = 5
 
@@ -118,6 +119,7 @@ public userciego as boolean
 public userestupido as boolean
 
 public nores as boolean 'no cambiar la resolucion
+public graphicsfile as string 'que graficos.ind usamos
 
 public rainbufferindex as long
 public fogatabufferindex as long
@@ -304,11 +306,11 @@ public const fundirmetal as integer = 88
 ' mensaje_*  --> mensajes de texto que se muestran en el cuadro de texto
 '
 
-public const mensaje_criatura_falla_golpe as string = "la criatura fallo el golpe!!!"
-public const mensaje_criatura_matado as string = "la criatura te ha matado!!!"
-public const mensaje_rechazo_ataque_escudo as string = "has rechazado el ataque con el escudo!!!"
-public const mensaje_usuario_rechazo_ataque_escudo  as string = "el usuario rechazo el ataque con su escudo!!!"
-public const mensaje_fallado_golpe as string = "has fallado el golpe!!!"
+public const mensaje_criatura_falla_golpe as string = "���la criatura fallo el golpe!!!"
+public const mensaje_criatura_matado as string = "���la criatura te ha matado!!!"
+public const mensaje_rechazo_ataque_escudo as string = "���has rechazado el ataque con el escudo!!!"
+public const mensaje_usuario_rechazo_ataque_escudo  as string = "���el usuario rechazo el ataque con su escudo!!!"
+public const mensaje_fallado_golpe as string = "���has fallado el golpe!!!"
 public const mensaje_seguro_activado as string = ">>seguro activado<<"
 public const mensaje_seguro_desactivado as string = ">>seguro desactivado<<"
 public const mensaje_pierde_nobleza as string = "��has perdido puntaje de nobleza y ganado puntaje de criminalidad!! si sigues ayudando a criminales te convertir�s en uno de ellos y ser�s perseguido por las tropas de las ciudades."
@@ -349,7 +351,7 @@ public const mensaje_produce_impacto_torso as string = " en el torso por "
 
 public const mensaje_trabajo_magia as string = "haz click sobre el objetivo..."
 public const mensaje_trabajo_pesca as string = "haz click sobre el sitio donde quieres pescar..."
-public const mensaje_trabajo_robar as string = "haz click sobre la victima..."
+public const mensaje_trabajo_robar as string = "haz click sobre la v�ctima..."
 public const mensaje_trabajo_talar as string = "haz click sobre el �rbol..."
 public const mensaje_trabajo_mineria as string = "haz click sobre el yacimiento..."
 public const mensaje_trabajo_fundirmetal as string = "haz click sobre la fragua..."
@@ -533,6 +535,7 @@ public enum eeditoptions
     eo_asesino
     eo_sex
     eo_raza
+    eo_addgold
 end enum
 
 ''
@@ -587,7 +590,8 @@ public declare function getasynckeystate lib "user32" (byval nvirtkey as long) a
 
 public declare sub sleep lib "kernel32" (byval dwmilliseconds as long)
 
-'para ejecutar el internet explorer para el manual
+'para ejecutar el browser y programas externos
+public const sw_shownormal as long = 1
 public declare function shellexecute lib "shell32.dll" alias "shellexecutea" (byval hwnd as long, byval lpoperation as string, byval lpfile as string, byval lpparameters as string, byval lpdirectory as string, byval nshowcmd as long) as long
 
 'lista de cabezas

@@ -5,6 +5,7 @@ begin vb.form frmscreenshots
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   4680
+   clipcontrols    =   0   'false
    linktopic       =   "form1"
    scaleheight     =   3195
    scalewidth      =   4680

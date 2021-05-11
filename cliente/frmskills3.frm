@@ -7,6 +7,7 @@ begin vb.form frmskills3
    clientleft      =   0
    clienttop       =   0
    clientwidth     =   5955
+   clipcontrols    =   0   'false
    beginproperty font 
       name            =   "tahoma"
       size            =   8.25
