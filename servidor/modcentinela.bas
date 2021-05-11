@@ -7,33 +7,36 @@ attribute vb_name = "modcentinela"
 '*****************************************************************
 'respective portions copyrighted by contributors listed below.
 '
-'this library is free software; you can redistribute it and/or
-'modify it under the terms of the gnu lesser general public
-'license as published by the free software foundation version 2.1 of
-'the license
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
-'this library is distributed in the hope that it will be useful,
+'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
-'merchantability or fitness for a particular purpose.  see the gnu
-'lesser general public license for more details.
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu lesser general public
-'license along with this library; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 
 '*****************************************************************
 'augusto rando(barrin@imperiumao.com.ar)
+'   imperiumao 1.2
 '   - first relase
 '
 'juan mart�n sotuyo dodero (juansotuyo@gmail.com)
-'   - adapted to alkon ao
+'   alkon ao 0.11.5
 '   - small improvements and added logs to detect possible cheaters
+'
+'juan mart�n sotuyo dodero (juansotuyo@gmail.com)
+'   alkon ao 0.12.0
+'   - added several messages to spam users until they reply
 '*****************************************************************
 
 option explicit
 
 private const npc_centinela_tierra as integer = 16  '�ndice del npc en el .dat
-private const npc_centinela_agua as integer = 16     '�dem anterior, pero en mapas de agua
+private const npc_centinela_agua as integer = 16    '�dem anterior, pero en mapas de agua
 
 public centinelanpcindex as integer                '�ndice del npc en el servidor
 
@@ -43,11 +46,31 @@ private type tcentinela
     revisandouserindex as integer   '�qu� �ndice revisamos?
     tiemporestante as integer       '�cu�ntos minutos le quedan al usuario?
     clave as integer                'clave que debe escribir
+    spawntime as long
 end type
 
 public centinelaactivado as boolean
 
 public centinela as tcentinela
+
+public sub calluserattention()
+'############################################################
+'makes noise and fx to call the user's attention.
+'############################################################
+    if (gettickcount() and &h7fffffff) - centinela.spawntime >= 5000 then
+        if centinela.revisandouserindex <> 0 and centinelaactivado then
+            if not userlist(centinela.revisandouserindex).flags.centinelaok then
+                call writeplaywave(centinela.revisandouserindex, snd_warp)
+                call writecreatefx(centinela.revisandouserindex, npclist(centinelanpcindex).char.charindex, fxids.fxwarp, 0)
+                
+                'resend the key
+                call centinelasendclave(centinela.revisandouserindex)
+                
+                call flushbuffer(centinela.revisandouserindex)
+            end if
+        end if
+    end if
+end sub
 
 private sub gotonextworkingchar()
 '############################################################
@@ -56,20 +79,22 @@ private sub gotonextworkingchar()
     dim loopc as long
     
     for loopc = 1 to lastuser
-        if userlist(loopc).name <> "" and userlist(loopc).counters.trabajando > 0 and userlist(loopc).flags.privilegios = playertype.user then
+        if userlist(loopc).flags.userlogged and userlist(loopc).counters.trabajando > 0 and (userlist(loopc).flags.privilegios and playertype.user) then
             if not userlist(loopc).flags.centinelaok then
                 'inicializamos
                 centinela.revisandouserindex = loopc
                 centinela.tiemporestante = tiempo_inicial
-                centinela.clave = randomnumber(1, 36000)
+                centinela.clave = randomnumber(1, 32000)
+                centinela.spawntime = gettickcount() and &h7fffffff
                 
                 'ponemos al centinela en posici�n
                 call warpcentinela(loopc)
                 
                 if centinelanpcindex then
-                    'mandamos el mensaje (el centinela habla y aparece en consola para que no haya dudas
-                    call senddata(sendtarget.toindex, loopc, 0, "||" & vbgreen & "�" & "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos." & "�" & cstr(npclist(centinelanpcindex).char.charindex))
-                    call senddata(sendtarget.toindex, loopc, 0, "||" & "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos." & fonttype_centinela)
+                    'mandamos el mensaje (el centinela habla y aparece en consola para que no haya dudas)
+                    call writechatoverhead(loopc, "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos.", cstr(npclist(centinelanpcindex).char.charindex), vbgreen)
+                    call writeconsolemsg(loopc, "saludos " & userlist(loopc).name & ", soy el centinela de estas tierras. me gustar�a que escribas /centinela " & centinela.clave & " en no m�s de dos minutos.", fonttypenames.fonttype_centinela)
+                    call flushbuffer(loopc)
                 end if
                 exit sub
             end if
@@ -105,7 +130,7 @@ on error goto error_handler
         name = userlist(centinela.revisandouserindex).name
         
         'avisamos a los admins
-        call senddata(sendtarget.toadmins, 0, 0, "||servidor> el centinela ha baneado a " & name & fonttype_server)
+        call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("servidor> el centinela ha baneado a " & name, fonttypenames.fonttype_server))
         
         'ponemos el flag de ban a 1
         call writevar(charpath & name & ".chr", "flags", "ban", "1")
@@ -151,14 +176,17 @@ public sub centinelacheckclave(byval userindex as integer, byval clave as intege
 '############################################################
     if clave = centinela.clave and userindex = centinela.revisandouserindex then
         userlist(centinela.revisandouserindex).flags.centinelaok = true
+        call writechatoverhead(userindex, "�muchas gracias " & userlist(centinela.revisandouserindex).name & "! espero no haber sido una molestia", cstr(npclist(centinelanpcindex).char.charindex), vbwhite)
         centinela.revisandouserindex = 0
-        call senddata(sendtarget.toindex, centinela.revisandouserindex, 0, "||" & vbwhite & "�" & "�muchas gracias " & userlist(centinela.revisandouserindex).name & "! espero no haber sido una molestia" & "�" & cstr(npclist(centinelanpcindex).char.charindex))
+        call flushbuffer(userindex)
     else
         call centinelasendclave(userindex)
         
+        'logueamos el evento
         if userindex <> centinela.revisandouserindex then
-            'logueamos el evento
             call logcentinela("el usuario " & userlist(userindex).name & " respondi� aunque no se le hablaba a �l.")
+        else
+            call logcentinela("el usuario " & userlist(userindex).name & " respondi� una clave incorrecta: " & clave & " - se esperaba : " & centinela.clave)
         end if
     end if
 end sub
@@ -170,7 +198,7 @@ public sub resetcentinelainfo()
     dim loopc as long
     
     for loopc = 1 to lastuser
-        if (userlist(loopc).name <> "" and loopc <> centinela.revisandouserindex) then
+        if (lenb(userlist(loopc).name) <> 0 and loopc <> centinela.revisandouserindex) then
             userlist(loopc).flags.centinelaok = false
         end if
     next loopc
@@ -184,14 +212,15 @@ public sub centinelasendclave(byval userindex as integer)
     
     if userindex = centinela.revisandouserindex then
         if not userlist(userindex).flags.centinelaok then
-            call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "�la clave que te he dicho es " & "/centinela " & centinela.clave & " escr�belo r�pido!" & "�" & cstr(npclist(centinelanpcindex).char.charindex))
+            call writechatoverhead(userindex, "�la clave que te he dicho es /centinela " & centinela.clave & ", escr�belo r�pido!", cstr(npclist(centinelanpcindex).char.charindex), vbgreen)
+            call writeconsolemsg(userindex, "�la clave correcta es /centinela " & centinela.clave & ", escr�belo r�pido!", fonttypenames.fonttype_centinela)
         else
             'logueamos el evento
             call logcentinela("el usuario " & userlist(centinela.revisandouserindex).name & " respondi� m�s de una vez la contrase�a correcta.")
-            call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "te agradezco, pero ya me has respondido. me retirar� pronto." & "�" & cstr(npclist(centinelanpcindex).char.charindex))
+            call writechatoverhead(userindex, "te agradezco, pero ya me has respondido. me retirar� pronto.", cstr(npclist(centinelanpcindex).char.charindex), vbgreen)
         end if
     else
-        call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & "no es a ti a quien estoy hablando, �no ves?" & "�" & cstr(npclist(centinelanpcindex).char.charindex))
+        call writechatoverhead(userindex, "no es a ti a quien estoy hablando, �no ves?", cstr(npclist(centinelanpcindex).char.charindex), vbwhite)
     end if
 end sub
 
@@ -216,8 +245,9 @@ public sub pasarminutocentinela()
             end if
             
             'el centinela habla y se manda a consola para que no quepan dudas
-            call senddata(sendtarget.toindex, centinela.revisandouserindex, 0, "||" & vbred & "��" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & "." & "�" & cstr(npclist(centinelanpcindex).char.charindex))
-            call senddata(sendtarget.toindex, centinela.revisandouserindex, 0, "||" & "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & "." & fonttype_centinela)
+            call writechatoverhead(centinela.revisandouserindex, "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & ".", cstr(npclist(centinelanpcindex).char.charindex), vbred)
+            call writeconsolemsg(centinela.revisandouserindex, "�" & userlist(centinela.revisandouserindex).name & ", tienes un minuto m�s para responder! debes escribir /centinela " & centinela.clave & ".", fonttypenames.fonttype_centinela)
+            call flushbuffer(centinela.revisandouserindex)
         end if
     end if
 end sub
@@ -248,9 +278,6 @@ public sub centinelauserlogout()
 'el usuario al que revisabamos se desconect�
 '############################################################
     if centinela.revisandouserindex then
-        'revisamos si no respondi� ya
-        if userlist(centinela.revisandouserindex).flags.centinelaok then exit sub
-        
         'logueamos el evento
         call logcentinela("el usuario " & userlist(centinela.revisandouserindex).name & " se desolgue� al pedirsele la contrase�a")
         

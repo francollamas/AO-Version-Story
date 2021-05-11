@@ -1,33 +1,26 @@
 attribute vb_name = "modareas"
-'argentum online 0.11.20
-'copyright (c) 2002 m�rquez pablo ignacio
+'**************************************************************
+' modareas.bas - module to allow the usage of areas instead of maps.
+' saves a lot of bandwidth.
 '
+' original idea by juan mart�n sotuyo dodero (maraxus)
+' (juansotuyo@gmail.com)
+' implemented by lucio n. tourrilhes (dunga)
+'**************************************************************
+
+'**************************************************************************
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
-'
-'argentum online is based on baronsoft's vb6 online rpg
-'you can contact the original creator of ore at aaron@baronsoft.com
-'for more information about ore please visit http://www.baronsoft.com/
-'
-'
-'you can contact me at:
-'morgolock@speedy.com.ar
-'www.geocities.com/gmorgolock
-'calle 3 n�mero 983 piso 7 dto a
-'la plata - pcia, buenos aires - republica argentina
-'c�digo postal 1900
-'pablo ignacio m�rquez
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
 
 ' modulo de envio por areas compatible con la versi�n 9.10.x ... by dunga
 
@@ -64,7 +57,6 @@ private areasinfo(1 to 100, 1 to 100) as byte
 private postoarea(1 to 100) as byte
 
 private areasrecive(12) as integer
-'private areasenvia(12) as integer
 
 public conngroups() as conngroup
 
@@ -81,7 +73,6 @@ public sub initareas()
 ' setup areas...
     for loopc = 0 to 11
         areasrecive(loopc) = (2 ^ loopc) or iif(loopc <> 0, 2 ^ (loopc - 1), 0) or iif(loopc <> 11, 2 ^ (loopc + 1), 0)
-'        areasenvia(loopc) = 2 ^ (loopc + 1)
     next loopc
     
     for loopc = 1 to 100
@@ -151,7 +142,6 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
     dim tempint as long, map as long
     
     with userlist(userindex)
-        
         minx = .areasinfo.minx
         miny = .areasinfo.miny
         
@@ -205,7 +195,7 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
         map = userlist(userindex).pos.map
         
         'esto es para ke el cliente elimine lo "fuera de area..."
-        call senddata(sendtarget.toindex, userindex, 0, "ca" & chr$(.pos.x) & chr$(.pos.y))
+        call writeareachanged(userindex)
         
         'actualizamos!!!
         for x = minx to maxx
@@ -217,58 +207,45 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte)
                     tempint = mapdata(map, x, y).userindex
                     
                     if userindex <> tempint then
-                        call makeuserchar(sendtarget.toindex, userindex, 0, cint(tempint), map, x, y)
-                        call makeuserchar(sendtarget.toindex, cint(tempint), 0, userindex, .pos.map, .pos.x, .pos.y)
+                        call makeuserchar(false, userindex, tempint, map, x, y)
+                        call makeuserchar(false, tempint, userindex, .pos.map, .pos.x, .pos.y)
                         
                         'si el user estaba invisible le avisamos al nuevo cliente de eso
-#if seguridadalkon then
-                        if encriptarprotocoloscriticos then
-                            if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
-                                 call enviardatosaslot(userindex, protocrypt("nover" & userlist(tempint).char.charindex & ",1", userindex) & endc)
-                            end if
-                            
-                            if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
-                                 call enviardatosaslot(tempint, protocrypt("nover" & userlist(userindex).char.charindex & ",1", tempint) & endc)
-                            end if
-                        else
-#end if
-                            if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
-                                 call enviardatosaslot(userindex, "nover" & userlist(tempint).char.charindex & ",1" & endc)
-                            end if
-                            
-                            if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
-                                 call enviardatosaslot(tempint, "nover" & userlist(userindex).char.charindex & ",1" & endc)
-                            end if
-#if seguridadalkon then
+                        if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
+                            call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
                         end if
-#end if
+                        if userlist(userindex).flags.invisible or userlist(userindex).flags.oculto then
+                            call writesetinvisible(tempint, userlist(userindex).char.charindex, true)
+                        end if
+                        
+                        call flushbuffer(tempint)
+                    
                     elseif head = user_nuevo then
-                        call makeuserchar(sendtarget.toindex, userindex, 0, userindex, map, x, y)
+                        call makeuserchar(false, userindex, userindex, map, x, y)
                     end if
-                
                 end if
                 
                 '<<< npc >>>
                 if mapdata(map, x, y).npcindex then
-                    call makenpcchar(sendtarget.toindex, userindex, 0, mapdata(map, x, y).npcindex, map, x, y)
+                    call makenpcchar(false, userindex, mapdata(map, x, y).npcindex, map, x, y)
                  end if
                  
                 '<<< item >>>
                 if mapdata(map, x, y).objinfo.objindex then
                     tempint = mapdata(map, x, y).objinfo.objindex
                     if not esobjetofijo(objdata(tempint).objtype) then
-                        call senddata(sendtarget.toindex, userindex, 0, "ho" & objdata(tempint).grhindex & "," & x & "," & y)
+                        call writeobjectcreate(userindex, objdata(tempint).grhindex, x, y)
                         
                         if objdata(tempint).objtype = eobjtype.otpuertas then
-                            call bloquear(sendtarget.toindex, userindex, 0, cint(map), x, y, mapdata(map, x, y).blocked)
-                            call bloquear(sendtarget.toindex, userindex, 0, cint(map), x - 1, y, mapdata(map, x - 1, y).blocked)
+                            call bloquear(false, userindex, x, y, mapdata(map, x, y).blocked)
+                            call bloquear(false, userindex, x - 1, y, mapdata(map, x - 1, y).blocked)
                         end if
                     end if
                 end if
             
             next y
         next x
-            
+        
         'precalculados :p
         tempint = .pos.x \ 9
         .areasinfo.arearecivex = areasrecive(tempint)
@@ -288,7 +265,6 @@ public sub checkupdateneedednpc(byval npcindex as integer, byval head as byte)
 'last modify date: unknow
 ' se llama cuando se mueve un npc
 '**************************************************************
-    
     if npclist(npcindex).areasinfo.areaid = areasinfo(npclist(npcindex).pos.x, npclist(npcindex).pos.y) then exit sub
     
     dim minx as long, maxx as long, miny as long, maxy as long, x as long, y as long
@@ -351,11 +327,11 @@ public sub checkupdateneedednpc(byval npcindex as integer, byval head as byte)
             for x = minx to maxx
                 for y = miny to maxy
                     if mapdata(.pos.map, x, y).userindex then _
-                        call makenpcchar(sendtarget.toindex, mapdata(.pos.map, x, y).userindex, 0, npcindex, .pos.map, .pos.x, .pos.y)
+                        call makenpcchar(false, mapdata(.pos.map, x, y).userindex, npcindex, .pos.map, .pos.x, .pos.y)
                 next y
             next x
         end if
-            
+        
         'precalculados :p
         tempint = .pos.x \ 9
         .areasinfo.arearecivex = areasrecive(tempint)
@@ -378,14 +354,19 @@ public sub quitaruser(byval userindex as integer, byval map as integer)
     dim tempval as long
     dim loopc as long
     
-    'saco del viejo mapa
-    conngroups(map).countentrys = conngroups(map).countentrys - 1
-    tempval = conngroups(map).countentrys
-    
-    for loopc = 1 to tempval + 1
+    'search for the user
+    for loopc = 1 to conngroups(map).countentrys
         if conngroups(map).userentrys(loopc) = userindex then exit for
     next loopc
     
+    'char not found
+    if loopc > conngroups(map).countentrys then exit sub
+    
+    'remove from old map
+    conngroups(map).countentrys = conngroups(map).countentrys - 1
+    tempval = conngroups(map).countentrys
+    
+    'move list back
     for loopc = loopc to tempval
         conngroups(map).userentrys(loopc) = conngroups(map).userentrys(loopc + 1)
     next loopc
@@ -395,16 +376,31 @@ public sub quitaruser(byval userindex as integer, byval map as integer)
     end if
 end sub
 
-public sub agregaruser(byval userindex as integer, byval map as integer, optional byval esnuevo as boolean = true)
+public sub agregaruser(byval userindex as integer, byval map as integer)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
-'
+'last modify date: 04/01/2007
+'modified by juan mart�n sotuyo dodero (maraxus)
+'   - now the method checks for repetead users instead of trusting parameters.
+'   - if the character is new to the map, update it
 '**************************************************************
     dim tempval as long
+    dim esnuevo as boolean
+    dim i as long
+    
+    if not mapavalido(map) then exit sub
+    
+    esnuevo = true
+    
+    'prevent adding repeated users
+    for i = 1 to conngroups(map).countentrys
+        if conngroups(map).userentrys(i) = userindex then
+            esnuevo = false
+            exit for
+        end if
+    next i
     
     if esnuevo then
-        if not mapavalido(map) then exit sub
         'update map and connection groups data
         conngroups(map).countentrys = conngroups(map).countentrys + 1
         tempval = conngroups(map).countentrys
@@ -415,7 +411,7 @@ public sub agregaruser(byval userindex as integer, byval map as integer, optiona
         
         conngroups(map).userentrys(tempval) = userindex
     end if
-
+    
     'update user
     userlist(userindex).areasinfo.areaid = 0
     
@@ -423,9 +419,11 @@ public sub agregaruser(byval userindex as integer, byval map as integer, optiona
     userlist(userindex).areasinfo.areapertenecey = 0
     userlist(userindex).areasinfo.arearecivex = 0
     userlist(userindex).areasinfo.arearecivey = 0
+    
+    call checkupdateneededuser(userindex, user_nuevo)
 end sub
 
-public sub argegarnpc(byval npcindex as integer)
+public sub agregarnpc(byval npcindex as integer)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
 'last modify date: unknow
@@ -437,151 +435,6 @@ public sub argegarnpc(byval npcindex as integer)
     npclist(npcindex).areasinfo.areapertenecey = 0
     npclist(npcindex).areasinfo.arearecivex = 0
     npclist(npcindex).areasinfo.arearecivey = 0
-end sub
-
-public sub sendtouserarea(byval userindex as integer, byval sddata as string, optional encriptar as boolean = false)
-'**************************************************************
-'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
-'
-'**************************************************************
-    dim loopc as long
-    dim tempindex as integer
     
-    dim map as integer
-    dim areax as integer
-    dim areay as integer
-    
-    map = userlist(userindex).pos.map
-    areax = userlist(userindex).areasinfo.areapertenecex
-    areay = userlist(userindex).areasinfo.areapertenecey
-
-    if not mapavalido(map) then exit sub
-    if not encriptar then sddata = sddata & endc
-    
-    for loopc = 1 to conngroups(map).countentrys
-        tempindex = conngroups(map).userentrys(loopc)
-        
-        if userlist(tempindex).areasinfo.arearecivex and areax then  'esta en el area?
-            if userlist(tempindex).areasinfo.arearecivey and areay then
-                if userlist(tempindex).connidvalida then
-#if seguridadalkon then
-                    if encriptar then
-                        call enviardatosaslot(tempindex, protocrypt(sddata, tempindex) & endc)
-                    else
-#end if
-                        call enviardatosaslot(tempindex, sddata)
-#if seguridadalkon then
-                    end if
-#end if
-                end if
-            end if
-        end if
-    next loopc
-end sub
-
-public sub sendtouserareabutindex(byval userindex as integer, byval sddata as string)
-'**************************************************************
-'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
-' esta solo se usa para enviar mps asi que se puede encriptar desde aca :)
-'**************************************************************
-    dim loopc as long
-    dim tempint as integer
-    dim tempindex as integer
-    
-    dim map as integer
-    dim areax as integer
-    dim areay as integer
-    
-    map = userlist(userindex).pos.map
-    areax = userlist(userindex).areasinfo.areapertenecex
-    areay = userlist(userindex).areasinfo.areapertenecey
-
-    if not mapavalido(map) then exit sub
-
-    for loopc = 1 to conngroups(map).countentrys
-        tempindex = conngroups(map).userentrys(loopc)
-            
-        tempint = userlist(tempindex).areasinfo.arearecivex and areax
-        if tempint then  'esta en el area?
-            tempint = userlist(tempindex).areasinfo.arearecivey and areay
-            if tempint then
-                if tempindex <> userindex then
-                    if userlist(tempindex).connidvalida then
-                        call enviardatosaslot(tempindex, sddata)
-                    end if
-                end if
-            end if
-        end if
-    next loopc
-end sub
-
-public sub sendtonpcarea(byval npcindex as long, byval sddata as string)
-'**************************************************************
-'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
-'
-'**************************************************************
-    dim loopc as long
-    dim tempint as integer
-    dim tempindex as integer
-    
-    dim map as integer
-    dim areax as integer
-    dim areay as integer
-    
-    map = npclist(npcindex).pos.map
-    areax = npclist(npcindex).areasinfo.areapertenecex
-    areay = npclist(npcindex).areasinfo.areapertenecey
-    
-    sddata = sddata & endc
-    
-    if not mapavalido(map) then exit sub
-    
-    for loopc = 1 to conngroups(map).countentrys
-        tempindex = conngroups(map).userentrys(loopc)
-        
-        tempint = userlist(tempindex).areasinfo.arearecivex and areax
-        if tempint then  'esta en el area?
-            tempint = userlist(tempindex).areasinfo.arearecivey and areay
-            if tempint then
-                if userlist(tempindex).connidvalida then
-                    call enviardatosaslot(tempindex, sddata)
-                end if
-            end if
-        end if
-    next loopc
-end sub
-
-public sub sendtoareabypos(byval map as integer, byval areax as integer, byval areay as integer, byval sddata as string)
-'**************************************************************
-'author: lucio n. tourrilhes (dunga)
-'last modify date: unknow
-'
-'**************************************************************
-    dim loopc as long
-    dim tempint as integer
-    dim tempindex as integer
-    
-    areax = 2 ^ (areax \ 9)
-    areay = 2 ^ (areay \ 9)
-    
-    sddata = sddata & endc
-    
-    if not mapavalido(map) then exit sub
-
-    for loopc = 1 to conngroups(map).countentrys
-        tempindex = conngroups(map).userentrys(loopc)
-            
-        tempint = userlist(tempindex).areasinfo.arearecivex and areax
-        if tempint then  'esta en el area?
-            tempint = userlist(tempindex).areasinfo.arearecivey and areay
-            if tempint then
-                if userlist(tempindex).connidvalida then
-                    call enviardatosaslot(tempindex, sddata)
-                end if
-            end if
-        end if
-    next loopc
+    call checkupdateneedednpc(npcindex, user_nuevo)
 end sub

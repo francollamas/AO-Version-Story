@@ -1,4 +1,23 @@
 attribute vb_name = "wsksock"
+'**************************************************************
+' wsksock.bas
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 #if usarquesocket = 1 then
 
 'date stamp: sept 1, 1996 (for version control, please don't remove)
@@ -132,6 +151,11 @@ public const wsa_flag_overlapped = &h1
 public const cf_accept = &h0
 public const cf_reject = &h1
 
+'agregado por maraxus
+public const sd_receive as long = &h0&
+public const sd_send as long = &h1&
+public const sd_both as long = &h2&
+
 public const invalid_socket = -1
 public const socket_error = -1
 
@@ -239,7 +263,7 @@ global const wsano_address = 11004
     public declare function listen lib "ws2_32.dll" (byval s as integer, byval backlog as integer) as integer
     public declare function ntohl lib "ws2_32.dll" (byval netlong as long) as long
     public declare function ntohs lib "ws2_32.dll" (byval netshort as integer) as integer
-    public declare function recv lib "ws2_32.dll" (byval s as integer, byval buf as any, byval buflen as integer, byval flags as integer) as integer
+    public declare function recv lib "ws2_32.dll" (byval s as integer, byref buf as any, byval buflen as integer, byval flags as integer) as integer
     public declare function recvfrom lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer, from as sockaddr, fromlen as integer) as integer
     public declare function ws_select lib "ws2_32.dll" alias "select" (byval nfds as integer, readfds as any, writefds as any, exceptfds as any, timeout as timeval) as integer
     public declare function send lib "ws2_32.dll" (byval s as integer, buf as any, byval buflen as integer, byval flags as integer) as integer
@@ -311,7 +335,7 @@ global const wsano_address = 11004
     public declare function listen lib "wsock32.dll" (byval s as long, byval backlog as long) as long
     public declare function ntohl lib "wsock32.dll" (byval netlong as long) as long
     public declare function ntohs lib "wsock32.dll" (byval netshort as long) as integer
-    public declare function recv lib "wsock32.dll" (byval s as long, byval buf as any, byval buflen as long, byval flags as long) as long
+    public declare function recv lib "wsock32.dll" (byval s as long, byref buf as any, byval buflen as long, byval flags as long) as long
     public declare function recvfrom lib "wsock32.dll" (byval s as long, buf as any, byval buflen as long, byval flags as long, from as sockaddr, fromlen as long) as long
     public declare function ws_select lib "wsock32.dll" alias "select" (byval nfds as long, readfds as fd_set, writefds as fd_set, exceptfds as fd_set, timeout as timeval) as long
     public declare function send lib "wsock32.dll" (byval s as long, buf as any, byval buflen as long, byval flags as long) as long
@@ -403,7 +427,7 @@ end function
     dim s&, selectops&, dummy&
 #end if
     dim sockin as sockaddr
-    sockreadbuffer$ = ""
+    sockreadbuffer$ = vbnullstring
     sockin = sazero
     sockin.sin_family = af_inet
     sockin.sin_port = htons(port)
@@ -514,7 +538,7 @@ public function getascip(byval inn as long) as string
         nstr = lstrlen(lpstr)
         if nstr > 32 then nstr = 32
         memcopy byval retstring, byval lpstr, nstr
-        retstring = left(retstring, nstr)
+        retstring = left$(retstring, nstr)
         getascip = retstring
     else
         getascip = "255.255.255.255"
@@ -530,7 +554,7 @@ public function gethostbyaddress(byval addr as long) as string
         memcopy hedesthost, byval phe, hostent_size
         hostname = string(256, 0)
         memcopy byval hostname, byval hedesthost.h_name, 256
-        gethostbyaddress = left(hostname, instr(hostname, chr(0)) - 1)
+        gethostbyaddress = left$(hostname, instr(hostname, chr$(0)) - 1)
     else
         gethostbyaddress = wsa_noname
     end if
@@ -564,8 +588,8 @@ public function getlocalhostname() as string
     if gethostname(sname, 256) then
         sname = wsa_noname
     else
-        if instr(sname, chr(0)) then
-            sname = left(sname, instr(sname, chr(0)) - 1)
+        if instr(sname, chr$(0)) then
+            sname = left$(sname, instr(sname, chr$(0)) - 1)
         end if
     end if
     getlocalhostname = sname
@@ -581,7 +605,7 @@ end function
     dim sa as sockaddr
     addrlen = sockaddr_size
     if getpeername(s, sa, addrlen) then
-        getpeeraddress = ""
+        getpeeraddress = vbnullstring
     else
         getpeeraddress = sockaddresstostring(sa)
     end if
@@ -665,7 +689,7 @@ end function
     szret = string(32, 0)
     addrlen = sockaddr_size
     if getsockname(s, sa, addrlen) then
-        getsockaddress = ""
+        getsockaddress = vbnullstring
     else
         getsockaddress = sockaddresstostring(sa)
     end if
@@ -765,7 +789,7 @@ function ircgetascip(byval ipl$) as string
     nstr = lstrlen(lpstr)
     if nstr > 32 then nstr = 32
     memcopy byval retstring, byval lpstr, nstr
-    retstring = left(retstring, nstr)
+    retstring = left$(retstring, nstr)
     ircgetascip = retstring
     exit function
 ircgetasciperror:
@@ -819,7 +843,7 @@ public function listenforconnect(byval port&, byval hwndtomsg&, byval enlazar as
         listenforconnect = invalid_socket
         exit function
     end if
-    if enlazar = "" then
+    if lenb(enlazar) = 0 then
         sockin.sin_addr = htonl(inaddr_any)
     else
         sockin.sin_addr = inet_addr(enlazar)
@@ -878,7 +902,7 @@ public function ksenddata(byval s%, vmessage as variant) as integer
 public function ksenddata(byval s&, vmessage as variant) as long
 #end if
     dim themsg() as byte, stemp$
-    themsg = ""
+    themsg = vbnullstring
     select case vartype(vmessage)
         case 8209   'byte array
             stemp = vmessage

@@ -22,18 +22,16 @@ attribute vb_exposed = false
 
 '**************************************************************************
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'(at your option) any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '**************************************************************************
 
 ''
@@ -121,6 +119,8 @@ private sub class_terminate()
         
         erase filedata
     end if
+    
+    mainnodes = 0
 end sub
 
 ''
@@ -133,12 +133,15 @@ end sub
 public sub initialize(byval file as string)
 '**************************************************************
 'author: juan mart�n sotuyo dodero
-'last modify date: 5/01/2006
+'last modify date: 27/07/2006
 'opens the requested file and loads it's data into memory
 '**************************************************************
     dim handle as integer
     dim text as string
     dim pos as long
+    
+    'prevent memory losses if we are attempting to reload a file....
+    call class_terminate
     
     'get a free handle and start reading line by line until the end
     handle = freefile

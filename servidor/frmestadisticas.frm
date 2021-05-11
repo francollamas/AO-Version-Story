@@ -134,6 +134,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'**************************************************************
+' frmestadisticas.frm
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private sub command1_click()
@@ -146,9 +165,9 @@ if cboususcolas.listcount > 0 then _
 
 for loopc = 1 to lastuser
     if userlist(loopc).flags.userlogged and userlist(loopc).connid >= 0 and userlist(loopc).connidvalida then
-        if userlist(loopc).colasalida.count > 0 then
+        if userlist(loopc).outgoingdata.length > 0 then
             n = n + 1
-            m = m + userlist(loopc).colasalida.count
+            m = m + userlist(loopc).outgoingdata.length
             cboususcolas.additem userlist(loopc).name
         end if
     end if

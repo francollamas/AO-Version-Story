@@ -96,7 +96,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -104,18 +104,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -133,75 +131,46 @@ attribute vb_exposed = false
 option explicit
 
 private tipoprop as tipo_propuesta
-private enum tipo_propuesta
+
+public enum tipo_propuesta
     alianza = 1
     paz = 2
 end enum
 
-
+public property let proposaltype(byval nvalue as tipo_propuesta)
+    tipoprop = nvalue
+end property
 
 private sub command1_click()
-unload me
-end sub
-
-public sub parsepeaceoffers(byval s as string)
-
-dim t%, r%
-
-t% = val(readfield(1, s, 44))
-
-for r% = 1 to t%
-    call lista.additem(readfield(r% + 1, s, 44))
-next r%
-
-
-tipoprop = paz
-
-me.show vbmodeless, frmmain
-
-end sub
-
-public sub parseallieoffers(byval s as string)
-
-dim t%, r%
-
-t% = val(readfield(1, s, 44))
-
-for r% = 1 to t%
-    call lista.additem(readfield(r% + 1, s, 44))
-next r%
-
-tipoprop = alianza
-me.show vbmodeless, frmmain
-
+    unload me
 end sub
 
 private sub command2_click()
 'me.visible = false
 if tipoprop = paz then
-    call senddata("peacedet" & lista.list(lista.listindex))
+    call writeguildpeacedetails(lista.list(lista.listindex))
 else
-    call senddata("alliedet" & lista.list(lista.listindex))
+    call writeguildalliancedetails(lista.list(lista.listindex))
 end if
 end sub
 
 private sub command3_click()
-'me.visible = false
-if tipoprop = paz then
-    call senddata("aceppeat" & lista.list(lista.listindex))
-else
-    call senddata("acepalia" & lista.list(lista.listindex))
-end if
-me.hide
-unload me
+    'me.visible = false
+    if tipoprop = paz then
+        call writeguildacceptpeace(lista.list(lista.listindex))
+    else
+        call writeguildacceptalliance(lista.list(lista.listindex))
+    end if
+    me.hide
+    unload me
 end sub
 
 private sub command4_click()
-if tipoprop = paz then
-    call senddata("recppeat" & lista.list(lista.listindex))
-else
-    call senddata("recpalia" & lista.list(lista.listindex))
-end if
-me.hide
-unload me
+    if tipoprop = paz then
+        call writeguildrejectpeace(lista.list(lista.listindex))
+    else
+        call writeguildrejectalliance(lista.list(lista.listindex))
+    end if
+    me.hide
+    unload me
 end sub

@@ -1,20 +1,18 @@
 attribute vb_name = "admin"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -58,6 +56,7 @@ public reiniciarserver as long
 public tinicioserver as long
 public estadisticasweb as new clsestadisticasipc
 
+'intervalos
 public sanaintervalosindescansar as integer
 public staminaintervalosindescansar as integer
 public sanaintervalodescansar as integer
@@ -73,7 +72,10 @@ public intervalolanzahechizo as integer
 public intervalonpcpuedeatacar as integer
 public intervalonpcai as integer
 public intervaloinvocacion as integer
+public intervalooculto as integer '[nacho]
 public intervalouserpuedeatacar as long
+public intervalomagiagolpe as long
+public intervalogolpemagia as long
 public intervalouserpuedecastear as long
 public intervalouserpuedetrabajar as long
 public intervaloparaconexion as long
@@ -81,6 +83,10 @@ public intervalocerrarconexion as long '[gonzalo]
 public intervalouserpuedeusar as long
 public intervaloflechascazadores as long
 public intervaloautoreiniciar as long   'segundos
+
+'balance
+
+public porcentajerecuperomana as integer
 
 public minutosws as long
 public puerto as integer
@@ -129,17 +135,6 @@ versionesactuales = rv
 
 end function
 
-
-public function validarloginmsg(byval n as integer) as integer
-on error resume next
-dim auxinteger as integer
-dim auxinteger2 as integer
-auxinteger = sd(n)
-auxinteger2 = sdm(n)
-validarloginmsg = complex(auxinteger + auxinteger2)
-end function
-
-
 sub respawnorigposnpcs()
 on error resume next
 
@@ -173,7 +168,7 @@ on error resume next
 dim loopx as integer
 dim porc as long
 
-call senddata(sendtarget.toall, 0, 0, "||servidor> iniciando worldsave" & fonttype_server)
+call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> iniciando worldsave", fonttypenames.fonttype_server))
 
 #if seguridadalkon then
     encriptacion.stringvalidacion = encriptacion.armarstringvalidacion
@@ -205,7 +200,7 @@ next loopx
 frmstat.visible = false
 
 if fileexist(datpath & "\bknpc.dat", vbnormal) then kill (datpath & "bknpc.dat")
-if fileexist(datpath & "\bknpcs-hostiles.dat", vbnormal) then kill (datpath & "bknpcs-hostiles.dat")
+'if fileexist(datpath & "\bknpcs-hostiles.dat", vbnormal) then kill (datpath & "bknpcs-hostiles.dat")
 
 for loopx = 1 to lastnpc
     if npclist(loopx).flags.backup = 1 then
@@ -213,43 +208,42 @@ for loopx = 1 to lastnpc
     end if
 next
 
-call senddata(sendtarget.toall, 0, 0, "||servidor> worldsave ha conclu�do" & fonttype_server)
+call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> worldsave ha conclu�do", fonttypenames.fonttype_server))
 
 end sub
 
 public sub purgarpenas()
-dim i as integer
-for i = 1 to lastuser
-    if userlist(i).flags.userlogged then
+    dim i as long
     
-        if userlist(i).counters.pena > 0 then
-                
+    for i = 1 to lastuser
+        if userlist(i).flags.userlogged then
+            if userlist(i).counters.pena > 0 then
                 userlist(i).counters.pena = userlist(i).counters.pena - 1
                 
                 if userlist(i).counters.pena < 1 then
                     userlist(i).counters.pena = 0
                     call warpuserchar(i, libertad.map, libertad.x, libertad.y, true)
-                    call senddata(sendtarget.toindex, i, 0, "||has sido liberado!" & fonttype_info)
+                    call writeconsolemsg(i, "has sido liberado!", fonttypenames.fonttype_info)
+                    
+                    call flushbuffer(i)
                 end if
-                
+            end if
         end if
-        
-    end if
-next i
+    next i
 end sub
 
 
-public sub encarcelar(byval userindex as integer, byval minutos as long, optional byval gmname as string = "")
+public sub encarcelar(byval userindex as integer, byval minutos as long, optional byval gmname as string = vbnullstring)
         
         userlist(userindex).counters.pena = minutos
        
         
         call warpuserchar(userindex, prision.map, prision.x, prision.y, true)
         
-        if gmname = "" then
-            call senddata(sendtarget.toindex, userindex, 0, "||has sido encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
+        if lenb(gmname) = 0 then
+            call writeconsolemsg(userindex, "has sido encarcelado, deberas permanecer en la carcel " & minutos & " minutos.", fonttypenames.fonttype_info)
         else
-            call senddata(sendtarget.toindex, userindex, 0, "||" & gmname & " te ha encarcelado, deberas permanecer en la carcel " & minutos & " minutos." & fonttype_info)
+            call writeconsolemsg(userindex, gmname & " te ha encarcelado, deberas permanecer en la carcel " & minutos & " minutos.", fonttypenames.fonttype_info)
         end if
         
 end sub
@@ -316,9 +310,9 @@ end if
 end sub
 
 public sub banipagrega(byval ip as string)
-banips.add ip
-
-call banipguardar
+    banips.add ip
+    
+    call banipguardar
 end sub
 
 public function banipbuscar(byval ip as string) as long
@@ -451,16 +445,107 @@ end if
 
 end sub
 
-
-public function userdarprivilegiolevel(byval name as string) as long
-if esdios(name) then
-    userdarprivilegiolevel = 3
-elseif essemidios(name) then
-    userdarprivilegiolevel = 2
-elseif esconsejero(name) then
-    userdarprivilegiolevel = 1
-else
-    userdarprivilegiolevel = 0
-end if
+public function userdarprivilegiolevel(byval name as string) as playertype
+'***************************************************
+'author: unknown
+'last modification: 03/02/07
+'last modified by: juan mart�n sotuyo dodero (maraxus)
+'***************************************************
+    if esadmin(name) then
+        userdarprivilegiolevel = playertype.admin
+    elseif esdios(name) then
+        userdarprivilegiolevel = playertype.dios
+    elseif essemidios(name) then
+        userdarprivilegiolevel = playertype.semidios
+    elseif esconsejero(name) then
+        userdarprivilegiolevel = playertype.consejero
+    else
+        userdarprivilegiolevel = playertype.user
+    end if
 end function
+
+public sub bancharacter(byval banneruserindex as integer, byval username as string, byval reason as string)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/02/07
+'
+'***************************************************
+    dim tuser as integer
+    dim userpriv as byte
+    dim cantpenas as byte
+    dim rank as integer
+    
+    if instrb(username, "+") then
+        username = replace(username, "+", " ")
+    end if
+    
+    tuser = nameindex(username)
+    
+    rank = playertype.admin or playertype.dios or playertype.semidios or playertype.consejero
+    
+    with userlist(banneruserindex)
+        if tuser <= 0 then
+            call writeconsolemsg(banneruserindex, "el usuario no esta online.", fonttypenames.fonttype_talk)
+            
+            if fileexist(charpath & username & ".chr", vbnormal) then
+                userpriv = userdarprivilegiolevel(username)
+                
+                if (userpriv and rank) > (.flags.privilegios and rank) then
+                    call writeconsolemsg(banneruserindex, "no podes banear a al alguien de mayor jerarquia.", fonttypenames.fonttype_info)
+                else
+                    if getvar(charpath & username & ".chr", "flags", "ban") <> "0" then
+                        call writeconsolemsg(banneruserindex, "el personaje ya se encuentra baneado.", fonttypenames.fonttype_info)
+                    else
+                        call logbanfromname(username, banneruserindex, reason)
+                        call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("servidor> " & .name & " ha baneado a " & username & ".", fonttypenames.fonttype_server))
+                        
+                        'ponemos el flag de ban a 1
+                        call writevar(charpath & username & ".chr", "flags", "ban", "1")
+                        'ponemos la pena
+                        cantpenas = val(getvar(charpath & username & ".chr", "penas", "cant"))
+                        call writevar(charpath & username & ".chr", "penas", "cant", cantpenas + 1)
+                        call writevar(charpath & username & ".chr", "penas", "p" & cantpenas + 1, lcase$(.name) & ": ban por " & lcase$(reason) & " " & date & " " & time)
+                        
+                        if (userpriv and rank) = (.flags.privilegios and rank) then
+                            .flags.ban = 1
+                            call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " banned by the server por bannear un administrador.", fonttypenames.fonttype_fight))
+                            call closesocket(banneruserindex)
+                        end if
+                        
+                        call loggm(.name, "ban a " & username)
+                    end if
+                end if
+            else
+                call writeconsolemsg(banneruserindex, "el pj " & username & " no existe.", fonttypenames.fonttype_info)
+            end if
+        else
+            if (userlist(tuser).flags.privilegios and rank) > (.flags.privilegios and rank) then
+                call writeconsolemsg(banneruserindex, "no podes banear a al alguien de mayor jerarquia.", fonttypenames.fonttype_info)
+            end if
+            
+            call logban(tuser, banneruserindex, reason)
+            call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("servidor> " & .name & " ha baneado a " & userlist(tuser).name & ".", fonttypenames.fonttype_server))
+            
+            'ponemos el flag de ban a 1
+            userlist(tuser).flags.ban = 1
+            
+            if (userlist(tuser).flags.privilegios and rank) = (.flags.privilegios and rank) then
+                .flags.ban = 1
+                call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " banned by the server por bannear un administrador.", fonttypenames.fonttype_fight))
+                call closesocket(banneruserindex)
+            end if
+            
+            call loggm(.name, "ban a " & username)
+            
+            'ponemos el flag de ban a 1
+            call writevar(charpath & username & ".chr", "flags", "ban", "1")
+            'ponemos la pena
+            cantpenas = val(getvar(charpath & username & ".chr", "penas", "cant"))
+            call writevar(charpath & username & ".chr", "penas", "cant", cantpenas + 1)
+            call writevar(charpath & username & ".chr", "penas", "p" & cantpenas + 1, lcase$(.name) & ": ban por " & lcase$(reason) & " " & date & " " & time)
+            
+            call closesocket(tuser)
+        end if
+    end with
+end sub
 

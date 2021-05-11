@@ -27,46 +27,119 @@ attribute vb_exposed = false
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
 'you should have received a copy of the gnu general public license
 'along with this program; if not, write to the free software
 'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
 '**************************************************************************
 
+'16/03/2004 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
+'   - first release
+'
+'03/03/2007 - juan mart�n sotuyo dodero (maraxus) - (juansotuyo@gmail.com)
+'   - add: sound and music activation / deactivation from within the class.
+'   - add: documentation
+'   - change: volume is no longer the db amplification / atenuation to be
+'           applied but a percentage for easier interaction with user.
+
+
+''
+' controls all audio using directsound and directmusic 7.
+'
+' @file     clsaudio.cls
+' @author   juan mart�n sotuyo dodero (maraxus) juansotuyo@gmail.com
+' @version  1.1.0
+' @date     20070303
+
 option explicit
 
+''
+' maximum number of sound buffers to hold in memory at any time.
 private const numsoundbuffers as byte = 30
 
-'wave sounds
+''
+' custom sound buffer structure.
+'
+' @param    filename    the name of the file loaded in this buffer
+' @param    looping     set to true if the sound will loop until stopped
+' @param    buffer      the directsoundbuffer object to wich the file is loaded
 private type soundbuffer
     filename as string
     looping as boolean
     buffer as directsoundbuffer
 end type
 
+''
+' states how to set a sound's looping state.
+'
+' @param    default     if wave is in memory use it's looping setting, otherwise false
+' @param    disabled    never loop
+' @param    enabled     loop until stopped
 public enum loopstyle
-    default = 0     'if wave is in memory use it's looping setting, otherwise false
-    disabled = 1    'never loop
-    enabled = 2     'loop
+    default = 0
+    disabled = 1
+    enabled = 2
 end enum
 
+''
+' set to true once the object is created to prevent multiple initializations of the same object.
+dim inited as boolean
+
+''
+'the one and only directsound object
 dim directsound as directsound
+
+''
+'array of all existing sound buffers
 dim dsbuffers(1 to numsoundbuffers) as soundbuffer
 
+''
+'directory from which to load sound files by default
 dim soundpath as string
 
-dim sndvolume as long   'sound volume
+''
+'the volume for sounds (fxs)
+dim sndvolume as long
 
-'music
+''
+'directmusic's performance object
 dim performance as directmusicperformance
+
+''
+'currently loaded segment
 dim segment as directmusicsegment
+
+''
+'the one and only directmusic loader
 dim loader as directmusicloader
+
+''
+'state of the currently loaded segment
 dim segstate as directmusicsegmentstate
 
-dim music as boolean        'true if music is supported by hw
+''
+'states wether music is supported by hardware or not
+dim music as boolean
 
+''
+'directory from which to load music files by default
 dim musicpath as string
+
+''
+'last loaded music file. used to be able to load it when music gets activated
+dim currentmusicfile as string
+
+''
+'states wether music is currently activated or not
+dim mactivated as boolean
+
+''
+'states wether sound is currently activated or not
+dim sactivated as boolean
+
+''
+'constructor. performs no action at all.
 
 private sub class_initialize()
 '***************************************************
@@ -75,6 +148,9 @@ private sub class_initialize()
 '
 '***************************************************
 end sub
+
+''
+'destructor. releases all created objects assuring no memory-leaks.
 
 private sub class_terminate()
 '***************************************************
@@ -101,7 +177,19 @@ on local error resume next
     set segment = nothing
     set performance = nothing
     set loader = nothing
+    
+    inited = false
 end sub
+
+''
+'initializes the clsaudio object.
+'
+' @param    dx          directx7 object to be used when creating the directsound and directmusic objects.
+' @param    hwnd        handle to the window to be used by directmusic when playing midi files.
+' @param    sound_path  directory in wich to search for sound files.
+' @param    music_path  directory in wich to search for music files.
+'
+' @return   true if no errors occured, false otherwise.
 
 public function initialize(byref dx as directx7, byval hwnd as long, byval sound_path as string, byval music_path as string) as boolean
 '***************************************************
@@ -110,14 +198,17 @@ public function initialize(byref dx as directx7, byval hwnd as long, byval sound
 'creates all ds and dm objects
 '***************************************************
 on error goto errhandler
-
+    
+    ' prevent multiple creations
+    if inited then exit function
+    
     'validate dx object
     if dx is nothing then goto errhandler
     
     'initialize directsound
     set directsound = dx.directsoundcreate("")
     
-    directsound.setcooperativelevel displayformhwnd, dsscl_priority
+    call directsound.setcooperativelevel(displayformhwnd, dsscl_priority)
     
     'set sound path
     soundpath = sound_path
@@ -131,11 +222,30 @@ on error goto errhandler
     'set music path
     musicpath = music_path
     
+    mactivated = true
+    sactivated = true
+    
+    currentmusicfile = vbnullstring
+    
+    'set tempo to 0 and volume of music
+    musictempo = 0
+    call performance.setmastervolume(200)
+    
+    inited = true
+    
     initialize = true
 exit function
 
 errhandler:
 end function
+
+''
+' creates and configures all directmusic objects.
+'
+' @param    dx          directx7 object to be used when creating the directsound and directmusic objects.
+' @param    hwnd        handle to the window to be used by directmusic when playing midi files.
+'
+' @return   true if no errors occured, false otherwise.
 
 private function initializedirectmusic(byref dx as directx7, byval hwnd as long) as boolean
 '***************************************************
@@ -147,17 +257,25 @@ on error goto errhandler
     set loader = directx.directmusicloadercreate()
     
     set performance = dx.directmusicperformancecreate()
-    performance.init directsound, hwnd
-    performance.setmasterautodownload true     'enable auto doanload of instruments
+    call performance.init(directsound, hwnd)
+    call performance.setmasterautodownload(true)        'enable auto download of instruments
     
     'set to port default, 1 channel group is enough for midis
-    performance.setport -1, 1
+    call performance.setport(-1, 1)
     
     initializedirectmusic = true
 exit function
 
 errhandler:
 end function
+
+''
+' plays a new wave file.
+'
+' @param    filename    the path to the file to be loaded. must be a relative path from the default path set at initialization.
+' @param    loopsound   the loop state for the sound.
+'
+' @return   the buffer index in which the sound is playing, or 0 in case of error.
 
 public function playwave(byval filename as string, optional byval loopsound as loopstyle = loopstyle.default) as long
 '***************************************************
@@ -168,6 +286,8 @@ public function playwave(byval filename as string, optional byval loopsound as l
 '***************************************************
 on error goto errhandler
     dim bufferindex as long
+    
+    if not soundactivated then exit function
     
     'get the buffer index were wave was loaded
     bufferindex = loadwave(filename, loopsound)
@@ -190,6 +310,14 @@ exit function
 errhandler:
 end function
 
+''
+' loads a new wave file.
+'
+' @param    filename    the path to the file to be loaded. must be a relative path from the default path set at initialization.
+' @param    looping     the loop state for the sound.
+'
+' @return   the buffer index in which the sound is playing, or 0 in case of error.
+
 private function loadwave(byval filename as string, byval looping as loopstyle) as long
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
@@ -210,7 +338,7 @@ on error goto errhandler
     'check if the buffer is in memory and not playing
     for i = 1 to numsoundbuffers
         if dsbuffers(i).filename = filename then
-            if dsbuffers(i).buffer.getstatus = 0 or dsbuffers(i).buffer.getstatus = dsbstatus_bufferlost then
+            if dsbuffers(i).buffer.getstatus = 0 or dsbuffers(i).buffer.getstatus() = dsbstatus_bufferlost then
                 'found it!!! we just play this one :)
                 loadwave = i
                 
@@ -232,7 +360,7 @@ on error goto errhandler
     'no empty buffers?? search for one not being played and use that slot
     if i > numsoundbuffers then
         for i = 1 to numsoundbuffers
-            if dsbuffers(i).buffer.getstatus = dsbstatus_bufferlost or dsbuffers(i).buffer.getstatus = 0 then
+            if dsbuffers(i).buffer.getstatus() = dsbstatus_bufferlost or dsbuffers(i).buffer.getstatus() = 0 then
                 exit for
             end if
         next i
@@ -241,7 +369,8 @@ on error goto errhandler
     'still no free buffers?? get the first non-looping sound
     if i > numsoundbuffers then
         for i = 1 to numsoundbuffers
-            if not (dsbuffers(i).buffer.getstatus and dsbstatus_looping) then
+            if not (dsbuffers(i).buffer.getstatus() and dsbstatus_looping) then
+                call dsbuffers(i).buffer.stop
                 exit for
             end if
         next i
@@ -278,28 +407,38 @@ exit function
 errhandler:
 end function
 
+''
+' stops a given sound or all of them.
+'
+' @param    bufferindex     the index of the sound file to stop playing. if 0, all sounds are stopped.
+
 public sub stopwave(optional byval bufferindex as long = 0)
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
 'stops the sound in the given buffer index, or every sound if
-'index is invalid
+'index is 0
 '***************************************************
     if bufferindex > 0 and bufferindex <= numsoundbuffers then
-        if dsbuffers(bufferindex).buffer.getstatus and dsbstatus_playing then
+        if dsbuffers(bufferindex).buffer.getstatus() and dsbstatus_playing then
             call dsbuffers(bufferindex).buffer.stop
         end if
-    else
+    elseif bufferindex = 0 then
         dim i as long
         for i = 1 to numsoundbuffers
             if not dsbuffers(i).buffer is nothing then
-                if dsbuffers(i).buffer.getstatus <> 0 and dsbuffers(i).buffer.getstatus <> dsbstatus_bufferlost then
+                if dsbuffers(i).buffer.getstatus() <> 0 and dsbuffers(i).buffer.getstatus() <> dsbstatus_bufferlost then
                     call dsbuffers(i).buffer.stop
                 end if
             end if
         next i
     end if
 end sub
+
+''
+' retrieves wether there are sounds currentyl playing or not.
+'
+' @return   true if there is at least one sound playing, false otherwise.
 
 public property get playingsound() as boolean
 '***************************************************
@@ -310,38 +449,61 @@ public property get playingsound() as boolean
     dim i as long
     
     for i = 1 to numsoundbuffers
-        if dsbuffers(i).buffer.getstatus and dsbstatus_playing then
+        if dsbuffers(i).buffer.getstatus() and dsbstatus_playing then
             playingsound = true
             exit property
         end if
     next i
 end property
 
-public property let soundvolume(byval volume as long)
+''
+' sets the volume of sound.
+'
+' @param    volume  new value to be set, in percentage (0 to 100).
+
+public property let soundvolume(byval volume as byte)
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
-'sets the sound's volume
+'sets the sound's volume as a percentage
 '***************************************************
     dim i as long
     
+    if volume > 100 then exit property
+    
+    'take percentage to actual value
+    sndvolume = volume * (dsbvolume_max - dsbvolume_min) / 100 + dsbvolume_min
+    
     for i = 1 to numsoundbuffers
-        if dsbuffers(i).buffer.getstatus and dsbstatus_playing then
-            call dsbuffers(i).buffer.setvolume(volume)
+        if not dsbuffers(i).buffer is nothing then
+            if dsbuffers(i).buffer.getstatus and dsbstatus_playing then
+                call dsbuffers(i).buffer.setvolume(sndvolume)
+            end if
         end if
     next i
-    
-    sndvolume = volume
 end property
 
-public property get soundvolume() as long
+''
+' gets the volume of sound.
+'
+' @return   the current sound volume in percentage.
+
+public property get soundvolume() as byte
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
-'sets the music's volume
+'sets the music's volume as a percentage
 '***************************************************
-    soundvolume = sndvolume
+    soundvolume = cbyte((sndvolume - dsbvolume_min) * 100 / (dsbvolume_max - dsbvolume_min))
 end property
+
+''
+' plays a new midi file.
+'
+' @param    file    the path to the file to be loaded. must be a relative path from the default path set at initialization.
+' @param    loops   number of times to loop sound. for eternal loops set it to -1.
+'
+' @return   true if file was properly loaded and started playing, false otherwise.
 
 public function playmidi(optional byval file as string = "", optional byval loops as long = -1) as boolean
 '***************************************************
@@ -350,11 +512,16 @@ public function playmidi(optional byval file as string = "", optional byval loop
 'loads a midi and start to play it
 '***************************************************
 on error goto errhandler
+    if lenb(file) > 0 then _
+        currentmusicfile = file
+    
+    if not musicactivated then exit function
+    
     if not music then exit function
     
     if playingmusic then stopmidi
     
-    if file <> "" then
+    if lenb(file) > 0 then
         if not loadmidi(file) then exit function
     else
         'make sure we have a loaded segment
@@ -362,19 +529,22 @@ on error goto errhandler
     end if
     
     'play it
-    segment.setrepeats loops
+    call segment.setrepeats(loops)
     
     set segstate = performance.playsegment(segment, 0, 0)
-    
-    'set tempo to 0 and volume to max
-    musictempo = 0
-    musicvolume = 200
     
     playmidi = true
 exit function
 
 errhandler:
 end function
+
+''
+' loads a new midi file.
+'
+' @param    file    the path to the file to be loaded. must be a relative path from the default path set at initialization.
+'
+' @return   true if file was properly loaded and started playing, false otherwise.
 
 private function loadmidi(byval file as string) as boolean
 '***************************************************
@@ -396,13 +566,16 @@ on error goto errhandler
         exit function
     end if
     
-    segment.setstandardmidifile
+    call segment.setstandardmidifile
     
     loadmidi = true
 exit function
 
 errhandler:
 end function
+
+''
+' stops playing the currently loaded midi file.
 
 public sub stopmidi()
 '***************************************************
@@ -419,6 +592,11 @@ exit sub
 errhandler:
 end sub
 
+''
+' sets the music's tempo.
+'
+' @param    tempo   new tempo value. must be in the range of 0.25 to 2.0
+
 public property let musictempo(byval tempo as single)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
@@ -427,19 +605,34 @@ public property let musictempo(byval tempo as single)
 '***************************************************
     if not music then exit property
     
-    performance.setmastertempo tempo
+    if tempo < 0.25 or tempo > 2# then exit property
+    
+    call performance.setmastertempo(tempo)
 end property
+
+''
+' sets the music's volume.
+'
+' @param    volume  percentage to wich to set the music volume.
 
 public property let musicvolume(byval volume as long)
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
-'sets the music's volume
+'sets the music's volume as a percentage
 '***************************************************
     if not music then exit property
     
-    performance.setmastervolume volume
+    if volume < 0 or volume > 100 then exit property
+    
+    ' volume ranges from -10000 to 10000
+    call performance.setmastervolume(volume * 200 - 10000)
 end property
+
+''
+' gets the music's tempo.
+'
+' @return   current music'tempo.
 
 public property get musictempo() as single
 '***************************************************
@@ -449,19 +642,29 @@ public property get musictempo() as single
 '***************************************************
     if not music then exit property
     
-    musictempo = performance.getmastertempo
+    musictempo = performance.getmastertempo()
 end property
+
+''
+' gets the music's volume.
+'
+' @return   current music's volume as a percentage.
 
 public property get musicvolume() as long
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 16/03/04
-'returns the music's volume
+'returns the music's volume as a percentage
 '***************************************************
     if not music then exit property
     
-    musicvolume = performance.getmastervolume
+    musicvolume = (performance.getmastervolume() + 10000) / 200
 end property
+
+''
+' checks wether there is music currently playing.
+'
+' @return   true if there is a midi playing, false otherwise.
 
 public property get playingmusic() as boolean
 '***************************************************
@@ -474,6 +677,11 @@ public property get playingmusic() as boolean
     playingmusic = performance.isplaying(segment, segstate)
 end property
 
+''
+' retrieves the music's length.
+'
+' @return   current music's length.
+
 public property get musiclenght() as long
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
@@ -482,5 +690,77 @@ public property get musiclenght() as long
 '***************************************************
     if not music then exit property
     
-    musiclenght = segment.getlength
+    musiclenght = segment.getlength()
+end property
+
+''
+' retrieves wether music is activated or not.
+'
+' @return   true if music is activated, false otherwise.
+
+public property get musicactivated() as boolean
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/03/07
+'retrieves wether the music is activated or not
+'***************************************************
+    musicactivated = mactivated
+end property
+
+''
+' sets wether music is activated or not.
+'
+' @param    nvalue  true if music should be activated, false otherwise.
+
+public property let musicactivated(byval nvalue as boolean)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/03/07
+'sets wether the music is activated or not
+'***************************************************
+    if mactivated = nvalue then exit property
+    
+    mactivated = nvalue
+    
+    if nvalue then
+        call playmidi(currentmusicfile)
+    else
+        call stopmidi
+    end if
+end property
+
+''
+' retrieves wether sound is activated or not.
+'
+' @return   true if sound is activated, false otherwise.
+
+public property get soundactivated() as boolean
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/03/07
+'retrieves wether the sound is activated or not
+'***************************************************
+    soundactivated = sactivated
+end property
+
+''
+' sets wether sound is activated or not.
+'
+' @param    nvalue  true if sound should be activated, false otherwise.
+
+public property let soundactivated(byval nvalue as boolean)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modification: 03/03/07
+'sets wether the sound is activated or not
+'***************************************************
+    dim i as long
+    
+    if sactivated = nvalue then exit property
+    
+    sactivated = nvalue
+    
+    if not nvalue then
+        call stopwave
+    end if
 end property

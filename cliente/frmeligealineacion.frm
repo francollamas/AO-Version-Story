@@ -38,7 +38,7 @@ begin vb.form frmeligealineacion
       caption         =   $"frmeligealineacion.frx":0000
       forecolor       =   &h00ffffff&
       height          =   645
-      index           =   4
+      index           =   1
       left            =   1095
       tabindex        =   9
       top             =   4140
@@ -50,7 +50,7 @@ begin vb.form frmeligealineacion
       caption         =   $"frmeligealineacion.frx":00d5
       forecolor       =   &h00ffffff&
       height          =   645
-      index           =   3
+      index           =   5
       left            =   1095
       tabindex        =   8
       top             =   3240
@@ -74,7 +74,7 @@ begin vb.form frmeligealineacion
       caption         =   $"frmeligealineacion.frx":025d
       forecolor       =   &h00ffffff&
       height          =   645
-      index           =   1
+      index           =   4
       left            =   1095
       tabindex        =   6
       top             =   1350
@@ -106,7 +106,7 @@ begin vb.form frmeligealineacion
       endproperty
       forecolor       =   &h00ffffff&
       height          =   240
-      index           =   4
+      index           =   1
       left            =   1005
       tabindex        =   4
       top             =   3915
@@ -126,7 +126,7 @@ begin vb.form frmeligealineacion
       endproperty
       forecolor       =   &h00ffffff&
       height          =   240
-      index           =   3
+      index           =   5
       left            =   1005
       tabindex        =   3
       top             =   3015
@@ -166,7 +166,7 @@ begin vb.form frmeligealineacion
       endproperty
       forecolor       =   &h00ffffff&
       height          =   240
-      index           =   1
+      index           =   4
       left            =   1005
       tabindex        =   1
       top             =   1125
@@ -198,68 +198,71 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'**************************************************************
+' frmeligealineacion.frm
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
+
+dim lastcoloured as byte
 
 'odio programar sin tiempo (c) el oso
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-dim i as byte
-
-    for i = 0 to 4
-        lbldescripcion(i).borderstyle = 0
-        lbldescripcion(i).backstyle = 0
-    next i
-    
+    lbldescripcion(lastcoloured).borderstyle = 0
+    lbldescripcion(lastcoloured).backstyle = 0
 end sub
 
 private sub lbldescripcion_click(index as integer)
-dim s as string
-    
-    select case index
-        case 0
-            s = "armada"
-        case 1
-            s = "legal"
-        case 2
-            s = "neutro"
-        case 3
-            s = "criminal"
-        case 4
-            s = "mal"
-    end select
-    
-    s = "/fundarclan " & s
-    call senddata(s)
+    call writeguildfundate(index)
     unload me
 end sub
 
 private sub lbldescripcion_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
+    
+    if lastcoloured <> index then
+        lbldescripcion(lastcoloured).borderstyle = 0
+        lbldescripcion(lastcoloured).backstyle = 0
+    end if
+    
     lbldescripcion(index).borderstyle = 1
     lbldescripcion(index).backstyle = 1
+    
     select case index
         case 0
             lbldescripcion(index).backcolor = &h400000
-        case 1
+        case 4
             lbldescripcion(index).backcolor = &h800000
         case 2
             lbldescripcion(index).backcolor = 4194368
-        case 3
+        case 5
             lbldescripcion(index).backcolor = &h80&
-        case 4
+        case 1
             lbldescripcion(index).backcolor = &h40&
     end select
+    
+    lastcoloured = index
 end sub
 
 
 private sub lblnombre_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-dim i as byte
-
-    for i = 0 to 4
-        lbldescripcion(i).borderstyle = 0
-        lbldescripcion(i).backstyle = 0
-    next i
-    
-
+    lbldescripcion(lastcoloured).borderstyle = 0
+    lbldescripcion(lastcoloured).backstyle = 0
 end sub
 
 private sub lblsalir_click()

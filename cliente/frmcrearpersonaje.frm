@@ -29,7 +29,7 @@ begin vb.form frmcrearpersonaje
       height          =   315
       itemdata        =   "frmcrearpersonaje.frx":0000
       left            =   5925
-      list            =   "frmcrearpersonaje.frx":0037
+      list            =   "frmcrearpersonaje.frx":0002
       style           =   2  'dropdown list
       tabindex        =   31
       top             =   2700
@@ -48,9 +48,9 @@ begin vb.form frmcrearpersonaje
       endproperty
       forecolor       =   &h00ffffff&
       height          =   315
-      itemdata        =   "frmcrearpersonaje.frx":00d1
+      itemdata        =   "frmcrearpersonaje.frx":0004
       left            =   5925
-      list            =   "frmcrearpersonaje.frx":00db
+      list            =   "frmcrearpersonaje.frx":000e
       style           =   2  'dropdown list
       tabindex        =   30
       top             =   2250
@@ -69,9 +69,9 @@ begin vb.form frmcrearpersonaje
       endproperty
       forecolor       =   &h00ffffff&
       height          =   315
-      itemdata        =   "frmcrearpersonaje.frx":00ee
+      itemdata        =   "frmcrearpersonaje.frx":0021
       left            =   5925
-      list            =   "frmcrearpersonaje.frx":0101
+      list            =   "frmcrearpersonaje.frx":0023
       style           =   2  'dropdown list
       tabindex        =   29
       top             =   1800
@@ -90,10 +90,9 @@ begin vb.form frmcrearpersonaje
       endproperty
       forecolor       =   &h00ffffff&
       height          =   315
-      itemdata        =   "frmcrearpersonaje.frx":012e
+      itemdata        =   "frmcrearpersonaje.frx":0025
       left            =   9015
-      list            =   "frmcrearpersonaje.frx":013e
-      sorted          =   -1  'true
+      list            =   "frmcrearpersonaje.frx":0027
       style           =   2  'dropdown list
       tabindex        =   7
       top             =   3510
@@ -150,7 +149,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   3
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":0167
+      mouseicon       =   "frmcrearpersonaje.frx":0029
       mousepointer    =   99  'custom
       top             =   3465
       width           =   150
@@ -159,7 +158,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   5
       left            =   7785
-      mouseicon       =   "frmcrearpersonaje.frx":02b9
+      mouseicon       =   "frmcrearpersonaje.frx":017b
       mousepointer    =   99  'custom
       top             =   3675
       width           =   150
@@ -168,7 +167,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   7
       left            =   7785
-      mouseicon       =   "frmcrearpersonaje.frx":040b
+      mouseicon       =   "frmcrearpersonaje.frx":02cd
       mousepointer    =   99  'custom
       top             =   3885
       width           =   150
@@ -177,7 +176,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   9
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":055d
+      mouseicon       =   "frmcrearpersonaje.frx":041f
       mousepointer    =   99  'custom
       top             =   4110
       width           =   150
@@ -186,7 +185,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   11
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":06af
+      mouseicon       =   "frmcrearpersonaje.frx":0571
       mousepointer    =   99  'custom
       top             =   4335
       width           =   150
@@ -195,7 +194,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   13
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":0801
+      mouseicon       =   "frmcrearpersonaje.frx":06c3
       mousepointer    =   99  'custom
       top             =   4545
       width           =   150
@@ -204,7 +203,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   15
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":0953
+      mouseicon       =   "frmcrearpersonaje.frx":0815
       mousepointer    =   99  'custom
       top             =   4785
       width           =   150
@@ -213,7 +212,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   17
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":0aa5
+      mouseicon       =   "frmcrearpersonaje.frx":0967
       mousepointer    =   99  'custom
       top             =   4965
       width           =   150
@@ -222,7 +221,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   19
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":0bf7
+      mouseicon       =   "frmcrearpersonaje.frx":0ab9
       mousepointer    =   99  'custom
       top             =   5175
       width           =   150
@@ -231,7 +230,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   21
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":0d49
+      mouseicon       =   "frmcrearpersonaje.frx":0c0b
       mousepointer    =   99  'custom
       top             =   5385
       width           =   150
@@ -240,7 +239,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   23
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":0e9b
+      mouseicon       =   "frmcrearpersonaje.frx":0d5d
       mousepointer    =   99  'custom
       top             =   5610
       width           =   150
@@ -249,7 +248,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   25
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":0fed
+      mouseicon       =   "frmcrearpersonaje.frx":0eaf
       mousepointer    =   99  'custom
       top             =   5820
       width           =   150
@@ -258,7 +257,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   27
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":113f
+      mouseicon       =   "frmcrearpersonaje.frx":1001
       mousepointer    =   99  'custom
       top             =   6015
       width           =   150
@@ -267,7 +266,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   1
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":1291
+      mouseicon       =   "frmcrearpersonaje.frx":1153
       mousepointer    =   99  'custom
       top             =   3240
       width           =   150
@@ -276,7 +275,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   0
       left            =   8355
-      mouseicon       =   "frmcrearpersonaje.frx":13e3
+      mouseicon       =   "frmcrearpersonaje.frx":12a5
       mousepointer    =   99  'custom
       top             =   3270
       width           =   180
@@ -285,7 +284,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   2
       left            =   8355
-      mouseicon       =   "frmcrearpersonaje.frx":1535
+      mouseicon       =   "frmcrearpersonaje.frx":13f7
       mousepointer    =   99  'custom
       top             =   3495
       width           =   195
@@ -294,7 +293,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   4
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":1687
+      mouseicon       =   "frmcrearpersonaje.frx":1549
       mousepointer    =   99  'custom
       top             =   3720
       width           =   195
@@ -303,7 +302,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   6
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":17d9
+      mouseicon       =   "frmcrearpersonaje.frx":169b
       mousepointer    =   99  'custom
       top             =   3945
       width           =   180
@@ -312,7 +311,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   8
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":192b
+      mouseicon       =   "frmcrearpersonaje.frx":17ed
       mousepointer    =   99  'custom
       top             =   4155
       width           =   195
@@ -321,7 +320,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   10
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":1a7d
+      mouseicon       =   "frmcrearpersonaje.frx":193f
       mousepointer    =   99  'custom
       top             =   4380
       width           =   165
@@ -330,7 +329,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   12
       left            =   8355
-      mouseicon       =   "frmcrearpersonaje.frx":1bcf
+      mouseicon       =   "frmcrearpersonaje.frx":1a91
       mousepointer    =   99  'custom
       top             =   4605
       width           =   165
@@ -339,7 +338,7 @@ begin vb.form frmcrearpersonaje
       height          =   120
       index           =   14
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":1d21
+      mouseicon       =   "frmcrearpersonaje.frx":1be3
       mousepointer    =   99  'custom
       top             =   4800
       width           =   135
@@ -348,7 +347,7 @@ begin vb.form frmcrearpersonaje
       height          =   120
       index           =   16
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":1e73
+      mouseicon       =   "frmcrearpersonaje.frx":1d35
       mousepointer    =   99  'custom
       top             =   4995
       width           =   135
@@ -357,7 +356,7 @@ begin vb.form frmcrearpersonaje
       height          =   120
       index           =   18
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":1fc5
+      mouseicon       =   "frmcrearpersonaje.frx":1e87
       mousepointer    =   99  'custom
       top             =   5220
       width           =   150
@@ -366,7 +365,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   20
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":2117
+      mouseicon       =   "frmcrearpersonaje.frx":1fd9
       mousepointer    =   99  'custom
       top             =   5400
       width           =   165
@@ -375,7 +374,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   22
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":2269
+      mouseicon       =   "frmcrearpersonaje.frx":212b
       mousepointer    =   99  'custom
       top             =   5640
       width           =   165
@@ -384,7 +383,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   24
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":23bb
+      mouseicon       =   "frmcrearpersonaje.frx":227d
       mousepointer    =   99  'custom
       top             =   5850
       width           =   150
@@ -393,7 +392,7 @@ begin vb.form frmcrearpersonaje
       height          =   120
       index           =   26
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":250d
+      mouseicon       =   "frmcrearpersonaje.frx":23cf
       mousepointer    =   99  'custom
       top             =   6075
       width           =   150
@@ -402,7 +401,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   28
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":265f
+      mouseicon       =   "frmcrearpersonaje.frx":2521
       mousepointer    =   99  'custom
       top             =   6285
       width           =   165
@@ -411,7 +410,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   29
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":27b1
+      mouseicon       =   "frmcrearpersonaje.frx":2673
       mousepointer    =   99  'custom
       top             =   6270
       width           =   165
@@ -420,7 +419,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   30
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":2903
+      mouseicon       =   "frmcrearpersonaje.frx":27c5
       mousepointer    =   99  'custom
       top             =   6495
       width           =   150
@@ -429,7 +428,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   31
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":2a55
+      mouseicon       =   "frmcrearpersonaje.frx":2917
       mousepointer    =   99  'custom
       top             =   6465
       width           =   150
@@ -438,7 +437,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   32
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":2ba7
+      mouseicon       =   "frmcrearpersonaje.frx":2a69
       mousepointer    =   99  'custom
       top             =   6720
       width           =   180
@@ -447,7 +446,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   33
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":2cf9
+      mouseicon       =   "frmcrearpersonaje.frx":2bbb
       mousepointer    =   99  'custom
       top             =   6690
       width           =   180
@@ -456,7 +455,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   34
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":2e4b
+      mouseicon       =   "frmcrearpersonaje.frx":2d0d
       mousepointer    =   99  'custom
       top             =   6945
       width           =   135
@@ -465,7 +464,7 @@ begin vb.form frmcrearpersonaje
       height          =   150
       index           =   35
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":2f9d
+      mouseicon       =   "frmcrearpersonaje.frx":2e5f
       mousepointer    =   99  'custom
       top             =   6915
       width           =   165
@@ -474,7 +473,7 @@ begin vb.form frmcrearpersonaje
       height          =   105
       index           =   36
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":30ef
+      mouseicon       =   "frmcrearpersonaje.frx":2fb1
       mousepointer    =   99  'custom
       top             =   7170
       width           =   150
@@ -483,7 +482,7 @@ begin vb.form frmcrearpersonaje
       height          =   180
       index           =   37
       left            =   7755
-      mouseicon       =   "frmcrearpersonaje.frx":3241
+      mouseicon       =   "frmcrearpersonaje.frx":3103
       mousepointer    =   99  'custom
       top             =   7125
       width           =   195
@@ -492,7 +491,7 @@ begin vb.form frmcrearpersonaje
       height          =   120
       index           =   38
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":3393
+      mouseicon       =   "frmcrearpersonaje.frx":3255
       mousepointer    =   99  'custom
       top             =   7395
       width           =   135
@@ -501,7 +500,7 @@ begin vb.form frmcrearpersonaje
       height          =   165
       index           =   39
       left            =   7770
-      mouseicon       =   "frmcrearpersonaje.frx":34e5
+      mouseicon       =   "frmcrearpersonaje.frx":33a7
       mousepointer    =   99  'custom
       top             =   7335
       width           =   165
@@ -510,7 +509,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   40
       left            =   8370
-      mouseicon       =   "frmcrearpersonaje.frx":3637
+      mouseicon       =   "frmcrearpersonaje.frx":34f9
       mousepointer    =   99  'custom
       top             =   7590
       width           =   165
@@ -519,7 +518,7 @@ begin vb.form frmcrearpersonaje
       height          =   135
       index           =   41
       left            =   7815
-      mouseicon       =   "frmcrearpersonaje.frx":3789
+      mouseicon       =   "frmcrearpersonaje.frx":364b
       mousepointer    =   99  'custom
       top             =   7560
       width           =   135
@@ -528,7 +527,7 @@ begin vb.form frmcrearpersonaje
       height          =   645
       index           =   2
       left            =   315
-      mouseicon       =   "frmcrearpersonaje.frx":38db
+      mouseicon       =   "frmcrearpersonaje.frx":379d
       mousepointer    =   99  'custom
       top             =   3015
       width           =   660
@@ -537,7 +536,7 @@ begin vb.form frmcrearpersonaje
       height          =   255
       index           =   1
       left            =   1905
-      mouseicon       =   "frmcrearpersonaje.frx":3a2d
+      mouseicon       =   "frmcrearpersonaje.frx":38ef
       mousepointer    =   99  'custom
       top             =   8565
       width           =   765
@@ -546,7 +545,7 @@ begin vb.form frmcrearpersonaje
       height          =   210
       index           =   0
       left            =   9075
-      mouseicon       =   "frmcrearpersonaje.frx":3b7f
+      mouseicon       =   "frmcrearpersonaje.frx":3a41
       mousepointer    =   99  'custom
       top             =   8565
       width           =   1200
@@ -785,7 +784,7 @@ begin vb.form frmcrearpersonaje
    begin vb.image imghogar 
       height          =   2850
       left            =   8775
-      picture         =   "frmcrearpersonaje.frx":3cd1
+      picture         =   "frmcrearpersonaje.frx":3b93
       top             =   3900
       width           =   2985
    end
@@ -817,7 +816,7 @@ begin vb.form frmcrearpersonaje
       caption         =   "0"
       forecolor       =   &h00ffffff&
       height          =   195
-      left            =   5310
+      left            =   5325
       tabindex        =   4
       top             =   3240
       width           =   210
@@ -861,7 +860,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -869,18 +868,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -900,22 +897,22 @@ option explicit
 public skillpoints as byte
 
 function checkdata() as boolean
-if userraza = "" then
+if userraza = 0 then
     msgbox "seleccione la raza del personaje."
     exit function
 end if
 
-if usersexo = "" then
+if usersexo = 0 then
     msgbox "seleccione el sexo del personaje."
     exit function
 end if
 
-if userclase = "" then
+if userclase = 0 then
     msgbox "seleccione la clase del personaje."
     exit function
 end if
 
-if userhogar = "" then
+if userhogar = 0 then
     msgbox "seleccione el hogar del personaje."
     exit function
 end if
@@ -939,60 +936,54 @@ checkdata = true
 end function
 
 private sub boton_click(index as integer)
-
-call audio.playwave(snd_click)
-
-select case index
-    case 0
-        
-        dim i as integer
-        dim k as object
-        i = 1
-        for each k in skill
-            userskills(i) = k.caption
-            i = i + 1
-        next
-        
-        username = txtnombre.text
-        
-        if right$(username, 1) = " " then
+    call audio.playwave(snd_click)
+    
+    select case index
+        case 0
+            
+            dim i as integer
+            dim k as object
+            i = 1
+            for each k in skill
+                userskills(i) = k.caption
+                i = i + 1
+            next
+            
+            username = txtnombre.text
+            
+            if right$(username, 1) = " " then
                 username = rtrim$(username)
                 msgbox "nombre invalido, se han removido los espacios al final del nombre"
-        end if
-        
-        userraza = lstraza.list(lstraza.listindex)
-        usersexo = lstgenero.list(lstgenero.listindex)
-        userclase = lstprofesion.list(lstprofesion.listindex)
-        
-        useratributos(1) = val(lbfuerza.caption)
-        useratributos(2) = val(lbinteligencia.caption)
-        useratributos(3) = val(lbagilidad.caption)
-        useratributos(4) = val(lbcarisma.caption)
-        useratributos(5) = val(lbconstitucion.caption)
-        
-        userhogar = lsthogar.list(lsthogar.listindex)
-        
-        'barrin 3/10/03
-        if checkdata() then
-            frmpasswdsinpadrinos.show vbmodal, me
-        end if
-        
-    case 1
-        if musica then
+            end if
+            
+            userraza = lstraza.listindex + 1
+            usersexo = lstgenero.listindex + 1
+            userclase = lstprofesion.listindex + 1
+            
+            useratributos(1) = val(lbfuerza.caption)
+            useratributos(2) = val(lbinteligencia.caption)
+            useratributos(3) = val(lbagilidad.caption)
+            useratributos(4) = val(lbcarisma.caption)
+            useratributos(5) = val(lbconstitucion.caption)
+            
+            userhogar = lsthogar.listindex + 1
+            
+            'barrin 3/10/03
+            if checkdata() then
+                frmpasswd.show vbmodal, me
+            end if
+            
+        case 1
             call audio.playmidi("2.mid")
-        end if
-        
-        frmconnect.fondo.picture = loadpicture(app.path & "\graficos\conectar.jpg")
-        me.visible = false
-        
-        
-    case 2
-        call audio.playwave(snd_dice)
-        call tirardados
-      
-end select
-
-
+            
+            frmconnect.fondo.picture = loadpicture(app.path & "\graficos\conectar.jpg")
+            unload me
+            
+            
+        case 2
+            call audio.playwave(snd_dice)
+            call tirardados
+    end select
 end sub
 
 
@@ -1005,29 +996,16 @@ if randomnumber > upperbound then randomnumber = upperbound
 
 end function
 
-
 private sub tirardados()
-'lbfuerza.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-'lbinteligencia.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-'lbagilidad.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-'lbcarisma.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-'lbconstitucion.caption = cint(randomnumber(1, 6) + randomnumber(1, 6) + randomnumber(1, 6))
-
-#if usarwrench = 1 then
-    if frmmain.socket1.connected then
-#else
-    if frmmain.winsock1.state = sckconnected then
-#end if
-        call senddata("tirdad")
-    end if
-
+    call writethrowdices
+    call flushbuffer
 end sub
 
 private sub command1_click(index as integer)
 call audio.playwave(snd_click)
 
 dim indice
-if index mod 2 = 0 then
+if (index and &h1) = 0 then
     if skillpoints > 0 then
         indice = index \ 2
         skill(indice).caption = val(skill(indice).caption) + 1
@@ -1059,6 +1037,26 @@ for i = lbound(listaclases) to ubound(listaclases)
     lstprofesion.additem listaclases(i)
 next i
 
+lsthogar.clear
+
+for i = lbound(ciudades()) to ubound(ciudades())
+    lsthogar.additem ciudades(i)
+next i
+
+
+lstraza.clear
+
+for i = lbound(listarazas()) to ubound(listarazas())
+    lstraza.additem listarazas(i)
+next i
+
+
+lstprofesion.clear
+
+for i = lbound(listaclases()) to ubound(listaclases())
+    lstprofesion.additem listaclases(i)
+next i
+
 lstprofesion.listindex = 1
 
 image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
@@ -1067,7 +1065,15 @@ end sub
 
 private sub lstprofesion_click()
 on error resume next
-image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
+    image1.picture = loadpicture(app.path & "\graficos\" & lstprofesion.text & ".jpg")
+    
+'todo : esto vuela en la 0.12.1!!!
+    if lstprofesion.listindex + 1 = eclass.druid then
+        call msgbox("esta clase se encuentra deshabilitada hasta el pr�ximo parche, en el que se le realizar�n varios cambios importantes." & vbcrlf _
+            & "sepan disculpar las molestias.")
+        
+        lstprofesion.listindex = 0
+    end if
 end sub
 
 private sub txtnombre_change()
@@ -1079,5 +1085,5 @@ msgbox "sea cuidadoso al seleccionar el nombre de su personaje, argentum es un j
 end sub
 
 private sub txtnombre_keypress(keyascii as integer)
- keyascii = asc(ucase(chr(keyascii)))
+    keyascii = asc(ucase(chr(keyascii)))
 end sub

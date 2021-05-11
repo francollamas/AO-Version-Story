@@ -1,4 +1,25 @@
 attribute vb_name = "modguilds"
+'**************************************************************
+' modguilds.bas - module to allow the usage of areas instead of maps.
+' saves a lot of bandwidth.
+'
+' implemented by mariano barrou (el oso)
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 'guilds nueva version. hecho por el oso, eliminando los problemas
@@ -13,28 +34,28 @@ option explicit
 private guildinfofile   as string
 'archivo .\guilds\guildinfo.ini o similar
 
+private const max_guilds as integer = 1000
+'cantidad maxima de guilds en el servidor
+
 private const ordenarlistadeclanes = true
 'true si se envia la lista ordenada por alineacion
 
 public cantidaddeclanes as integer
 'cantidad actual de clanes en el servidor
 
-public guilds()         as clsclan
+private guilds(1 to max_guilds) as clsclan
 'array global de guilds, se indexa por userlist().guildindex
 
-public const max_guilds as integer = 1000
-'cantidad maxima de guilds en el servidor
-
-public const cantidadmaximacodex as byte = 8
+private const cantidadmaximacodex as byte = 8
 'cantidad maxima de codecs que se pueden definir
 
 public const maxaspirantes as byte = 10
 'cantidad maxima de aspirantes que puede tener un clan acumulados a la vez
 
-public const maxantifaccion as byte = 5
+private const maxantifaccion as byte = 5
 'puntos maximos de antifaccion que un clan tolera antes de ser cambiada su alineacion
 
-public gmsescuchando as new collection
+private gmsescuchando as new collection
 
 public enum alineacion_guild
     alineacion_legion = 1
@@ -111,7 +132,7 @@ end function
 
 public function m_validarpermanencia(byval userindex as integer, byval sumaantifaccion as boolean, byref cambioalineacion as boolean, byref cambiolider as boolean) as boolean
 dim guildindex  as integer
-dim ml          as string
+dim ml()        as string
 dim m           as string
 dim ui          as integer
 dim sale        as boolean
@@ -144,10 +165,9 @@ dim i           as integer
             'internamente al iterador en el proceso
             cambiolider = false
             i = 1
-            ml = guilds(guildindex).getmemberlist(",")
-            m = readfield(i, ml, asc(","))
-            while m <> vbnullstring
-
+            ml = guilds(guildindex).getmemberlist()
+            m = ml(i)
+            while lenb(m) <> 0
                 'vamos a violar un poco de capas..
                 ui = nameindex(m)
                 if ui > 0 then
@@ -181,7 +201,7 @@ dim i           as integer
                     end if
                 end if
                 i = i + 1
-                m = readfield(i, ml, asc(","))
+                m = ml(i)
             wend
         else
             'no se va el fundador, el peor caso es que se vaya el lider
@@ -193,8 +213,6 @@ dim i           as integer
             call m_echarmiembrodeclan(-1, userlist(userindex).name)   'y lo echamos
         end if
     end if
-    
-
 end function
 
 public sub m_desconectarmiembrodelclan(byval userindex as integer, byval guildindex as integer)
@@ -209,14 +227,6 @@ end function
 private function m_esguildfounder(byref pj as string, byval guildindex as integer) as boolean
     m_esguildfounder = (ucase$(pj) = ucase$(trim$(guilds(guildindex).fundador)))
 end function
-
-
-'public function getleader(byval guildindex as integer) as string
-'    getleader = vbnullstring
-'
-'    if guildindex <= 0 then exit function
-'    getleader = guilds(guildindex).getleader()
-'end function
 
 public function m_echarmiembrodeclan(byval expulsador as integer, byval expulsado as string) as integer
 'ui echa a expulsado del clan de expulsado
@@ -236,7 +246,7 @@ dim gi          as integer
                 call guilds(gi).expulsarmiembro(expulsado)
                 call logclanes(expulsado & " ha sido expulsado de " & guilds(gi).guildname & " expulsador = " & expulsador)
                 userlist(userindex).guildindex = 0
-                call warpuserchar(userindex, userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y)
+                call refreshcharstatus(userindex)
                 m_echarmiembrodeclan = gi
             else
                 m_echarmiembrodeclan = 0
@@ -276,20 +286,22 @@ dim gi as integer
 end sub
 
 
-public sub actualizarcodexydesc(byref datos as string, byval guildindex as integer)
-dim cantcodex       as integer
-dim i               as integer
-
-    if guildindex = 0 then exit sub
-    call guilds(guildindex).setdesc(readfield(1, datos, asc("�")))
-    cantcodex = cint(readfield(2, datos, asc("�")))
-    for i = 1 to cantcodex
-        call guilds(guildindex).setcodex(i, readfield(2 + i, datos, asc("�")))
-    next i
-    for i = cantcodex + 1 to cantidadmaximacodex
-        call guilds(guildindex).setcodex(i, vbnullstring)
-    next i
-
+public sub changecodexanddesc(byref desc as string, byref codex() as string, byval guildindex as integer)
+    dim i as long
+    
+    if guildindex < 1 or guildindex > cantidaddeclanes then exit sub
+    
+    with guilds(guildindex)
+        call .setdesc(desc)
+        
+        for i = 0 to ubound(codex())
+            call .setcodex(i, codex(i))
+        next i
+        
+        for i = i to cantidadmaximacodex
+            call .setcodex(i, vbnullstring)
+        next i
+    end with
 end sub
 
 public sub actualizarnoticias(byval userindex as integer, byref datos as string)
@@ -305,11 +317,7 @@ dim gi              as integer
         
 end sub
 
-public function crearnuevoclan(byref guildinfo as string, byval fundadorindex as integer, byval alineacion as alineacion_guild, byref referror as string) as boolean
-dim guildname       as string
-dim descripcion     as string
-dim url             as string
-dim codex()         as string
+public function crearnuevoclan(byval fundadorindex as integer, byref desc as string, byref guildname as string, byref url as string, byref codex() as string, byval alineacion as alineacion_guild, byref referror as string) as boolean
 dim cantcodex       as integer
 dim i               as integer
 dim dummystring     as string
@@ -319,8 +327,6 @@ dim dummystring     as string
         referror = dummystring
         exit function
     end if
-
-    guildname = trim$(readfield(2, guildinfo, asc("�")))
 
     if guildname = vbnullstring or not guildnamevalido(guildname) then
         referror = "nombre de clan inv�lido."
@@ -332,16 +338,7 @@ dim dummystring     as string
         exit function
     end if
 
-    descripcion = readfield(1, guildinfo, asc("�"))
-    url = readfield(3, guildinfo, asc("�"))
-    cantcodex = cint(readfield(4, guildinfo, asc("�")))
-
-    if cantcodex > 0 then
-        redim codex(1 to cantcodex) as string
-        for i = 1 to cantcodex
-            codex(i) = readfield(4 + i, guildinfo, asc("�"))
-        next i
-    end if
+    cantcodex = ubound(codex()) + 1
 
     'tenemos todo para fundar ya
     if cantidaddeclanes < ubound(guilds) then
@@ -357,9 +354,9 @@ dim dummystring     as string
         
         'seteamos codex y descripcion
         for i = 1 to cantcodex
-            call guilds(cantidaddeclanes).setcodex(i, codex(i))
+            call guilds(cantidaddeclanes).setcodex(i, codex(i - 1))
         next i
-        call guilds(cantidaddeclanes).setdesc(descripcion)
+        call guilds(cantidaddeclanes).setdesc(desc)
         call guilds(cantidaddeclanes).setguildnews("clan creado con alineaci�n : " & alineacion2string(alineacion))
         call guilds(cantidaddeclanes).setleader(userlist(fundadorindex).name)
         call guilds(cantidaddeclanes).seturl(url)
@@ -368,7 +365,7 @@ dim dummystring     as string
         call guilds(cantidaddeclanes).aceptarnuevomiembro(userlist(fundadorindex).name)
         call guilds(cantidaddeclanes).conectarmiembro(fundadorindex)
         userlist(fundadorindex).guildindex = cantidaddeclanes
-        call warpuserchar(fundadorindex, userlist(fundadorindex).pos.map, userlist(fundadorindex).pos.x, userlist(fundadorindex).pos.y, false)
+        call refreshcharstatus(fundadorindex)
         
         for i = 1 to cantidaddeclanes - 1
             call guilds(i).procesarfundaciondeotroclan
@@ -379,45 +376,57 @@ dim dummystring     as string
     end if
     
     crearnuevoclan = true
-    
 end function
 
-
 public sub sendguildnews(byval userindex as integer)
-dim news            as string
+dim guildindex  as integer
 dim enemiescount    as integer
-dim alliescount     as integer
-dim guildindex      as integer
 dim i               as integer
-
+dim go as integer
 
     guildindex = userlist(userindex).guildindex
     if guildindex = 0 then exit sub
+
+    dim enemies() as string
     
-    news = "guildne" & guilds(guildindex).getguildnews & "�"
-
-    enemiescount = guilds(guildindex).cantidadenemys
-    news = news & cstr(enemiescount) & "�"
-    i = guilds(guildindex).iterador_proximarelacion(guerra)
+    if guilds(guildindex).cantidadenemys then
+        redim enemies(0 to guilds(guildindex).cantidadenemys - 1) as string
+    else
+        redim enemies(0)
+    end if
+    
+    dim allies() as string
+    
+    if guilds(guildindex).cantidadallies then
+        redim allies(0 to guilds(guildindex).cantidadallies - 1) as string
+    else
+        redim allies(0)
+    end if
+    
+    i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.guerra)
+    go = 0
+    
     while i > 0
-        news = news & guilds(i).guildname & "�"
-        i = guilds(guildindex).iterador_proximarelacion(guerra)
+        enemies(go) = guilds(i).guildname
+        i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.guerra)
+        go = go + 1
     wend
-    alliescount = guilds(guildindex).cantidadallies
-    news = news & cstr(alliescount) & "�"
-    i = guilds(guildindex).iterador_proximarelacion(aliados)
+    
+    i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.aliados)
+    go = 0
+    
     while i > 0
-        news = news & guilds(i).guildname & "�"
-        i = guilds(guildindex).iterador_proximarelacion(aliados)
+        enemies(go) = guilds(i).guildname
+        i = guilds(guildindex).iterador_proximarelacion(relaciones_guild.aliados)
     wend
 
-    call senddata(sendtarget.toindex, userindex, 0, news)
+    call writeguildnews(userindex, guilds(guildindex).getguildnews, enemies, allies)
 
     if guilds(guildindex).eleccionesabiertas then
-        call senddata(sendtarget.toindex, userindex, 0, "||hoy es la votacion para elegir un nuevo l�der para el clan!!." & fonttype_guild)
-        call senddata(sendtarget.toindex, userindex, 0, "||la eleccion durara 24 horas, se puede votar a cualquier miembro del clan." & fonttype_guild)
-        call senddata(sendtarget.toindex, userindex, 0, "||para votar escribe /voto nickname." & fonttype_guild)
-        call senddata(sendtarget.toindex, userindex, 0, "||solo se computara un voto por miembro. tu voto no puede ser cambiado." & fonttype_guild)
+        call writeconsolemsg(userindex, "hoy es la votacion para elegir un nuevo l�der para el clan!!.", fonttypenames.fonttype_guild)
+        call writeconsolemsg(userindex, "la eleccion durara 24 horas, se puede votar a cualquier miembro del clan.", fonttypenames.fonttype_guild)
+        call writeconsolemsg(userindex, "para votar escribe /voto nickname.", fonttypenames.fonttype_guild)
+        call writeconsolemsg(userindex, "solo se computara un voto por miembro. tu voto no puede ser cambiado.", fonttypenames.fonttype_guild)
     end if
 
 end sub
@@ -436,7 +445,7 @@ public function m_puedesalirdeclan(byref nombre as string, byval guildindex as i
 
     'cuando ui no puede echar a nombre?
     'si no es gm y no es lider del clan del pj y no es el mismo que se va voluntariamente
-    if userlist(quienloechaui).flags.privilegios = playertype.user then
+    if userlist(quienloechaui).flags.privilegios and playertype.user then
         if not m_esguildleader(ucase$(userlist(quienloechaui).name), guildindex) then
             if ucase$(userlist(quienloechaui).name) <> ucase$(nombre) then      'si no sale voluntariamente...
                 exit function
@@ -483,7 +492,7 @@ public function puedefundarunclan(byval userindex as integer, byval alineacion a
                 exit function
             end if
         case alineacion_guild.alineacion_master
-            if userlist(userindex).flags.privilegios < playertype.dios then
+            if userlist(userindex).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then
                 referror = "para fundar un clan sin alineaci�n debes ser un dios."
                 exit function
             end if
@@ -505,9 +514,15 @@ dim f           as byte
 
     m_estadopermiteentrarchar = false
     
-    personaje = replace(personaje, "\", vbnullstring)
-    personaje = replace(personaje, "/", vbnullstring)
-    personaje = replace(personaje, ".", vbnullstring)
+    if instrb(personaje, "\") <> 0 then
+        personaje = replace(personaje, "\", vbnullstring)
+    end if
+    if instrb(personaje, "/") <> 0 then
+        personaje = replace(personaje, "/", vbnullstring)
+    end if
+    if instrb(personaje, ".") <> 0 then
+        personaje = replace(personaje, ".", vbnullstring)
+    end if
     
     if fileexist(charpath & personaje & ".chr") then
         promedio = clng(getvar(charpath & personaje & ".chr", "rep", "promedio"))
@@ -611,13 +626,13 @@ end function
 public function string2relacion(byval s as string) as relaciones_guild
     select case ucase$(trim$(s))
         case vbnullstring, "p"
-            string2relacion = paz
+            string2relacion = relaciones_guild.paz
         case "g"
-            string2relacion = guerra
+            string2relacion = relaciones_guild.guerra
         case "a"
-            string2relacion = aliados
+            string2relacion = relaciones_guild.aliados
         case else
-            string2relacion = paz
+            string2relacion = relaciones_guild.paz
     end select
 end function
 
@@ -686,6 +701,8 @@ end function
 
 public function v_usuariovota(byval userindex as integer, byref votado as string, byref referror as string) as boolean
 dim guildindex      as integer
+dim list()          as string
+dim i as long
 
     v_usuariovota = false
     guildindex = userlist(userindex).guildindex
@@ -700,11 +717,18 @@ dim guildindex      as integer
         exit function
     end if
     
-    if instr(1, guilds(guildindex).getmemberlist(","), votado, vbtextcompare) <= 0 then
+    
+    list = guilds(guildindex).getmemberlist()
+    for i = 0 to ubound(list())
+        if ucase$(votado) = ucase$(list(i)) then exit for
+    next i
+    
+    if i > ubound(list()) then
         referror = votado & " no pertenece al clan"
         exit function
     end if
-
+    
+    
     if guilds(guildindex).yavoto(userlist(userindex).name) then
         referror = "ya has votado, no puedes cambiar tu voto"
         exit function
@@ -719,16 +743,16 @@ public sub v_rutinaelecciones()
 dim i       as integer
 
 on error goto errh
-    call senddata(sendtarget.toall, 0, 0, "||servidor> revisando elecciones" & fonttype_server)
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> revisando elecciones", fonttypenames.fonttype_server))
     for i = 1 to cantidaddeclanes
         if not guilds(i) is nothing then
             if guilds(i).revisarelecciones then
-                call senddata(sendtarget.toall, 0, 0, "||        > " & guilds(i).getleader & " es el nuevo lider de " & guilds(i).guildname & "!" & fonttype_server)
+                call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & guilds(i).getleader & " es el nuevo lider de " & guilds(i).guildname & "!", fonttypenames.fonttype_server))
             end if
         end if
 proximo:
     next i
-    call senddata(sendtarget.toall, 0, 0, "||servidor> elecciones revisadas" & fonttype_server)
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> elecciones revisadas", fonttypenames.fonttype_server))
 exit sub
 errh:
     call logerror("modguilds.v_rutinaelecciones():" & err.description)
@@ -740,9 +764,15 @@ private function getguildindexfromchar(byref playername as string) as integer
 'visual basic no permite declarar metodos de clase
 dim i       as integer
 dim temps   as string
-    playername = replace(playername, "\", vbnullstring)
-    playername = replace(playername, "/", vbnullstring)
-    playername = replace(playername, ".", vbnullstring)
+    if instrb(playername, "\") <> 0 then
+        playername = replace(playername, "\", vbnullstring)
+    end if
+    if instrb(playername, "/") <> 0 then
+        playername = replace(playername, "/", vbnullstring)
+    end if
+    if instrb(playername, ".") <> 0 then
+        playername = replace(playername, ".", vbnullstring)
+    end if
     temps = getvar(charpath & playername & ".chr", "guild", "guildindex")
     if isnumeric(temps) then
         getguildindexfromchar = cint(temps)
@@ -772,7 +802,7 @@ dim i as integer
         i = guilds(guildindex).m_iterador_proximouserindex
         while i > 0
             'no mostramos dioses y admins
-            if i <> userindex and (userlist(i).flags.privilegios < playertype.dios or userlist(userindex).flags.privilegios >= playertype.dios) then _
+            if i <> userindex and ((userlist(i).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 or (userlist(userindex).flags.privilegios and (playertype.dios or playertype.admin) <> 0)) then _
                 m_listademiembrosonline = m_listademiembrosonline & userlist(i).name & ","
             i = guilds(guildindex).m_iterador_proximouserindex
         wend
@@ -782,84 +812,77 @@ dim i as integer
     end if
 end function
 
-public function sendguildslist(byval userindex as integer) as string
-dim tstr as string
-dim tint as integer
-
-    tstr = cantidaddeclanes & ","
-    for tint = 1 to cantidaddeclanes
-        tstr = tstr & guilds(tint).guildname & ","
-    next tint
-    sendguildslist = tstr
+public function prepareguildslist() as string()
+    dim tstr() as string
+    dim i as long
+    
+    if cantidaddeclanes = 0 then
+        redim tstr(0) as string
+    else
+        redim tstr(cantidaddeclanes - 1) as string
+        
+        for i = 1 to cantidaddeclanes
+            tstr(i - 1) = guilds(i).guildname
+        next i
+    end if
+    
+    prepareguildslist = tstr
 end function
 
-public function sendguilddetails(byref guildname as string) as string
-dim tstr    as string
-dim gi      as integer
-dim i       as integer
+public sub sendguilddetails(byval userindex as integer, byref guildname as string)
+    dim codex(cantidadmaximacodex - 1)  as string
+    dim gi      as integer
+    dim i       as long
 
     gi = guildindex(guildname)
-    if gi = 0 then exit function
+    if gi = 0 then exit sub
     
-    tstr = guilds(gi).guildname & "�"
-    tstr = tstr & guilds(gi).fundador & "�"
-    tstr = tstr & guilds(gi).getfechafundacion & "�"
-    tstr = tstr & guilds(gi).getleader & "�"
-    tstr = tstr & guilds(gi).geturl & "�"
-    tstr = tstr & cstr(guilds(gi).cantidaddemiembros) & "�"
-    tstr = tstr & iif(guilds(gi).eleccionesabiertas, "elecciones abiertas", "elecciones cerradas") & "�"
-    tstr = tstr & alineacion2string(guilds(gi).alineacion) & "�"
-    tstr = tstr & guilds(gi).cantidadenemys & "�"
-    tstr = tstr & guilds(gi).cantidadallies & "�"
-    tstr = tstr & guilds(gi).puntosantifaccion & "/" & cstr(maxantifaccion) & "�"
-    for i = 1 to cantidadmaximacodex
-        tstr = tstr & guilds(gi).getcodex(i) & "�"
-    next i
-    tstr = tstr & guilds(gi).getdesc
-    
-    sendguilddetails = tstr
-end function
+    with guilds(gi)
+        for i = 1 to cantidadmaximacodex
+            codex(i - 1) = .getcodex(i)
+        next i
+        
+        call protocol.writeguilddetails(userindex, guildname, .fundador, .getfechafundacion, .getleader, _
+                                    .geturl, .cantidaddemiembros, .eleccionesabiertas, alineacion2string(.alineacion), _
+                                    .cantidadenemys, .cantidadallies, .puntosantifaccion & "/" & cstr(maxantifaccion), _
+                                    codex, .getdesc)
+    end with
+end sub
 
+public sub sendguildleaderinfo(byval userindex as integer)
+'***************************************************
+'autor: mariano barrou (el oso)
+'last modification: 12/10/06
+'las modified by: juan mart�n sotuyo dodero (maraxus)
+'***************************************************
+    dim gi      as integer
+    dim guildlist() as string
+    dim memberlist() as string
+    dim aspirantslist() as string
 
-public function sendguildleaderinfo(byval userindex as integer) as string
-dim tstr    as string
-dim tint    as integer
-dim cantasp as integer
-dim gi      as integer
-
-    sendguildleaderinfo = vbnullstring
-    gi = userlist(userindex).guildindex
-    
-    if gi <= 0 or gi > cantidaddeclanes then
-        exit function
-    end if
-    
-    if not m_esguildleader(userlist(userindex).name, gi) then exit function
-    
-    '<-------lista de guilds ---------->
-    tstr = cantidaddeclanes & "�"
-    
-    for tint = 1 to cantidaddeclanes
-        tstr = tstr & guilds(tint).guildname & "�"
-    next tint
-    
-    '<-------lista de miembros ---------->
-    tstr = tstr & guilds(gi).cantidaddemiembros & "�"
-    tstr = tstr & guilds(gi).getmemberlist("�") & "�"
-    
-    '<------- guild news -------->
-    tstr = tstr & replace(guilds(gi).getguildnews, vbcrlf, "�") & "�"
-    
-    '<------- solicitudes ------->
-    cantasp = guilds(gi).cantidadaspirantes()
-    tstr = tstr & cantasp & "�"
-    if cantasp > 0 then
-        tstr = tstr & guilds(gi).getaspirantes("�") & "�"
-    end if
-
-    sendguildleaderinfo = tstr
-
-end function
+    with userlist(userindex)
+        gi = .guildindex
+        
+        guildlist = prepareguildslist()
+        
+        if gi <= 0 or gi > cantidaddeclanes then
+            'send the guild list instead
+            call protocol.writeguildlist(userindex, guildlist)
+            exit sub
+        end if
+        
+        if not m_esguildleader(.name, gi) then
+            'send the guild list instead
+            call protocol.writeguildlist(userindex, guildlist)
+            exit sub
+        end if
+        
+        memberlist = guilds(gi).getmemberlist()
+        aspirantslist = guilds(gi).getaspirantes()
+        
+        call writeguildleaderinfo(userindex, guildlist, memberlist, guilds(gi).getguildnews(), aspirantslist)
+    end with
+end sub
 
 
 public function m_iterador_proximouserindex(byval guildindex as integer) as integer
@@ -886,18 +909,39 @@ public function r_iterador_proximapropuesta(byval guildindex as integer, byval t
     end if
 end function
 
-
 public function gmescuchaclan(byval userindex as integer, byval guildname as string) as integer
 dim gi as integer
+
+    'listen to no guild at all
+    if lenb(guildname) = 0 and userlist(userindex).escucheclan <> 0 then
+        'quit listening to previous guild!!
+        call writeconsolemsg(userindex, "dejas de escuchar a : " & guilds(userlist(userindex).escucheclan).guildname, fonttypenames.fonttype_guild)
+        guilds(userlist(userindex).escucheclan).desconectargm (userindex)
+        exit function
+    end if
+    
 'devuelve el guildindex
     gi = guildindex(guildname)
     if gi > 0 then
+        if userlist(userindex).escucheclan <> 0 then
+            if userlist(userindex).escucheclan = gi then
+                'already listening to them...
+                call writeconsolemsg(userindex, "conectado a : " & guildname, fonttypenames.fonttype_guild)
+                gmescuchaclan = gi
+                exit function
+            else
+                'quit listening to previous guild!!
+                call writeconsolemsg(userindex, "dejas de escuchar a : " & guilds(userlist(userindex).escucheclan).guildname, fonttypenames.fonttype_guild)
+                guilds(userlist(userindex).escucheclan).desconectargm (userindex)
+            end if
+        end if
+        
         call guilds(gi).conectargm(userindex)
-        call senddata(sendtarget.toindex, userindex, 0, "||conectado a : " & guildname & fonttype_guild)
+        call writeconsolemsg(userindex, "conectado a : " & guildname, fonttypenames.fonttype_guild)
         gmescuchaclan = gi
         userlist(userindex).escucheclan = gi
     else
-        call senddata(sendtarget.toindex, userindex, 0, "||error, el clan no existe" & fonttype_guild)
+        call writeconsolemsg(userindex, "error, el clan no existe", fonttypenames.fonttype_guild)
         gmescuchaclan = 0
     end if
     
@@ -944,8 +988,8 @@ dim gig as integer
 
     call guilds(gi).anularpropuestas(gig)
     call guilds(gig).anularpropuestas(gi)
-    call guilds(gi).setrelacion(gig, guerra)
-    call guilds(gig).setrelacion(gi, guerra)
+    call guilds(gi).setrelacion(gig, relaciones_guild.guerra)
+    call guilds(gig).setrelacion(gi, relaciones_guild.guerra)
 
     r_declararguerra = gig
 
@@ -957,7 +1001,6 @@ public function r_aceptarpropuestadepaz(byval userindex as integer, byref guildp
 dim gi      as integer
 dim gig     as integer
 
-    r_aceptarpropuestadepaz = 0
     gi = userlist(userindex).guildindex
     if gi <= 0 or gi > cantidaddeclanes then
         referror = "no eres miembro de ning�n clan"
@@ -982,23 +1025,22 @@ dim gig     as integer
         exit function
     end if
 
-    if guilds(gi).getrelacion(gig) <> guerra then
+    if guilds(gi).getrelacion(gig) <> relaciones_guild.guerra then
         referror = "no est�s en guerra con ese clan"
         exit function
     end if
     
-    if not guilds(gi).haypropuesta(gig, paz) then
+    if not guilds(gi).haypropuesta(gig, relaciones_guild.paz) then
         referror = "no hay ninguna propuesta de paz para aceptar"
         exit function
     end if
 
     call guilds(gi).anularpropuestas(gig)
     call guilds(gig).anularpropuestas(gi)
-    call guilds(gi).setrelacion(gig, paz)
-    call guilds(gig).setrelacion(gi, paz)
+    call guilds(gi).setrelacion(gig, relaciones_guild.paz)
+    call guilds(gig).setrelacion(gi, relaciones_guild.paz)
     
     r_aceptarpropuestadepaz = gig
-
 end function
 
 public function r_rechazarpropuestadealianza(byval userindex as integer, byref guildpro as string, byref referror as string) as integer
@@ -1076,7 +1118,7 @@ dim gig     as integer
         exit function
     end if
     
-    if not guilds(gi).haypropuesta(gig, paz) then
+    if not guilds(gi).haypropuesta(gig, relaciones_guild.paz) then
         referror = "no hay propuesta de paz del clan " & guildpro
         exit function
     end if
@@ -1119,20 +1161,20 @@ dim gig     as integer
         exit function
     end if
 
-    if guilds(gi).getrelacion(gig) <> paz then
+    if guilds(gi).getrelacion(gig) <> relaciones_guild.paz then
         referror = "no est�s en paz con el clan, solo puedes aceptar propuesas de alianzas con alguien que estes en paz."
         exit function
     end if
     
-    if not guilds(gi).haypropuesta(gig, aliados) then
+    if not guilds(gi).haypropuesta(gig, relaciones_guild.aliados) then
         referror = "no hay ninguna propuesta de alianza para aceptar."
         exit function
     end if
 
     call guilds(gi).anularpropuestas(gig)
     call guilds(gig).anularpropuestas(gi)
-    call guilds(gi).setrelacion(gig, aliados)
-    call guilds(gig).setrelacion(gi, aliados)
+    call guilds(gi).setrelacion(gig, relaciones_guild.aliados)
+    call guilds(gig).setrelacion(gi, relaciones_guild.aliados)
     
     r_aceptarpropuestadealianza = gig
 
@@ -1174,15 +1216,15 @@ dim gi              as integer
     end if
     
     'de acuerdo al tipo procedemos validando las transiciones
-    if tipo = paz then
-        if guilds(gi).getrelacion(otroclangi) <> guerra then
+    if tipo = relaciones_guild.paz then
+        if guilds(gi).getrelacion(otroclangi) <> relaciones_guild.guerra then
             referror = "no est�s en guerra con " & otroclan
             exit function
         end if
-    elseif tipo = guerra then
+    elseif tipo = relaciones_guild.guerra then
         'por ahora no hay propuestas de guerra
-    elseif tipo = aliados then
-        if guilds(gi).getrelacion(otroclangi) <> paz then
+    elseif tipo = relaciones_guild.aliados then
+        if guilds(gi).getrelacion(otroclangi) <> relaciones_guild.paz then
             referror = "para solicitar alianza no debes estar ni aliado ni en guerra con " & otroclan
             exit function
         end if
@@ -1222,49 +1264,65 @@ dim gi              as integer
     
 end function
 
-public function r_listadepropuestas(byval userindex as integer, byval tipo as relaciones_guild) as string
-dim gi  as integer
-dim i   as integer
+public function r_listadepropuestas(byval userindex as integer, byval tipo as relaciones_guild) as string()
 
-
+    dim gi  as integer
+    dim i   as integer
+    dim proposalcount as integer
+    dim proposals() as string
+    
     gi = userlist(userindex).guildindex
+    
     if gi > 0 and gi <= cantidaddeclanes then
-        i = guilds(gi).iterador_proximapropuesta(tipo)
-        while i > 0
-            r_listadepropuestas = r_listadepropuestas & guilds(i).guildname & ","
-            i = guilds(gi).iterador_proximapropuesta(tipo)
-        wend
-        if len(r_listadepropuestas) > 0 then
-            r_listadepropuestas = left$(r_listadepropuestas, len(r_listadepropuestas) - 1)
-        end if
+        with guilds(gi)
+            proposalcount = .cantidadpropuestas(tipo)
+            
+            'resize array to contain all proposals
+            if proposalcount > 0 then
+                redim proposals(proposalcount - 1) as string
+            else
+                redim proposals(0) as string
+            end if
+            
+            'store each guild name
+            for i = 0 to proposalcount - 1
+                proposals(i) = guilds(.iterador_proximapropuesta(tipo)).guildname
+            next i
+        end with
     end if
-
-end function
-
-public function r_cantidaddepropuestas(byval userindex as integer, byval tipo as relaciones_guild) as integer
-dim gi as integer
-    gi = userlist(userindex).guildindex
-    if gi > 0 and gi <= cantidaddeclanes then
-        r_cantidaddepropuestas = guilds(gi).cantidadpropuestas(tipo)
-    end if
+    
+    r_listadepropuestas = proposals
 end function
 
 public sub a_rechazaraspirantechar(byref aspirante as string, byval guild as integer, byref detalles as string)
-    aspirante = replace(aspirante, "\", "")
-    aspirante = replace(aspirante, "/", "")
-    aspirante = replace(aspirante, ".", "")
+    if instrb(aspirante, "\") <> 0 then
+        aspirante = replace(aspirante, "\", "")
+    end if
+    if instrb(aspirante, "/") <> 0 then
+        aspirante = replace(aspirante, "/", "")
+    end if
+    if instrb(aspirante, ".") <> 0 then
+        aspirante = replace(aspirante, ".", "")
+    end if
     call guilds(guild).informarrechazoenchar(aspirante, detalles)
 end sub
 
 public function a_obtenerrechazodechar(byref aspirante as string) as string
-    aspirante = replace(aspirante, "\", "")
-    aspirante = replace(aspirante, "/", "")
-    aspirante = replace(aspirante, ".", "")
+    if instrb(aspirante, "\") <> 0 then
+        aspirante = replace(aspirante, "\", "")
+    end if
+    if instrb(aspirante, "/") <> 0 then
+        aspirante = replace(aspirante, "/", "")
+    end if
+    if instrb(aspirante, ".") <> 0 then
+        aspirante = replace(aspirante, ".", "")
+    end if
     a_obtenerrechazodechar = getvar(charpath & aspirante & ".chr", "guild", "motivorechazo")
     call writevar(charpath & aspirante & ".chr", "guild", "motivorechazo", vbnullstring)
 end function
 
 public function a_rechazaraspirante(byval userindex as integer, byref nombre as string, byref motivo as string, byref referror as string) as boolean
+'check: el par�metro motivo, no se utiliza ��
 dim gi              as integer
 dim ui              as integer
 dim nroaspirante    as integer
@@ -1309,76 +1367,83 @@ dim nroaspirante    as integer
     
 end function
 
-public function a_detallespersonaje(byval userindex as integer, byref personaje as string, byref referror as string) as string
-dim gi          as integer
-dim nroasp      as integer
-dim tstr        as string
-dim userfile    as string
-dim peticiones  as string
-dim miembro     as string
-dim guildactual as integer
-
-
-
-    a_detallespersonaje = vbnullstring
+public sub senddetallespersonaje(byval userindex as integer, byref personaje as string)
+    dim gi          as integer
+    dim nroasp      as integer
+    dim guildname   as string
+    dim userfile    as clsinireader
+    dim miembro     as string
+    dim guildactual as integer
+    dim list()      as string
+    dim i           as long
     
     gi = userlist(userindex).guildindex
+    
     if gi <= 0 or gi > cantidaddeclanes then
-        referror = "no perteneces a ning�n clan"
-        exit function
+        call protocol.writeconsolemsg(userindex, "no perteneces a ning�n clan", fonttypenames.fonttype_info)
+        exit sub
     end if
     
     if not m_esguildleader(userlist(userindex).name, gi) then
-        referror = "no eres el l�der de tu clan"
-        exit function
+        call protocol.writeconsolemsg(userindex, "no eres el l�der de tu clan", fonttypenames.fonttype_info)
+        exit sub
     end if
     
-    personaje = replace(personaje, "\", vbnullstring)
-    personaje = replace(personaje, "/", vbnullstring)
-    personaje = replace(personaje, ".", vbnullstring)
+    if instrb(personaje, "\") <> 0 then
+        personaje = replace$(personaje, "\", vbnullstring)
+    end if
+    if instrb(personaje, "/") <> 0 then
+        personaje = replace$(personaje, "/", vbnullstring)
+    end if
+    if instrb(personaje, ".") <> 0 then
+        personaje = replace$(personaje, ".", vbnullstring)
+    end if
     
     nroasp = guilds(gi).numerodeaspirante(personaje)
     
     if nroasp = 0 then
-        if instr(1, guilds(gi).getmemberlist("."), personaje, vbtextcompare) <= 0 then
-            referror = "el personaje no es ni aspirante ni miembro del clan"
-            exit function
+        list = guilds(gi).getmemberlist()
+        
+        for i = 0 to ubound(list())
+            if personaje = list(i) then exit for
+        next i
+        
+        if i > ubound(list()) then
+            call protocol.writeconsolemsg(userindex, "el personaje no es ni aspirante ni miembro del clan", fonttypenames.fonttype_info)
+            exit sub
         end if
     end if
     
     'ahora traemos la info
     
-    userfile = charpath & personaje & ".chr"
-
-    tstr = personaje & "�"
-    tstr = tstr & getvar(userfile, "init", "raza") & "�"
-    tstr = tstr & getvar(userfile, "init", "clase") & "�"
-    tstr = tstr & getvar(userfile, "init", "genero") & "�"
-    tstr = tstr & getvar(userfile, "stats", "elv") & "�"
-    tstr = tstr & getvar(userfile, "stats", "gld") & "�"
-    tstr = tstr & getvar(userfile, "stats", "banco") & "�"
-    tstr = tstr & getvar(userfile, "rep", "promedio") & "�"
+    set userfile = new clsinireader
     
-    peticiones = getvar(userfile, "guild", "pedidos")
-    tstr = tstr & iif(len(peticiones) > 400, ".." & right$(peticiones, 400), peticiones) & "�"
+    with userfile
+        .initialize (charpath & personaje & ".chr")
+        
+        ' get the character's current guild
+        guildactual = val(.getvalue("guild", "guildindex"))
+        if guildactual > 0 and guildactual <= cantidaddeclanes then
+            guildname = "<" & guilds(guildactual).guildname & ">"
+        else
+            guildname = "ninguno"
+        end if
+        
+        'get previous guilds
+        miembro = .getvalue("guild", "miembro")
+        if len(miembro) > 400 then
+            miembro = ".." & right$(miembro, 400)
+        end if
+        
+        call protocol.writecharacterinfo(userindex, personaje, .getvalue("init", "raza"), .getvalue("init", "clase"), _
+                                .getvalue("init", "genero"), .getvalue("stats", "elv"), .getvalue("stats", "gld"), _
+                                .getvalue("stats", "banco"), .getvalue("rep", "promedio"), .getvalue("guild", "pedidos"), _
+                                guildname, miembro, .getvalue("facciones", "ejercitoreal"), .getvalue("facciones", "ejercitocaos"), _
+                                .getvalue("facciones", "ciudmatados"), .getvalue("facciones", "crimmatados"))
+    end with
     
-    miembro = getvar(userfile, "guild", "miembro")
-    tstr = tstr & iif(len(miembro) > 400, ".." & right$(miembro, 400), miembro) & "�"
-    
-    guildactual = val(getvar(userfile, "guild", "guildindex"))
-    if guildactual > 0 and guildactual <= cantidaddeclanes then
-        tstr = tstr & "<" & guilds(guildactual).guildname & ">" & "�"
-    else
-        tstr = tstr & "ninguno" & "�"
-    end if
-
-    tstr = tstr & getvar(userfile, "facciones", "ejercitoreal") & "�"
-    tstr = tstr & getvar(userfile, "facciones", "ejercitocaos") & "�"
-    tstr = tstr & getvar(userfile, "facciones", "ciudmatados") & "�"
-    tstr = tstr & getvar(userfile, "facciones", "crimmatados") & "�"
-    
-    a_detallespersonaje = tstr
-end function
+    set userfile = nothing
+end sub
 
 public function a_nuevoaspirante(byval userindex as integer, byref clan as string, byref solicitud as string, byref referror as string) as boolean
 dim viejosolicitado     as string
@@ -1416,7 +1481,7 @@ dim nuevoguildindex     as integer
 
     viejosolicitado = getvar(charpath & userlist(userindex).name & ".chr", "guild", "aspirantea")
 
-    if viejosolicitado <> vbnullstring then
+    if lenb(viejosolicitado) <> 0 then
         'borramos la vieja solicitud
         viejoguildindex = cint(viejosolicitado)
         if viejoguildindex <> 0 then
@@ -1468,10 +1533,18 @@ dim aspiranteui     as integer
             referror = aspirante & " no puede entrar a un clan " & alineacion2string(guilds(gi).alineacion)
             call guilds(gi).retiraraspirante(aspirante, nroaspirante)
             exit function
+        elseif not userlist(aspiranteui).guildindex = 0 then
+            referror = aspirante & " ya es parte de otro clan."
+            call guilds(gi).retiraraspirante(aspirante, nroaspirante)
+            exit function
         end if
     else
         if not m_estadopermiteentrarchar(aspirante, gi) then
             referror = aspirante & " no puede entrar a un clan " & alineacion2string(guilds(gi).alineacion)
+            call guilds(gi).retiraraspirante(aspirante, nroaspirante)
+            exit function
+        elseif getguildindexfromchar(aspirante) then
+            referror = aspirante & " ya es parte de otro clan."
             call guilds(gi).retiraraspirante(aspirante, nroaspirante)
             exit function
         end if
@@ -1480,7 +1553,32 @@ dim aspiranteui     as integer
     
     call guilds(gi).retiraraspirante(aspirante, nroaspirante)
     call guilds(gi).aceptarnuevomiembro(aspirante)
-
+    
+    ' if player is online, update tag
+    if aspiranteui > 0 then
+        call refreshcharstatus(aspiranteui)
+    end if
+    
     a_aceptaraspirante = true
+end function
 
+public function guildname(byval guildindex as integer) as string
+    if guildindex <= 0 or guildindex > cantidaddeclanes then _
+        exit function
+    
+    guildname = guilds(guildindex).guildname
+end function
+
+public function guildleader(byval guildindex as integer) as string
+    if guildindex <= 0 or guildindex > cantidaddeclanes then _
+        exit function
+    
+    guildleader = guilds(guildindex).getleader
+end function
+
+public function guildalignment(byval guildindex as integer) as string
+    if guildindex <= 0 or guildindex > cantidaddeclanes then _
+        exit function
+    
+    guildalignment = alineacion2string(guilds(guildindex).alineacion)
 end function

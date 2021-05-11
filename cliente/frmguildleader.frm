@@ -240,7 +240,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -248,18 +248,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -277,53 +275,47 @@ attribute vb_exposed = false
 option explicit
 
 private sub cmdelecciones_click()
-    call senddata("abreelec")
+    call writeguildopenelections
     unload me
 end sub
 
 private sub command1_click()
+    if solicitudes.listindex = -1 then exit sub
+    
+    frmcharinfo.frmsolicitudes = true
+    call writeguildmemberinfo(solicitudes.list(solicitudes.listindex))
 
-frmcharinfo.frmsolicitudes = true
-call senddata("1hrinfo<" & solicitudes.list(solicitudes.listindex))
-
-'unload me
-
+    'unload me
 end sub
 
 private sub command2_click()
+    if members.listindex = -1 then exit sub
+    
+    frmcharinfo.frmmiembros = true
+    call writeguildmemberinfo(members.list(members.listindex))
 
-frmcharinfo.frmmiembros = true
-call senddata("1hrinfo<" & members.list(members.listindex))
-
-'unload me
-
+    'unload me
 end sub
 
 private sub command3_click()
+    dim k as string
 
-dim k$
-
-k$ = replace(txtguildnews, vbcrlf, "�")
-
-call senddata("actgnews" & k$)
-
+    k = replace(txtguildnews, vbcrlf, "�")
+    
+    call writeguildupdatenews(k)
 end sub
 
 private sub command4_click()
+    frmguildbrief.esleader = true
+    call writeguildrequestdetails(guildslist.list(guildslist.listindex))
 
-frmguildbrief.esleader = true
-call senddata("clandetails" & guildslist.list(guildslist.listindex))
-
-'unload me
-
+    'unload me
 end sub
 
 private sub command5_click()
-
-call frmguilddetails.show(vbmodal, frmguildleader)
-
-'unload me
-
+    call frmguilddetails.show(vbmodal, frmguildleader)
+    
+    'unload me
 end sub
 
 private sub command6_click()
@@ -332,55 +324,13 @@ call frmguildurl.show(vbmodeless, frmguildleader)
 end sub
 
 private sub command7_click()
-call senddata("envpropp")
+    call writeguildpeaceproplist
 end sub
 private sub command9_click()
-call senddata("envalpro")
+    call writeguildallianceproplist
 end sub
-
 
 private sub command8_click()
-unload me
-frmmain.setfocus
-end sub
-
-
-public sub parseleaderinfo(byval data as string)
-
-if me.visible then exit sub
-
-dim r%, t%
-
-r% = val(readfield(1, data, asc("�")))
-
-for t% = 1 to r%
-    guildslist.additem readfield(1 + t%, data, asc("�"))
-next t%
-
-r% = val(readfield(t% + 1, data, asc("�")))
-miembros.caption = "el clan cuenta con " & r% & " miembros."
-
-dim k%
-
-for k% = 1 to r%
-    members.additem readfield(t% + 1 + k%, data, asc("�"))
-next k%
-
-txtguildnews = replace(readfield(t% + k% + 1, data, asc("�")), "�", vbcrlf)
-
-t% = t% + k% + 2
-
-r% = val(readfield(t%, data, asc("�")))
-
-for k% = 1 to r%
-    solicitudes.additem readfield(t% + k%, data, asc("�"))
-next k%
-
-me.show , frmmain
-
-end sub
-
-
-private sub form_deactivate()
-'me.setfocus
+    unload me
+    frmmain.setfocus
 end sub

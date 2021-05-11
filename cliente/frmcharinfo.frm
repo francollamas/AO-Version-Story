@@ -260,7 +260,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -268,18 +268,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -300,103 +298,35 @@ public frmmiembros as boolean
 public frmsolicitudes as boolean
 
 private sub aceptar_click()
-frmmiembros = false
-frmsolicitudes = false
-call senddata("aceptari" & trim$(right(nombre, len(nombre) - 8)))
-unload frmguildleader
-call senddata("glinfo")
-unload me
+    frmmiembros = false
+    frmsolicitudes = false
+    call writeguildacceptnewmember(trim$(right$(nombre, len(nombre) - 8)))
+    unload frmguildleader
+    call writerequestguildleaderinfo
+    unload me
 end sub
 
 private sub command1_click()
-unload me
-end sub
-
-
-public sub parsecharinfo(byval rdata as string)
-
-if frmmiembros then
-    rechazar.visible = false
-    aceptar.visible = false
-    echar.visible = true
-    desc.visible = false
-else
-    rechazar.visible = true
-    aceptar.visible = true
-    echar.visible = false
-    desc.visible = true
-end if
-
-'    tstr = personaje & "�"1
-'    tstr = tstr & getvar(userfile, "init", "raza") & "�"2
-'    tstr = tstr & getvar(userfile, "init", "clase") & "�"3
-'    tstr = tstr & getvar(userfile, "init", "genero") & "�"4
-'    tstr = tstr & getvar(userfile, "stats", "elv") & "�"5
-'    tstr = tstr & getvar(userfile, "stats", "gld") & "�"6
-'    tstr = tstr & getvar(userfile, "stats", "banco") & "�"7
-'    tstr = tstr & getvar(userfile, "rep", "promedio") & "�"8
-
-
-nombre.caption = "nombre: " & readfield(1, rdata, asc("�"))
-raza.caption = "raza: " & readfield(2, rdata, asc("�"))
-clase.caption = "clase: " & readfield(3, rdata, asc("�"))
-genero.caption = "genero: " & readfield(4, rdata, asc("�"))
-nivel.caption = "nivel: " & readfield(5, rdata, asc("�"))
-oro.caption = "oro: " & readfield(6, rdata, asc("�"))
-banco.caption = "banco: " & readfield(7, rdata, asc("�"))
-me.reputacion.caption = "reputaci�n: " & readfield(8, rdata, asc("�"))
-
-
-'    peticiones = getvar(userfile, "guilds", "pedidos")9
-'    tstr = tstr & iif(len(peticiones > 400), ".." & right$(peticiones, 400), peticiones) & "�"
-    
-'    miembro = getvar(userfile, "guilds", "miembro")10
-'    tstr = tstr & iif(len(miembro) > 400, ".." & right$(miembro, 400), miembro) & "�"
-
-me.txtpeticiones.text = readfield(9, rdata, asc("�"))
-me.txtmiembro.text = readfield(10, rdata, asc("�"))
-
-
-'guildactual = val(getvar(userfile, "guild", "guildindex"))11
-me.guildactual.caption = "clan: " & readfield(11, rdata, asc("�"))
-
-
-'    tstr = tstr & getvar(userfile, "facciones", "ejercitoreal") & "�"12
-'    tstr = tstr & getvar(userfile, "facciones", "ejercitocaos") & "�"13
-'    tstr = tstr & getvar(userfile, "facciones", "ciudmatados") & "�"14
-'    tstr = tstr & getvar(userfile, "facciones", "crimmatados") & "�"15
-
-me.ejercito.caption = "ej�rcito: " & iif(val(readfield(12, rdata, asc("�"))) <> 0, "armada real", iif(val(readfield(13, rdata, asc("�"))) <> 0, "legi�n oscura", "-"))
-
-ciudadanos.caption = "ciudadanos asesinados: " & readfield(14, rdata, asc("�"))
-criminales.caption = "criminales asesinados: " & readfield(15, rdata, asc("�"))
-
-
-status.caption = iif(val(readfield(8, rdata, asc("�"))) > 0, " (ciudadano)", " (criminal)")
-status.forecolor = iif(val(readfield(8, rdata, asc("�"))) > 0, vbblue, vbred)
-me.show vbmodeless, frmmain
-
-
+    unload me
 end sub
 
 private sub desc_click()
-call senddata("envcomen" & right(nombre, len(nombre) - 7))
+    call writeguildrequestjoinerinfo(right$(nombre, len(nombre) - 8))
 end sub
 
 private sub echar_click()
-call senddata("echarcla" & right(nombre, len(nombre) - 7))
-frmmiembros = false
-frmsolicitudes = false
-unload frmguildleader
-call senddata("glinfo")
-unload me
+    call writeguildkickmember(right$(nombre, len(nombre) - 8))
+    frmmiembros = false
+    frmsolicitudes = false
+    unload frmguildleader
+    call writerequestguildleaderinfo
+    unload me
 end sub
 
 private sub rechazar_click()
-load frmcommet
-frmcommet.t = rechazopj
-frmcommet.nombre = right$(nombre, len(nombre) - 7)
-frmcommet.caption = "ingrese motivo para rechazo"
-frmcommet.show vbmodeless, frmcharinfo
-
+    load frmcommet
+    frmcommet.t = rechazopj
+    frmcommet.nombre = right$(nombre, len(nombre) - 8)
+    frmcommet.caption = "ingrese motivo para rechazo"
+    frmcommet.show vbmodeless, frmcharinfo
 end sub

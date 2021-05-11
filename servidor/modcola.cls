@@ -11,22 +11,20 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -85,27 +83,32 @@ private sub class_initialize()
 set cola = new collection
 end sub
 
-public function verelemento(byval index as integer) as variant
+public function verelemento(byval index as integer) as string
 on error resume next
-
-
-
-if indexvalido(index) then
-    verelemento = cola(index)
-else
-    verelemento = 0
-end if
-
+    if indexvalido(index) then
+        'pablo
+        verelemento = ucase$(cola.item(index))
+        '/pablo
+        'verelemento = cola(index)
+    else
+        verelemento = 0
+    end if
 end function
 
 
-public sub push(byval info as string, byval nombre as string)
+public sub push(byval nombre as string)
 on error resume next
 'mete elemento en la cola
-call cola.add(ucase$(nombre))
+'pablo
+dim aux as string
+aux = time$ + " " + ucase$(nombre)
+call cola.add(aux)
+'/pablo
+
+'call cola.add(ucase$(nombre))
 end sub
 
-public function pop() as variant
+public function pop() as string
 on error resume next
 'quita elemento de la cola
 if cola.count > 0 then
@@ -116,7 +119,7 @@ else
 end if
 end function
 
-public function popbyval() as variant
+public function popbyval() as string
 on error resume next
 'call logtarea("popbyval sos")
 
@@ -132,36 +135,38 @@ end function
 public function existe(byval nombre as string) as boolean
 on error resume next
   
- dim f as boolean
- dim v as variant
+ dim v as string
  dim i as integer
  dim nombreenmayusculas as string
  nombreenmayusculas = ucase$(nombre)
  
- i = 1
- f = false
- 
  for i = 1 to me.longitud
-        v = me.verelemento(i)
+        'pablo
+        v = mid$(me.verelemento(i), 10, len(me.verelemento(i)))
+        '/pablo
+        'v = me.verelemento(i)
         if v = nombreenmayusculas then
             existe = true
             exit function
         end if
  next
-
+ existe = false
 
 end function
 
 public sub quitar(byval nombre as string)
 on error resume next
-dim v as variant
+dim v as string
 dim i as integer
 dim nombreenmayusculas as string
  
 nombreenmayusculas = ucase$(nombre)
  
 for i = 1 to me.longitud
-    v = me.verelemento(i)
+    'pablo
+    v = mid$(me.verelemento(i), 10, len(me.verelemento(i)))
+    '/pablo
+    'v = me.verelemento(i)
     if v = nombreenmayusculas then
         call cola.remove(i)
         exit sub

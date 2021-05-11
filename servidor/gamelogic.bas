@@ -1,20 +1,18 @@
 attribute vb_name = "extra"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -32,13 +30,42 @@ attribute vb_name = "extra"
 option explicit
 
 public function esnewbie(byval userindex as integer) as boolean
-esnewbie = userlist(userindex).stats.elv <= limitenewbie
+    esnewbie = userlist(userindex).stats.elv <= limitenewbie
 end function
 
+public function esarmada(byval userindex as integer) as boolean
+'***************************************************
+'autor: pablo (toxicwaste)
+'last modification: 23/01/2007
+'***************************************************
+    esarmada = (userlist(userindex).faccion.armadareal = 1)
+end function
 
+public function escaos(byval userindex as integer) as boolean
+'***************************************************
+'autor: pablo (toxicwaste)
+'last modification: 23/01/2007
+'***************************************************
+    escaos = (userlist(userindex).faccion.fuerzascaos = 1)
+end function
+
+public function esgm(byval userindex as integer) as boolean
+'***************************************************
+'autor: pablo (toxicwaste)
+'last modification: 23/01/2007
+'***************************************************
+    esgm = (userlist(userindex).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero))
+end function
 
 public sub dotileevents(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer)
-
+'***************************************************
+'autor: pablo (toxicwaste) & unknown (orginal version)
+'last modification: 23/01/2007
+'handles the map passage of users. allows the existance
+'of exclusive maps for newbies, royal army and caos legion members
+'and enables gms to enter every map without restriction.
+'uses: mapinfo(map).restringir = "newbie" (newbies), "armada", "caos" and "no".
+'***************************************************
 on error goto errhandler
 
 dim npos as worldpos
@@ -50,11 +77,38 @@ if inmapbounds(map, x, y) then
         fxflag = objdata(mapdata(map, x, y).objinfo.objindex).objtype = eobjtype.otteleport
     end if
     
-    if mapdata(map, x, y).tileexit.map > 0 then
+    if (mapdata(map, x, y).tileexit.map > 0) and (mapdata(map, x, y).tileexit.map <= nummaps) then
         '�es mapa de newbies?
-        if ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "si" then
+        if ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "newbie" then
             '�el usuario es un newbie?
-            if esnewbie(userindex) then
+            if esnewbie(userindex) or esgm(userindex) then
+                if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
+                    if fxflag then '�fx?
+                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
+                    else
+                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, false)
+                    end if
+                else
+                    call closestlegalpos(mapdata(map, x, y).tileexit, npos)
+                    if npos.x <> 0 and npos.y <> 0 then
+                        if fxflag then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
+                        else
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, false)
+                        end if
+                    end if
+                end if
+            else 'no es newbie
+                call writeconsolemsg(userindex, "mapa exclusivo para newbies.", fonttypenames.fonttype_info)
+                call closeststablepos(userlist(userindex).pos, npos)
+
+                if npos.x <> 0 and npos.y <> 0 then
+                    call warpuserchar(userindex, npos.map, npos.x, npos.y, false)
+                end if
+            end if
+        elseif ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "armada" then '�es mapa de armadas?
+            '�el usuario es armada?
+            if esarmada(userindex) or esgm(userindex) then
                 if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
                     if fxflag then '�fx?
                         call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
@@ -71,17 +125,42 @@ if inmapbounds(map, x, y) then
                         end if
                     end if
                 end if
-            else 'no es newbie
-                call senddata(sendtarget.toindex, userindex, 0, "||mapa exclusivo para newbies." & fonttype_info)
-                dim veces as byte
-                veces = 0
+            else 'no es armada
+                call writeconsolemsg(userindex, "mapa exclusivo para miembros del ejercito real", fonttypenames.fonttype_info)
                 call closeststablepos(userlist(userindex).pos, npos)
 
                 if npos.x <> 0 and npos.y <> 0 then
                         call warpuserchar(userindex, npos.map, npos.x, npos.y)
                 end if
             end if
-        else 'no es un mapa de newbies
+        elseif ucase$(mapinfo(mapdata(map, x, y).tileexit.map).restringir) = "caos" then '�es mapa de caos?
+            '�el usuario es caos?
+            if escaos(userindex) or esgm(userindex) then
+                if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
+                    if fxflag then '�fx?
+                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
+                    else
+                        call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y)
+                    end if
+                else
+                    call closestlegalpos(mapdata(map, x, y).tileexit, npos)
+                    if npos.x <> 0 and npos.y <> 0 then
+                        if fxflag then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, true)
+                        else
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y)
+                        end if
+                    end if
+                end if
+            else 'no es caos
+                call writeconsolemsg(userindex, "mapa exclusivo para miembros del ejercito oscuro.", fonttypenames.fonttype_info)
+                call closeststablepos(userlist(userindex).pos, npos)
+
+                if npos.x <> 0 and npos.y <> 0 then
+                        call warpuserchar(userindex, npos.map, npos.x, npos.y)
+                end if
+            end if
+        else 'no es un mapa de newbies, ni armadas, ni caos
             if legalpos(mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, puedeatravesaragua(userindex)) then
                 if fxflag then
                     call warpuserchar(userindex, mapdata(map, x, y).tileexit.map, mapdata(map, x, y).tileexit.x, mapdata(map, x, y).tileexit.y, true)
@@ -99,18 +178,37 @@ if inmapbounds(map, x, y) then
                 end if
             end if
         end if
+        'te fusite del mapa. la criatura ya no es m�s tuya ni te reconoce como que vos la atacaste.
+        dim an as integer
+    
+        an = userlist(userindex).flags.atacadopornpc
+        if an > 0 then
+           npclist(an).movement = npclist(an).flags.oldmovement
+           npclist(an).hostile = npclist(an).flags.oldhostil
+           npclist(an).flags.attackedby = vbnullstring
+        end if
+    
+        an = userlist(userindex).flags.npcatacado
+        if an > 0 then
+            if npclist(an).flags.attackedfirstby = userlist(userindex).name then
+            npclist(an).flags.attackedfirstby = vbnullstring
+            end if
+        end if
+        userlist(userindex).flags.atacadopornpc = 0
+        userlist(userindex).flags.npcatacado = 0
     end if
     
 end if
 
+
+
 exit sub
 
 errhandler:
-    call logerror("error en dotileevents")
-
+    call logerror("error en dotileevents. error: " & err.number & " - desc: " & err.description)
 end sub
 
-function inrangovision(byval userindex as integer, x as integer, y as integer) as boolean
+function inrangovision(byval userindex as integer, byval x as integer, byval y as integer) as boolean
 
 if x > userlist(userindex).pos.x - minxborder and x < userlist(userindex).pos.x + minxborder then
     if y > userlist(userindex).pos.y - minyborder and y < userlist(userindex).pos.y + minyborder then
@@ -136,8 +234,8 @@ end function
 
 
 function inmapbounds(byval map as integer, byval x as integer, byval y as integer) as boolean
-
-if x < minxborder or x > maxxborder or y < minyborder or y > maxyborder then
+            
+if (map <= 0 or map > nummaps) or x < minxborder or x > maxxborder or y < minyborder or y > maxyborder then
     inmapbounds = false
 else
     inmapbounds = true
@@ -145,8 +243,10 @@ end if
 
 end function
 
-sub closestlegalpos(pos as worldpos, byref npos as worldpos)
+sub closestlegalpos(pos as worldpos, byref npos as worldpos, optional puedeagua as boolean = false, optional puedetierra as boolean = true)
 '*****************************************************************
+'author: unknown (original version)
+'last modification: 24/01/2007 (toxicwaste)
 'encuentra la posicion legal mas cercana y la guarda en npos
 '*****************************************************************
 
@@ -157,7 +257,7 @@ dim ty as integer
 
 npos.map = pos.map
 
-do while not legalpos(pos.map, npos.x, npos.y)
+do while not legalpos(pos.map, npos.x, npos.y, puedeagua, puedetierra)
     if loopc > 12 then
         notfound = true
         exit do
@@ -166,7 +266,7 @@ do while not legalpos(pos.map, npos.x, npos.y)
     for ty = pos.y - loopc to pos.y + loopc
         for tx = pos.x - loopc to pos.x + loopc
             
-            if legalpos(npos.map, tx, ty) then
+            if legalpos(npos.map, tx, ty, puedeagua, puedetierra) then
                 npos.x = tx
                 npos.y = ty
                 '�hay objeto?
@@ -235,19 +335,21 @@ end if
 
 end sub
 
-function nameindex(byref name as string) as integer
+function nameindex(byval name as string) as integer
 
 dim userindex as integer
 '�nombre valido?
-if name = "" then
+if lenb(name) = 0 then
     nameindex = 0
     exit function
 end if
 
-name = ucase$(replace(name, "+", " "))
+if instrb(name, "+") <> 0 then
+    name = ucase$(replace(name, "+", " "))
+end if
 
 userindex = 1
-do until ucase$(userlist(userindex).name) = name
+do until ucase$(userlist(userindex).name) = ucase$(name)
     
     userindex = userindex + 1
     
@@ -268,7 +370,7 @@ function ip_index(byval inip as string) as integer
  
 dim userindex as integer
 '�nombre valido?
-if inip = "" then
+if lenb(inip) = 0 then
     ip_index = 0
     exit function
 end if
@@ -305,10 +407,10 @@ next loopc
 checkforsameip = false
 end function
 
-function checkforsamename(byval userindex as integer, byval name as string) as boolean
+function checkforsamename(byval name as string) as boolean
 'controlo que no existan usuarios con el mismo nombre
 dim loopc as long
-for loopc = 1 to maxusers
+for loopc = 1 to lastuser
     if userlist(loopc).flags.userlogged then
         
         'if ucase$(userlist(loopc).name) = ucase$(name) and userlist(loopc).connid <> -1 then
@@ -365,30 +467,38 @@ pos.y = ny
 
 end sub
 
-function legalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false) as boolean
-
+function legalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true) as boolean
+'***************************************************
+'autor: pablo (toxicwaste) & unknown (orginal version)
+'last modification: 23/01/2007
+'checks if the position is legal.
+'***************************************************
 '�es un mapa valido?
 if (map <= 0 or map > nummaps) or _
    (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
             legalpos = false
 else
-  
-  if not puedeagua then
+    if puedeagua and puedetierra then
+        legalpos = (mapdata(map, x, y).blocked <> 1) and _
+                   (mapdata(map, x, y).userindex = 0) and _
+                   (mapdata(map, x, y).npcindex = 0)
+    elseif puedetierra and not puedeagua then
         legalpos = (mapdata(map, x, y).blocked <> 1) and _
                    (mapdata(map, x, y).userindex = 0) and _
                    (mapdata(map, x, y).npcindex = 0) and _
                    (not hayagua(map, x, y))
-  else
+    elseif puedeagua and not puedetierra then
         legalpos = (mapdata(map, x, y).blocked <> 1) and _
                    (mapdata(map, x, y).userindex = 0) and _
                    (mapdata(map, x, y).npcindex = 0) and _
                    (hayagua(map, x, y))
-  end if
+    else
+        legalpos = false
+    end if
    
 end if
 
 end function
-
 function legalposnpc(byval map as integer, byval x as integer, byval y as integer, byval aguavalida as byte) as boolean
 
 if (map <= 0 or map > nummaps) or _
@@ -421,7 +531,7 @@ dim loopc as integer
 numhelplines = val(getvar(datpath & "help.dat", "init", "numlines"))
 
 for loopc = 1 to numhelplines
-    call senddata(sendtarget.toindex, index, 0, "||" & getvar(datpath & "help.dat", "help", "line" & loopc) & fonttype_info)
+    call writeconsolemsg(index, getvar(datpath & "help.dat", "help", "line" & loopc), fonttypenames.fonttype_info)
 next loopc
 
 end sub
@@ -430,7 +540,7 @@ public sub expresar(byval npcindex as integer, byval userindex as integer)
     if npclist(npcindex).nroexpresiones > 0 then
         dim randomi
         randomi = randomnumber(1, npclist(npcindex).nroexpresiones)
-        call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "||" & vbwhite & "�" & npclist(npcindex).expresiones(randomi) & "�" & npclist(npcindex).char.charindex & fonttype_info)
+        call senddata(sendtarget.topcarea, userindex, preparemessagechatoverhead(npclist(npcindex).expresiones(randomi), npclist(npcindex).char.charindex, vbwhite))
     end if
 end sub
 
@@ -442,6 +552,12 @@ dim foundsomething as byte
 dim tempcharindex as integer
 dim stat as string
 dim objtype as integer
+dim ft as fonttypenames
+
+'�rango visi�n? (toxicwaste)
+if (abs(userlist(userindex).pos.y - y) > rango_vision_y) or (abs(userlist(userindex).pos.x - x) > rango_vision_x) then
+    exit sub
+end if
 
 '�posicion valida?
 if inmapbounds(map, x, y) then
@@ -484,9 +600,9 @@ if inmapbounds(map, x, y) then
     if foundsomething = 1 then
         userlist(userindex).flags.targetobj = mapdata(map, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.objindex
         if mostrarcantidad(userlist(userindex).flags.targetobj) then
-            call senddata(sendtarget.toindex, userindex, 0, "||" & objdata(userlist(userindex).flags.targetobj).name & " - " & mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.amount & "" & fonttype_info)
+            call writeconsolemsg(userindex, objdata(userlist(userindex).flags.targetobj).name & " - " & mapdata(userlist(userindex).flags.targetobjmap, userlist(userindex).flags.targetobjx, userlist(userindex).flags.targetobjy).objinfo.amount & "", fonttypenames.fonttype_info)
         else
-            call senddata(sendtarget.toindex, userindex, 0, "||" & objdata(userlist(userindex).flags.targetobj).name & fonttype_info)
+            call writeconsolemsg(userindex, objdata(userlist(userindex).flags.targetobj).name, fonttypenames.fonttype_info)
         end if
     
     end if
@@ -521,9 +637,9 @@ if inmapbounds(map, x, y) then
     'reaccion al personaje
     if foundchar = 1 then '  �encontro un usuario?
             
-       if userlist(tempcharindex).flags.admininvisible = 0 or userlist(userindex).flags.privilegios = playertype.dios then
+       if userlist(tempcharindex).flags.admininvisible = 0 or userlist(userindex).flags.privilegios and playertype.dios then
             
-            if userlist(tempcharindex).descrm = "" then
+            if lenb(userlist(tempcharindex).descrm) = 0 then
                 if esnewbie(tempcharindex) then
                     stat = " <newbie>"
                 end if
@@ -535,35 +651,43 @@ if inmapbounds(map, x, y) then
                 end if
                 
                 if userlist(tempcharindex).guildindex > 0 then
-                    stat = stat & " <" & guilds(userlist(tempcharindex).guildindex).guildname & ">"
+                    stat = stat & " <" & modguilds.guildname(userlist(tempcharindex).guildindex) & ">"
                 end if
                 
-                if len(userlist(tempcharindex).desc) > 1 then
+                if len(userlist(tempcharindex).desc) > 0 then
                     stat = "ves a " & userlist(tempcharindex).name & stat & " - " & userlist(tempcharindex).desc
                 else
                     stat = "ves a " & userlist(tempcharindex).name & stat
                 end if
                 
-                if userlist(tempcharindex).flags.pertalcons > 0 then
-                    stat = stat & " [consejo de banderbill]" & fonttype_consejovesa
-                elseif userlist(tempcharindex).flags.pertalconscaos > 0 then
-                    stat = stat & " [consejo de las sombras]" & fonttype_consejocaosvesa
+                                
+                if userlist(tempcharindex).flags.privilegios and playertype.royalcouncil then
+                    stat = stat & " [consejo de banderbill]"
+                    ft = fonttypenames.fonttype_consejovesa
+                elseif userlist(tempcharindex).flags.privilegios and playertype.chaoscouncil then
+                    stat = stat & " [consejo de las sombras]"
+                    ft = fonttypenames.fonttype_consejocaosvesa
                 else
-                    if userlist(tempcharindex).flags.privilegios > 0 then
-                        stat = stat & " <game master> ~0~185~0~1~0"
+                    if not userlist(tempcharindex).flags.privilegios and playertype.user then
+                        stat = stat & " <game master>"
+                        ft = fonttypenames.fonttype_gm
                     elseif criminal(tempcharindex) then
-                        stat = stat & " <criminal> ~255~0~0~1~0"
+                        stat = stat & " <criminal>"
+                        ft = fonttypenames.fonttype_fight
                     else
-                        stat = stat & " <ciudadano> ~0~0~200~1~0"
+                        stat = stat & " <ciudadano>"
+                        ft = fonttypenames.fonttype_citizen
                     end if
                 end if
             else
-                stat = userlist(tempcharindex).descrm & " " & fonttype_infobold
+                stat = userlist(tempcharindex).descrm
+                ft = fonttypenames.fonttype_infobold
             end if
             
-            if len(stat) > 0 then _
-                call senddata(sendtarget.toindex, userindex, 0, "||" & stat)
-
+            if lenb(stat) > 0 then
+                call writeconsolemsg(userindex, stat, ft)
+            end if
+            
             foundsomething = 1
             userlist(userindex).flags.targetuser = tempcharindex
             userlist(userindex).flags.targetnpc = 0
@@ -574,68 +698,73 @@ if inmapbounds(map, x, y) then
     if foundchar = 2 then '�encontro un npc?
             dim estatus as string
             
-            if userlist(userindex).flags.privilegios >= playertype.semidios then
-                estatus = "(" & npclist(tempcharindex).stats.minhp & "/" & npclist(tempcharindex).stats.maxhp & ")"
+            if userlist(userindex).flags.privilegios and (playertype.semidios or playertype.dios or playertype.admin) then
+                estatus = "(" & npclist(tempcharindex).stats.minhp & "/" & npclist(tempcharindex).stats.maxhp & ") "
             else
-                if userlist(userindex).stats.userskills(eskill.supervivencia) >= 0 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 10 then
-                    estatus = "(dudoso) "
-                elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 10 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 20 then
-                    if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp / 2) then
-                        estatus = "(herido) "
+                if userlist(userindex).flags.muerto = 0 then
+                    if userlist(userindex).stats.userskills(eskill.supervivencia) >= 0 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 10 then
+                        estatus = "(dudoso) "
+                    elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 10 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 20 then
+                        if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp / 2) then
+                            estatus = "(herido) "
+                        else
+                            estatus = "(sano) "
+                        end if
+                    elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 20 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 30 then
+                        if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                            estatus = "(malherido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                            estatus = "(herido) "
+                        else
+                            estatus = "(sano) "
+                        end if
+                    elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 30 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 40 then
+                        if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
+                            estatus = "(muy malherido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                            estatus = "(herido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                            estatus = "(levemente herido) "
+                        else
+                            estatus = "(sano) "
+                        end if
+                    elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 40 and userlist(userindex).stats.userskills(eskill.supervivencia) < 60 then
+                        if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.05) then
+                            estatus = "(agonizando) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.1) then
+                            estatus = "(casi muerto) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
+                            estatus = "(muy malherido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
+                            estatus = "(herido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
+                            estatus = "(levemente herido) "
+                        elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp) then
+                            estatus = "(sano) "
+                        else
+                            estatus = "(intacto) "
+                        end if
+                    elseif userlist(userindex).stats.userskills(eskill.supervivencia) >= 60 then
+                        estatus = "(" & npclist(tempcharindex).stats.minhp & "/" & npclist(tempcharindex).stats.maxhp & ") "
                     else
-                        estatus = "(sano) "
+                        estatus = "!error!"
                     end if
-                elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 20 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 30 then
-                    if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
-                        estatus = "(malherido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
-                        estatus = "(herido) "
-                    else
-                        estatus = "(sano) "
-                    end if
-                elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 30 and userlist(userindex).stats.userskills(eskill.supervivencia) <= 40 then
-                    if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
-                        estatus = "(muy malherido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
-                        estatus = "(herido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
-                        estatus = "(levemente herido) "
-                    else
-                        estatus = "(sano) "
-                    end if
-                elseif userlist(userindex).stats.userskills(eskill.supervivencia) > 40 and userlist(userindex).stats.userskills(eskill.supervivencia) < 60 then
-                    if npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.05) then
-                        estatus = "(agonizando) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.1) then
-                        estatus = "(casi muerto) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.25) then
-                        estatus = "(muy malherido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.5) then
-                        estatus = "(herido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp * 0.75) then
-                        estatus = "(levemente herido) "
-                    elseif npclist(tempcharindex).stats.minhp < (npclist(tempcharindex).stats.maxhp) then
-                        estatus = "(sano) "
-                    else
-                        estatus = "(intacto) "
-                    end if
-                elseif userlist(userindex).stats.userskills(eskill.supervivencia) >= 60 then
-                    estatus = "(" & npclist(tempcharindex).stats.minhp & "/" & npclist(tempcharindex).stats.maxhp & ") "
-                else
-                    estatus = "!error!"
                 end if
             end if
             
             if len(npclist(tempcharindex).desc) > 1 then
-                call senddata(sendtarget.toindex, userindex, 0, "||" & vbwhite & "�" & npclist(tempcharindex).desc & "�" & npclist(tempcharindex).char.charindex & fonttype_info)
+                call writechatoverhead(userindex, npclist(tempcharindex).desc, npclist(tempcharindex).char.charindex, vbwhite)
             elseif tempcharindex = centinelanpcindex then
                 'enviamos nuevamente el texto del centinela seg�n quien pregunta
                 call modcentinela.centinelasendclave(userindex)
             else
                 if npclist(tempcharindex).maestrouser > 0 then
-                    call senddata(sendtarget.toindex, userindex, 0, "|| " & estatus & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name & fonttype_info)
+                    call writeconsolemsg(userindex, estatus & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name, fonttypenames.fonttype_info)
                 else
-                    call senddata(sendtarget.toindex, userindex, 0, "|| " & estatus & npclist(tempcharindex).name & "." & fonttype_info)
+                    call writeconsolemsg(userindex, estatus & npclist(tempcharindex).name & ".", fonttypenames.fonttype_info)
+                    if userlist(userindex).flags.privilegios and (playertype.dios or playertype.admin) then
+                        call writeconsolemsg(userindex, "le peg� primero: " & npclist(tempcharindex).flags.attackedfirstby & ".", fonttypenames.fonttype_info)
+                    end if
                 end if
                 
             end if
@@ -662,7 +791,7 @@ if inmapbounds(map, x, y) then
         userlist(userindex).flags.targetobjmap = 0
         userlist(userindex).flags.targetobjx = 0
         userlist(userindex).flags.targetobjy = 0
-        call senddata(sendtarget.toindex, userindex, 0, "||no ves nada interesante." & fonttype_info)
+        call writeconsolemsg(userindex, "no ves nada interesante.", fonttypenames.fonttype_info)
     end if
 
 else
@@ -674,7 +803,7 @@ else
         userlist(userindex).flags.targetobjmap = 0
         userlist(userindex).flags.targetobjx = 0
         userlist(userindex).flags.targetobjy = 0
-        call senddata(sendtarget.toindex, userindex, 0, "||no ves nada interesante." & fonttype_info)
+        call writeconsolemsg(userindex, "no ves nada interesante.", fonttypenames.fonttype_info)
     end if
 end if
 
@@ -694,25 +823,25 @@ y = pos.y - target.y
 
 'ne
 if sgn(x) = -1 and sgn(y) = 1 then
-    finddirection = eheading.north
+    finddirection = iif(randomnumber(0, 1), eheading.north, eheading.east)
     exit function
 end if
 
 'nw
 if sgn(x) = 1 and sgn(y) = 1 then
-    finddirection = eheading.west
+    finddirection = iif(randomnumber(0, 1), eheading.west, eheading.north)
     exit function
 end if
 
 'sw
 if sgn(x) = 1 and sgn(y) = -1 then
-    finddirection = eheading.west
+    finddirection = iif(randomnumber(0, 1), eheading.west, eheading.south)
     exit function
 end if
 
 'se
 if sgn(x) = -1 and sgn(y) = -1 then
-    finddirection = eheading.south
+    finddirection = iif(randomnumber(0, 1), eheading.south, eheading.east)
     exit function
 end if
 

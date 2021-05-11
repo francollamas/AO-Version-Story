@@ -259,10 +259,29 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'**************************************************************
+' frmcomerciarusu.frm
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private sub cmdaceptar_click()
-call senddata("comusuok")
+    call writeusercommerceok
 end sub
 
 private sub cmdofrecer_click()
@@ -280,24 +299,22 @@ elseif optque(1).value = true then
 end if
 
 if optque(0).value = true then
-    call senddata("ofrecer" & list1.listindex + 1 & "," & trim(val(txtcant.text)))
+    call writeusercommerceoffer(list1.listindex + 1, val(txtcant.text))
 elseif optque(1).value = true then
-    call senddata("ofrecer" & flagoro & "," & trim(val(txtcant.text)))
+    call writeusercommerceoffer(flagoro, val(txtcant.text))
 else
     exit sub
 end if
 
 lblestadoresp.visible = true
-
 end sub
 
 private sub cmdrechazar_click()
-call senddata("comusuno")
+    call writeusercommercereject
 end sub
 
 private sub command2_click()
-call senddata("fincomusu")
-
+    call writeusercommerceend
 end sub
 
 private sub form_deactivate()
@@ -366,6 +383,8 @@ end sub
 
 private sub txtcant_change()
     if val(txtcant.text) < 1 then txtcant.text = "1"
+    
+    if val(txtcant.text) > 2147483647 then txtcant.text = "2147483647"
 end sub
 
 private sub txtcant_keydown(keycode as integer, shift as integer)

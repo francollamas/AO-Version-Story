@@ -4,10 +4,10 @@ begin vb.form frminterv
    clientheight    =   4710
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   7695
+   clientwidth     =   7650
    linktopic       =   "form1"
    scaleheight     =   4710
-   scalewidth      =   7695
+   scalewidth      =   7650
    startupposition =   3  'windows default
    begin vb.commandbutton command2 
       caption         =   "guardar intervalos"
@@ -139,10 +139,10 @@ begin vb.form frminterv
             strikethrough   =   0   'false
          endproperty
          height          =   1650
-         left            =   165
+         left            =   120
          tabindex        =   40
-         top             =   300
-         width           =   2580
+         top             =   240
+         width           =   2625
          begin vb.textbox txtcmdexec 
             height          =   285
             left            =   1320
@@ -610,22 +610,20 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -667,7 +665,7 @@ frmmain.timer_ai.interval = val(txtai.text)
 intervalouserpuedetrabajar = val(txttrabajo.text)
 intervalouserpuedeatacar = val(txtpuedeatacar.text)
 frmmain.tlluvia.interval = val(txtintervaloperdidastaminalluvia.text)
-frmmain.cmdexec.interval = val(txtcmdexec.text)
+
 
 
 end sub
@@ -705,7 +703,7 @@ call writevar(inipath & "server.ini", "intervalos", "intervalonpcpuedeatacar", f
 call writevar(inipath & "server.ini", "intervalos", "intervalotrabajo", str(intervalouserpuedetrabajar))
 call writevar(inipath & "server.ini", "intervalos", "intervalouserpuedeatacar", str(intervalouserpuedeatacar))
 call writevar(inipath & "server.ini", "intervalos", "intervaloperdidastaminalluvia", frmmain.tlluvia.interval)
-call writevar(inipath & "server.ini", "intervalos", "intervalotimerexec", frmmain.cmdexec.interval)
+
 
 msgbox "los intervalos se han guardado sin problemas"
 

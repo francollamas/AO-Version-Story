@@ -1,5 +1,5 @@
 attribute vb_name = "mod_tileengine"
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -7,18 +7,16 @@ attribute vb_name = "mod_tileengine"
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -235,10 +233,10 @@ public userpos as position 'posicion
 public addtouserpos as position 'si se mueve
 public usercharindex as integer
 
-public usermaxagu as integer
-public userminagu as integer
-public usermaxham as integer
-public userminham as integer
+public usermaxagu as byte
+public userminagu as byte
+public usermaxham as byte
+public userminham as byte
 
 public enginerun as boolean
 public framespersec as integer
@@ -586,11 +584,6 @@ ty = userpos.y + cy
 
 end sub
 
-
-
-
-
-
 sub makechar(byval charindex as integer, byval body as integer, byval head as integer, byval heading as byte, byval x as integer, byval y as integer, byval arma as integer, byval escudo as integer, byval casco as integer)
 
 on error resume next
@@ -598,7 +591,9 @@ on error resume next
 'apuntamos al ultimo char
 if charindex > lastchar then lastchar = charindex
 
-numchars = numchars + 1
+'if the char wasn't allready active (we are rewritting it) don't increase char count
+if charlist(charindex).active = 0 then _
+    numchars = numchars + 1
 
 if arma = 0 then arma = 2
 if escudo = 0 then escudo = 2
@@ -653,9 +648,7 @@ sub resetcharinfo(byval charindex as integer)
     charlist(charindex).pos.x = 0
     charlist(charindex).pos.y = 0
     charlist(charindex).usandoarma = false
-
 end sub
-
 
 sub erasechar(byval charindex as integer)
 on error resume next
@@ -676,6 +669,9 @@ end if
 
 
 mapdata(charlist(charindex).pos.x, charlist(charindex).pos.y).charindex = 0
+
+'remove char's dialog
+call dialogos.removedialog(charindex)
 
 call resetcharinfo(charindex)
 
@@ -764,14 +760,12 @@ if userestado <> 1 then call dopasosfx(charindex)
 
 'areas viejos
 if (ny < minlimitey) or (ny > maxlimitey) or (nx < minlimitex) or (nx > maxlimitex) then
-    debug.print usercharindex
     call erasechar(charindex)
 end if
 
 end sub
 
 public sub dofogatafx()
-if sound then
     if bfogata then
         bfogata = hayfogata()
         if not bfogata then
@@ -782,36 +776,29 @@ if sound then
         bfogata = hayfogata()
         if bfogata and fogatabufferindex = 0 then fogatabufferindex = audio.playwave("fuego.wav", loopstyle.enabled)
     end if
-end if
 end sub
 
 function estapcarea(byval index2 as integer) as boolean
-
-dim x as integer, y as integer
-
-for y = userpos.y - minyborder + 1 to userpos.y + minyborder - 1
-  for x = userpos.x - minxborder + 1 to userpos.x + minxborder - 1
-            
+    dim x as long, y as long
+    
+    for y = userpos.y - minyborder + 1 to userpos.y + minyborder - 1
+        for x = userpos.x - minxborder + 1 to userpos.x + minxborder - 1
             if mapdata(x, y).charindex = index2 then
                 estapcarea = true
                 exit function
             end if
-        
-  next x
-next y
-
-estapcarea = false
-
+        next x
+    next y
+    
+    estapcarea = false
 end function
 
 
 sub dopasosfx(byval charindex as integer)
 static pie as boolean
 
-if not sound then exit sub
-
 if not usernavegando then
-    if not charlist(charindex).muerto and estapcarea(charindex) then
+    if not charlist(charindex).muerto and estapcarea(charindex) and (charlist(charindex).priv = 0 or charlist(charindex).priv > 5) then
         charlist(charindex).pie = not charlist(charindex).pie
         if charlist(charindex).pie then
             call audio.playwave(snd_pasos1)
@@ -882,7 +869,7 @@ if fxch = fxmeditar.chico or fxch = fxmeditar.grande or fxch = fxmeditar.mediano
     charlist(charindex).fxlooptimes = 0
 end if
 
-if not estapcarea(charindex) then dialogos.quitardialogo (charindex)
+if not estapcarea(charindex) then call dialogos.removedialog(charindex)
 
 if (ny < minlimitey) or (ny > maxlimitey) or (nx < minlimitex) or (nx > maxlimitex) then
     call erasechar(charindex)
@@ -1223,7 +1210,7 @@ end sub
 
 'sub ddrawtransgrhtosurface(surface as directdrawsurface7, grh as grh, x as integer, y as integer, center as byte, animate as byte, optional byval killanim as integer = 0)
 '[code 000]:matux
-    sub ddrawtransgrhtosurface(surface as directdrawsurface7, grh as grh, byval x as integer, byval y as integer, center as byte, animate as byte, optional byval killanim as integer = 0)
+    sub ddrawtransgrhtosurface(surface as directdrawsurface7, grh as grh, byval x as integer, byval y as integer, center as byte, animate as byte, optional byval killanim as integer = 0, optional capa2 as boolean = false)
 '[end]'
 '*****************************************************************
 'draws a grh transparently to a x and y position
@@ -1276,7 +1263,11 @@ igrhindex = grhdata(grh.grhindex).frames(grh.framecounter)
 'center grh over x,y pos
 if center then
     if grhdata(igrhindex).tilewidth <> 1 then
-        x = x - int(grhdata(igrhindex).tilewidth * 16) + 16 'hard coded for speed
+        if capa2 = true then ' [gs] 24/10/2006 - correccion en la capa 2
+            x = x - int(grhdata(igrhindex).tilewidth * 32) + 32 'hard coded for speed
+        else
+            x = x - int(grhdata(igrhindex).tilewidth * 16) + 16 'hard coded for speed
+        end if
     end if
     if grhdata(igrhindex).tileheight <> 1 then
         y = y - int(grhdata(igrhindex).tileheight * 32) + 32 'hard coded for speed
@@ -1467,6 +1458,12 @@ sub drawgrhtohdc(hwnd as long, hdc as long, grh as integer, sourcerect as rect, 
 end sub
 
 sub renderscreen(tilex as integer, tiley as integer, pixeloffsetx as integer, pixeloffsety as integer)
+'***************************************************
+'autor: unknown
+'last modification: 12/24/06
+'
+'12/24/06: nigo - check x,y are in map bounds
+'***************************************************
 on error resume next
 
 
@@ -1505,55 +1502,57 @@ maxx = (tilex + 17)
 'draw floor layer
 screeny = 8
 for y = (miny + 8) to maxy - 8
-    screenx = 8
-    for x = minx + 8 to maxx - 8
-        if x > 100 or y < 1 then exit for
-        'layer 1 **********************************
-        with mapdata(x, y).graphic(1)
-            if (.started = 1) then
-                if (.speedcounter > 0) then
-                    .speedcounter = .speedcounter - 1
-                    if (.speedcounter = 0) then
-                        .speedcounter = grhdata(.grhindex).speed
-                        .framecounter = .framecounter + 1
-                        if (.framecounter > grhdata(.grhindex).numframes) then _
-                            .framecounter = 1
+    if y > 0 and y < 101 then 'in map bounds
+        screenx = 8
+        for x = minx + 8 to maxx - 8
+            if x > 0 and x < 101 then 'in map bounds
+                'layer 1 **********************************
+                with mapdata(x, y).graphic(1)
+                    if (.started = 1) then
+                        if (.speedcounter > 0) then
+                            .speedcounter = .speedcounter - 1
+                            if (.speedcounter = 0) then
+                                .speedcounter = grhdata(.grhindex).speed
+                                .framecounter = .framecounter + 1
+                                if (.framecounter > grhdata(.grhindex).numframes) then _
+                                    .framecounter = 1
+                            end if
+                        end if
                     end if
+
+                    'figure out what frame to draw (always 1 if not animated)
+                    igrhindex = grhdata(.grhindex).frames(.framecounter)
+                end with
+
+                rsourcerect.left = grhdata(igrhindex).sx
+                rsourcerect.top = grhdata(igrhindex).sy
+                rsourcerect.right = rsourcerect.left + grhdata(igrhindex).pixelwidth
+                rsourcerect.bottom = rsourcerect.top + grhdata(igrhindex).pixelheight
+
+                'el width fue hardcodeado para speed!
+                call backbuffersurface.bltfast( _
+                        ((32 * screenx) - 32) + pixeloffsetx, _
+                        ((32 * screeny) - 32) + pixeloffsety, _
+                        surfacedb.surface(grhdata(igrhindex).filenum), _
+                        rsourcerect, _
+                        ddbltfast_wait)
+                '******************************************
+                'layer 2 **********************************
+                if mapdata(x, y).graphic(2).grhindex <> 0 then
+                    call ddrawtransgrhtosurface( _
+                            backbuffersurface, _
+                            mapdata(x, y).graphic(2), _
+                            ((32 * screenx) - 32) + pixeloffsetx, _
+                            ((32 * screeny) - 32) + pixeloffsety, _
+                            1, _
+                            1, 0, true)
                 end if
+                '******************************************
             end if
-
-            'figure out what frame to draw (always 1 if not animated)
-            igrhindex = grhdata(.grhindex).frames(.framecounter)
-        end with
-
-        rsourcerect.left = grhdata(igrhindex).sx
-        rsourcerect.top = grhdata(igrhindex).sy
-        rsourcerect.right = rsourcerect.left + grhdata(igrhindex).pixelwidth
-        rsourcerect.bottom = rsourcerect.top + grhdata(igrhindex).pixelheight
-
-        'el width fue hardcodeado para speed!
-        call backbuffersurface.bltfast( _
-                ((32 * screenx) - 32) + pixeloffsetx, _
-                ((32 * screeny) - 32) + pixeloffsety, _
-                surfacedb.surface(grhdata(igrhindex).filenum), _
-                rsourcerect, _
-                ddbltfast_wait)
-        '******************************************
-        'layer 2 **********************************
-        if mapdata(x, y).graphic(2).grhindex <> 0 then
-            call ddrawtransgrhtosurface( _
-                    backbuffersurface, _
-                    mapdata(x, y).graphic(2), _
-                    ((32 * screenx) - 32) + pixeloffsetx, _
-                    ((32 * screeny) - 32) + pixeloffsety, _
-                    1, _
-                    1)
-        end if
-        '******************************************
-        screenx = screenx + 1
-    next x
+            screenx = screenx + 1
+        next x
+    end if
     screeny = screeny + 1
-    if y > 100 then exit for
 next y
 
 
@@ -1564,259 +1563,259 @@ call convertcptotp(frmmain.mainviewshp.left, frmmain.mainviewshp.top, frmmain.mo
 'draw transparent layers  (layer 2, 3)
 screeny = 8
 for y = miny + 8 to maxy - 1
-    screenx = 5
-    for x = minx + 5 to maxx - 5
-        if x > 100 or x < -3 then exit for
-        ippx = 32 * screenx - 32 + pixeloffsetx
-        ippy = 32 * screeny - 32 + pixeloffsety
+    if y > 0 and y < 101 then 'in map bounds
+        screenx = 5
+        for x = minx + 5 to maxx - 5
+            if x > 0 and x < 101 then 'in map bounds
+                ippx = 32 * screenx - 32 + pixeloffsetx
+                ippy = 32 * screeny - 32 + pixeloffsety
 
-        'object layer **********************************
-        if mapdata(x, y).objgrh.grhindex <> 0 then
-'            if y > userpos.y then
-'                call ddrawtransgrhtosurfacealpha( _
-'                        backbuffersurface, _
-'                        mapdata(x, y).objgrh, _
-'                        ippx, ippy, 1, 1)
-'            else
-                call ddrawtransgrhtosurface( _
-                        backbuffersurface, _
-                        mapdata(x, y).objgrh, _
-                        ippx, ippy, 1, 1)
-'            end if
-        end if
-        '***********************************************
-        'char layer ************************************
-        if mapdata(x, y).charindex <> 0 then
-            tempchar = charlist(mapdata(x, y).charindex)
-            pixeloffsetxtemp = pixeloffsetx
-            pixeloffsetytemp = pixeloffsety
-
-            moved = 0
-            'if needed, move left and right
-            if tempchar.moveoffset.x <> 0 then
-                tempchar.body.walk(tempchar.heading).started = 1
-                tempchar.arma.weaponwalk(tempchar.heading).started = 1
-                tempchar.escudo.shieldwalk(tempchar.heading).started = 1
-                pixeloffsetxtemp = pixeloffsetxtemp + tempchar.moveoffset.x
-                tempchar.moveoffset.x = tempchar.moveoffset.x - (8 * sgn(tempchar.moveoffset.x))
-                moved = 1
-            end if
-            'if needed, move up and down
-            if tempchar.moveoffset.y <> 0 then
-                tempchar.body.walk(tempchar.heading).started = 1
-                tempchar.arma.weaponwalk(tempchar.heading).started = 1
-                tempchar.escudo.shieldwalk(tempchar.heading).started = 1
-                pixeloffsetytemp = pixeloffsetytemp + tempchar.moveoffset.y
-                tempchar.moveoffset.y = tempchar.moveoffset.y - (8 * sgn(tempchar.moveoffset.y))
-                moved = 1
-            end if
-            'if done moving stop animation
-            if moved = 0 and tempchar.moving = 1 then
-                tempchar.moving = 0
-                tempchar.body.walk(tempchar.heading).framecounter = 1
-                tempchar.body.walk(tempchar.heading).started = 0
-                tempchar.arma.weaponwalk(tempchar.heading).framecounter = 1
-                tempchar.arma.weaponwalk(tempchar.heading).started = 0
-                tempchar.escudo.shieldwalk(tempchar.heading).framecounter = 1
-                tempchar.escudo.shieldwalk(tempchar.heading).started = 0
-            end if
-            
-            '[anim atak]
-            if tempchar.arma.weaponattack > 0 then
-                tempchar.arma.weaponattack = tempchar.arma.weaponattack - 1
-                if tempchar.arma.weaponattack = 0 then
-                    tempchar.arma.weaponwalk(tempchar.heading).started = 0
+                'object layer **********************************
+                if mapdata(x, y).objgrh.grhindex <> 0 then
+'                   if y > userpos.y then
+'                       call ddrawtransgrhtosurfacealpha( _
+'                               backbuffersurface, _
+'                               mapdata(x, y).objgrh, _
+'                               ippx, ippy, 1, 1)
+'                   else
+                        call ddrawtransgrhtosurface( _
+                                backbuffersurface, _
+                                mapdata(x, y).objgrh, _
+                                ippx, ippy, 1, 1)
+'                   end if
                 end if
-            end if
-            '[/anim atak]
+                '***********************************************
+                'char layer ************************************
+                if mapdata(x, y).charindex <> 0 then
+                    tempchar = charlist(mapdata(x, y).charindex)
+                    pixeloffsetxtemp = pixeloffsetx
+                    pixeloffsetytemp = pixeloffsety
+
+                    moved = 0
+                    'if needed, move left and right
+                    if tempchar.moveoffset.x <> 0 then
+                        tempchar.body.walk(tempchar.heading).started = 1
+                        tempchar.arma.weaponwalk(tempchar.heading).started = 1
+                        tempchar.escudo.shieldwalk(tempchar.heading).started = 1
+                        pixeloffsetxtemp = pixeloffsetxtemp + tempchar.moveoffset.x
+                        tempchar.moveoffset.x = tempchar.moveoffset.x - (8 * sgn(tempchar.moveoffset.x))
+                        moved = 1
+                    end if
+                    'if needed, move up and down
+                    if tempchar.moveoffset.y <> 0 then
+                        tempchar.body.walk(tempchar.heading).started = 1
+                        tempchar.arma.weaponwalk(tempchar.heading).started = 1
+                        tempchar.escudo.shieldwalk(tempchar.heading).started = 1
+                        pixeloffsetytemp = pixeloffsetytemp + tempchar.moveoffset.y
+                        tempchar.moveoffset.y = tempchar.moveoffset.y - (8 * sgn(tempchar.moveoffset.y))
+                        moved = 1
+                    end if
+                    'if done moving stop animation
+                    if moved = 0 and tempchar.moving = 1 then
+                        tempchar.moving = 0
+                        tempchar.body.walk(tempchar.heading).framecounter = 1
+                        tempchar.body.walk(tempchar.heading).started = 0
+                        tempchar.arma.weaponwalk(tempchar.heading).framecounter = 1
+                        tempchar.arma.weaponwalk(tempchar.heading).started = 0
+                        tempchar.escudo.shieldwalk(tempchar.heading).framecounter = 1
+                        tempchar.escudo.shieldwalk(tempchar.heading).started = 0
+                    end if
             
-            'dibuja solamente players
-            ippx = ((32 * screenx) - 32) + pixeloffsetxtemp
-            ippy = ((32 * screeny) - 32) + pixeloffsetytemp
-            if tempchar.head.head(tempchar.heading).grhindex <> 0 then
-                if not charlist(mapdata(x, y).charindex).invisible then
+                    '[anim atak]
+                    if tempchar.arma.weaponattack > 0 then
+                        tempchar.arma.weaponattack = tempchar.arma.weaponattack - 1
+                        if tempchar.arma.weaponattack = 0 then
+                            tempchar.arma.weaponwalk(tempchar.heading).started = 0
+                        end if
+                    end if
+                    '[/anim atak]
+            
+                    'dibuja solamente players
+                    ippx = ((32 * screenx) - 32) + pixeloffsetxtemp
+                    ippy = ((32 * screeny) - 32) + pixeloffsetytemp
+                    if tempchar.head.head(tempchar.heading).grhindex <> 0 then
+                        if not charlist(mapdata(x, y).charindex).invisible then
 #if seguridadalkon then
-                    if not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
+                            if not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
 #end if
-                        '[cuerpo]'
-                            call ddrawtransgrhtosurface(backbuffersurface, tempchar.body.walk(tempchar.heading), _
-                                    (((32 * screenx) - 32) + pixeloffsetxtemp), _
-                                    (((32 * screeny) - 32) + pixeloffsetytemp), _
-                                    1, 1)
-                        '[cabeza]'
-                            call ddrawtransgrhtosurface( _
-                                    backbuffersurface, _
-                                    tempchar.head.head(tempchar.heading), _
-                                    ippx + tempchar.body.headoffset.x, _
-                                    ippy + tempchar.body.headoffset.y, _
-                                    1, 0)
-                        '[casco]'
-                            if tempchar.casco.head(tempchar.heading).grhindex <> 0 then
-                                call ddrawtransgrhtosurface( _
-                                        backbuffersurface, _
-                                        tempchar.casco.head(tempchar.heading), _
-                                        ippx + tempchar.body.headoffset.x, _
-                                        ippy + tempchar.body.headoffset.y, _
-                                        1, 0)
-                            end if
-                        '[arma]'
-                            if tempchar.arma.weaponwalk(tempchar.heading).grhindex <> 0 then
-                                call ddrawtransgrhtosurface( _
-                                        backbuffersurface, _
-                                        tempchar.arma.weaponwalk(tempchar.heading), _
-                                        ippx, ippy, 1, 1)
-                            end if
-                        '[escudo]'
-                            if tempchar.escudo.shieldwalk(tempchar.heading).grhindex <> 0 then
-                                call ddrawtransgrhtosurface( _
+                                '[cuerpo]'
+                                    call ddrawtransgrhtosurface(backbuffersurface, tempchar.body.walk(tempchar.heading), _
+                                            (((32 * screenx) - 32) + pixeloffsetxtemp), _
+                                            (((32 * screeny) - 32) + pixeloffsetytemp), _
+                                            1, 1)
+                                '[cabeza]'
+                                    call ddrawtransgrhtosurface( _
+                                            backbuffersurface, _
+                                            tempchar.head.head(tempchar.heading), _
+                                            ippx + tempchar.body.headoffset.x, _
+                                            ippy + tempchar.body.headoffset.y, _
+                                            1, 0)
+                                '[casco]'
+                                    if tempchar.casco.head(tempchar.heading).grhindex <> 0 then
+                                        call ddrawtransgrhtosurface( _
+                                                backbuffersurface, _
+                                                tempchar.casco.head(tempchar.heading), _
+                                                ippx + tempchar.body.headoffset.x, _
+                                                ippy + tempchar.body.headoffset.y, _
+                                                1, 0)
+                                    end if
+                                '[arma]'
+                                    if tempchar.arma.weaponwalk(tempchar.heading).grhindex <> 0 then
+                                        call ddrawtransgrhtosurface( _
+                                                backbuffersurface, _
+                                                tempchar.arma.weaponwalk(tempchar.heading), _
+                                                ippx, ippy, 1, 1)
+                                    end if
+                                '[escudo]'
+                                    if tempchar.escudo.shieldwalk(tempchar.heading).grhindex <> 0 then
+                                        call ddrawtransgrhtosurface( _
                                         backbuffersurface, _
                                         tempchar.escudo.shieldwalk(tempchar.heading), _
                                         ippx, ippy, 1, 1)
-                            end if
-                    
-                    
-                             if nombres and abs(nx - x) < 2 and (abs(ny - y)) < 2 then
-                                'ya estoy dibujando solo si esta visible
-                                'if tempchar.invisible = false and not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
-                                    if tempchar.nombre <> "" then
-                                        dim lcenter as long
-                                        'call dialogos.drawtext(ippx - 30, ippy + 60, "mi:" & iif(mi(cualmi).isinvisible(mapdata(x, y).charindex), "1", "0") & " .i:" & iif(tempchar.invisible, "1", "0") & "  x,y:" & x & "," & y, rgb(colorespj(5).r, colorespj(5).g, colorespj(5).b))
-                                        if instr(tempchar.nombre, "<") > 0 and instr(tempchar.nombre, ">") > 0 then
-                                            lcenter = (frmmain.textwidth(left(tempchar.nombre, instr(tempchar.nombre, "<") - 1)) / 2) - 16
-                                            dim sclan as string
-                                            sclan = mid(tempchar.nombre, instr(tempchar.nombre, "<"))
-                                            
-                                            select case tempchar.priv
-                                            case 0
-                                                if tempchar.criminal then
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                                else
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                                    lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                                end if
-                                            case 25  'admin
-                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                            case else 'el resto
-                                                call dialogos.drawtext(ippx - lcenter, ippy + 30, left(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
-                                                call dialogos.drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                            end select
-                                        else
-                                            lcenter = (frmmain.textwidth(tempchar.nombre) / 2) - 16
-                                            select case tempchar.priv
-                                            case 0
-                                                if tempchar.criminal then
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b))
-                                                else
-                                                    call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b))
-                                                end if
-                                            case 7
-                                                call dialogos.drawtextbig(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                            case else
-                                                call dialogos.drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b))
-                                            end select
-                                        end if
                                     end if
-                                'end if  'enidf ni
-                             end if
+                    
+                    
+                                    if nombres and abs(nx - x) < 2 and (abs(ny - y)) < 2 then
+                                        'ya estoy dibujando solo si esta visible
+                                        'if tempchar.invisible = false and not mi(cualmi).isinvisible(mapdata(x, y).charindex) then
+                                            if tempchar.nombre <> "" then
+                                                dim lcenter as long
+                                                'call dialogos.drawtext(ippx - 30, ippy + 60, "mi:" & iif(mi(cualmi).isinvisible(mapdata(x, y).charindex), "1", "0") & " .i:" & iif(tempchar.invisible, "1", "0") & "  x,y:" & x & "," & y, rgb(colorespj(5).r, colorespj(5).g, colorespj(5).b))
+                                                if instr(tempchar.nombre, "<") > 0 and instr(tempchar.nombre, ">") > 0 then
+                                                    lcenter = (frmmain.textwidth(left(tempchar.nombre, instr(tempchar.nombre, "<") - 1)) / 2) - 16
+                                                    dim sclan as string
+                                                    sclan = mid(tempchar.nombre, instr(tempchar.nombre, "<"))
+                                            
+                                                    select case tempchar.priv
+                                                        case 0
+                                                            if tempchar.criminal then
+                                                                call drawtext(ippx - lcenter, ippy + 30, left$(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b), frmmain.font)
+                                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                                call drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b), frmmain.font)
+                                                            else
+                                                                call drawtext(ippx - lcenter, ippy + 30, left$(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b), frmmain.font)
+                                                                lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                                call drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b), frmmain.font)
+                                                            end if
+                                                        case 4  'admin
+                                                            call drawtextbig(ippx - lcenter, ippy + 30, left$(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmsg.font, frmmain.font)
+                                                            lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                            call drawtextbig(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmsg.font, frmmain.font)
+                                                        case else 'el resto
+                                                            call drawtext(ippx - lcenter, ippy + 30, left$(tempchar.nombre, instr(tempchar.nombre, "<") - 1), rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmain.font)
+                                                            lcenter = (frmmain.textwidth(sclan) / 2) - 16
+                                                            call drawtext(ippx - lcenter, ippy + 45, sclan, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmain.font)
+                                                    end select
+                                                else
+                                                    lcenter = (frmmain.textwidth(tempchar.nombre) / 2) - 16
+                                                    select case tempchar.priv
+                                                        case 0
+                                                            if tempchar.criminal then
+                                                                call drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b), frmmain.font)
+                                                            else
+                                                                call drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b), frmmain.font)
+                                                            end if
+                                                        case 4  'admin
+                                                            call drawtextbig(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmsg.font, frmmain.font)
+                                                        case else
+                                                            call drawtext(ippx - lcenter, ippy + 30, tempchar.nombre, rgb(colorespj(tempchar.priv).r, colorespj(tempchar.priv).g, colorespj(tempchar.priv).b), frmmain.font)
+                                                    end select
+                                                end if
+                                            end if
+                                        'end if  'enidf ni
+                                    end if
 #if seguridadalkon then
-                    else
-                        do while true
-                            call msgbox("woaaaaa cheater!!! ahora te deben estar matando de lo lindo ;)" & vbnewline & "aprieta ok para salir", vbcritical + vbokonly, ":d")
-                            call msgbox("no, mejor no salimos")
-                        loop
-                    end if  'end if not mi.isi
+                            else
+                                do while true
+                                    call msgbox("woaaaaa cheater!!! ahora te deben estar matando de lo lindo ;)" & vbnewline & "aprieta ok para salir", vbcritical + vbokonly, ":d")
+                                    call msgbox("no, mejor no salimos")
+                                loop
+                            end if  'end if not mi.isi
 #end if
-                end if  'end if ~in
+                        end if  'end if ~in
 
-                if dialogos.cantidaddialogos > 0 then
-                    call dialogos.update_dialog_pos( _
-                            (ippx + tempchar.body.headoffset.x), _
-                            (ippy + tempchar.body.headoffset.y), _
-                            mapdata(x, y).charindex)
-                end if
+                        call dialogos.updatedialogpos( _
+                                    (ippx + tempchar.body.headoffset.x), _
+                                    (ippy + tempchar.body.headoffset.y), _
+                                    mapdata(x, y).charindex)
                 
                 
-            else '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
-                if dialogos.cantidaddialogos > 0 then
-                    call dialogos.update_dialog_pos( _
-                            (ippx + tempchar.body.headoffset.x), _
-                            (ippy + tempchar.body.headoffset.y), _
-                            mapdata(x, y).charindex)
-                end if
+                    else '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
+                        call dialogos.updatedialogpos( _
+                                    (ippx + tempchar.body.headoffset.x), _
+                                    (ippy + tempchar.body.headoffset.y), _
+                                    mapdata(x, y).charindex)
 
-                call ddrawtransgrhtosurface( _
-                        backbuffersurface, _
-                        tempchar.body.walk(tempchar.heading), _
-                        ippx, ippy, 1, 1)
-            end if '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
+                        call ddrawtransgrhtosurface( _
+                                backbuffersurface, _
+                                tempchar.body.walk(tempchar.heading), _
+                                ippx, ippy, 1, 1)
+                    end if '<-> if tempchar.head.head(tempchar.heading).grhindex <> 0 then
 
 
-            'refresh charlist
-            charlist(mapdata(x, y).charindex) = tempchar
+                    'refresh charlist
+                    charlist(mapdata(x, y).charindex) = tempchar
 
-            'blitfx (tm)
-            if charlist(mapdata(x, y).charindex).fx <> 0 then
+                    'blitfx (tm)
+                    if charlist(mapdata(x, y).charindex).fx <> 0 then
 #if (conalfab = 1) then
-                call ddrawtransgrhtosurfacealpha( _
-                        backbuffersurface, _
-                        fxdata(tempchar.fx).fx, _
-                        ippx + fxdata(tempchar.fx).offsetx, _
-                        ippy + fxdata(tempchar.fx).offsety, _
-                        1, 1, mapdata(x, y).charindex)
+                        call ddrawtransgrhtosurfacealpha( _
+                                backbuffersurface, _
+                                fxdata(tempchar.fx).fx, _
+                                ippx + fxdata(tempchar.fx).offsetx, _
+                                ippy + fxdata(tempchar.fx).offsety, _
+                                1, 1, mapdata(x, y).charindex)
 #else
-                call ddrawtransgrhtosurface( _
-                        backbuffersurface, _
-                        fxdata(tempchar.fx).fx, _
-                        ippx + fxdata(tempchar.fx).offsetx, _
-                        ippy + fxdata(tempchar.fx).offsety, _
-                        1, 1, mapdata(x, y).charindex)
+                        call ddrawtransgrhtosurface( _
+                                backbuffersurface, _
+                                fxdata(tempchar.fx).fx, _
+                                ippx + fxdata(tempchar.fx).offsetx, _
+                                ippy + fxdata(tempchar.fx).offsety, _
+                                1, 1, mapdata(x, y).charindex)
 #end if
+                    end if
+                '''''''''
+                end if '<-> if mapdata(x, y).charindex <> 0 then
+                '*************************************************
+                'layer 3 *****************************************
+                if mapdata(x, y).graphic(3).grhindex <> 0 then
+                    'draw
+                    call ddrawtransgrhtosurface( _
+                            backbuffersurface, _
+                            mapdata(x, y).graphic(3), _
+                            ((32 * screenx) - 32) + pixeloffsetx, _
+                            ((32 * screeny) - 32) + pixeloffsety, _
+                            1, 1)
+                end if
+                '************************************************
             end if
-        end if '<-> if mapdata(x, y).charindex <> 0 then
-        '*************************************************
-        'layer 3 *****************************************
-        if mapdata(x, y).graphic(3).grhindex <> 0 then
-            'draw
-            call ddrawtransgrhtosurface( _
-                    backbuffersurface, _
-                    mapdata(x, y).graphic(3), _
-                    ((32 * screenx) - 32) + pixeloffsetx, _
-                    ((32 * screeny) - 32) + pixeloffsety, _
-                    1, 1)
-        end if
-        '************************************************
-        screenx = screenx + 1
-    next x
+            screenx = screenx + 1
+        next x
+    end if
     screeny = screeny + 1
-    if y >= 100 or y < 1 then exit for
 next y
 
 if not btecho then
     'draw blocked tiles and grid
     screeny = 5
     for y = miny + 5 to maxy - 1
-        screenx = 5
-        for x = minx + 5 to maxx
-            'check to see if in bounds
-            if x < 101 and x > 0 and y < 101 and y > 0 then
-                if mapdata(x, y).graphic(4).grhindex <> 0 then
-                    'draw
-                    call ddrawtransgrhtosurface( _
-                        backbuffersurface, _
-                        mapdata(x, y).graphic(4), _
-                        ((32 * screenx) - 32) + pixeloffsetx, _
-                        ((32 * screeny) - 32) + pixeloffsety, _
-                        1, 1)
+        if y > 0 and y < 101 then 'in map bounds
+            screenx = 5
+            for x = minx + 5 to maxx
+                if y > 0 and y < 101 then 'in map bounds
+                    if mapdata(x, y).graphic(4).grhindex <> 0 then
+                        'draw
+                        call ddrawtransgrhtosurface( _
+                            backbuffersurface, _
+                            mapdata(x, y).graphic(4), _
+                            ((32 * screenx) - 32) + pixeloffsetx, _
+                            ((32 * screeny) - 32) + pixeloffsety, _
+                            1, 1)
+                    end if
                 end if
-            end if
-            screenx = screenx + 1
-        next x
+                screenx = screenx + 1
+            next x
+        end if
         screeny = screeny + 1
     next y
 end if
@@ -1881,13 +1880,14 @@ pp.bottom = windowtileheight * tilepixelheight
 '            end if
 '[end]'
 end sub
+
 public function rendersounds()
 '**************************************************************
 'author: juan mart�n sotuyo dodero
 'last modify date: 4/22/2006
 'actualiza todos los sonidos del mapa.
 '**************************************************************
-    if blluvia(usermap) = 1 and sound then
+    if blluvia(usermap) = 1 then
         if brain then
             if btecho then
                 if frmmain.isplaying <> playloop.pllluviain then
@@ -2099,12 +2099,12 @@ sub shownextframe()
         '****** update screen ******
         call renderscreen(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
 
-        if iscombate then call dialogos.drawtext(260, 260, "modo combate", vbred)
+        if iscombate then call drawtext(260, 260, "modo combate", vbred, frmmain.font)
         
-        call dialogos.mostrartexto
+        call dialogos.render
         call dibujarcartel
         
-        call dialogosclanes.draw(dialogos)
+        call dialogosclanes.draw
         
         call drawbackbuffersurface
         
@@ -2176,3 +2176,34 @@ hayerroralpha:
 end sub
 
 #end if
+
+public sub drawtext(byval lngxpos as integer, byval lngypos as integer, byref strtext as string, byval lngcolor as long, byref font as stdfont)
+   if strtext <> "" then
+        call backbuffersurface.setfonttransparency(true)
+        call backbuffersurface.setforecolor(vbblack)
+        call backbuffersurface.setfont(font)
+        
+        call backbuffersurface.drawtext(lngxpos - 2, lngypos - 1, strtext, false)
+        
+        call backbuffersurface.setfonttransparency(true)
+        call backbuffersurface.setforecolor(lngcolor)
+        
+        call backbuffersurface.setfont(font)
+        
+        call backbuffersurface.drawtext(lngxpos, lngypos, strtext, false)
+   end if
+end sub
+
+public sub drawtextbig(byval lngxpos as integer, byval lngypos as integer, byref strtext as string, byval lngcolor as long, byref backfont as stdfont, byref frontfont as stdfont)
+   if strtext <> "" then
+        call backbuffersurface.setfonttransparency(true)
+        call backbuffersurface.setforecolor(vbblack)
+        call backbuffersurface.setfont(backfont)
+        call backbuffersurface.drawtext(lngxpos - 2, lngypos - 1, strtext, false)
+        
+        call backbuffersurface.setfonttransparency(true)
+        call backbuffersurface.setforecolor(lngcolor)
+        call backbuffersurface.setfont(frontfont)
+        call backbuffersurface.drawtext(lngxpos, lngypos, strtext, false)
+   end if
+end sub

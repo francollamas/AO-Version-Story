@@ -11,6 +11,26 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
+'**************************************************************
+' diccionario.cls
+'
+' designed and implemented by mariono barrou (el oso)
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 'clase diccionario
 'basico, plain sin queso ni papa fritas
 
@@ -48,7 +68,7 @@ dim i as integer
 
 atput = false
 
-if clave = "" then exit function
+if lenb(clave) = 0 then exit function
 
 clave = ucase$(clave)
 
@@ -117,7 +137,7 @@ public sub dumpall()
 dim i as integer
 
 for i = 1 to max_elem
-    p_elementos(i).clave = ""
+    p_elementos(i).clave = vbnullstring
     p_elementos(i).def = null
 next i
 p_cant = 0

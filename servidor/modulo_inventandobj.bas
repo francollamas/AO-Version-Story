@@ -1,20 +1,18 @@
 attribute vb_name = "invnpc"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -42,18 +40,18 @@ option explicit
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 '?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-public function tiraritemalpiso(pos as worldpos, obj as obj) as worldpos
+public function tiraritemalpiso(pos as worldpos, obj as obj, optional notpirata as boolean = true) as worldpos
 on error goto errhandler
 
     dim nuevapos as worldpos
     nuevapos.x = 0
     nuevapos.y = 0
-    call tilelibre(pos, nuevapos, obj)
+    
+    tilelibre pos, nuevapos, obj, notpirata, true
     if nuevapos.x <> 0 and nuevapos.y <> 0 then
-          call makeobj(sendtarget.tomap, 0, pos.map, _
-                obj, pos.map, nuevapos.x, nuevapos.y)
-          tiraritemalpiso = nuevapos
+        call makeobj(pos.map, obj, pos.map, nuevapos.x, nuevapos.y)
     end if
+    tiraritemalpiso = nuevapos
 
 exit function
 errhandler:
@@ -106,11 +104,11 @@ on error resume next
 dim ln as string, npcfile as string
 dim i as integer
 
-if npclist(npcindex).numero > 499 then
-    npcfile = datpath & "npcs-hostiles.dat"
-else
+'if npclist(npcindex).numero > 499 then
+'    npcfile = datpath & "npcs-hostiles.dat"
+'else
     npcfile = datpath & "npcs.dat"
-end if
+'end if
  
 for i = 1 to max_inventory_slots
     ln = getvar(npcfile, "npc" & npclist(npcindex).numero, "obj" & i)
@@ -192,11 +190,11 @@ dim loopc as integer
 dim ln as string
 dim npcfile as string
 
-if npclist(npcindex).numero > 499 then
-    npcfile = datpath & "npcs-hostiles.dat"
-else
+'if npclist(npcindex).numero > 499 then
+'    npcfile = datpath & "npcs-hostiles.dat"
+'else
     npcfile = datpath & "npcs.dat"
-end if
+'end if
 
 npclist(npcindex).invent.nroitems = val(getvar(npcfile, "npc" & npclist(npcindex).numero, "nroitems"))
 

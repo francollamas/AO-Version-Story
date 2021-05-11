@@ -1,23 +1,21 @@
 attribute vb_name = "mod_declaraciones"
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
 'copyright (c) 2002 aaron perkins
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -37,10 +35,18 @@ option explicit
 
 'objetos p�blicos
 public dialogosclanes as new clsguilddlg
-public dialogos as new cdialogos
+public dialogos as new clsdialogs
 public audio as new clsaudio
 public inventario as new clsgrapchicalinventory
-public surfacedb as clssurfacemanager   'no va new porque es unainterfaz, el new se pone al decidir que clase de objeto es
+public surfacedb as clssurfacemanager   'no va new porque es una interfaz, el new se pone al decidir que clase de objeto es
+public custommessages as new clscustommessages
+
+public incomingdata as new clsbytequeue
+public outgoingdata as new clsbytequeue
+
+''
+'the main timer of the game.
+public maintimer as new clstimer
 
 #if seguridadalkon then
 public md5 as new clsmd5
@@ -55,6 +61,27 @@ public const snd_over as string = "click2.wav"
 public const snd_dice as string = "cupdice.wav"
 public const snd_lluviainend as string = "lluviainend.wav"
 public const snd_lluviaoutend as string = "lluviaoutend.wav"
+
+' head index of the casper. used to know if a char is killed
+
+' constantes de intervalo
+public const int_macro_hechis as integer = 2788
+public const int_macro_trabajo as integer = 900
+
+public const int_attack as integer = 1500
+public const int_arrows as integer = 1400
+public const int_cast_spell as integer = 1400
+public const int_cast_attack as integer = 1000
+public const int_work as integer = 700
+public const int_useitemu as integer = 450
+public const int_useitemdck as integer = 220
+public const int_sentrpu as integer = 2000
+
+public macrobltindex as integer
+
+public const casper_head as integer = 500
+
+public const numatributes as byte = 5
 
 'musica
 public const midi_inicio as byte = 6
@@ -76,8 +103,6 @@ public type tserverinfo
     desc as string
     passrecport as integer
 end type
-
-public currentmidi as long
 
 public serverslst() as tserverinfo
 public serversrecibidos as boolean
@@ -120,18 +145,18 @@ public versiones(1 to 7) as integer
 
 public usamacro as boolean
 public cntd as byte
-public secuenciamacrohechizos as byte
+
 
 
 
 '[kevin]
-public const max_bancoinventory_slots = 40
+public const max_bancoinventory_slots as byte = 40
 public userbancoinventory(1 to max_bancoinventory_slots) as inventory
 '[/kevin]
 
 
 public tips() as string * 255
-public const loopadeternum = 999
+public const loopadeternum as integer = 999
 
 'direcciones
 public enum e_heading
@@ -142,39 +167,132 @@ public enum e_heading
 end enum
 
 'objetos
-public const max_inventory_objs = 10000
-public const max_inventory_slots = 20
-public const max_npc_inventory_slots = 50
-public const maxhechi = 35
+public const max_inventory_objs as integer = 10000
+public const max_inventory_slots as byte = 20
+public const max_npc_inventory_slots as byte = 50
+public const maxhechi as byte = 35
 
-public const maxskillpoints = 100
+public const maxskillpoints as byte = 100
 
-public const flagoro = 777
+public const flagoro as integer = max_inventory_slots + 1
 
-public const fogata = 1521
+public const fogata as integer = 1521
 
-public enum skills
-     suerte = 1
-     magia = 2
-     robar = 3
-     tacticas = 4
-     armas = 5
-     meditar = 6
-     apu�alar = 7
-     ocultarse = 8
-     supervivencia = 9
-     talar = 10
-     comerciar = 11
-     defensa = 12
-     pesca = 13
-     mineria = 14
-     carpinteria = 15
-     herreria = 16
-     liderazgo = 17 ' nota: solia decir "curacion"
-     domar = 18
-     proyectiles = 19
-     wresterling = 20
-     navegacion = 21
+
+public enum eclass
+    mage = 1    'mago
+    cleric      'cl�rigo
+    warrior     'guerrero
+    assasin     'asesino
+    thief       'ladr�n
+    bard        'bardo
+    druid       'druida
+    bandit      'bandido
+    paladin     'palad�n
+    hunter      'cazador
+    fisher      'pescador
+    blacksmith  'herrero
+    lumberjack  'le�ador
+    miner       'minero
+    carpenter   'carpintero
+    pirat       'pirata
+end enum
+
+public enum eciudad
+    cullathorpe = 1
+    cnix
+    cbanderbill
+    clindos
+    carghal
+end enum
+
+enum eraza
+    humano = 1
+    elfo
+    elfooscuro
+    gnomo
+    enano
+end enum
+
+public enum eskill
+    suerte = 1
+    magia = 2
+    robar = 3
+    tacticas = 4
+    armas = 5
+    meditar = 6
+    apu�alar = 7
+    ocultarse = 8
+    supervivencia = 9
+    talar = 10
+    comerciar = 11
+    defensa = 12
+    pesca = 13
+    mineria = 14
+    carpinteria = 15
+    herreria = 16
+    liderazgo = 17
+    domar = 18
+    proyectiles = 19
+    wrestling = 20
+    navegacion = 21
+end enum
+
+public enum eatributos
+    fuerza = 1
+    agilidad = 2
+    inteligencia = 3
+    carisma = 4
+    constitucion = 5
+end enum
+
+enum egenero
+    hombre = 1
+    mujer
+end enum
+
+public enum playertype
+    user = &h1
+    consejero = &h2
+    semidios = &h4
+    dios = &h8
+    admin = &h10
+    rolemaster = &h20
+    chaoscouncil = &h40
+    royalcouncil = &h80
+end enum
+
+public enum eobjtype
+    otuseonce = 1
+    otweapon = 2
+    otarmadura = 3
+    otarboles = 4
+    otguita = 5
+    otpuertas = 6
+    otcontenedores = 7
+    otcarteles = 8
+    otllaves = 9
+    otforos = 10
+    otpociones = 11
+    otbebidas = 13
+    otle�a = 14
+    otfogata = 15
+    otescudo = 16
+    otcasco = 17
+    otanillo = 18
+    otteleport = 19
+    otyacimiento = 22
+    otminerales = 23
+    otpergaminos = 24
+    otinstrumentos = 26
+    otyunque = 27
+    otfragua = 28
+    otbarcos = 31
+    otflechas = 32
+    otbotellavacia = 33
+    otbotellallena = 34
+    otmanchas = 35          'no se usa
+    otcualquiera = 1000
 end enum
 
 public const fundirmetal as integer = 88
@@ -318,7 +436,6 @@ public usergld as long
 public userlvl as integer
 public userport as integer
 public userserverip as string
-public usercanattack as integer
 public userestado as byte '0 = vivo & 1 = muerto
 public userpasarnivel as long
 public userexp as long
@@ -332,74 +449,107 @@ public pausa as boolean
 public iscombate as boolean
 public userparalizado as boolean
 public usernavegando as boolean
-public userhogar as string
+public userhogar as eciudad
 
 '<-------------------------nuevo-------------------------->
 public comerciando as boolean
 '<-------------------------nuevo-------------------------->
 
-public userclase as string
-public usersexo as string
-public userraza as string
+public userclase as eclass
+public usersexo as egenero
+public userraza as eraza
 public useremail as string
 
-public const numciudades as byte = 3
+public const numciudades as byte = 5
 public const numskills as byte = 21
 public const numatributos as byte = 5
 public const numclases as byte = 16
 public const numrazas as byte = 5
 
-public userskills(1 to numskills) as integer
+public userskills(1 to numskills) as byte
 public skillsnames(1 to numskills) as string
 
-public useratributos(1 to numatributos) as integer
+public useratributos(1 to numatributos) as byte
 public atributosnames(1 to numatributos) as string
 
 public ciudades(1 to numciudades) as string
-public citydesc(1 to numciudades) as string
 
 public listarazas(1 to numrazas) as string
 public listaclases(1 to numclases) as string
-
-public musica as boolean
-public sound as boolean
 
 public skillpoints as integer
 public alocados as integer
 public flags() as integer
 public oscuridad as integer
 public logged as boolean
-public nopuedeusar as boolean
-
-'barrin 30/9/03
-public userpuederefrescar as boolean
 
 public usingskill as integer
 
-
 public md5hushyo as string * 16
+
+public pingtime as long
 
 public enum e_modo
     normal = 1
-    borrarpj = 2
-    crearnuevopj = 3
-    dados = 4
-    recuperarpass = 5
+    crearnuevopj = 2
+    dados = 3
 end enum
 
 public estadologin as e_modo
    
 public enum fxmeditar
-'    fxmeditarchico = 4
-'    fxmeditarmediano = 5
-'    fxmeditargrande = 6
-'    fxmeditarxgrande = 16
     chico = 4
     mediano = 5
     grande = 6
     xgrande = 16
 end enum
 
+public enum eclantype
+    ct_royalarmy
+    ct_evil
+    ct_neutral
+    ct_gm
+    ct_legal
+    ct_criminal
+end enum
+
+public enum eeditoptions
+    eo_gold = 1
+    eo_experience
+    eo_body
+    eo_head
+    eo_citicenskilled
+    eo_criminalskilled
+    eo_level
+    eo_class
+    eo_skills
+    eo_skillpointsleft
+    eo_nobleza
+    eo_asesino
+    eo_sex
+    eo_raza
+end enum
+
+''
+' triggers
+'
+' @param nada nada
+' @param bajotecho bajo techo
+' @param trigger_2 ???
+' @param posinvalida los npcs no pueden pisar tiles con este trigger
+' @param zonasegura no se puede robar o pelear desde este trigger
+' @param antipiquete
+' @param zonapelea al pelear en este trigger no se caen las cosas y no cambia el estado de ciuda o crimi
+'
+public enum etrigger
+    nada = 0
+    bajotecho = 1
+    trigger_2 = 2
+    posinvalida = 3
+    zonasegura = 4
+    antipiquete = 5
+    zonapelea = 6
+end enum
 
 'server stuff
 public requestpostimer as integer 'used in main loop
@@ -436,6 +586,9 @@ public declare function getasynckeystate lib "user32" (byval nvirtkey as long) a
 
 public declare sub sleep lib "kernel32" (byval dwmilliseconds as long)
 
+'para ejecutar el internet explorer para el manual
+public declare function shellexecute lib "shell32.dll" alias "shellexecutea" (byval hwnd as long, byval lpoperation as string, byval lpfile as string, byval lpparameters as string, byval lpdirectory as string, byval nshowcmd as long) as long
+
 'lista de cabezas
 public type tindicecabeza
     head(1 to 4) as integer
@@ -452,4 +605,3 @@ public type tindicefx
     offsetx as integer
     offsety as integer
 end type
-

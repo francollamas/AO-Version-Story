@@ -1,5 +1,5 @@
 attribute vb_name = "mod_general"
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -7,18 +7,16 @@ attribute vb_name = "mod_general"
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -35,20 +33,14 @@ attribute vb_name = "mod_general"
 
 option explicit
 
-public bk as long
-public brk as long
-
-
 public iplst as string
-public banners as string
 
 public bfogata as boolean
 
 public blluvia() as byte ' array para determinar si
 'debemos mostrar la animacion de la lluvia
 
-public lframetimer as long
-public shkeys() as string
+private lframetimer as long
 
 public function dirgraficos() as string
     dirgraficos = app.path & "\" & config_inicio.dirgraficos & "\"
@@ -64,39 +56,6 @@ end function
 
 public function dirmapas() as string
     dirmapas = app.path & "\" & config_inicio.dirmapas & "\"
-end function
-
-public function sumadigitos(byval numero as integer) as integer
-    'suma digitos
-    do
-        sumadigitos = sumadigitos + (numero mod 10)
-        numero = numero \ 10
-    loop while (numero > 0)
-end function
-
-public function sumadigitosmenos(byval numero as integer) as integer
-    'suma digitos, y resta el total de d�gitos
-    do
-        sumadigitosmenos = sumadigitosmenos + (numero mod 10) - 1
-        numero = numero \ 10
-    loop while (numero > 0)
-end function
-
-public function complex(byval numero as integer) as integer
-    if numero mod 2 <> 0 then
-        complex = numero * sumadigitos(numero)
-    else
-        complex = numero * sumadigitosmenos(numero)
-    end if
-end function
-
-public function validarloginmsg(byval numero as integer) as integer
-    dim auxinteger as integer
-    dim auxinteger2 as integer
-    
-    auxinteger = sumadigitos(numero)
-    auxinteger2 = sumadigitosmenos(numero)
-    validarloginmsg = complex(auxinteger + auxinteger2)
 end function
 
 public function randomnumber(byval lowerbound as long, byval upperbound as long) as long
@@ -144,6 +103,7 @@ errorh:
 end sub
 
 sub cargarcolores()
+on error resume next
     dim archivoc as string
     
     archivoc = app.path & "\init\colores.dat"
@@ -216,13 +176,19 @@ sub addtorichtextbox(byref richtextbox as richtextbox, byval text as string, opt
 'automatically scrolls to new text.
 'text box must be multiline and have a 3d
 'apperance!
+'pablo (toxicwaste) 01/26/2007 : now the list refreshes properly.
+'juan mart�n sotuyo dodero (maraxus) 03/29/2007 : replaced toxicwaste's code for extra performance.
 '******************************************
     with richtextbox
-        if (len(.text)) > 10000 then .text = ""
+        if len(.text) > 1000 then
+            'get rid of first line
+            .selstart = instr(1, .text, vbcrlf) + 1
+            .sellength = len(.text) - .selstart + 2
+            .textrtf = .selrtf
+        end if
         
         .selstart = len(richtextbox.text)
         .sellength = 0
-        
         .selbold = bold
         .selitalic = italic
         
@@ -323,6 +289,10 @@ end function
 sub unloadallforms()
 on error resume next
 
+#if seguridadalkon then
+    call unprotectform
+#end if
+
     dim mifrm as form
     
     for each mifrm in forms
@@ -369,10 +339,18 @@ sub setconnected()
 
     'unload the connect form
     unload frmconnect
+    unload frmpasswd
+    unload frmcrearpersonaje
     
     frmmain.label8.caption = username
     'load main form
     frmmain.visible = true
+#if seguridadalkon then
+    'unprotect character creation and protect the main form
+    call unprotectform
+    call protectform(frmmain)
+#end if
+
 end sub
 
 sub cargartip()
@@ -404,16 +382,18 @@ sub moveto(byval direccion as e_heading)
     end select
     
     if legalok then
-        call senddata("m" & direccion)
+        call writewalk(direccion)
         if not userdescansar and not usermeditar and not userparalizado then
             movecharbyhead usercharindex, direccion
             movescreen direccion
         end if
     else
         if charlist(usercharindex).heading <> direccion then
-            call senddata("chea" & direccion)
+            call writechangeheading(direccion)
         end if
     end if
+    
+    if frmmain.macrotrabajo.enabled then frmmain.desactivarmacrotrabajo
     
 end sub
 
@@ -423,9 +403,7 @@ sub randommove()
 'last modify date: 06/03/2006
 ' 06/03/2006: alejolp - ahora utiliza la funcion moveto
 '***************************************************
-
-    moveto randomnumber(1, 4)
-    
+    moveto randomnumber(north, west)
 end sub
 
 sub checkkeys()
@@ -433,6 +411,9 @@ sub checkkeys()
 'checks keys and respond
 '*****************************************************************
 on error resume next
+    'no input allowed while argentum is not the active window
+    if not api.isappactive() then exit sub
+    
     'don't allow any these keys during movement..
     if usermoving = 0 then
         if not userestupido then
@@ -443,7 +424,7 @@ on error resume next
                 frmmain.coord.caption = "(" & usermap & "," & userpos.x & "," & userpos.y & ")"
                 exit sub
             end if
-        
+            
             'move right
             if getkeystate(vbkeyright) < 0 then
                 if frmmain.trainingmacro.enabled then frmmain.desactivarmacrohechizos
@@ -621,37 +602,53 @@ sub switchmap(byval map as integer)
     curmap = map
 end sub
 
-'todo : reemplazar por la nueva versi�n, esta apesta!!!
-public function readfield(byval pos as integer, byval text as string, byval sepascii as integer) as string
+function readfield(byval pos as integer, byref text as string, byval sepascii as byte) as string
 '*****************************************************************
-'gets a field from a string
+'gets a field from a delimited string
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modify date: 11/15/2004
 '*****************************************************************
-    dim i as integer
-    dim lastpos as integer
-    dim curchar as string * 1
-    dim fieldnum as integer
-    dim seperator as string
+    dim i as long
+    dim lastpos as long
+    dim currentpos as long
+    dim delimiter as string * 1
     
-    seperator = chr$(sepascii)
-    lastpos = 0
-    fieldnum = 0
+    delimiter = chr$(sepascii)
     
-    for i = 1 to len(text)
-        curchar = mid$(text, i, 1)
-        if curchar = seperator then
-            fieldnum = fieldnum + 1
-            if fieldnum = pos then
-                readfield = mid$(text, lastpos + 1, (instr(lastpos + 1, text, seperator, vbtextcompare) - 1) - (lastpos))
-                exit function
-            end if
-            lastpos = i
-        end if
+    for i = 1 to pos
+        lastpos = currentpos
+        currentpos = instr(lastpos + 1, text, delimiter, vbbinarycompare)
     next i
-    fieldnum = fieldnum + 1
     
-    if fieldnum = pos then
-        readfield = mid$(text, lastpos + 1)
+    if currentpos = 0 then
+        readfield = mid$(text, lastpos + 1, len(text) - lastpos)
+    else
+        readfield = mid$(text, lastpos + 1, currentpos - lastpos - 1)
     end if
+end function
+
+function fieldcount(byref text as string, byval sepascii as byte) as long
+'*****************************************************************
+'gets the number of fields in a delimited string
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modify date: 07/29/2007
+'*****************************************************************
+    dim count as long
+    dim curpos as long
+    dim delimiter as string * 1
+    
+    if lenb(text) = 0 then exit function
+    
+    delimiter = chr$(sepascii)
+    
+    curpos = 0
+    
+    do
+        curpos = instr(curpos + 1, text, delimiter)
+        count = count + 1
+    loop while curpos <> 0
+    
+    fieldcount = count
 end function
 
 function fileexist(byval file as string, byval filetype as vbfileattribute) as boolean
@@ -686,6 +683,12 @@ public function isip(byval ip as string) as boolean
 end function
 
 public sub cargarservidores()
+'********************************
+'author: unknown
+'last modification: 07/26/07
+'last modified by: rapsodius
+'added instruction "closeclient" before end so the mutex is cleared
+'********************************
 on error goto errorh
     dim f as string
     dim c as integer
@@ -706,6 +709,8 @@ exit sub
 
 errorh:
     call msgbox("error cargando los servidores, actualicelos de la web", vbcritical + vbokonly, "argentum online")
+    
+    call closeclient
     end
 end sub
 
@@ -756,56 +761,19 @@ public function curserverport() as integer
     if curserver <> 0 then
         curserverport = serverslst(curserver).puerto
     else
-        curserverport = cint(frmconnect.porttxt)
+        curserverport = val(frmconnect.porttxt)
     end if
 end function
 
-
 sub main()
-'todo : cambiar esto cuando se corrija el bug de los timers
-'on error goto manejadorerrores
-on error resume next
-
-#if seguridadalkon then
-    initsecurity
-#end if
-
     call writeclientver
-    call leerlineacomandos
-
-    if app.previnstance then
-        call msgbox("argentum online ya esta corriendo! no es posible correr otra instancia del juego. haga click en aceptar para salir.", vbapplicationmodal + vbinformation + vbokonly, "error al ejecutar")
-        end
-    end if
-
-dim f as boolean
-dim ulttick as long, esttick as long
-dim timers(1 to 2) as integer
-
-    'usaremos esto para ayudar en los parches
-    call savesetting("argentumonlinecliente", "init", "path", app.path & "\")
     
-    chdrive app.path
-    chdir app.path
-
-#if seguridadalkon then
-    'obtener el hushmd5
-    dim fmd5hushyo as string * 32
-    fmd5hushyo = md5.getmd5file(app.path & "\" & app.exename & ".exe")
-    call md5.md5reset
-    md5hushyo = txtoffset(hexmd52asc(fmd5hushyo), 55)
-    
-    debug.print fmd5hushyo
-#else
-    md5hushyo = "0123456789abcdef"  'we aren't using a real md5
-#end if
-    
-    'cargamos el archivo de configuracion inicial
+    'load config file
     if fileexist(app.path & "\init\inicio.con", vbnormal) then
         config_inicio = leergameini()
     end if
     
-    
+    'load ao.dat config file
     if fileexist(app.path & "\init\ao.dat", vbarchive) then
         call loadclientsetup
         
@@ -815,10 +783,38 @@ dim timers(1 to 2) as integer
             set surfacedb = new clssurfacemanstatic
         end if
     else
-        'por default usamos el din�mico
+        'use dynamic by default
         set surfacedb = new clssurfacemandyn
     end if
     
+    'read command line. do it after config file is loaded to prevent this from
+    'canceling the effects of "/nores" option.
+    call leerlineacomandos
+    
+    if findpreviousinstance then
+        call msgbox("argentum online ya esta corriendo! no es posible correr otra instancia del juego. haga click en aceptar para salir.", vbapplicationmodal + vbinformation + vbokonly, "error al ejecutar")
+        end
+    end if
+    
+    
+    'usaremos esto para ayudar en los parches
+    call savesetting("argentumonlinecliente", "init", "path", app.path & "\")
+    
+    chdrive app.path
+    chdir app.path
+
+#if seguridadalkon then
+    'obtener el hushmd5
+    dim fmd5hushyo as string * 32
+    
+    fmd5hushyo = md5.getmd5file(app.path & "\" & app.exename & ".exe")
+    call md5.md5reset
+    md5hushyo = txtoffset(hexmd52asc(fmd5hushyo), 55)
+    
+    debug.print fmd5hushyo
+#else
+    md5hushyo = "0123456789abcdef"  'we aren't using a real md5
+#end if
     
     tipf = config_inicio.tip
     
@@ -828,10 +824,6 @@ dim timers(1 to 2) as integer
     frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
     addtorichtextbox frmcargando.status, "buscando servidores....", 0, 0, 0, 0, 0, 1
 
-#if usarwrench = 1 then
-    frmmain.socket1.startup
-#end if
-
     call cargarservidores
 'todo : esto de serverrecibidos no se podr�a sacar???
     serversrecibidos = true
@@ -840,6 +832,9 @@ dim timers(1 to 2) as integer
     addtorichtextbox frmcargando.status, "iniciando constantes...", 0, 0, 0, 0, 0, 1
     
     call inicializarnombres
+    
+    ' initialize fonttypes
+    call protocol.initfonts
     
     frmoldpersonaje.nametxt.text = config_inicio.name
     frmoldpersonaje.passwordtxt.text = ""
@@ -855,7 +850,7 @@ dim loopc as integer
 
 lasttime = gettickcount
 
-    call inittileengine(frmmain.hwnd, 152, 7, 32, 32, 13, 17, 9)
+    call inittileengine(frmmain.hwnd, 160, 7, 32, 32, 13, 17, 9)
     
     call addtorichtextbox(frmcargando.status, "creando animaciones extra....")
     
@@ -882,18 +877,25 @@ usermap = 1
     'inicializamos el sonido
     call addtorichtextbox(frmcargando.status, "iniciando directsound....", 0, 0, 0, 0, 0, true)
     call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
+    
+    'enable / disable audio
+    audio.musicactivated = not clientsetup.bnomusic
+    audio.soundactivated = not clientsetup.bnosound
+    
     call addtorichtextbox(frmcargando.status, "hecho", , , , 1, , false)
     
     'inicializamos el inventario gr�fico
     call inventario.initialize(directdraw, frmmain.picinv)
     
-    if musica then
-        call audio.playmidi(midi_inicio & ".mid")
-    end if
+    call audio.playmidi(midi_inicio & ".mid")
 
     frmpres.picture = loadpicture(app.path & "\graficos\bosquefinal.jpg")
     frmpres.show vbmodal    'es modal, as� que se detiene la ejecuci�n de main hasta que se desaparece
     
+#if usarwrench = 1 then
+    frmmain.socket1.startup
+#end if
+
     frmconnect.visible = true
 
 'todo : esto va en engine initialization
@@ -912,6 +914,37 @@ usermap = 1
     primeravez = true
     prgrun = true
     pausa = false
+    
+    'set the intervals of timers
+    call maintimer.setinterval(timersindex.attack, int_attack)
+    call maintimer.setinterval(timersindex.work, int_work)
+    call maintimer.setinterval(timersindex.useitemwithu, int_useitemu)
+    call maintimer.setinterval(timersindex.useitemwithdblclick, int_useitemdck)
+    call maintimer.setinterval(timersindex.sendrpu, int_sentrpu)
+    call maintimer.setinterval(timersindex.castspell, int_cast_spell)
+    call maintimer.setinterval(timersindex.arrows, int_arrows)
+    call maintimer.setinterval(timersindex.castattack, int_cast_attack)
+    
+    frmmain.macrotrabajo.interval = int_macro_trabajo
+    frmmain.macrotrabajo.enabled = false
+    
+   'init timers
+    call maintimer.start(timersindex.attack)
+    call maintimer.start(timersindex.work)
+    call maintimer.start(timersindex.useitemwithu)
+    call maintimer.start(timersindex.useitemwithdblclick)
+    call maintimer.start(timersindex.sendrpu)
+    call maintimer.start(timersindex.castspell)
+    call maintimer.start(timersindex.arrows)
+    call maintimer.start(timersindex.castattack)
+    
+    'set the dialog's font
+    dialogos.font = frmmain.font
+    dialogosclanes.font = frmmain.font
+    
+    
+    ' load the form for screenshots
+    call load(frmscreenshots)
     
     do while prgrun
         's�lo dibujamos si la ventana no est� minimizada
@@ -944,33 +977,24 @@ usermap = 1
             framesperseccounter = 0
             lframetimer = gettickcount
         end if
-        
-'todo : ser�a mejor comparar el tiempo desde la �ltima vez que se hizo hasta el actual solo cuando se precisa. adem�s evit�s el corte de intervalos con 2 golpes seguidos.
-        'sistema de timers renovado:
-        esttick = gettickcount
-        for loopc = 1 to ubound(timers)
-            timers(loopc) = timers(loopc) + (esttick - ulttick)
-            'timer de trabajo
-            if timers(1) >= tus then
-                timers(1) = 0
-                nopuedeusar = false
-            end if
-            'timer de attaque (77)
-            if timers(2) >= tat then
-                timers(2) = 0
-                usercanattack = 1
-                userpuederefrescar = true
-            end if
-        next loopc
-        ulttick = gettickcount
+
         
 #if seguridadalkon then
         call checksecurity
 #end if
         
+        ' if there is anything to be sent, we send it
+        call flushbuffer
+        
         doevents
     loop
-
+    
+    ' allow new instances of the client to be opened
+    call previnstance.closeclient
+    
+    ' unload the form for screenshots
+    unload frmscreenshots
+    
     enginerun = false
     frmcargando.show
     addtorichtextbox frmcargando.status, "liberando recursos...", 0, 0, 0, 0, 0, 1
@@ -991,11 +1015,16 @@ usermap = 1
     end if
 
     'destruimos los objetos p�blicos creados
+    set custommessages = nothing
     set surfacedb = nothing
     set dialogos = nothing
     set dialogosclanes = nothing
     set audio = nothing
     set inventario = nothing
+    set maintimer = nothing
+    set incomingdata = nothing
+    set outgoingdata = nothing
+    
 #if seguridadalkon then
     set md5 = nothing
 #end if
@@ -1006,14 +1035,6 @@ usermap = 1
     config_inicio.tip = tipf
     call escribirgameini(config_inicio)
     
-#if seguridadalkon then
-    deinitsecurity
-#end if
-end
-
-manejadorerrores:
-    msgbox "ha ocurrido un error irreparable, el cliente se cerrar�."
-    logerror "contexto:" & err.helpcontext & " desc:" & err.description & " fuente:" & err.source
     end
 end sub
 
@@ -1079,12 +1100,13 @@ private function cmsvalidatechar_(byval iasc as integer) as boolean
                         (iasc = 95) or (iasc = 45) or (iasc = 46)
 end function
 
-'todo : como todo lorelativo a mapas, no tiene anda que hacer ac�....
+'todo : como todo lo relativo a mapas, no tiene nada que hacer ac�....
 function hayagua(byval x as integer, byval y as integer) as boolean
-
-    hayagua = mapdata(x, y).graphic(1).grhindex >= 1505 and _
-                mapdata(x, y).graphic(1).grhindex <= 1520 and _
+    hayagua = ((mapdata(x, y).graphic(1).grhindex >= 1505 and mapdata(x, y).graphic(1).grhindex <= 1520) or _
+            (mapdata(x, y).graphic(1).grhindex >= 5665 and mapdata(x, y).graphic(1).grhindex <= 5680) or _
+            (mapdata(x, y).graphic(1).grhindex >= 13547 and mapdata(x, y).graphic(1).grhindex <= 13562)) and _
                 mapdata(x, y).graphic(2).grhindex = 0
+                
 end function
 
 public sub showsendtxt()
@@ -1107,7 +1129,6 @@ public sub leerlineacomandos()
     
     'parseo los comandos
     t = split(command, " ")
-    
     for i = lbound(t) to ubound(t)
         select case ucase$(t(i))
             case "/nores" 'no cambiar la resolucion
@@ -1119,7 +1140,7 @@ end sub
 private sub loadclientsetup()
 '**************************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 11/27/2005
+'last modify date: 24/06/2006
 '
 '**************************************************************
     dim fhandle as integer
@@ -1129,8 +1150,7 @@ private sub loadclientsetup()
         get fhandle, , clientsetup
     close fhandle
     
-    musica = not clientsetup.bnomusic
-    sound = not clientsetup.bnosound
+    nores = clientsetup.bnores
 end sub
 
 private sub inicializarnombres()
@@ -1139,62 +1159,77 @@ private sub inicializarnombres()
 'last modify date: 11/27/2005
 'inicializa los nombres de razas, ciudades, clases, skills, atributos, etc.
 '**************************************************************
-    ciudades(1) = "ullathorpe"
-    ciudades(2) = "nix"
-    ciudades(3) = "banderbill"
+    ciudades(eciudad.cullathorpe) = "ullathorpe"
+    ciudades(eciudad.cnix) = "nix"
+    ciudades(eciudad.cbanderbill) = "banderbill"
+    ciudades(eciudad.clindos) = "lindos"
+    ciudades(eciudad.carghal) = "argh�l"
+    
+    listarazas(eraza.humano) = "humano"
+    listarazas(eraza.elfo) = "elfo"
+    listarazas(eraza.elfooscuro) = "elfo oscuro"
+    listarazas(eraza.gnomo) = "gnomo"
+    listarazas(eraza.enano) = "enano"
 
-    citydesc(1) = "ullathorpe est� establecida en el medio de los grandes bosques de argentum, es principalmente un pueblo de campesinos y le�adores. su ubicaci�n hace de ullathorpe un punto de paso obligado para todos los aventureros ya que se encuentra cerca de los lugares m�s legendarios de este mundo."
-    citydesc(2) = "nix es una gran ciudad. edificada sobre la costa oeste del principal continente de argentum."
-    citydesc(3) = "banderbill se encuentra al norte de ullathorpe y nix, es una de las ciudades m�s importantes de todo el imperio."
+    listaclases(eclass.mage) = "mago"
+    listaclases(eclass.cleric) = "clerigo"
+    listaclases(eclass.warrior) = "guerrero"
+    listaclases(eclass.assasin) = "asesino"
+    listaclases(eclass.thief) = "ladron"
+    listaclases(eclass.bard) = "bardo"
+    listaclases(eclass.druid) = "druida"
+    listaclases(eclass.bandit) = "bandido"
+    listaclases(eclass.paladin) = "paladin"
+    listaclases(eclass.hunter) = "cazador"
+    listaclases(eclass.fisher) = "pescador"
+    listaclases(eclass.blacksmith) = "herrero"
+    listaclases(eclass.lumberjack) = "le�ador"
+    listaclases(eclass.miner) = "minero"
+    listaclases(eclass.carpenter) = "carpintero"
+    listaclases(eclass.pirat) = "pirata"
+    
+    skillsnames(eskill.suerte) = "suerte"
+    skillsnames(eskill.magia) = "magia"
+    skillsnames(eskill.robar) = "robar"
+    skillsnames(eskill.tacticas) = "tacticas de combate"
+    skillsnames(eskill.armas) = "combate con armas"
+    skillsnames(eskill.meditar) = "meditar"
+    skillsnames(eskill.apu�alar) = "apu�alar"
+    skillsnames(eskill.ocultarse) = "ocultarse"
+    skillsnames(eskill.supervivencia) = "supervivencia"
+    skillsnames(eskill.talar) = "talar �rboles"
+    skillsnames(eskill.comerciar) = "comercio"
+    skillsnames(eskill.defensa) = "defensa con escudos"
+    skillsnames(eskill.pesca) = "pesca"
+    skillsnames(eskill.mineria) = "mineria"
+    skillsnames(eskill.carpinteria) = "carpinteria"
+    skillsnames(eskill.herreria) = "herreria"
+    skillsnames(eskill.liderazgo) = "liderazgo"
+    skillsnames(eskill.domar) = "domar animales"
+    skillsnames(eskill.proyectiles) = "armas de proyectiles"
+    skillsnames(eskill.wrestling) = "wrestling"
+    skillsnames(eskill.navegacion) = "navegacion"
 
-    listarazas(1) = "humano"
-    listarazas(2) = "elfo"
-    listarazas(3) = "elfo oscuro"
-    listarazas(4) = "gnomo"
-    listarazas(5) = "enano"
+    atributosnames(eatributos.fuerza) = "fuerza"
+    atributosnames(eatributos.agilidad) = "agilidad"
+    atributosnames(eatributos.inteligencia) = "inteligencia"
+    atributosnames(eatributos.carisma) = "carisma"
+    atributosnames(eatributos.constitucion) = "constitucion"
+end sub
 
-    listaclases(1) = "mago"
-    listaclases(2) = "clerigo"
-    listaclases(3) = "guerrero"
-    listaclases(4) = "asesino"
-    listaclases(5) = "ladron"
-    listaclases(6) = "bardo"
-    listaclases(7) = "druida"
-    listaclases(8) = "bandido"
-    listaclases(9) = "paladin"
-    listaclases(10) = "cazador"
-    listaclases(11) = "pescador"
-    listaclases(12) = "herrero"
-    listaclases(13) = "le�ador"
-    listaclases(14) = "minero"
-    listaclases(15) = "carpintero"
-    listaclases(16) = "pirata"
+''
+' removes all text from the console and dialogs
 
-    skillsnames(skills.suerte) = "suerte"
-    skillsnames(skills.magia) = "magia"
-    skillsnames(skills.robar) = "robar"
-    skillsnames(skills.tacticas) = "tacticas de combate"
-    skillsnames(skills.armas) = "combate con armas"
-    skillsnames(skills.meditar) = "meditar"
-    skillsnames(skills.apu�alar) = "apu�alar"
-    skillsnames(skills.ocultarse) = "ocultarse"
-    skillsnames(skills.supervivencia) = "supervivencia"
-    skillsnames(skills.talar) = "talar �rboles"
-    skillsnames(skills.comerciar) = "comercio"
-    skillsnames(skills.defensa) = "defensa con escudos"
-    skillsnames(skills.pesca) = "pesca"
-    skillsnames(skills.mineria) = "mineria"
-    skillsnames(skills.carpinteria) = "carpinteria"
-    skillsnames(skills.herreria) = "herreria"
-    skillsnames(skills.liderazgo) = "liderazgo"
-    skillsnames(skills.domar) = "domar animales"
-    skillsnames(skills.proyectiles) = "armas de proyectiles"
-    skillsnames(skills.wresterling) = "wresterling"
-    skillsnames(skills.navegacion) = "navegacion"
-
-    atributosnames(1) = "fuerza"
-    atributosnames(2) = "agilidad"
-    atributosnames(3) = "inteligencia"
-    atributosnames(4) = "carisma"
-    atributosnames(5) = "constitucion"
+public sub cleandialogs()
+'**************************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modify date: 11/27/2005
+'removes all text from the console and dialogs
+'**************************************************************
+    'clean console and dialogs
+    frmmain.rectxt.text = vbnullstring
+    
+    call dialogosclanes.removedialogs
+    
+    call dialogos.removealldialogs
 end sub

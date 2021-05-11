@@ -1,20 +1,18 @@
 attribute vb_name = "ai"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -235,19 +233,19 @@ for headingloop = eheading.north to eheading.west
         if inmapbounds(npos.map, npos.x, npos.y) then
             ui = mapdata(npos.map, npos.x, npos.y).userindex
             if ui > 0 then
-                  if userlist(ui).flags.muerto = 0 then
+                  if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
                          '�es criminal?
                          if not delcaos then
                             if criminal(ui) then
                                    if npcatacauser(npcindex, ui) then
-                                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                                    end if
                                    exit sub
                             elseif npclist(npcindex).flags.attackedby = userlist(ui).name _
                                       and not npclist(npcindex).flags.follow then
                                   
                                   if npcatacauser(npcindex, ui) then
-                                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                                   end if
                                   exit sub
                             end if
@@ -255,14 +253,14 @@ for headingloop = eheading.north to eheading.west
                             if not criminal(ui) then
                                    
                                    if npcatacauser(npcindex, ui) then
-                                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                                    end if
                                    exit sub
                             elseif npclist(npcindex).flags.attackedby = userlist(ui).name _
                                       and not npclist(npcindex).flags.follow then
                                   
                                   if npcatacauser(npcindex, ui) then
-                                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                                   end if
                                   exit sub
                             end if
@@ -297,19 +295,19 @@ for headingloop = eheading.north to eheading.west
             ui = mapdata(npos.map, npos.x, npos.y).userindex
             npci = mapdata(npos.map, npos.x, npos.y).npcindex
             if ui > 0 and not atacopj then
-                if userlist(ui).flags.muerto = 0 then
+                if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
                     atacopj = true
                     if npclist(npcindex).flags.lanzaspells <> 0 then
                         call npclanzaunspell(npcindex, ui)
                     end if
                     if npcatacauser(npcindex, mapdata(npos.map, npos.x, npos.y).userindex) then
-                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                     end if
                     exit sub
                 end if
             elseif npci > 0 then
                     if npclist(npci).maestrouser > 0 and npclist(npci).flags.paralizado = 0 then
-                        call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                        call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                         call sistemacombate.npcatacanpc(npcindex, npci, false)
                         exit sub
                     end if
@@ -338,12 +336,12 @@ for headingloop = eheading.north to eheading.west
             ui = mapdata(npos.map, npos.x, npos.y).userindex
             if ui > 0 then
                 if userlist(ui).name = npclist(npcindex).flags.attackedby then
-                    if userlist(ui).flags.muerto = 0 then
+                    if userlist(ui).flags.muerto = 0 and userlist(ui).flags.adminperseguible then
                             if npclist(npcindex).flags.lanzaspells > 0 then
                               call npclanzaunspell(npcindex, ui)
                             end if
                             if npcatacauser(npcindex, ui) then
-                                call changenpcchar(sendtarget.tomap, 0, npos.map, npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
+                                call changenpcchar(npcindex, npclist(npcindex).char.body, npclist(npcindex).char.head, headingloop)
                             end if
                             exit sub
                     end if
@@ -405,7 +403,7 @@ else
             if x >= minxborder and x <= maxxborder and y >= minyborder and y <= maxyborder then
                 ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
                 if ui > 0 then
-                     if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 then
+                     if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
                          if npclist(npcindex).flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ui)
                          theading = finddirection(npclist(npcindex).pos, userlist(mapdata(npclist(npcindex).pos.map, x, y).userindex).pos)
                          call movenpcchar(npcindex, theading)
@@ -448,6 +446,7 @@ if npclist(npcindex).flags.inmovilizado = 1 then
             signons = 0
     end select
     
+    
     for y = npclist(npcindex).pos.y to npclist(npcindex).pos.y + signons * rango_vision_y step iif(signons = 0, 1, signons)
         for x = npclist(npcindex).pos.x to npclist(npcindex).pos.x + signoeo * rango_vision_x step iif(signoeo = 0, 1, signoeo)
 
@@ -457,8 +456,9 @@ if npclist(npcindex).flags.inmovilizado = 1 then
                     if userlist(ui).name = npclist(npcindex).flags.attackedby then
                         if npclist(npcindex).maestrouser > 0 then
                             if not criminal(npclist(npcindex).maestrouser) and not criminal(ui) and (userlist(npclist(npcindex).maestrouser).flags.seguro or userlist(npclist(npcindex).maestrouser).faccion.armadareal = 1) then
-                                call senddata(sendtarget.toindex, npclist(npcindex).maestrouser, 0, "||la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado" & fonttype_info)
-                                npclist(npcindex).flags.attackedby = ""
+                                call writeconsolemsg(npclist(npcindex).maestrouser, "la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado", fonttypenames.fonttype_info)
+                                call flushbuffer(npclist(npcindex).maestrouser) 'check
+                                npclist(npcindex).flags.attackedby = vbnullstring
                                 exit sub
                             end if
                         end if
@@ -482,8 +482,9 @@ else
                     if userlist(ui).name = npclist(npcindex).flags.attackedby then
                         if npclist(npcindex).maestrouser > 0 then
                             if not criminal(npclist(npcindex).maestrouser) and not criminal(ui) and (userlist(npclist(npcindex).maestrouser).flags.seguro or userlist(npclist(npcindex).maestrouser).faccion.armadareal = 1) then
-                                call senddata(sendtarget.toindex, npclist(npcindex).maestrouser, 0, "||la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado" & fonttype_info)
-                                npclist(npcindex).flags.attackedby = ""
+                                call writeconsolemsg(npclist(npcindex).maestrouser, "la mascota no atacar� a ciudadanos si eres miembro de la armada real o tienes el seguro activado", fonttypenames.fonttype_info)
+                                call flushbuffer(npclist(npcindex).maestrouser) 'check
+                                npclist(npcindex).flags.attackedby = vbnullstring
                                 call followamo(npcindex)
                                 exit sub
                             end if
@@ -511,7 +512,7 @@ private sub restoreoldmovement(byval npcindex as integer)
 if npclist(npcindex).maestrouser = 0 then
     npclist(npcindex).movement = npclist(npcindex).flags.oldmovement
     npclist(npcindex).hostile = npclist(npcindex).flags.oldhostil
-    npclist(npcindex).flags.attackedby = ""
+    npclist(npcindex).flags.attackedby = vbnullstring
 end if
 
 end sub
@@ -582,7 +583,7 @@ if npclist(npcindex).flags.inmovilizado = 1 then
                ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
                if ui > 0 then
                     if criminal(ui) then
-                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 then
+                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
                             if npclist(npcindex).flags.lanzaspells > 0 then
                                   call npclanzaunspell(npcindex, ui)
                             end if
@@ -602,7 +603,7 @@ else
                ui = mapdata(npclist(npcindex).pos.map, x, y).userindex
                if ui > 0 then
                     if criminal(ui) then
-                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 then
+                       if userlist(ui).flags.muerto = 0 and userlist(ui).flags.invisible = 0 and userlist(ui).flags.oculto = 0 and userlist(ui).flags.adminperseguible then
                             if npclist(npcindex).flags.lanzaspells > 0 then
                                   call npclanzaunspell(npcindex, ui)
                             end if
@@ -727,6 +728,7 @@ else
                             end if
                          end if
                          if npclist(npcindex).flags.inmovilizado = 1 then exit sub
+                         if npclist(npcindex).targetnpc = 0 then exit sub
                          theading = finddirection(npclist(npcindex).pos, npclist(mapdata(npclist(npcindex).pos.map, x, y).npcindex).pos)
                          call movenpcchar(npcindex, theading)
                          exit sub
@@ -944,16 +946,18 @@ for y = npclist(npcindex).pos.y - 10 to npclist(npcindex).pos.y + 10    'makes a
                  'move towards user
                   dim tmpuserindex as integer
                   tmpuserindex = mapdata(npclist(npcindex).pos.map, x, y).userindex
-                  if userlist(tmpuserindex).flags.muerto = 0 and userlist(tmpuserindex).flags.invisible = 0 and userlist(tmpuserindex).flags.oculto = 0 then
-                    'we have to invert the coordinates, this is because
-                    'ore refers to maps in converse way of my pathfinding
-                    'routines.
-                    npclist(npcindex).pfinfo.target.x = userlist(tmpuserindex).pos.y
-                    npclist(npcindex).pfinfo.target.y = userlist(tmpuserindex).pos.x 'ops!
-                    npclist(npcindex).pfinfo.targetuser = tmpuserindex
-                    call seekpath(npcindex)
-                    exit function
-                  end if
+                  with userlist(tmpuserindex)
+                    if .flags.muerto = 0 and .flags.invisible = 0 and .flags.oculto = 0 and .flags.adminperseguible then
+                        'we have to invert the coordinates, this is because
+                        'ore refers to maps in converse way of my pathfinding
+                        'routines.
+                        npclist(npcindex).pfinfo.target.x = userlist(tmpuserindex).pos.y
+                        npclist(npcindex).pfinfo.target.y = userlist(tmpuserindex).pos.x 'ops!
+                        npclist(npcindex).pfinfo.targetuser = tmpuserindex
+                        call seekpath(npcindex)
+                        exit function
+                    end if
+                  end with
              end if
              
          end if

@@ -1,19 +1,36 @@
 attribute vb_name = "modbanco"
-option explicit
+'**************************************************************
+' modbanco.bas - handles the character's bank accounts.
+'
+' implemented by kevin birmingham (neb)
+' kbneb@hotmail.com
+'**************************************************************
 
-'modulo programado por neb
-'kevin birmingham
-'kbneb@hotmail.com
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
+option explicit
 
 sub iniciardeposito(byval userindex as integer)
 on error goto errhandler
 
 'hacemos un update del inventario del usuario
 call updatebanuserinv(true, userindex, 0)
-'atcualizamos el dinero
-call senduserstatsbox(userindex)
+'actualizamos el dinero
+call writeupdateuserstats(userindex)
 'mostramos la ventana pa' comerciar y ver ladear la osamenta. jajaja
-senddata sendtarget.toindex, userindex, 0, "initbanco"
+call writebankinit(userindex)
 userlist(userindex).flags.comerciando = true
 
 errhandler:
@@ -22,23 +39,9 @@ end sub
 
 sub sendbanobj(userindex as integer, slot as byte, object as userobj)
 
-
 userlist(userindex).bancoinvent.object(slot) = object
 
-if object.objindex > 0 then
-
-    call senddata(sendtarget.toindex, userindex, 0, "sbo" & slot & "," & object.objindex & "," & objdata(object.objindex).name & "," & object.amount & "," & objdata(object.objindex).grhindex & "," _
-    & objdata(object.objindex).objtype & "," _
-    & objdata(object.objindex).maxhit & "," _
-    & objdata(object.objindex).minhit & "," _
-    & objdata(object.objindex).maxdef)
-
-else
-
-    call senddata(sendtarget.toindex, userindex, 0, "sbo" & slot & "," & "0" & "," & "(none)" & "," & "0" & "," & "0")
-
-end if
-
+call writechangebankslot(userindex, slot)
 
 end sub
 
@@ -84,7 +87,7 @@ on error goto errhandler
 if cantidad < 1 then exit sub
 
 
-call senduserstatsbox(userindex)
+call writeupdateuserstats(userindex)
 
    
        if userlist(userindex).bancoinvent.object(i).amount > 0 then
@@ -95,10 +98,9 @@ call senduserstatsbox(userindex)
             call updateuserinv(true, userindex, 0)
             'actualizamos el banco
             call updatebanuserinv(true, userindex, 0)
-            'actualizamos la ventana de comercio
-            call updateventanabanco(i, 0, userindex)
        end if
-
+            'actualizamos la ventana de comercio
+            call updateventanabanco(userindex)
 
 
 errhandler:
@@ -134,7 +136,7 @@ if slot > max_inventory_slots then
             slot = slot + 1
 
             if slot > max_inventory_slots then
-                call senddata(sendtarget.toindex, userindex, 0, "||no pod�s tener mas objetos." & fonttype_info)
+                call writeconsolemsg(userindex, "no pod�s tener mas objetos.", fonttypenames.fonttype_info)
                 exit sub
             end if
         loop
@@ -152,7 +154,7 @@ if userlist(userindex).invent.object(slot).amount + cantidad <= max_inventory_ob
     
     call quitarbancoinvitem(userindex, cbyte(objindex), cantidad)
 else
-    call senddata(sendtarget.toindex, userindex, 0, "||no pod�s tener mas objetos." & fonttype_info)
+    call writeconsolemsg(userindex, "no pod�s tener mas objetos.", fonttypenames.fonttype_info)
 end if
 
 
@@ -179,11 +181,8 @@ objindex = userlist(userindex).bancoinvent.object(slot).objindex
     
 end sub
 
-sub updateventanabanco(byval slot as integer, byval npcinv as byte, byval userindex as integer)
- 
- 
- call senddata(sendtarget.toindex, userindex, 0, "bancook" & slot & "," & npcinv)
- 
+sub updateventanabanco(byval userindex as integer)
+    call writebankok(userindex)
 end sub
 
 sub userdepositaitem(byval userindex as integer, byval item as integer, byval cantidad as integer)
@@ -191,7 +190,7 @@ sub userdepositaitem(byval userindex as integer, byval item as integer, byval ca
 on error goto errhandler
 
 'el usuario deposita un item
-call senduserstatsbox(userindex)
+call writeupdateuserstats(userindex)
    
 if userlist(userindex).invent.object(item).amount > 0 and userlist(userindex).invent.object(item).equipped = 0 then
             
@@ -202,11 +201,9 @@ if userlist(userindex).invent.object(item).amount > 0 and userlist(userindex).in
             call updateuserinv(true, userindex, 0)
             'actualizamos el inventario del banco
             call updatebanuserinv(true, userindex, 0)
-            'actualizamos la ventana del banco
-            
-            call updateventanabanco(item, 1, userindex)
-            
 end if
+            'actualizamos la ventana del banco
+            call updateventanabanco(userindex)
 
 errhandler:
 
@@ -239,7 +236,7 @@ if slot > max_bancoinventory_slots then
             slot = slot + 1
 
             if slot > max_bancoinventory_slots then
-                call senddata(sendtarget.toindex, userindex, 0, "||no tienes mas espacio en el banco!!" & fonttype_info)
+                call writeconsolemsg(userindex, "no tienes mas espacio en el banco!!", fonttypenames.fonttype_info)
                 exit sub
                 exit do
             end if
@@ -260,7 +257,7 @@ if slot <= max_bancoinventory_slots then 'slot valido
         call quitaruserinvitem(userindex, cbyte(objindex), cantidad)
 
     else
-        call senddata(sendtarget.toindex, userindex, 0, "||el banco no puede cargar tantos objetos." & fonttype_info)
+        call writeconsolemsg(userindex, "el banco no puede cargar tantos objetos.", fonttypenames.fonttype_info)
     end if
 
 else
@@ -272,11 +269,13 @@ end sub
 sub senduserbovedatxt(byval sendindex as integer, byval userindex as integer)
 on error resume next
 dim j as integer
-call senddata(sendtarget.toindex, sendindex, 0, "||" & userlist(userindex).name & fonttype_info)
-call senddata(sendtarget.toindex, sendindex, 0, "|| tiene " & userlist(userindex).bancoinvent.nroitems & " objetos." & fonttype_info)
+
+call writeconsolemsg(sendindex, userlist(userindex).name, fonttypenames.fonttype_info)
+call writeconsolemsg(sendindex, " tiene " & userlist(userindex).bancoinvent.nroitems & " objetos.", fonttypenames.fonttype_info)
+
 for j = 1 to max_bancoinventory_slots
     if userlist(userindex).bancoinvent.object(j).objindex > 0 then
-        call senddata(sendtarget.toindex, sendindex, 0, "|| objeto " & j & " " & objdata(userlist(userindex).bancoinvent.object(j).objindex).name & " cantidad:" & userlist(userindex).bancoinvent.object(j).amount & fonttype_info)
+        call writeconsolemsg(sendindex, " objeto " & j & " " & objdata(userlist(userindex).bancoinvent.object(j).objindex).name & " cantidad:" & userlist(userindex).bancoinvent.object(j).amount, fonttypenames.fonttype_info)
     end if
 next
 
@@ -291,18 +290,18 @@ dim objind as long, objcant as long
 charfile = charpath & charname & ".chr"
 
 if fileexist(charfile, vbnormal) then
-    call senddata(sendtarget.toindex, sendindex, 0, "||" & charname & fonttype_info)
-    call senddata(sendtarget.toindex, sendindex, 0, "|| tiene " & getvar(charfile, "bancoinventory", "cantidaditems") & " objetos." & fonttype_info)
+    call writeconsolemsg(sendindex, charname, fonttypenames.fonttype_info)
+    call writeconsolemsg(sendindex, " tiene " & getvar(charfile, "bancoinventory", "cantidaditems") & " objetos.", fonttypenames.fonttype_info)
     for j = 1 to max_bancoinventory_slots
         tmp = getvar(charfile, "bancoinventory", "obj" & j)
         objind = readfield(1, tmp, asc("-"))
         objcant = readfield(2, tmp, asc("-"))
         if objind > 0 then
-            call senddata(sendtarget.toindex, sendindex, 0, "|| objeto " & j & " " & objdata(objind).name & " cantidad:" & objcant & fonttype_info)
+            call writeconsolemsg(sendindex, " objeto " & j & " " & objdata(objind).name & " cantidad:" & objcant, fonttypenames.fonttype_info)
         end if
     next
 else
-    call senddata(sendtarget.toindex, sendindex, 0, "||usuario inexistente: " & charname & fonttype_info)
+    call writeconsolemsg(sendindex, "usuario inexistente: " & charname, fonttypenames.fonttype_info)
 end if
 
 end sub

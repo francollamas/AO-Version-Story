@@ -11,6 +11,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
+'**************************************************************
+' soundmapinfo.cls
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private type p_tsoundmapinfo
@@ -45,23 +64,30 @@ private sub class_initialize()
 end sub
 
 public sub loadsoundmapinfo()
-dim i as integer
-dim j as integer
-dim temps as string
-dim mapfile as string
+    dim i as integer
+    dim j as integer
+    dim temps as string
+    dim mapfile as string
+    
     mapfile = app.path & mappath & "mapa"
     
+    'usage of val() prevents errors when dats are corrputed or incomplete. all invalid values are assumed to be zero.
+    
+'todo : log the error in the dat for correction.
     for i = 1 to ubound(p_mapas)
         temps = getvar(mapfile & i & ".dat", "sonidos", "cantidad")
+        
         if isnumeric(temps) then
-            p_mapas(i).cantidad = cint(getvar(mapfile & i & ".dat", "sonidos", "cantidad"))
+            p_mapas(i).cantidad = val(temps)
+            
             redim p_mapas(i).flags(1 to p_mapas(i).cantidad) as long
             redim p_mapas(i).probabilidad(1 to p_mapas(i).cantidad) as single
             redim p_mapas(i).soundindex(1 to p_mapas(i).cantidad) as integer
+            
             for j = 1 to p_mapas(i).cantidad
-                p_mapas(i).flags(j) = cint(getvar(mapfile & i & ".dat", "sonido" & j, "flags"))
-                p_mapas(i).probabilidad(j) = csng(getvar(mapfile & i & ".dat", "sonido" & j, "probabilidad"))
-                p_mapas(i).soundindex(j) = cint(getvar(mapfile & i & ".dat", "sonido" & j, "sonido"))
+                p_mapas(i).flags(j) = val(getvar(mapfile & i & ".dat", "sonido" & j, "flags"))
+                p_mapas(i).probabilidad(j) = val(getvar(mapfile & i & ".dat", "sonido" & j, "probabilidad"))
+                p_mapas(i).soundindex(j) = val(getvar(mapfile & i & ".dat", "sonido" & j, "sonido"))
             next j
         else
             p_mapas(i).cantidad = 0
@@ -69,11 +95,10 @@ dim mapfile as string
     next i
 end sub
 
-
 public sub reproducirsonidosdemapas()
-dim i as integer
-dim sonidosmapa as byte
-dim sonidomapa as byte
+    dim i as integer
+    dim sonidosmapa as byte
+    dim sonidomapa as byte
 
     for i = 1 to ubound(p_mapas)
         if p_mapas(i).cantidad > 0 then
@@ -82,19 +107,18 @@ dim sonidomapa as byte
                 'tocarlo
                 if lloviendo then
                     if p_mapas(i).flags(sonidomapa) xor p_esoundflags.lluvia then
-                        call senddata(sendtarget.tomap, 0, i, "tw" & p_mapas(i).soundindex(sonidomapa))
+                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa)))
                     end if
                 else
                     if p_mapas(i).flags(sonidomapa) xor p_esoundflags.ninguna then
-                        call senddata(sendtarget.tomap, 0, i, "tw" & p_mapas(i).soundindex(sonidomapa))
+                        call senddata(sendtarget.tomap, i, preparemessageplaywave(p_mapas(i).soundindex(sonidomapa)))
                     end if
                 end if
             end if
         end if
     next i
-    
 end sub
 
-public sub reproducirsonido(byval destino as byte, byval userindex as integer, byval mapa as integer, byval soundindex as integer)
-    call senddata(destino, userindex, mapa, "tw" & soundindex)
+public sub reproducirsonido(byval destino as sendtarget, byval index as integer, byval soundindex as integer)
+    call senddata(destino, index, preparemessageplaywave(soundindex))
 end sub

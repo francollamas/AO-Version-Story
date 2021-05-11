@@ -136,6 +136,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'**************************************************************
+' frmcambiarmotd.frm
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private sub cmdok_click()
@@ -163,7 +182,7 @@ private sub cmdok_click()
         end if
     next i
     
-    call senddata("zmotd" & txtmotd.text)
+    call writesetmotd(txtmotd.text)
     unload me
 end sub
 
@@ -173,33 +192,33 @@ end sub
 
 'a partir de command2_click son todos buttons para agregar color al texto
 private sub cmdazul_click()
-    txtmotd.text = txtmotd & "50~70~250~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~50~70~250~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdrojo_click()
-    txtmotd.text = txtmotd & "255~0~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~255~0~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdblanco_click()
-    txtmotd.text = txtmotd & "255~255~255~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~255~255~255~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdgris_click()
-    txtmotd.text = txtmotd & "157~157~157~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~157~157~157~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdamarillo_click()
-    txtmotd.text = txtmotd & "244~244~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~244~244~0~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdmorado_click()
-    txtmotd.text = txtmotd & "128~0~128~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~128~0~128~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdverde_click()
-  txtmotd.text = txtmotd & "23~104~26~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+  txtmotd.text = txtmotd & "~23~104~26~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub
 
 private sub cmdmarron_click()
-    txtmotd.text = txtmotd & "97~58~31~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
+    txtmotd.text = txtmotd & "~97~58~31~" & cstr(chkbold.value) & "~" & cstr(chkitalic.value)
 end sub

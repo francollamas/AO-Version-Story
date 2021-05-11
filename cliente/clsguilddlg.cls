@@ -13,20 +13,55 @@ attribute vb_predeclaredid = false
 attribute vb_exposed = false
 option explicit
 
-private p_cantidaddialogos as byte
 private const p_segundos = 7
+
+private p_cantidaddialogos as byte
+
 private type t_guilddlg
     texto as string
     segundos as byte
 end type
+
 private p_dialogos() as t_guilddlg
 private p_activo as boolean
 
+private usedfont as stdfont
+
 public property let cantidaddialogos(byval v as byte)
     if v > 0 then
-    redim preserve p_dialogos(1 to v) as t_guilddlg
+        redim preserve p_dialogos(1 to v) as t_guilddlg
     end if
     p_cantidaddialogos = v
+end property
+
+''
+' removes all dialogs from screen.
+
+public sub removedialogs()
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 04/02/07
+'removes all dialogs
+'***************************************************
+    dim i as long
+    
+    for i = 1 to p_cantidaddialogos
+        p_dialogos(i).texto = vbnullstring
+    next i
+end sub
+
+''
+' retrieves the number of dialogs to be displayed on screen.
+'
+' @return   the number of dialogs to be displayed on screen.
+
+public property get cantidaddialogos() as byte
+'***************************************************
+'autor: juan mart�n sotuyo dodero (maraxus)
+'last modification: 04/01/07
+'retrieves the number of dialogs to be displayed on screen
+'***************************************************
+    cantidaddialogos = p_cantidaddialogos
 end property
 
 public property let activo(byval v as boolean)
@@ -37,13 +72,13 @@ public property get activo() as boolean
     activo = p_activo
 end property
 
-public sub class_initialize()
+private sub class_initialize()
     p_cantidaddialogos = 5
     redim p_dialogos(1 to p_cantidaddialogos) as t_guilddlg
     p_activo = true
 end sub
 
-public sub draw(byref c as cdialogos)
+public sub draw()
 dim i as byte
 dim y as long
 
@@ -54,9 +89,9 @@ y = 250
     for i = 1 to p_cantidaddialogos
         if trim$(p_dialogos(i).texto) <> vbnullstring then
             if left$(p_dialogos(i).texto, 1) = chr(3) then
-                call c.drawtext(260, y + (i * 10), mid(p_dialogos(i).texto, 2), vbgreen)
+                call mod_tileengine.drawtext(260, y + (i * 10), mid(p_dialogos(i).texto, 2), vbgreen, usedfont)
             else
-                call c.drawtext(260, y + (i * 10), p_dialogos(i).texto, vbyellow)
+                call mod_tileengine.drawtext(260, y + (i * 10), p_dialogos(i).texto, vbyellow, usedfont)
             end if
         end if
     next i
@@ -109,3 +144,30 @@ end if
 
 end sub
 
+''
+' retrieves the font being used to render dialogs.
+'
+' @return   the font being used to render dialogs.
+
+public property get font() as stdfont
+'**************************************************************
+'author: juan mart�n sotuyo dodero
+'last modify date: 04/27/06
+'retrieves the font being used to render dialogs.
+'**************************************************************
+    font = usedfont
+end property
+
+''
+' sets the font being used to render dialogs.
+'
+' @param    nvalue  the new font to be used to render dialogs.
+
+public property let font(byref nvalue as stdfont)
+'**************************************************************
+'author: juan mart�n sotuyo dodero
+'last modify date: 04/27/06
+'sets the font being used to render dialogs.
+'**************************************************************
+    set usedfont = nvalue
+end property

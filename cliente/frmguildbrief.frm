@@ -166,7 +166,7 @@ begin vb.form frmguildbrief
       begin vb.label codex 
          height          =   255
          index           =   1
-         left            =   210
+         left            =   240
          tabindex        =   11
          top             =   600
          width           =   6735
@@ -291,7 +291,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -299,18 +299,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -329,79 +327,30 @@ option explicit
 
 public esleader as boolean
 
-
-public sub parseguildinfo(byval buffer as string)
-
-if not esleader then
-    guerra.visible = false
-    aliado.visible = false
-    command3.visible = false
-else
-    guerra.visible = true
-    aliado.visible = true
-    command3.visible = true
-end if
-
-nombre.caption = "nombre:" & readfield(1, buffer, asc("�"))
-fundador.caption = "fundador:" & readfield(2, buffer, asc("�"))
-creacion.caption = "fecha de creacion:" & readfield(3, buffer, asc("�"))
-lider.caption = "lider:" & readfield(4, buffer, asc("�"))
-web.caption = "web site:" & readfield(5, buffer, asc("�"))
-miembros.caption = "miembros:" & readfield(6, buffer, asc("�"))
-eleccion.caption = "dias para proxima eleccion de lider:" & readfield(7, buffer, asc("�"))
-'oro.caption = "oro:" & readfield(8, buffer, asc("�"))
-lblalineacion.caption = "alineaci�n: " & readfield(8, buffer, asc("�"))
-enemigos.caption = "clanes enemigos:" & readfield(9, buffer, asc("�"))
-aliados.caption = "clanes aliados:" & readfield(10, buffer, asc("�"))
-antifaccion.caption = "puntos antifaccion: " & readfield(11, buffer, asc("�"))
-
-dim t as long
-
-for t = 1 to 8
-    codex(t - 1).caption = readfield(11 + t, buffer, asc("�"))
-next t
-
-dim des as string
-
-des = readfield(20, buffer, asc("�"))
-desc.text = replace(des, "�", vbcrlf)
-
-me.show vbmodal, frmmain
-
-end sub
-
 private sub aliado_click()
-frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
-frmcommet.t = alianza
-frmcommet.caption = "ingrese propuesta de alianza"
-call frmcommet.show(vbmodal, frmguildbrief)
-
-'call senddata("ofrecali" & right(nombre, len(nombre) - 7))
-'unload me
+    frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
+    frmcommet.t = tipo.alianza
+    frmcommet.caption = "ingrese propuesta de alianza"
+    call frmcommet.show(vbmodal, frmguildbrief)
 end sub
 
 private sub command1_click()
-unload me
+    unload me
 end sub
 
 private sub command2_click()
-
-call frmguildsol.recievesolicitud(right$(nombre, len(nombre) - 7))
-call frmguildsol.show(vbmodal, frmguildbrief)
-'unload me
-
+    call frmguildsol.recievesolicitud(right$(nombre, len(nombre) - 7))
+    call frmguildsol.show(vbmodal, frmguildbrief)
 end sub
 
 private sub command3_click()
-frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
-frmcommet.t = paz
-frmcommet.caption = "ingrese propuesta de paz"
-call frmcommet.show(vbmodal, frmguildbrief)
-'unload me
+    frmcommet.nombre = right(nombre.caption, len(nombre.caption) - 7)
+    frmcommet.t = tipo.paz
+    frmcommet.caption = "ingrese propuesta de paz"
+    call frmcommet.show(vbmodal, frmguildbrief)
 end sub
 
-
 private sub guerra_click()
-call senddata("decguerr" & right(nombre.caption, len(nombre.caption) - 7))
-unload me
+    call writeguilddeclarewar(right(nombre.caption, len(nombre.caption) - 7))
+    unload me
 end sub

@@ -109,7 +109,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -117,18 +117,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -194,21 +192,21 @@ private sub image1_click(index as integer)
 
 call audio.playwave(snd_click)
 
-
-
 select case index
     case 0
        
 #if usarwrench = 1 then
-        if frmmain.socket1.connected then frmmain.socket1.disconnect
-#else
-        if frmmain.winsock1.state <> sckclosed then _
-            frmmain.winsock1.close
-#end if
-        if frmconnect.mousepointer = 11 then
-            exit sub
+        if frmmain.socket1.connected then
+            frmmain.socket1.disconnect
+            frmmain.socket1.cleanup
+            doevents
         end if
-        
+#else
+        if frmmain.winsock1.state <> sckclosed then
+            frmmain.winsock1.close
+            doevents
+        end if
+#end if
         
         'update user info
         username = nametxt.text
@@ -221,16 +219,13 @@ select case index
         userpassword = aux
 #end if
         if checkuserdata(false) = true then
-            'sendnewchar = false
             estadologin = normal
-            me.mousepointer = 11
+            
 #if usarwrench = 1 then
-            frmmain.socket1.hostaddress = curserverip
+            frmmain.socket1.hostname = curserverip
             frmmain.socket1.remoteport = curserverport
             frmmain.socket1.connect
 #else
-            if frmmain.winsock1.state <> sckclosed then _
-                frmmain.winsock1.close
             frmmain.winsock1.connect curserverip, curserverport
 #end if
         end if

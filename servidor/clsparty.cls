@@ -11,6 +11,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
+'**************************************************************
+' clsparty.cls
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private p_members(1 to party_maxmembers) as tpartymember
@@ -79,7 +98,7 @@ for i = 1 to party_maxmembers
                     if userlist(ui).stats.exp > maxexp then _
                         userlist(ui).stats.exp = maxexp
                     call checkuserlevel(ui)
-                    call senduserstatsbox(ui)
+                    call writeupdateuserstats(ui)
                 end if
             end if
         end if
@@ -94,7 +113,7 @@ dim i as integer
 
 for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
-        call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| [" & sender & "] " & texto & fonttype_party)
+        call writeconsolemsg(p_members(i).userindex, " [" & sender & "] " & texto, fonttypenames.fonttype_party)
     end if
 next i
 
@@ -138,18 +157,19 @@ if i = 1 then
     call mandarmensajeaconsola("el lider disuelve la party.", "servidor")
     for j = party_maxmembers to 1 step -1
         if p_members(j).userindex > 0 then
-            call senddata(sendtarget.toindex, p_members(j).userindex, 0, "|| abandonas la party liderada por " & userlist(p_members(1).userindex).name & fonttype_party)
+            
+            call writeconsolemsg(p_members(j).userindex, " abandonas la party liderada por " & userlist(p_members(1).userindex).name, fonttypenames.fonttype_party)
     
-            call senddata(sendtarget.toindex, p_members(j).userindex, 0, "|| durante la misma has conseguido " & p_members(j).experiencia & " puntos de experiencia!" & fonttype_party)
+            call writeconsolemsg(p_members(j).userindex, " durante la misma has conseguido " & p_members(j).experiencia & " puntos de experiencia!", fonttypenames.fonttype_party)
     
             if not party_experienciaporgolpe then
                 userlist(p_members(j).userindex).stats.exp = userlist(p_members(j).userindex).stats.exp + p_members(j).experiencia
                 if userlist(p_members(j).userindex).stats.exp > maxexp then _
                     userlist(p_members(j).userindex).stats.exp = maxexp
                 call checkuserlevel(p_members(j).userindex)
-                call senduserstatsbox(p_members(j).userindex)
+                call writeupdateuserstats(p_members(j).userindex)
             end if
-            call mandarmensajeaconsola(userlist(p_members(j).userindex).name & " abandona la party." & fonttype_party, "servidor")
+            call mandarmensajeaconsola(userlist(p_members(j).userindex).name & " abandona la party.", "servidor")
             userlist(p_members(j).userindex).partyindex = 0
             p_cantmiembros = p_cantmiembros - 1
             p_members(j).userindex = 0
@@ -163,10 +183,11 @@ else
             if userlist(p_members(i).userindex).stats.exp > maxexp then _
                 userlist(p_members(i).userindex).stats.exp = maxexp
             call checkuserlevel(p_members(i).userindex)
-            call senduserstatsbox(p_members(i).userindex)
+            call writeupdateuserstats(p_members(i).userindex)
         end if
-        call mandarmensajeaconsola(userlist(p_members(i).userindex).name & " abandona la party." & fonttype_party, "servidor")
-        call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| durante la misma has conseguido " & p_members(i).experiencia & " puntos de experiencia!" & fonttype_party)
+        call mandarmensajeaconsola(userlist(p_members(i).userindex).name & " abandona la party.", "servidor")
+        'todo: revisar que esto este bien, y no este faltando/sobrando un mensaje, ahora solo los estoy corrigiendo
+        call writeconsolemsg(p_members(i).userindex, " durante la misma has conseguido " & p_members(i).experiencia & " puntos de experiencia!", fonttypenames.fonttype_party)
         p_cantmiembros = p_cantmiembros - 1
         p_members(i).userindex = 0
         p_members(i).experiencia = 0
@@ -189,12 +210,12 @@ for i = 1 to party_maxmembers
     if p_members(i).userindex > 0 then
         if p_members(i).userindex = userindex then
             userindexindex = i
-            exit for
-        end if
-        'chequeo la dif entre levels
-        if abs(userlist(userindex).stats.elv - userlist(p_members(i).userindex).stats.elv) > maxpartydeltalevel then
-            call senddata(sendtarget.toindex, p_members(i).userindex, 0, "|| no se puede hacer l�der a " & userlist(userindex).name & " pues la diferencia entre niveles de los miembros de la party ser�a mayor a " & maxpartydeltalevel & fonttype_party)
-            hacerleader = false
+        else
+            'chequeo la dif entre levels
+            if abs(cint(userlist(userindex).stats.elv) - cint(userlist(p_members(i).userindex).stats.elv)) > maxpartydeltalevel then
+                call writeconsolemsg(p_members(i).userindex, "no se puede hacer l�der a " & userlist(userindex).name & " pues la diferencia entre niveles de los miembros de la party ser�a mayor a " & maxpartydeltalevel, fonttypenames.fonttype_party)
+                hacerleader = false
+            end if
         end if
     end if
 next i
@@ -204,7 +225,7 @@ if not hacerleader then exit function
 if userindexindex = 0 then
     'catastrofe! esto no deberia pasar nunca! pero como es ao.... :p
     call logerror("inconsistencia de parties")
-    call senddata(sendtarget.toadmins, 0, 0, "|| inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!")
+    call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(" inconsistencia de parties en hacerleader (uii = 0), avise a un programador esto es una catastrofe!!!!", fonttypenames.fonttype_guild))
     hacerleader = false
     exit function
 end if
@@ -217,8 +238,8 @@ oldexp = p_members(1).experiencia
 p_members(1).userindex = p_members(userindexindex).userindex     'que en realdiad es el userindex, pero no quiero inconsistencias moviendo experiencias
 p_members(1).experiencia = p_members(userindexindex).experiencia
 
-p_members(i).userindex = oldleader
-p_members(i).experiencia = oldexp
+p_members(userindexindex).userindex = oldleader
+p_members(userindexindex).experiencia = oldexp
 
 p_fundador = p_members(1).userindex
 
@@ -285,7 +306,7 @@ if rv then
                     rv = false
                 end if
                 'diferencia entre niveles
-                if abs(userlist(ui).stats.elv - userlist(userindex).stats.elv) > maxpartydeltalevel then
+                if abs(cint(userlist(ui).stats.elv) - cint(userlist(userindex).stats.elv)) > maxpartydeltalevel then
                     razon = "la diferencia con " & userlist(ui).name & " es mayor a " & maxpartydeltalevel & " niveles."
                     rv = false
                 end if
@@ -326,7 +347,7 @@ if not party_experienciaporgolpe then   'esto sirve solo cuando acumulamos la ex
                 end if
             end if
             p_members(i).experiencia = 0
-            call senduserstatsbox(p_members(i).userindex)
+            call writeupdateuserstats(p_members(i).userindex)
         end if
     next i
 end if

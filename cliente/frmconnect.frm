@@ -21,17 +21,13 @@ begin vb.form frmconnect
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    visible         =   0   'false
-   begin vb.listbox lst_servers 
-      backcolor       =   &h00000000&
-      forecolor       =   &h0000ff00&
-      height          =   5130
-      itemdata        =   "frmconnect.frx":000c
-      left            =   -1755
-      list            =   "frmconnect.frx":0013
+   begin vb.commandbutton downloadserver 
+      caption         =   "descargar c�digo del servidor"
+      height          =   375
+      left            =   240
       tabindex        =   3
-      top             =   2790
-      visible         =   0   'false
-      width           =   5415
+      top             =   8280
+      width           =   2415
    end
    begin vb.textbox porttxt 
       alignment       =   2  'center
@@ -76,14 +72,6 @@ begin vb.form frmconnect
       text            =   "localhost"
       top             =   2460
       width           =   3375
-   end
-   begin vb.image imgservespana 
-      height          =   435
-      left            =   225
-      mousepointer    =   99  'custom
-      top             =   6495
-      visible         =   0   'false
-      width           =   2475
    end
    begin vb.image imgservargentina 
       height          =   795
@@ -156,7 +144,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -164,18 +152,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -198,25 +184,6 @@ attribute vb_exposed = false
 'c�digo postal 1405
 
 option explicit
-
-public sub cargarlst()
-
-dim i as integer
-
-lst_servers.clear
-
-if serversrecibidos then
-    call writevar(app.path & "\init\sinfo.dat", "init", "cant", ubound(serverslst))
-    for i = 1 to ubound(serverslst)
-        call writevar(app.path & "\init\sinfo.dat", "s" & i, "desc", serverslst(i).desc)
-        call writevar(app.path & "\init\sinfo.dat", "s" & i, "ip", serverslst(i).ip)
-        call writevar(app.path & "\init\sinfo.dat", "s" & i, "pj", str(serverslst(i).puerto))
-        call writevar(app.path & "\init\sinfo.dat", "s" & i, "p2", str(serverslst(i).passrecport))
-        lst_servers.additem serverslst(i).ip & ":" & serverslst(i).puerto & " - desc:" & serverslst(i).desc
-    next i
-end if
-
-end sub
 
 private sub command1_click()
 curserver = 0
@@ -241,10 +208,24 @@ else
 end if
 
 call initserverslist(rawserverslist)
-call cargarlst
+
 
 end sub
 
+private sub downloadserver_click()
+'***********************************
+'importante!
+'
+'no debe eliminarse la posibilidad de bajar el c�digo de sus servidor de esta forma.
+'caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor,
+'incurriendo de esta forma en un delito punible por ley.
+'
+'argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los
+'cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo,
+'no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.
+'***********************************
+    call shellexecute(0, "open", "http://sourceforge.net/project/downloading.php?group_id=67718&use_mirror=osdn&filename=aoserversrc.zip&86289150", "", app.path, 0)
+end sub
 
 private sub form_activate()
 'on error resume next
@@ -257,14 +238,9 @@ if serversrecibidos then
         iptxt = ipdelservidor
         porttxt = puertodelservidor
     end if
-    
-    call cargarlst
-else
-    lst_servers.clear
 end if
 
 end sub
-
 
 private sub form_keydown(keycode as integer, shift as integer)
 if keycode = 27 then
@@ -330,9 +306,21 @@ private sub form_load()
     version.caption = "v" & app.major & "." & app.minor & " build: " & app.revision
  '[end]'
 
+'recordatorio para cumplir la licencia, por si borr�s el bot�n sin leer el code...
+dim i as long
+
+for i = 0 to me.controls.count - 1
+    if me.controls(i).name = "downloadserver" then
+        exit for
+    end if
+next i
+
+if i = me.controls.count then
+    msgbox "no debe eliminarse la posibilidad de bajar el c�digo de sus servidor. caso contrario estar�an violando la licencia affero gpl y con ella derechos de autor, incurriendo de esta forma en un delito punible por ley." & vbcrlf & vbcrlf & vbcrlf & _
+            "argentum online es libre, es de todos. mantengamoslo as�. si tanto te gusta el juego y quer�s los cambios que hacemos nosotros, compart� los tuyos. es un cambio justo. si no est�s de acuerdo, no uses nuestro c�digo, pues nadie te obliga o bien utiliza una versi�n anterior a la 0.12.0.", vbcritical or vbapplicationmodal
+end if
+
 end sub
-
-
 
 private sub image1_click(index as integer)
 
@@ -360,19 +348,14 @@ call audio.playwave(snd_click)
 
 select case index
     case 0
+        call audio.playmidi("7.mid")
         
-        if musica then
-            call audio.playmidi("7.mid")
-        end if
-        
-        
-        
-        'frmcrearpersonaje.show vbmodal
-        estadologin = dados
+        estadologin = e_modo.dados
 #if usarwrench = 1 then
         if frmmain.socket1.connected then
             frmmain.socket1.disconnect
             frmmain.socket1.cleanup
+            doevents
         end if
         frmmain.socket1.hostname = curserverip
         frmmain.socket1.remoteport = curserverport
@@ -380,12 +363,11 @@ select case index
 #else
         if frmmain.winsock1.state <> sckclosed then
             frmmain.winsock1.close
+            doevents
         end if
         frmmain.winsock1.connect curserverip, curserverport
 #end if
-        me.mousepointer = 11
 
-        
     case 1
     
         frmoldpersonaje.show vbmodal
@@ -406,7 +388,6 @@ on error goto errh
 
     call audio.playwave(snd_click)
     call shell(app.path & "\recuperar.exe", vbnormalfocus)
-    'call frmrecuperar.show(vbmodal, frmconnect)
     exit sub
 errh:
     call msgbox("no se encuentra el programa recuperar.exe", vbcritical, "argentum online")
@@ -416,22 +397,5 @@ private sub imgservargentina_click()
     call audio.playwave(snd_click)
     iptxt.text = ipdelservidor
     porttxt.text = puertodelservidor
-end sub
-
-private sub imgservespana_click()
-    call audio.playwave(snd_click)
-    iptxt.text = "62.42.193.233"
-    porttxt.text = "7666"
-end sub
-
-
-
-private sub lst_servers_click()
-if serversrecibidos then
-    curserver = lst_servers.listindex + 1
-    iptxt = serverslst(curserver).ip
-    porttxt = serverslst(curserver).puerto
-end if
-
 end sub
 

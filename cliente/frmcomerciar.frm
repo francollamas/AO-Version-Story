@@ -200,7 +200,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -208,18 +208,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -238,18 +236,9 @@ attribute vb_exposed = false
 
 option explicit
 
-'[code]:matux
-'
-'    le puse el iconito de la manito a los botones ^_^ y
-'   le puse borde a la ventana.
-'
-'[end]'
-
-'<-------------------------nuevo-------------------------->
-'<-------------------------nuevo-------------------------->
-'<-------------------------nuevo-------------------------->
 public lastindex1 as integer
 public lastindex2 as integer
+public lasactionbuy as boolean
 
 private sub cantidad_change()
     if val(cantidad.text) < 1 then
@@ -270,15 +259,8 @@ end if
 end sub
 
 private sub command2_click()
-senddata ("fincom")
+    call writecommerceend
 end sub
-
-
-
-private sub form_deactivate()
-'me.setfocus
-end sub
-
 
 private sub form_load()
 'cargamos la interfase
@@ -287,7 +269,6 @@ image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
 image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
 
 end sub
-
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
 if image1(0).tag = 0 then
@@ -304,32 +285,33 @@ private sub image1_click(index as integer)
 
 call audio.playwave(snd_click)
 
-if list1(index).list(list1(index).listindex) = "nada" or _
+if list1(index).list(list1(index).listindex) = "" or _
    list1(index).listindex < 0 then exit sub
 
 select case index
     case 0
         frmcomerciar.list1(0).setfocus
         lastindex1 = list1(0).listindex
+        lasactionbuy = true
         if usergld >= npcinventory(list1(0).listindex + 1).valor * val(cantidad) then
-                senddata ("comp" & "," & list1(0).listindex + 1 & "," & cantidad.text)
-                
+            call writecommercebuy(list1(0).listindex + 1, cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no ten�s suficiente oro.", 2, 51, 223, 1, 1
             exit sub
         end if
+   
    case 1
         lastindex2 = list1(1).listindex
+        lasactionbuy = false
         if not inventario.equipped(list1(1).listindex + 1) then
-            senddata ("vend" & "," & list1(1).listindex + 1 & "," & cantidad.text)
+            call writecommercesell(list1(1).listindex + 1, cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no podes vender el item porque lo estas usando.", 2, 51, 223, 1, 1
             exit sub
         end if
-                
 end select
-list1(0).clear
 
+list1(0).clear
 list1(1).clear
 
 npcinvdim = 0
@@ -374,38 +356,58 @@ select case index
         label1(0).caption = npcinventory(list1(0).listindex + 1).name
         label1(1).caption = npcinventory(list1(0).listindex + 1).valor
         label1(2).caption = npcinventory(list1(0).listindex + 1).amount
+        
         select case npcinventory(list1(0).listindex + 1).objtype
-            case 2
+            case eobjtype.otweapon
                 label1(3).caption = "max golpe:" & npcinventory(list1(0).listindex + 1).maxhit
                 label1(4).caption = "min golpe:" & npcinventory(list1(0).listindex + 1).minhit
                 label1(3).visible = true
                 label1(4).visible = true
-            case 3
+            case eobjtype.otarmadura
                 label1(3).visible = false
                 label1(4).caption = "defensa:" & npcinventory(list1(0).listindex + 1).def
                 label1(4).visible = true
+            case else
+                label1(3).visible = false
+                label1(4).visible = false
         end select
+        
         call drawgrhtohdc(picture1.hwnd, picture1.hdc, npcinventory(list1(0).listindex + 1).grhindex, sr, dr)
+    
     case 1
         label1(0).caption = inventario.itemname(list1(1).listindex + 1)
         label1(1).caption = inventario.valor(list1(1).listindex + 1)
         label1(2).caption = inventario.amount(list1(1).listindex + 1)
+        
         select case inventario.objtype(list1(1).listindex + 1)
-            case 2
+            case eobjtype.otweapon
                 label1(3).caption = "max golpe:" & inventario.maxhit(list1(1).listindex + 1)
                 label1(4).caption = "min golpe:" & inventario.minhit(list1(1).listindex + 1)
                 label1(3).visible = true
                 label1(4).visible = true
-            case 3
+            case eobjtype.otarmadura
                 label1(3).visible = false
                 label1(4).caption = "defensa:" & inventario.def(list1(1).listindex + 1)
                 label1(4).visible = true
+            case else
+                label1(3).visible = false
+                label1(4).visible = false
         end select
+        
         call drawgrhtohdc(picture1.hwnd, picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
 end select
-picture1.refresh
+
+if label1(2).caption = 0 then ' 27/08/2006 - gs > no mostrar imagen ni nada, cuando no ahi nada que mostrar.
+    label1(3).visible = false
+    label1(4).visible = false
+    picture1.visible = false
+else
+    picture1.visible = true
+    picture1.refresh
+end if
 
 end sub
+
 '<-------------------------nuevo-------------------------->
 '<-------------------------nuevo-------------------------->
 '<-------------------------nuevo-------------------------->

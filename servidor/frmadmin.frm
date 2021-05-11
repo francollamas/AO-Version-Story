@@ -75,6 +75,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'**************************************************************
+' frmadmin.frm
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 private sub cbopjs_change()
@@ -90,7 +109,7 @@ dim tindex as long
 
 tindex = nameindex(cbopjs.text)
 if tindex > 0 then
-    call senddata(sendtarget.toall, 0, 0, "||servidor> " & userlist(tindex).name & " ha sido hechado. " & fonttype_server)
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> " & userlist(tindex).name & " ha sido hechado. ", fonttypenames.fonttype_server))
     call closesocket(tindex)
 end if
 
@@ -104,7 +123,7 @@ with cbopjs
     
     for loopc = 1 to lastuser
         if userlist(loopc).flags.userlogged and userlist(loopc).connid >= 0 and userlist(loopc).connidvalida then
-            if userlist(loopc).flags.privilegios = playertype.user then
+            if userlist(loopc).flags.privilegios and playertype.user then
                 .additem userlist(loopc).name
                 .itemdata(.newindex) = loopc
             end if
@@ -130,7 +149,7 @@ dim tindex as long
 tindex = nameindex(cbopjs.text)
 if tindex > 0 then
     with userlist(tindex)
-        text1.text = .colasalida.count & " elementos en cola." & vbcrlf
+        text1.text = .outgoingdata.length & " elementos en cola." & vbcrlf
     end with
 end if
 

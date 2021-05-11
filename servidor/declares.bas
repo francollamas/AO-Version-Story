@@ -1,20 +1,18 @@
 attribute vb_name = "declaraciones"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -37,7 +35,6 @@ option explicit
 
 public mixedkey as long
 public serverip as string
-public crcsubkey as string
 
 type testadisticasdiarias
     segundos as double
@@ -56,12 +53,21 @@ public trashcollector as new collection
 
 
 public const maxspawnattemps = 60
-public const maxusermatados = 9000000
 public const loopadeternum = 999
 public const fxsangre = 14
 
+''
+' the color of chats over head of dead characters.
+public const chat_color_dead_char as long = &hc0c0c0
+
+''
+' the color of yells made by any kind of game administrator.
+public const chat_color_gm_yell as long = &hf82ff
+
 
 public const ifragatafantasmal = 87
+public const ifragatareal = 190
+public const ifragatacaos = 189
 
 public enum iminerales
     hierrocrudo = 192
@@ -79,11 +85,63 @@ public type tllamadagm
 end type
 
 public enum playertype
-    user = 0
-    consejero = 1
-    semidios = 2
-    dios = 3
-    admin = 4
+    user = &h1
+    consejero = &h2
+    semidios = &h4
+    dios = &h8
+    admin = &h10
+    rolemaster = &h20
+    chaoscouncil = &h40
+    royalcouncil = &h80
+end enum
+
+public enum eclass
+    mage = 1       'mago
+    cleric      'cl�rigo
+    warrior     'guerrero
+    assasin     'asesino
+    thief       'ladr�n
+    bard        'bardo
+    druid       'druida
+    bandit      'bandido
+    paladin     'palad�n
+    hunter      'cazador
+    fisher      'pescador
+    blacksmith  'herrero
+    lumberjack  'le�ador
+    miner       'minero
+    carpenter   'carpintero
+    pirat       'pirata
+end enum
+
+public enum eciudad
+    cullathorpe = 1
+    cnix
+    cbanderbill
+    clindos
+    carghal
+end enum
+
+public enum eraza
+    humano = 1
+    elfo
+    elfooscuro
+    gnomo
+    enano
+end enum
+
+enum egenero
+    hombre = 1
+    mujer
+end enum
+
+public enum eclantype
+    ct_royalarmy
+    ct_evil
+    ct_neutral
+    ct_gm
+    ct_legal
+    ct_criminal
 end enum
 
 public const limitenewbie as byte = 12
@@ -97,7 +155,7 @@ end type
 public micabecera as tcabecera
 
 'barrin 3/10/03
-public const tiempo_iniciomeditar as byte = 3
+public const tiempo_iniciomeditar as integer = 3000
 
 public const ningunescudo as integer = 2
 public const ninguncasco as integer = 2
@@ -177,8 +235,6 @@ public enum tipohechizo
     uinvocacion = 4
 end enum
 
-public const dragon as integer = 6
-
 public const max_mensajes_foro as byte = 35
 
 public const maxuserhechizos as byte = 35
@@ -211,6 +267,8 @@ public const guardias as integer = 6
 public const maxrep as long = 6000000
 public const maxoro as long = 90000000
 public const maxexp as long = 99999999
+
+public const maxusermatados as long = 65000
 
 public const maxatributos as byte = 38
 public const minatributos as byte = 6
@@ -245,8 +303,11 @@ public enum enpctype
     guardiareal = 2
     entrenador = 3
     banquero = 4
+    noble = 5
+    dragon = 6
     timbero = 7
     guardiascaos = 8
+    resucitadornewbie = 9
 end enum
 
 public const min_apu�alar as byte = 10
@@ -263,7 +324,7 @@ public const numatributos as byte = 5
 
 ''
 ' cantidad de clases
-public const numclases as byte = 17
+public const numclases as byte = 16
 
 ''
 ' cantidad de razas
@@ -273,10 +334,6 @@ public const numrazas as byte = 5
 ''
 ' valor maximo de cada skill
 public const maxskillpoints as byte = 100
-
-''
-' constante para indicar que se esta usando oro
-public const flagoro as integer = 777
 
 ''
 'direccion
@@ -341,7 +398,7 @@ public enum eskill
     liderazgo = 17
     domar = 18
     proyectiles = 19
-    wresterling = 20
+    wrestling = 20
     navegacion = 21
 end enum
 
@@ -412,6 +469,11 @@ public const max_inventory_objs as integer = 10000
 ' cantidad de "slots" en el inventario
 public const max_inventory_slots as byte = 20
 
+''
+' constante para indicar que se esta usando oro
+public const flagoro as integer = max_inventory_slots + 1
+
+
 ' categorias principales
 public enum eobjtype
     otuseonce = 1
@@ -430,7 +492,7 @@ public enum eobjtype
     otfogata = 15
     otescudo = 16
     otcasco = 17
-    otherramientas = 18
+    otanillo = 18
     otteleport = 19
     otyacimiento = 22
     otminerales = 23
@@ -465,10 +527,10 @@ public const fonttype_consejocaosvesa as string = "~255~50~0~1~0"
 public const fonttype_centinela as string = "~0~255~0~1~0"
 
 'estadisticas
-public const stat_maxelv as byte = 99
+public const stat_maxelv as byte = 255
 public const stat_maxhp as integer = 999
 public const stat_maxsta as integer = 999
-public const stat_maxman as integer = 2000
+public const stat_maxman as integer = 9999
 public const stat_maxhit_under36 as byte = 99
 public const stat_maxhit_over36 as integer = 999
 public const stat_maxdef as byte = 99
@@ -490,7 +552,7 @@ public type thechizo
     targetmsg as string
     propiomsg as string
     
-    resis as byte
+'    resis as byte
     
     tipo as tipohechizo
     
@@ -550,9 +612,9 @@ public type thechizo
     invoca as byte
     numnpc as integer
     cant as integer
-    
-    materializa as byte
-    itemindex as byte
+
+'    materializa as byte
+'    itemindex as byte
     
     minskill as integer
     manarequerido as integer
@@ -588,8 +650,8 @@ public type inventario
     cascoeqpslot as byte
     municioneqpobjindex as integer
     municioneqpslot as byte
-    herramientaeqpobjindex as integer
-    herramientaeqpslot as integer
+    anilloeqpobjindex as integer
+    anilloeqpslot as byte
     barcoobjindex as integer
     barcoslot as byte
     nroitems as integer
@@ -704,6 +766,11 @@ public type objdata
     indexcerradallave as integer
     
     razaenana as byte
+    razadrow as byte
+    razaelfa as byte
+    razagnoma as byte
+    razahumana as byte
+    
     mujer as byte
     hombre as byte
     
@@ -723,7 +790,7 @@ public type objdata
     texto as string
     
     'clases que no tienen permitido usar este obj
-    claseprohibida(1 to numclases) as string
+    claseprohibida(1 to numclases) as eclass
     
     snd1 as integer
     snd2 as integer
@@ -770,25 +837,23 @@ end type
 '*********************************************************
 
 public type treputacion 'fama del usuario
-    noblerep as double
-    burguesrep as double
-    pleberep as double
-    ladronesrep as double
-    bandidorep as double
-    asesinorep as double
-    promedio as double
+    noblerep as long
+    burguesrep as long
+    pleberep as long
+    ladronesrep as long
+    bandidorep as long
+    asesinorep as long
+    promedio as long
 end type
 
 'estadisticas de los usuarios
 public type userstats
     gld as long 'dinero
     banco as long
-    met as integer
     
     maxhp as integer
     minhp as integer
     
-    fit as integer
     maxsta as integer
     minsta as integer
     maxman as integer
@@ -804,14 +869,14 @@ public type userstats
         
     def as integer
     exp as double
-    elv as long
+    elv as byte
     elu as long
-    userskills(1 to numskills) as integer
-    useratributos(1 to numatributos) as integer
-    useratributosbackup(1 to numatributos) as integer
+    userskills(1 to numskills) as byte
+    useratributos(1 to numatributos) as byte
+    useratributosbackup(1 to numatributos) as byte
     userhechizos(1 to maxuserhechizos) as integer
-    usuariosmatados as integer
-    criminalesmatados as integer
+    usuariosmatados as long
+    criminalesmatados as long
     npcsmuertos as integer
     
     skillpts as integer
@@ -875,10 +940,10 @@ public type userflags
     
     atacadopornpc as integer
     atacadoporuser as integer
+    npcatacado as integer
     
     statschanged as byte
     privilegios as playertype
-    esrolesmaster as boolean
     
     valcode as integer
     
@@ -888,6 +953,9 @@ public type userflags
     oldbody as integer
     oldhead as integer
     admininvisible as byte
+    adminperseguible as boolean
+    
+    chatcolor as long
     
     '[el oso]
     md5reportado as string
@@ -904,8 +972,6 @@ public type userflags
     '[/cdt]
     
     noactualizado as boolean
-    pertalcons as byte
-    pertalconscaos as byte
     
     silenciado as byte
     
@@ -920,13 +986,17 @@ public type usercounters
     hpcounter as integer
     stacounter as integer
     frio as integer
+    lava as integer
     comcounter as integer
     aguacounter as integer
     veneno as integer
     paralisis as integer
     ceguera as integer
     estupidez as integer
+    
     invisibilidad as integer
+    tiempooculto as integer
+    
     mimetismo as integer
     piquetec as long
     pena as long
@@ -944,18 +1014,23 @@ public type usercounters
     
     timerlanzarspell as long
     timerpuedeatacar as long
+    timerpuedeusararco as long
     timerpuedetrabajar as long
     timerusar as long
+    timermagiagolpe as long
+    timergolpemagia as long
+    
     
     trabajando as long  ' para el centinela
     ocultando as long   ' unico trabajo no revisado por el centinela
 end type
 
+'cosas faccionarias.
 public type tfacciones
     armadareal as byte
     fuerzascaos as byte
-    criminalesmatados as double
-    ciudadanosmatados as double
+    criminalesmatados as long
+    ciudadanosmatados as long
     recompensasreal as long
     recompensascaos as long
     recibioexpinicialreal as byte
@@ -963,6 +1038,10 @@ public type tfacciones
     recibioarmadurareal as byte
     recibioarmaduracaos as byte
     reenlistadas as byte
+    nivelingreso as integer
+    fechaingreso as string
+    matadosingreso as integer 'para armadas nada mas
+    nextrecompensa as integer
 end type
 
 'tipo de los usuarios
@@ -973,7 +1052,6 @@ public type user
     showname as boolean 'permite que los gms oculten su nick con el comando /showname
     
     modname as string
-    password as string
     
     char as char 'define la apariencia
     charmimetizado as char
@@ -982,11 +1060,11 @@ public type user
     desc as string ' descripcion
     descrm as string
     
-    clase as string
-    raza as string
-    genero as string
+    clase as eclass
+    raza as eraza
+    genero as egenero
     email as string
-    hogar as string
+    hogar as eciudad
         
     invent as inventario
     
@@ -994,11 +1072,6 @@ public type user
     
     connidvalida as boolean
     connid as long 'id
-    rdbuffer as string 'buffer roto
-    
-    commandsbuffer as new ccolaarray
-    colasalida as new collection
-    sockpuedoenviar as boolean
     
     '[kevin]
     bancoinvent as bancoinventario
@@ -1020,10 +1093,15 @@ public type user
     
     faccion as tfacciones
     
-    prevchecksum as long
-    packetnumber as long
-    randkey as long
-    
+#if seguridadalkon then
+    security as securitydata
+#end if
+
+#if conuptime then
+    logontime as date
+    uptime as long
+#end if
+
     ip as string
     
      '[alejo]
@@ -1042,6 +1120,10 @@ public type user
     keycrypt as integer
     
     areasinfo as areainfo
+    
+    'outgoing and incoming messages
+    outgoingdata as clsbytequeue
+    incomingdata as clsbytequeue
 end type
 
 
@@ -1097,6 +1179,7 @@ public type npcflags
     sound as integer
     attacking as integer
     attackedby as string
+    attackedfirstby as string
     category1 as string
     category2 as string
     category3 as string
@@ -1177,7 +1260,6 @@ public type npc
     poderataque as long
     poderevasion as long
 
-    inflacion as long
 
     giveexp as long
     givegld as long
@@ -1233,6 +1315,8 @@ type mapinfo
     pk as boolean
     magiasinefecto as byte
     noencriptarmp as byte
+    invisinefecto as byte
+    resusinefecto as byte
     
     terreno as string
     zona as string
@@ -1249,9 +1333,6 @@ public backup as boolean ' todo: se usa esta variable ?
 public listarazas(1 to numrazas) as string
 public skillsnames(1 to numskills) as string
 public listaclases(1 to numclases) as string
-
-public const endl as string * 2 = vbcrlf
-public const endc as string * 1 = vbnullchar
 
 public recordusuarios as long
 
@@ -1325,11 +1406,11 @@ public encriptarprotocoloscriticos as boolean
 
 '*****************arrays publicos*************************
 public userlist() as user 'usuarios
-public npclist() as npc 'npcs
+public npclist(1 to maxnpcs) as npc 'npcs
 public mapdata() as mapblock
 public mapinfo() as mapinfo
 public hechizos() as thechizo
-public charlist() as integer
+public charlist(1 to maxchars) as integer
 public objdata() as objdata
 public fx() as fxdata
 public spawnlist() as tcriaturasentrenador
@@ -1340,13 +1421,14 @@ public armadurasherrero() as integer
 public objcarpintero() as integer
 public md5s() as string
 public banips as new collection
-public parties() as clsparty
+public parties(1 to max_parties) as clsparty
 '*********************************************************
 
 public nix as worldpos
 public ullathorpe as worldpos
 public banderbill as worldpos
 public lindos as worldpos
+public arghal as worldpos
 
 public prision as worldpos
 public libertad as worldpos
@@ -1359,6 +1441,8 @@ public declare function gettickcount lib "kernel32" () as long
 
 public declare function writeprivateprofilestring lib "kernel32" alias "writeprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpstring as string, byval lpfilename as string) as long
 public declare function getprivateprofilestring lib "kernel32" alias "getprivateprofilestringa" (byval lpapplicationname as string, byval lpkeyname as any, byval lpdefault as string, byval lpreturnedstring as string, byval nsize as long, byval lpfilename as string) as long
+
+public declare sub zeromemory lib "kernel32.dll" alias "rtlzeromemory" (byref destination as any, byval length as long)
 
 public enum e_objetoscriticos
     manzana = 1

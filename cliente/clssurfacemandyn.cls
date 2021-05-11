@@ -30,7 +30,7 @@ attribute vb_exposed = false
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
 'you should have received a copy of the gnu general public license
 'along with this program; if not, write to the free software
@@ -266,7 +266,7 @@ errhandler:
         end if
     else
         msgbox "un error inesperado ocurri� al intentar cargar el gr�fico " & filepath & ". " & vbcrlf & _
-                "el c�digo de error es " & cstr(err.number) & vbcrlf & "copia este mensaje y notifica a los administradores.", _
+                "el c�digo de error es " & cstr(err.number) & " - " & err.description & vbcrlf & "copia este mensaje y notifica a los administradores.", _
                 vbokonly or vbcritical or vbexclamation, "error"
         end
     end if

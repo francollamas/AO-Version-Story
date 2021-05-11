@@ -1,4 +1,24 @@
 attribute vb_name = "praetorianscoopnpc"
+'**************************************************************
+' praetorianscoopnpc.bas - handles the praeorians npcs.
+'
+' implemented by mariano barrou (el oso)
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 '''''''''''''''''''''''''''''''''''''''''
 '' declaraciones del modulo pretoriano ''
@@ -33,7 +53,9 @@ public const alcoba1_y as integer = 25
 public const alcoba2_x as integer = 67
 public const alcoba2_y as integer = 25
 
-
+'added by nacho
+'cuantos pretorianos vivos quedan. uno por cada alcoba
+public pretorianosvivos(1 to 2) as integer
 
 '/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 '/\/\/\/\/\/\/\/\ modulo de combate pretoriano /\/\/\/\/\/\/\/\/\
@@ -73,6 +95,11 @@ end function
 
 
 sub crearclanpretoriano(byval mapa as integer, byval x as integer, byval y as integer)
+'********************************************************
+'author: el oso
+'inicializa el clan pretoriano.
+'last modify date: 22/6/06: (nacho) seteamos cuantos npcs creamos
+'********************************************************
 on error goto errorh
 
     ''------------------------------------------------------
@@ -95,9 +122,11 @@ on error goto errorh
         case is < 50
             wp.x = alcoba2_x
             wp.y = alcoba2_y
+            pretorianosvivos(2) = 7 'hay 7 + el rey.
         case is >= 50
             wp.x = alcoba1_x
             wp.y = alcoba1_y
+            pretorianosvivos(1) = 7 'hay 7 + el rey.
     end select
     
     telefrag = mapdata(wp.map, wp.x, wp.y).npcindex
@@ -108,7 +137,8 @@ on error goto errorh
         call closestlegalpos(wp, wp2)
         if (legalpos(wp2.map, wp2.x, wp2.y)) then
             ''mover al actual
-            call senddata(sendtarget.tomap, 0, wp2.map, "mp" & npclist(telefrag).char.charindex & "," & wp2.x & "," & wp2.y)
+            
+            call senddata(sendtarget.tonpcarea, telefrag, preparemessagecharactermove(npclist(telefrag).char.charindex, wp2.x, wp2.y))
             'update map and user pos
             mapdata(wp.map, wp.x, wp.y).npcindex = 0
             npclist(telefrag).pos = wp2
@@ -136,6 +166,7 @@ on error goto errorh
     call crearnpc(prcaza_npc, mapa_pretoriano, wp)
     wp.x = wp.x - 4
     call crearnpc(prmago_npc, mapa_pretoriano, wp)
+    
 exit sub
 
 errorh:
@@ -198,7 +229,7 @@ on error goto errorh
             npcalind = mapdata(npcposm, x, y).npcindex  ''por si implementamos algo contra npcs
             pjenind = mapdata(npcposm, x, y).userindex
             if (pjenind > 0) and (npclist(npcind).canattack = 1) then
-                if (userlist(pjenind).flags.invisible = 0 or userlist(pjenind).flags.oculto = 0) and not (userlist(pjenind).flags.muerto = 1) and not userlist(pjenind).flags.admininvisible = 1 then
+                if (userlist(pjenind).flags.invisible = 0 or userlist(pjenind).flags.oculto = 0) and not (userlist(pjenind).flags.muerto = 1) and not userlist(pjenind).flags.admininvisible = 1 and userlist(pjenind).flags.adminperseguible then
                 'todo: borrar los gms
                     if (esmagooclerigo(pjenind)) then
                         ''say no more, atacar a este
@@ -358,7 +389,7 @@ on error goto errorh
     else
         if not (npclist(npcind).invent.barcoslot = 6) then
             npclist(npcind).invent.barcoslot = 6    ''restore wand break counter
-            call senddata(sendtarget.tomap, npcind, npclist(npcind).pos.map, "cfx" & npclist(npcind).char.charindex & "," & 0 & "," & 0)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagecreatefx(npclist(npcind).char.charindex, 0, 0))
         end if
     
         'pick the best target according to the following criteria:
@@ -385,8 +416,8 @@ on error goto errorh
                 pjenind = mapdata(npcposm, x, y).userindex
                 
                 if (pjenind > 0) and (npclist(npcind).canattack = 1) then
-                    if not (userlist(pjenind).flags.muerto = 1) and not (userlist(pjenind).flags.admininvisible = 1) then
-                        if (userlist(pjenind).flags.invisible = 1) then
+                    if not (userlist(pjenind).flags.muerto = 1) and not (userlist(pjenind).flags.admininvisible = 1) and userlist(pjenind).flags.adminperseguible then
+                        if (userlist(pjenind).flags.invisible = 1) or (userlist(pjenind).flags.oculto = 1) then
                             ''usuario invisible, vamos a ver si se la podemos sacar
                             
                             if (randomnumber(1, 100) <= 35) then
@@ -431,11 +462,11 @@ on error goto errorh
     ''case 1 esta "harcodeado" en el doble for
     ''es remover invisibilidades
     case 2          ''apocalipsis rahma na�arak o'al
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�" & hechizos(npclist(npcind).spells(dat_apocalipsis)).palabrasmagicas & "�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(npclist(npcind).spells(dat_apocalipsis)).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
         call npclanzaspellsobreuser2(npcind, besttarget, npclist(npcind).spells(dat_apocalipsis)) ''spell 1 de mago: apocalipsis
     case 3
     
-        call senddata(sendtarget.tomap, npcind, npclist(npcind).pos.map, "cfx" & npclist(npcind).char.charindex & "," & fxids.fxmeditargrande & "," & loopadeternum)
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagecreatefx(npclist(npcind).char.charindex, fxids.fxmeditargrande, loopadeternum))
         ''userlist(userindex).char.fx = fxids.fxmeditargrande
     
         if npclist(npcind).canattack = 1 then
@@ -606,8 +637,8 @@ on error goto errorh
                 end if
 
                 if pjenind > 0 and not haypretorianos then
-                    if not (userlist(pjenind).flags.muerto = 1 or userlist(pjenind).flags.invisible = 1 or userlist(pjenind).flags.oculto = 1 or userlist(pjenind).flags.ceguera = 1) then
-                        ''si no esta muerto o invisible o ciego...
+                    if not (userlist(pjenind).flags.muerto = 1 or userlist(pjenind).flags.invisible = 1 or userlist(pjenind).flags.oculto = 1 or userlist(pjenind).flags.ceguera = 1) and userlist(pjenind).flags.adminperseguible then
+                        ''si no esta muerto o invisible o ciego... o tiene el /ignorando
                         dist = sqr((userlist(pjenind).pos.x - npcposx) ^ 2 + (userlist(pjenind).pos.y - npcposy) ^ 2)
                         if (dist < distbesttarget or besttarget = 0) then
                             besttarget = pjenind
@@ -642,7 +673,7 @@ on error goto errorh
                     ui = mapdata(npos.map, npos.x, npos.y).userindex
                     if ui > 0 then
                         if npcatacauser(npcind, ui) then
-                            call changenpcchar(sendtarget.tomap, 0, npos.map, npcind, npclist(npcind).char.body, npclist(npcind).char.head, headingloop)
+                            call changenpcchar(npcind, npclist(npcind).char.body, npclist(npcind).char.head, headingloop)
                         end if
                         
                         ''special speed ability for praetorian king ---------
@@ -697,7 +728,7 @@ on error goto errorh
         for y = npcposy - 7 to npcposy + 7
             pjenind = mapdata(npcposm, x, y).userindex
             if (pjenind > 0) then
-                if (not (userlist(pjenind).flags.invisible = 1 or userlist(pjenind).flags.oculto = 1 or userlist(pjenind).flags.muerto = 1)) and esalcanzable(npcind, pjenind) then
+                if (not (userlist(pjenind).flags.invisible = 1 or userlist(pjenind).flags.oculto = 1 or userlist(pjenind).flags.muerto = 1)) and esalcanzable(npcind, pjenind) and userlist(pjenind).flags.adminperseguible then
                     ''caluclo la distancia al pj, si esta mas cerca q el actual
                     ''mejor besttarget entonces ataco a ese.
                     if (besttarget > 0) then
@@ -741,7 +772,7 @@ for headingloop = eheading.north to eheading.west
         if ui > 0 then
             if not (userlist(ui).flags.muerto = 1) then
                 if npcatacauser(npcind, ui) then
-                    call changenpcchar(sendtarget.tomap, 0, npos.map, npcind, npclist(npcind).char.body, npclist(npcind).char.head, headingloop)
+                    call changenpcchar(npcind, npclist(npcind).char.body, npclist(npcind).char.head, headingloop)
                 end if
                 npclist(npcind).canattack = 0
             end if
@@ -840,7 +871,7 @@ on error goto errorh
                         end if
                     end if
                 elseif (pjenind > 0) then ''aggressor
-                    if not (userlist(pjenind).flags.muerto = 1) then
+                    if not (userlist(pjenind).flags.muerto = 1) and userlist(pjenind).flags.adminperseguible then
                         if (userlist(pjenind).flags.paralizado = 0) then
                             if (not (userlist(pjenind).flags.invisible = 1 or userlist(pjenind).flags.oculto = 1)) then
                                 ''pj movil y visible, jeje, si o si es target
@@ -903,11 +934,11 @@ on error goto errorh
         ''fin quehacer = 0 (npc al cuete)
         
     case 1  '' paralizar enemigo pj
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�" & hechizos(npclist(npcind).spells(dat_paralizarpj)).palabrasmagicas & "�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(npclist(npcind).spells(dat_paralizarpj)).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
         call npclanzaspellsobreuser(npcind, besttarget, npclist(npcind).spells(dat_paralizarpj)) ''spell 1 de clerigo es paralizar
         exit sub
     case 2  '' ataque a usuarios (invisibles tambien)
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�" & hechizos(npclist(npcind).spells(dat_tormentaavanzada)).palabrasmagicas & "�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(npclist(npcind).spells(dat_tormentaavanzada)).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
         call npclanzaspellsobreuser2(npcind, besttarget, npclist(npcind).spells(dat_tormentaavanzada)) ''spell 2 de clerigo es vax on tar avanzado
         exit sub
     case 3  '' ataque a mascotas
@@ -983,10 +1014,10 @@ end sub
 function esmagooclerigo(byval pjenind as integer) as boolean
 on error goto errorh
 
-    esmagooclerigo = ucase$(userlist(pjenind).clase) = "mago" or _
-                        ucase$(userlist(pjenind).clase) = "clerigo" or _
-                        ucase$(userlist(pjenind).clase) = "druida" or _
-                        ucase$(userlist(pjenind).clase) = "bardo"
+    esmagooclerigo = userlist(pjenind).clase = eclass.mage or _
+                        userlist(pjenind).clase = eclass.cleric or _
+                        userlist(pjenind).clase = eclass.druid or _
+                        userlist(pjenind).clase = eclass.bard
 exit function
 
 errorh:
@@ -999,9 +1030,9 @@ on error goto errorh
     
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcalind, npclist(npcalind).pos.map, "cfx" & npclist(npcalind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcalind, preparemessagecreatefx(npclist(npcalind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
     npclist(npcalind).veneno = 0
     npclist(npcalind).flags.envenenado = 0
 
@@ -1018,9 +1049,9 @@ on error goto errorh
     
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.tonpcarea, npcalind, npclist(npcalind).pos.map, "cfx" & npclist(npcalind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.tonpcarea, npcalind, preparemessagecreatefx(npclist(npcalind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
     
     if (npclist(npcalind).stats.minhp + 5 < npclist(npcalind).stats.maxhp) then
         npclist(npcalind).stats.minhp = npclist(npcalind).stats.minhp + 5
@@ -1042,10 +1073,9 @@ on error goto errorh
     
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.tonpcarea, npcalind, npclist(npcalind).pos.map, "cfx" & npclist(npcalind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.tonpcarea, npcalind, preparemessagecreatefx(npclist(npcalind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
     npclist(npcalind).contadores.paralisis = 0
     npclist(npcalind).flags.paralizado = 0
 exit sub
@@ -1061,12 +1091,10 @@ on error goto errorh
     
     indireccion = npclist(paralizador).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, paralizador, npclist(paralizador).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(paralizador).char.charindex))
-    call senddata(sendtarget.tonpcarea, paralizador, npclist(paralizador).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.tonpcarea, paralizado, npclist(paralizado).pos.map, "cfx" & npclist(paralizado).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    'call senddata(sendtarget.tonpcarea, paralizador, npclist(paralizador).pos.map, "||" & vbcyan & "� hoax mantra �" & str(npclist(paralizador).char.charindex))
-    'call senddata(sendtarget.tonpcarea, paralizador, npclist(paralizador).pos.map, "tw" & hechizos(npclist(paralizador).spells(1)).wav)
-    'call senddata(sendtarget.tonpcarea, paralizado, npclist(paralizado).pos.map, "cfx" & npclist(paralizado).char.charindex & "," & hechizos(npclist(paralizador).spells(1)).fxgrh & "," & hechizos(npclist(paralizador).spells(1)).loops)
+    call senddata(sendtarget.tonpcarea, paralizador, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(paralizador).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, paralizador, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.tonpcarea, paralizado, preparemessagecreatefx(npclist(paralizado).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
+    
     npclist(paralizado).flags.paralizado = 1
     npclist(paralizado).contadores.paralisis = intervaloparalizado * 2
 
@@ -1084,12 +1112,9 @@ on error goto errorh
 
     indireccion = npclist(curador).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, curador, npclist(curador).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(curador).char.charindex))
-    call senddata(sendtarget.tonpcarea, curador, npclist(curador).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.tonpcarea, curado, npclist(curado).pos.map, "cfx" & npclist(curado).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    'call senddata(sendtarget.tonpcarea, curador, npclist(curador).pos.map, "||" & vbcyan & "�en corp sanctis�" & str(npclist(curador).char.charindex))
-    'call senddata(sendtarget.tonpcarea, curador, npclist(curador).pos.map, "tw" & hechizos(npclist(curador).spells(3)).wav)
-    'call senddata(sendtarget.tonpcarea, curado, npclist(curado).pos.map, "cfx" & npclist(curado).char.charindex & "," & hechizos(npclist(curador).spells(3)).fxgrh & "," & hechizos(npclist(curador).spells(3)).loops)
+    call senddata(sendtarget.tonpcarea, curador, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(curador).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, curador, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.tonpcarea, curado, preparemessagecreatefx(npclist(curado).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
     if npclist(curado).stats.minhp + 30 > npclist(curado).stats.maxhp then
         npclist(curado).stats.minhp = npclist(curado).stats.maxhp
     else
@@ -1108,21 +1133,18 @@ on error goto errorh
     
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.topcarea, pjenind, userlist(pjenind).pos.map, "cfx" & userlist(pjenind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�cae xiti̇" & str(npclist(npcind).char.charindex))
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(3).wav)
-    'call senddata(sendtarget.tonpcarea, curado, npclist(curado).pos.map, "cfx" & npclist(curado).char.charindex & "," & hechizos(npclist(curador).spells(3)).fxgrh & "," & hechizos(npclist(curador).spells(3)).loops)
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.topcarea, pjenind, preparemessagecreatefx(userlist(pjenind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
     
     userlist(pjenind).flags.ceguera = 1
     userlist(pjenind).counters.ceguera = intervaloinvisible
     ''envia ceguera
-    call senddata(sendtarget.toindex, pjenind, 0, "cegu")
+    call writeblind(pjenind)
     ''bardea si es el rey
     if npclist(npcind).name = "rey pretoriano" then
-        call senddata(sendtarget.toindex, pjenind, 0, "||el rey pretoriano te ha vuelto ciego " & fonttype_fight)
-        call senddata(sendtarget.toindex, pjenind, 0, "||a la distancia escuchas las siguientes palabras: �cobarde, no eres digno de luchar conmigo si escapas! " & fonttype_veneno)
+        call writeconsolemsg(pjenind, "el rey pretoriano te ha vuelto ciego ", fonttypenames.fonttype_fight)
+        call writeconsolemsg(pjenind, "a la distancia escuchas las siguientes palabras: �cobarde, no eres digno de luchar conmigo si escapas! ", fonttypenames.fonttype_veneno)
     end if
 
 exit sub
@@ -1138,27 +1160,17 @@ on error goto errorh
 
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.topcarea, pjenind, userlist(pjenind).pos.map, "cfx" & userlist(pjenind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�async gam alڰ" & str(npclist(npcind).char.charindex))
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(3).wav)
-    'call senddata(sendtarget.tonpcarea, curado, npclist(curado).pos.map, "cfx" & npclist(curado).char.charindex & "," & hechizos(npclist(curador).spells(3)).fxgrh & "," & hechizos(npclist(curador).spells(3)).loops)
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.topcarea, pjenind, preparemessagecreatefx(userlist(pjenind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
     userlist(pjenind).flags.estupidez = 1
     userlist(pjenind).counters.estupidez = intervaloinvisible
     'manda estupidez
-#if seguridadalkon then
-    if encriptarprotocoloscriticos then
-        call sendcrypteddata(sendtarget.toindex, pjenind, 0, "dumb")
-    else
-#end if
-        call senddata(sendtarget.toindex, pjenind, 0, "dumb")
-#if seguridadalkon then
-    end if
-#end if
+    call writedumb(pjenind)
+
     'bardea si es el rey
     if npclist(npcind).name = "rey pretoriano" then
-        call senddata(sendtarget.toindex, pjenind, 0, "||el rey pretoriano te ha vuelto est�pido " & fonttype_fight)
+        call writeconsolemsg(pjenind, "el rey pretoriano te ha vuelto est�pido ", fonttypenames.fonttype_fight)
     end if
 exit sub
 
@@ -1172,23 +1184,23 @@ on error goto errorh
     
     indireccion = npclist(npcind).spells(indice)
     '' envia las palabras magicas, fx y wav del indice-esimo hechizo del npc-hostiles.dat
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "� " & hechizos(indireccion).palabrasmagicas & " �" & str(npclist(npcind).char.charindex))
-    call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(indireccion).wav)
-    call senddata(sendtarget.topcarea, pjenind, userlist(pjenind).pos.map, "cfx" & userlist(pjenind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops + 4)
+    call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(hechizos(indireccion).palabrasmagicas, npclist(npcind).char.charindex, vbcyan))
+    call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(hechizos(indireccion).wav))
+    call senddata(sendtarget.topcarea, pjenind, preparemessagecreatefx(userlist(pjenind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
+    
+    'sacamos el efecto de ocultarse
+    if userlist(pjenind).flags.oculto = 1 then
+        userlist(pjenind).counters.tiempooculto = 0
+        userlist(pjenind).flags.oculto = 0
+        call senddata(sendtarget.topcarea, pjenind, preparemessagesetinvisible(userlist(pjenind).char.charindex, false))
+        call writeconsolemsg(pjenind, "�has sido detectado!", fonttypenames.fonttype_veneno)
+    else
+    'sino, solo lo "iniciamos" en la sacada de invisibilidad.
+        call writeconsolemsg(pjenind, "comienzas a hacerte visible.", fonttypenames.fonttype_veneno)
+        userlist(pjenind).counters.invisibilidad = intervaloinvisible - 1
+    end if
 
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbcyan & "�an rohl �x ma�o�" & str(npclist(npcind).char.charindex))
-    'call senddata(sendtarget.topcarea, pjenind, userlist(pjenind).pos.map, "cfx" & userlist(pjenind).char.charindex & "," & hechizos(4).fxgrh & "," & hechizos(4).loops + 4)
-    'call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & hechizos(4).wav)
     
-    call senddata(sendtarget.toindex, pjenind, 0, "||comienzas a hacerte visible." & fonttype_veneno)
-    userlist(pjenind).counters.invisibilidad = intervaloinvisible - 1
-    ''guarda, la invisiblidad corre para adelante y no para atras a diferencia de paralisis!!
-    ''la invisiblidad se resetea cuando llega a intervaloinvisible
-    'alta manera de zafar las distintas maneras de manejar la invisiblidad por los distintos servidors
-    'gracias barrin por la idea ;-)
-    
-    'userlist(pjenind).flags.invisible = 0
-    'call senddata(sendtarget.tomap, 0, userlist(pjenind).pos.map, "nover" & userlist(pjenind).char.charindex & ",0")
 exit sub
 
 errorh:
@@ -1210,23 +1222,23 @@ dim da�o as integer
 if hechizos(spell).subehp = 1 then
 
     da�o = randomnumber(hechizos(spell).minhp, hechizos(spell).maxhp)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & hechizos(spell).wav)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & hechizos(spell).fxgrh & "," & hechizos(spell).loops)
+    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+    call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
 
     userlist(userindex).stats.minhp = userlist(userindex).stats.minhp + da�o
     if userlist(userindex).stats.minhp > userlist(userindex).stats.maxhp then userlist(userindex).stats.minhp = userlist(userindex).stats.maxhp
     
-    call senddata(sendtarget.toindex, userindex, 0, "||" & npclist(npcindex).name & " te ha quitado " & da�o & " puntos de vida." & fonttype_fight)
+    call writeconsolemsg(userindex, npclist(npcindex).name & " te ha quitado " & da�o & " puntos de vida.", fonttypenames.fonttype_fight)
 
 elseif hechizos(spell).subehp = 2 then
     
     da�o = randomnumber(hechizos(spell).minhp, hechizos(spell).maxhp)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & hechizos(spell).wav)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & hechizos(spell).fxgrh & "," & hechizos(spell).loops)
+    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+    call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
 
-    if userlist(userindex).flags.privilegios = playertype.user then userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - da�o
+    if userlist(userindex).flags.privilegios and playertype.user then userlist(userindex).stats.minhp = userlist(userindex).stats.minhp - da�o
     
-    call senddata(sendtarget.toindex, userindex, 0, "||" & npclist(npcindex).name & " te ha quitado " & da�o & " puntos de vida." & fonttype_fight)
+    call writeconsolemsg(userindex, npclist(npcindex).name & " te ha quitado " & da�o & " puntos de vida.", fonttypenames.fonttype_fight)
     
     'muere
     if userlist(userindex).stats.minhp < 1 then
@@ -1240,17 +1252,11 @@ if hechizos(spell).paraliza = 1 then
      if userlist(userindex).flags.paralizado = 0 then
           userlist(userindex).flags.paralizado = 1
           userlist(userindex).counters.paralisis = intervaloparalizado
-          call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & hechizos(spell).wav)
-          call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & hechizos(spell).fxgrh & "," & hechizos(spell).loops)
-#if seguridadalkon then
-          if encriptarprotocoloscriticos then
-            call sendcrypteddata(sendtarget.toindex, userindex, 0, "paradok")
-          else
-#end if
-            call senddata(sendtarget.toindex, userindex, 0, "paradok")
-#if seguridadalkon then
-          end if
-#end if
+          call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(hechizos(spell).wav))
+          call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, hechizos(spell).fxgrh, hechizos(spell).loops))
+
+          call writeparalizeok(userindex)
+
      end if
 end if
 
@@ -1282,23 +1288,23 @@ on error goto errorh
     
     select case bs
         case 5
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "�rahma�" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_vivo)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("rahma", npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
         case 4
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "�v�rtax �" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_vivo)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("v�rtax", npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
         case 3
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "�zill�" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_vivo)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("zill", npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
         case 2
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "�y�k� e'nta�" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_vivo)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("y�k� e'nta", npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
         case 1
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "���kor�t�!!�" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_vivo)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("��kor�t�!!", npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
         case 0
-            call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbgreen & "� �" & str(npclist(npcind).char.charindex))
-            call senddata(sendtarget.tomap, npcind, npclist(npcind).pos.map, "tw" & sonido_dragon_muerto)
+            call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead(vbnullstring, npclist(npcind).char.charindex, vbgreen))
+            call senddata(sendtarget.tonpcarea, npcind, preparemessageplaywave(sonido_dragon_vivo))
             npcposx = npclist(npcind).pos.x
             npcposy = npclist(npcind).pos.y
             npcposm = npclist(npcind).pos.map
@@ -1314,11 +1320,11 @@ on error goto errorh
                         danio = 880 / (dist ^ (3 / 7))
                         danioi = abs(int(danio))
                         ''efectiviza el danio
-                        if userlist(pjind).flags.privilegios = playertype.user then userlist(pjind).stats.minhp = userlist(pjind).stats.minhp - danioi
+                        if userlist(pjind).flags.privilegios and playertype.user then userlist(pjind).stats.minhp = userlist(pjind).stats.minhp - danioi
                         
-                        call senddata(sendtarget.toindex, pjind, 0, "||" & npclist(npcind).name & " te ha quitado " & danioi & " puntos de vida al romper su vara." & fonttype_fight)
-                        call senddata(sendtarget.topcarea, pjind, userlist(pjind).pos.map, "tw" & hechizos(indireccion).wav)
-                        call senddata(sendtarget.topcarea, pjind, userlist(pjind).pos.map, "cfx" & userlist(pjind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
+                        call writeconsolemsg(pjind, npclist(npcind).name & " te ha quitado " & danioi & " puntos de vida al romper su vara.", fonttypenames.fonttype_fight)
+                        call senddata(sendtarget.topcarea, pjind, preparemessageplaywave(hechizos(indireccion).wav))
+                        call senddata(sendtarget.topcarea, pjind, preparemessagecreatefx(userlist(pjind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
                         
                         if userlist(pjind).stats.minhp < 1 then
                             userlist(pjind).stats.minhp = 0
@@ -1334,8 +1340,8 @@ on error goto errorh
                             ''efectiviza el danio
                             npclist(mascotaind).stats.minhp = npclist(mascotaind).stats.minhp - danioi
                             
-                            call senddata(sendtarget.tonpcarea, mascotaind, npclist(mascotaind).pos.map, "tw" & hechizos(indireccion).wav)
-                            call senddata(sendtarget.tonpcarea, mascotaind, npclist(mascotaind).pos.map, "cfx" & npclist(mascotaind).char.charindex & "," & hechizos(indireccion).fxgrh & "," & hechizos(indireccion).loops)
+                            call senddata(sendtarget.tonpcarea, mascotaind, preparemessageplaywave(hechizos(indireccion).wav))
+                            call senddata(sendtarget.tonpcarea, mascotaind, preparemessagecreatefx(npclist(mascotaind).char.charindex, hechizos(indireccion).fxgrh, hechizos(indireccion).loops))
                             
                             if npclist(mascotaind).stats.minhp < 1 then
                                 npclist(mascotaind).stats.minhp = 0
@@ -1366,6 +1372,8 @@ on error goto errorh
 ''  si no puedo moverme, me considero piketeado
 ''  la funcion es larga, pero es o(1) - orden algor�tmico temporal constante
 
+'rapsodius - changed mod by and for speed
+
 dim npcx as integer
 dim npcy as integer
 dim usrx as integer
@@ -1391,7 +1399,7 @@ mapa = map
         if (npcy < usry) then
             ''npc esta arriba a la derecha
             dual = randomnumber(0, 10)
-            if ((dual mod 2) = 0) then ''move down
+            if ((dual and 1) = 0) then ''move down
                 if legalpos(mapa, npcx, npcy + 1) then
                     call moveraba(npcorig)
                     exit sub
@@ -1428,7 +1436,7 @@ mapa = map
             end if  ''checked random first move
         elseif (npcy > usry) then   ''npc esta abajo a la derecha
             dual = randomnumber(0, 10)
-            if ((dual mod 2) = 0) then ''move up
+            if ((dual and 1) = 0) then ''move up
                 if legalpos(mapa, npcx, npcy - 1) then  ''u
                     call moverarr(npcorig)
                     exit sub
@@ -1471,7 +1479,7 @@ mapa = map
             else
                 ''si me muevo abajo entro en loop. aca el algoritmo falla
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, npclist(npcorig).pos.map, "||" & vbyellow & "�maldito bastardo, � ven aqu� !�" & str(npclist(npcorig).char.charindex))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", str(npclist(npcorig).char.charindex), vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1482,7 +1490,7 @@ mapa = map
         if (npcy < usry) then
             ''npc esta arriba a la izquierda
             dual = randomnumber(0, 10)
-            if ((dual mod 2) = 0) then ''move down
+            if ((dual and 1) = 0) then ''move down
                 if legalpos(mapa, npcx, npcy + 1) then  ''aba
                     call moveraba(npcorig)
                     exit sub
@@ -1518,7 +1526,7 @@ mapa = map
         
         elseif (npcy > usry) then   ''npc esta abajo a la izquierda
             dual = randomnumber(0, 10)
-            if ((dual mod 2) = 0) then ''move up
+            if ((dual and 1) = 0) then ''move up
                 if legalpos(mapa, npcx, npcy - 1) then  ''u
                     call moverarr(npcorig)
                     exit sub
@@ -1564,7 +1572,7 @@ mapa = map
             else
                 ''si me muevo loopeo. aca falla el algoritmo
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, npclist(npcorig).pos.map, "||" & vbyellow & "�maldito bastardo, � ven aqu� !�" & str(npclist(npcorig).char.charindex))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1585,7 +1593,7 @@ mapa = map
             else
                 ''aca tambien falla el algoritmo
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, npclist(npcorig).pos.map, "||" & vbyellow & "�maldito bastardo, � ven aqu� !�" & str(npclist(npcorig).char.charindex))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1602,7 +1610,7 @@ mapa = map
             else
                 ''posible loop
                 if npclist(npcorig).canattack = 1 and (randomnumber(1, 100) > 95) then
-                    call senddata(sendtarget.tonpcarea, npcorig, npclist(npcorig).pos.map, "||" & vbyellow & "�maldito bastardo, � ven aqu� !�" & str(npclist(npcorig).char.charindex))
+                    call senddata(sendtarget.tonpcarea, npcorig, preparemessagechatoverhead("maldito bastardo, � ven aqu� !", npclist(npcorig).char.charindex, vbyellow))
                     npclist(npcorig).canattack = 0
                 end if
             end if
@@ -1616,7 +1624,6 @@ errorh:
 
 end sub
 
-
 sub moveraba(byval npcorig as integer)
 on error goto errorh
 
@@ -1626,8 +1633,8 @@ on error goto errorh
     mapa = npclist(npcorig).pos.map
     npcx = npclist(npcorig).pos.x
     npcy = npclist(npcorig).pos.y
-
-    call senddata(sendtarget.tomap, 0, npclist(npcorig).pos.map, "mp" & npclist(npcorig).char.charindex & "," & npcx & "," & npcy + 1)
+    
+    call senddata(sendtarget.tonpcarea, npcorig, preparemessagecharactermove(npclist(npcorig).char.charindex, npcx, npcy + 1))
     'update map and npc pos
     mapdata(mapa, npcx, npcy).npcindex = 0
     npclist(npcorig).pos.y = npcy + 1
@@ -1653,7 +1660,7 @@ on error goto errorh
     npcx = npclist(npcorig).pos.x
     npcy = npclist(npcorig).pos.y
     
-    call senddata(sendtarget.tomap, 0, npclist(npcorig).pos.map, "mp" & npclist(npcorig).char.charindex & "," & npcx & "," & npcy - 1)
+    call senddata(sendtarget.tonpcarea, npcorig, preparemessagecharactermove(npclist(npcorig).char.charindex, npcx, npcy - 1))
     'update map and npc pos
     mapdata(mapa, npcx, npcy).npcindex = 0
     npclist(npcorig).pos.y = npcy - 1
@@ -1678,7 +1685,7 @@ on error goto errorh
     npcx = npclist(npcorig).pos.x
     npcy = npclist(npcorig).pos.y
 
-    call senddata(sendtarget.tomap, 0, npclist(npcorig).pos.map, "mp" & npclist(npcorig).char.charindex & "," & npcx - 1 & "," & npcy)
+    call senddata(sendtarget.tonpcarea, npcorig, preparemessagecharactermove(npclist(npcorig).char.charindex, npcx - 1, npcy))
     'update map and npc pos
     mapdata(mapa, npcx, npcy).npcindex = 0
     npclist(npcorig).pos.x = npcx - 1
@@ -1704,7 +1711,7 @@ on error goto errorh
     npcx = npclist(npcorig).pos.x
     npcy = npclist(npcorig).pos.y
     
-    call senddata(sendtarget.tomap, 0, npclist(npcorig).pos.map, "mp" & npclist(npcorig).char.charindex & "," & npcx + 1 & "," & npcy)
+    call senddata(sendtarget.tonpcarea, npcorig, preparemessagecharactermove(npclist(npcorig).char.charindex, npcx + 1, npcy))
     'update map and npc pos
     mapdata(mapa, npcx, npcy).npcindex = 0
     npclist(npcorig).pos.x = npcx + 1
@@ -1939,56 +1946,56 @@ on error goto errorh
     npcposm = npclist(npcind).pos.map
     
     if legalpos(npcposm, npcposx + 1, npcposy + 1) then
-        call senddata(sendtarget.tomap, 0, npcposm, "mp" & npclist(npcind).char.charindex & "," & npcposx + 1 & "," & npcposy + 1)
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagecharactermove(npclist(npcind).char.charindex, npcposx + 1, npcposy + 1))
         'update map and npc pos
         mapdata(npcposm, npcposx, npcposy).npcindex = 0
         npclist(npcind).pos.y = npcposy + 1
         npclist(npcind).pos.x = npcposx + 1
         npclist(npcind).char.heading = eheading.south
         mapdata(npcposm, npcposx + 1, npcposy + 1).npcindex = npcind
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbyellow & "���ja ja ja ja!!�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("��ja ja ja ja!!", npclist(npcind).char.charindex, vbyellow))
         exit sub
     end if
 
     if legalpos(npcposm, npcposx - 1, npcposy - 1) then
-        call senddata(sendtarget.tomap, 0, npcposm, "mp" & npclist(npcind).char.charindex & "," & npcposx - 1 & "," & npcposy - 1)
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagecharactermove(npclist(npcind).char.charindex, npcposx - 1, npcposy - 1))
         'update map and npc pos
         mapdata(npcposm, npcposx, npcposy).npcindex = 0
         npclist(npcind).pos.y = npcposy - 1
         npclist(npcind).pos.x = npcposx - 1
         npclist(npcind).char.heading = eheading.north
         mapdata(npcposm, npcposx - 1, npcposy - 1).npcindex = npcind
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbyellow & "���ja ja ja ja!!�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("��ja ja ja ja!!", npclist(npcind).char.charindex, vbyellow))
         exit sub
     end if
 
     if legalpos(npcposm, npcposx + 1, npcposy - 1) then
-        call senddata(sendtarget.tomap, 0, npcposm, "mp" & npclist(npcind).char.charindex & "," & npcposx + 1 & "," & npcposy - 1)
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagecharactermove(npclist(npcind).char.charindex, npcposx + 1, npcposy - 1))
         'update map and npc pos
         mapdata(npcposm, npcposx, npcposy).npcindex = 0
         npclist(npcind).pos.y = npcposy - 1
         npclist(npcind).pos.x = npcposx + 1
         npclist(npcind).char.heading = eheading.east
         mapdata(npcposm, npcposx + 1, npcposy - 1).npcindex = npcind
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbyellow & "���ja ja ja ja!!�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("��ja ja ja ja!!", npclist(npcind).char.charindex, vbyellow))
         exit sub
     end if
     
     if legalpos(npcposm, npcposx - 1, npcposy + 1) then
-        call senddata(sendtarget.tomap, 0, npcposm, "mp" & npclist(npcind).char.charindex & "," & npcposx - 1 & "," & npcposy + 1)
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagecharactermove(npclist(npcind).char.charindex, npcposx - 1, npcposy + 1))
         'update map and npc pos
         mapdata(npcposm, npcposx, npcposy).npcindex = 0
         npclist(npcind).pos.y = npcposy + 1
         npclist(npcind).pos.x = npcposx - 1
         npclist(npcind).char.heading = eheading.west
         mapdata(npcposm, npcposx - 1, npcposy + 1).npcindex = npcind
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbyellow & "���ja ja ja ja!!�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("��ja ja ja ja!!", npclist(npcind).char.charindex, vbyellow))
         exit sub
     end if
     
     ''si esta aca, estamos fritos!
     if npclist(npcind).canattack = 1 then
-        call senddata(sendtarget.tonpcarea, npcind, npclist(npcind).pos.map, "||" & vbyellow & "��por las barbas de los antiguos reyes! �alej�os endemoniados espectros o sufrir�is la furia de los dioses!�" & str(npclist(npcind).char.charindex))
+        call senddata(sendtarget.tonpcarea, npcind, preparemessagechatoverhead("�por las barbas de los antiguos reyes! �alej�os endemoniados espectros o sufrir�is la furia de los dioses!", npclist(npcind).char.charindex, vbyellow))
         npclist(npcind).canattack = 0
     end if
     

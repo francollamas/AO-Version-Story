@@ -94,7 +94,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -102,18 +102,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -171,17 +169,32 @@ end if
 end sub
 
 private sub mnuborrar_click()
-if list1.listindex < 0 then exit sub
-senddata ("sosdone" & list1.list(list1.listindex))
-
-list1.removeitem list1.listindex
-
+    if list1.listindex < 0 then exit sub
+    'pablo (toxicwaste)
+    dim aux as string
+    aux = mid$(readfield(1, list1.list(list1.listindex), asc("-")), 10, len(readfield(1, list1.list(list1.listindex), asc("-"))))
+    call writesosremove(aux)
+    '/pablo (toxicwaste)
+    'call writesosremove(list1.list(list1.listindex))
+    
+    list1.removeitem list1.listindex
 end sub
 
 private sub mnuir_click()
-senddata ("/ira " & readfield(1, list1.list(list1.listindex), asc("-")))
+    'pablo (toxicwaste)
+    dim aux as string
+    aux = mid$(readfield(1, list1.list(list1.listindex), asc("-")), 10, len(readfield(1, list1.list(list1.listindex), asc("-"))))
+    call writegotochar(aux)
+    '/pablo (toxicwaste)
+    'call writegotochar(readfield(1, list1.list(list1.listindex), asc("-")))
+    
 end sub
 
 private sub mnutraer_click()
-senddata ("/sum " & readfield(1, list1.list(list1.listindex), asc("-")))
+    'pablo (toxicwaste)
+    dim aux as string
+    aux = mid$(readfield(1, list1.list(list1.listindex), asc("-")), 10, len(readfield(1, list1.list(list1.listindex), asc("-"))))
+    call writesummonchar(aux)
+    'pablo (toxicwaste)
+    'call writesummonchar(readfield(1, list1.list(list1.listindex), asc("-")))
 end sub

@@ -1,4 +1,24 @@
 attribute vb_name = "mdparty"
+'**************************************************************
+' mdparty.bas - library of functions to manipulate parties.
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
+
 option explicit
 
 ''
@@ -66,11 +86,12 @@ end function
 public function puedecrearparty(byval userindex as integer) as boolean
     puedecrearparty = true
 '    if userlist(userindex).stats.elv < minpartylevel then
-    if userlist(userindex).stats.useratributos(eatributos.carisma) * userlist(userindex).stats.userskills(eskill.liderazgo) < 100 then
-        call senddata(sendtarget.toindex, userindex, 0, "|| tu carisma y liderazgo no son suficientes para liderar una party." & fonttype_party)
+    
+    if cint(userlist(userindex).stats.useratributos(eatributos.carisma)) * userlist(userindex).stats.userskills(eskill.liderazgo) < 100 then
+        call writeconsolemsg(userindex, "tu carisma y liderazgo no son suficientes para liderar una party.", fonttypenames.fonttype_party)
         puedecrearparty = false
     elseif userlist(userindex).flags.muerto = 1 then
-        call senddata(sendtarget.toindex, userindex, 0, "|| est�s muerto!" & fonttype_party)
+        call writeconsolemsg(userindex, "est�s muerto!", fonttypenames.fonttype_party)
         puedecrearparty = false
     end if
 end function
@@ -82,33 +103,33 @@ if userlist(userindex).partyindex = 0 then
         if userlist(userindex).stats.userskills(eskill.liderazgo) >= 5 then
             tint = mdparty.nextparty
             if tint = -1 then
-                call senddata(sendtarget.toindex, userindex, 0, "|| por el momento no se pueden crear mas parties" & fonttype_party)
+                call writeconsolemsg(userindex, "por el momento no se pueden crear mas parties", fonttypenames.fonttype_party)
                 exit sub
             else
                 set parties(tint) = new clsparty
                 if not parties(tint).nuevomiembro(userindex) then
-                    call senddata(sendtarget.toindex, userindex, 0, "|| la party est� llena, no puedes entrar" & fonttype_party)
+                    call writeconsolemsg(userindex, "la party est� llena, no puedes entrar", fonttypenames.fonttype_party)
                     set parties(tint) = nothing
                     exit sub
                 else
-                    call senddata(sendtarget.toindex, userindex, 0, "|| � has formado una party !" & fonttype_party)
+                    call writeconsolemsg(userindex, "�has formado una party!", fonttypenames.fonttype_party)
                     userlist(userindex).partyindex = tint
                     userlist(userindex).partysolicitud = 0
                     if not parties(tint).hacerleader(userindex) then
-                        call senddata(sendtarget.toindex, userindex, 0, "|| no puedes hacerte l�der." & fonttype_party)
+                        call writeconsolemsg(userindex, "no puedes hacerte l�der.", fonttypenames.fonttype_party)
                     else
-                        call senddata(sendtarget.toindex, userindex, 0, "|| � te has convertido en l�der de la party !" & fonttype_party)
+                        call writeconsolemsg(userindex, "� te has convertido en l�der de la party !", fonttypenames.fonttype_party)
                     end if
                 end if
             end if
         else
-            call senddata(sendtarget.toindex, userindex, 0, "|| no tienes suficientes puntos de liderazgo para liderar una party." & fonttype_party)
+            call writeconsolemsg(userindex, " no tienes suficientes puntos de liderazgo para liderar una party.", fonttypenames.fonttype_party)
         end if
     else
-        call senddata(sendtarget.toindex, userindex, 0, "|| est�s muerto!" & fonttype_party)
+        call writeconsolemsg(userindex, "est�s muerto!", fonttypenames.fonttype_party)
     end if
 else
-    call senddata(sendtarget.toindex, userindex, 0, "|| ya perteneces a una party." & fonttype_party)
+    call writeconsolemsg(userindex, " ya perteneces a una party.", fonttypenames.fonttype_party)
 end if
 end sub
 
@@ -118,12 +139,12 @@ dim tint as integer
 
     if userlist(userindex).partyindex > 0 then
         'si ya esta en una party
-        call senddata(sendtarget.toindex, userindex, 0, "|| ya perteneces a una party, escribe /salirparty para abandonarla" & fonttype_party)
+        call writeconsolemsg(userindex, " ya perteneces a una party, escribe /salirparty para abandonarla", fonttypenames.fonttype_party)
         userlist(userindex).partysolicitud = 0
         exit sub
     end if
     if userlist(userindex).flags.muerto = 1 then
-        call senddata(sendtarget.toindex, userindex, 0, "|| �est�s muerto!" & fonttype_info)
+        call writeconsolemsg(userindex, " �est�s muerto!", fonttypenames.fonttype_info)
         userlist(userindex).partysolicitud = 0
         exit sub
     end if
@@ -131,18 +152,18 @@ dim tint as integer
     if tint > 0 then
         if userlist(tint).partyindex > 0 then
             userlist(userindex).partysolicitud = userlist(tint).partyindex
-            call senddata(sendtarget.toindex, userindex, 0, "|| el fundador decidir� si te acepta en la party" & fonttype_party)
+            call writeconsolemsg(userindex, " el fundador decidir� si te acepta en la party", fonttypenames.fonttype_party)
         else
-            call senddata(sendtarget.toindex, userindex, 0, "|| " & userlist(tint).name & " no es fundador de ninguna party." & fonttype_info)
+            call writeconsolemsg(userindex, userlist(tint).name & " no es fundador de ninguna party.", fonttypenames.fonttype_info)
             userlist(userindex).partysolicitud = 0
             exit sub
         end if
     else
-        call senddata(sendtarget.toindex, userindex, 0, "|| para ingresar a una party debes hacer click sobre el fundador y luego escribir /party" & fonttype_party)
+        call writeconsolemsg(userindex, " para ingresar a una party debes hacer click sobre el fundador y luego escribir /party", fonttypenames.fonttype_party)
         userlist(userindex).partysolicitud = 0
     end if
-
 end sub
+
 public sub salirdeparty(byval userindex as integer)
 dim pi as integer
 pi = userlist(userindex).partyindex
@@ -154,11 +175,10 @@ if pi > 0 then
         userlist(userindex).partyindex = 0
     end if
 else
-    call senddata(sendtarget.toindex, userindex, 0, "|| no eres miembro de ninguna party." & fonttype_info)
+    call writeconsolemsg(userindex, " no eres miembro de ninguna party.", fonttypenames.fonttype_info)
 end if
 
 end sub
-
 
 public sub expulsardeparty(byval leader as integer, byval oldmember as integer)
 dim pi as integer
@@ -175,16 +195,14 @@ if pi > 0 then
                 userlist(oldmember).partyindex = 0
             end if
         else
-            call senddata(sendtarget.toindex, leader, 0, "|| solo el fundador puede expulsar miembros de una party." & fonttype_info)
+            call writeconsolemsg(leader, " solo el fundador puede expulsar miembros de una party.", fonttypenames.fonttype_info)
         end if
     else
-        call senddata(sendtarget.toindex, leader, 0, "|| " & userlist(oldmember).name & " no pertenece a tu party." & fonttype_info)
+        call writeconsolemsg(leader, userlist(oldmember).name & " no pertenece a tu party.", fonttypenames.fonttype_info)
     end if
 else
-    call senddata(sendtarget.toindex, leader, 0, "|| no eres miembro de ninguna party." & fonttype_info)
+    call writeconsolemsg(leader, " no eres miembro de ninguna party.", fonttypenames.fonttype_info)
 end if
-
-
 
 end sub
 
@@ -210,34 +228,34 @@ if pi > 0 then
                             else
                                 'no pudo entrar
                                 'aca uno puede codificar otro tipo de errores...
-                                call senddata(sendtarget.toadmins, leader, 0, "|| servidor> catastrofe en parties, nuevomiembro dio false! :s " & fonttype_party)
+                                call senddata(sendtarget.toadmins, leader, preparemessageconsolemsg(" servidor> catastrofe en parties, nuevomiembro dio false! :s ", fonttypenames.fonttype_party))
                             end if
                         else
                             'no debe entrar
-                            call senddata(sendtarget.toindex, leader, 0, "|| " & razon & fonttype_party)
+                            call writeconsolemsg(leader, razon, fonttypenames.fonttype_party)
                         end if
                     else
-                        call senddata(sendtarget.toindex, leader, 0, "|| " & userlist(newmember).name & " no ha solicitado ingresar a tu party." & fonttype_party)
+                        call writeconsolemsg(leader, userlist(newmember).name & " no ha solicitado ingresar a tu party.", fonttypenames.fonttype_party)
                         exit sub
                     end if
                 else
-                    call senddata(sendtarget.toindex, leader, 0, "|| �est� muerto, no puedes aceptar miembros en ese estado!" & fonttype_party)
+                    call writeconsolemsg(leader, "�est� muerto, no puedes aceptar miembros en ese estado!", fonttypenames.fonttype_party)
                     exit sub
                 end if
             else
-                call senddata(sendtarget.toindex, leader, 0, "|| �est�s muerto, no puedes aceptar miembros en ese estado!" & fonttype_party)
+                call writeconsolemsg(leader, "�est�s muerto, no puedes aceptar miembros en ese estado!", fonttypenames.fonttype_party)
                 exit sub
             end if
         else
-            call senddata(sendtarget.toindex, leader, 0, "||" & userlist(newmember).name & " ya es miembro de otra party." & fonttype_party)
+            call writeconsolemsg(leader, userlist(newmember).name & " ya es miembro de otra party.", fonttypenames.fonttype_party)
             ' ya tiene party el otro tipo
         end if
     else
-        call senddata(sendtarget.toindex, leader, 0, "|| no eres l�der, no puedes aceptar miembros." & fonttype_party)
+        call writeconsolemsg(leader, "no eres l�der, no puedes aceptar miembros.", fonttypenames.fonttype_party)
         exit sub
     end if
 else
-    call senddata(sendtarget.toindex, leader, 0, "|| no eres miembro de ninguna party." & fonttype_info)
+    call writeconsolemsg(leader, "no eres miembro de ninguna party.", fonttypenames.fonttype_info)
     exit sub
 end if
 
@@ -262,7 +280,7 @@ dim texto as string
     
     if pi > 0 then
         call parties(pi).obtenermiembrosonline(texto)
-        call senddata(sendtarget.toindex, userindex, 0, "||" & texto & fonttype_party)
+        call writeconsolemsg(userindex, texto, fonttypenames.fonttype_party)
     end if
     
 
@@ -283,16 +301,16 @@ if pi > 0 then
                 if parties(pi).hacerleader(newleader) then
                     call parties(pi).mandarmensajeaconsola("el nuevo l�der de la party es " & userlist(newleader).name, userlist(oldleader).name)
                 else
-                    call senddata(sendtarget.toindex, oldleader, 0, "||�no se ha hecho el cambio de mando!" & fonttype_party)
+                    call writeconsolemsg(oldleader, "�no se ha hecho el cambio de mando!", fonttypenames.fonttype_party)
                 end if
             else
-                call senddata(sendtarget.toindex, oldleader, 0, "||�no eres el l�der!" & fonttype_party)
+                call writeconsolemsg(oldleader, "�no eres el l�der!", fonttypenames.fonttype_party)
             end if
         else
-            call senddata(sendtarget.toindex, oldleader, 0, "||�est� muerto!" & fonttype_info)
+            call writeconsolemsg(oldleader, "�est� muerto!", fonttypenames.fonttype_info)
         end if
     else
-        call senddata(sendtarget.toindex, oldleader, 0, "||" & userlist(newleader).name & " no pertenece a tu party." & fonttype_info)
+        call writeconsolemsg(oldleader, userlist(newleader).name & " no pertenece a tu party.", fonttypenames.fonttype_info)
     end if
 end if
 
@@ -308,16 +326,16 @@ dim i as integer
 if not party_experienciaporgolpe then
     
     haciendobk = true
-    call senddata(sendtarget.toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
     
-    call senddata(sendtarget.toall, 0, 0, "||servidor> distribuyendo experiencia en parties." & fonttype_server)
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> distribuyendo experiencia en parties.", fonttypenames.fonttype_server))
     for i = 1 to max_parties
         if not parties(i) is nothing then
             call parties(i).flushexperiencia
         end if
     next i
-    call senddata(sendtarget.toall, 0, 0, "||servidor> experiencia distribuida." & fonttype_server)
-    call senddata(sendtarget.toall, 0, 0, "bkw")
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> experiencia distribuida.", fonttypenames.fonttype_server))
+    call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
     haciendobk = false
 
 end if

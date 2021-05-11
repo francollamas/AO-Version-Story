@@ -1,20 +1,18 @@
 attribute vb_name = "trabajo"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -32,62 +30,28 @@ attribute vb_name = "trabajo"
 option explicit
 
 public sub dopermaneceroculto(byval userindex as integer)
-on error goto errhandler
-dim suerte as integer
-dim res as integer
+'********************************************************
+'autor: nacho (integer)
+'last modif: 28/01/2007
+'chequea si ya debe mostrarse
+'pablo (toxicwaste): cambie los ordenes de prioridades porque sino no andaba.
+'********************************************************
 
-if userlist(userindex).stats.userskills(eskill.ocultarse) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= -1 then
-                    suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 11 then
-                    suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 21 then
-                    suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 31 then
-                    suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 41 then
-                    suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 51 then
-                    suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 61 then
-                    suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 71 then
-                    suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 81 then
-                    suerte = 10
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 91 then
-                    suerte = 10     'lo atamos con alambre.... en la 11.6 el sistema de ocultarse deber�a de estar bien hecho
-end if
-
-if ucase$(userlist(userindex).clase) <> "ladron" then suerte = suerte + 50
-
-'cazador con armadura de cazador oculto no se hace visible
-if ucase$(userlist(userindex).clase) = "cazador" and userlist(userindex).stats.userskills(eskill.ocultarse) > 90 then
-    if userlist(userindex).invent.armoureqpobjindex = 648 or userlist(userindex).invent.armoureqpobjindex = 360 then
-        exit sub
+userlist(userindex).counters.tiempooculto = userlist(userindex).counters.tiempooculto - 1
+if userlist(userindex).counters.tiempooculto <= 0 then
+    
+    userlist(userindex).counters.tiempooculto = intervalooculto
+    if userlist(userindex).clase = eclass.hunter and userlist(userindex).stats.userskills(eskill.ocultarse) > 90 then
+        if userlist(userindex).invent.armoureqpobjindex = 648 or userlist(userindex).invent.armoureqpobjindex = 360 then
+            exit sub
+        end if
     end if
-end if
-
-
-res = randomnumber(1, suerte)
-
-if res > 9 then
+    userlist(userindex).counters.tiempooculto = 0
     userlist(userindex).flags.oculto = 0
-    if userlist(userindex).flags.invisible = 0 then
-        'no hace falta encriptar este (se jode el gil que bypassea esto)
-        call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
-        call senddata(sendtarget.toindex, userindex, 0, "||�has vuelto a ser visible!" & fonttype_info)
-    end if
+    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
+    call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
 end if
+
 
 
 exit sub
@@ -99,65 +63,37 @@ errhandler:
 end sub
 
 public sub doocultarse(byval userindex as integer)
-
+'pablo (toxicwaste): no olvidar agregar intervalooculto=500 al server.ini.
+'modifique la f�rmula y ahora anda bien.
 on error goto errhandler
 
-dim suerte as integer
+dim suerte as double
 dim res as integer
+dim skill as integer
+skill = userlist(userindex).stats.userskills(eskill.ocultarse)
 
-if userlist(userindex).stats.userskills(eskill.ocultarse) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= -1 then
-                    suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 11 then
-                    suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 21 then
-                    suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 31 then
-                    suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 41 then
-                    suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 51 then
-                    suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 61 then
-                    suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 71 then
-                    suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 81 then
-                    suerte = 10
-elseif userlist(userindex).stats.userskills(eskill.ocultarse) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.ocultarse) >= 91 then
-                    suerte = 7
-end if
+suerte = (((0.000002 * skill - 0.0002) * skill + 0.0064) * skill + 0.1124) * 100
 
-if ucase$(userlist(userindex).clase) <> "ladron" then suerte = suerte + 50
+res = randomnumber(1, 100)
 
-res = randomnumber(1, suerte)
+if res <= suerte then
 
-if res <= 5 then
     userlist(userindex).flags.oculto = 1
-#if seguridadalkon then
-    if encriptarprotocoloscriticos then
-        call sendcrypteddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",1")
-    else
-#end if
-        call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",1")
-#if seguridadalkon then
-    end if
-#end if
-    call senddata(sendtarget.toindex, userindex, 0, "||�te has escondido entre las sombras!" & fonttype_info)
+    suerte = (-0.000001 * (100 - skill) ^ 3)
+    suerte = suerte + (0.00009229 * (100 - skill) ^ 2)
+    suerte = suerte + (-0.0088 * (100 - skill))
+    suerte = suerte + (0.9571)
+    suerte = suerte * intervalooculto
+    userlist(userindex).counters.tiempooculto = suerte
+  
+    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, true))
+
+    call writeconsolemsg(userindex, "�te has escondido entre las sombras!", fonttypenames.fonttype_info)
     call subirskill(userindex, ocultarse)
 else
     '[cdt 17-02-2004]
     if not userlist(userindex).flags.ultimomensaje = 4 then
-        call senddata(sendtarget.toindex, userindex, 0, "||�no has logrado esconderte!" & fonttype_info)
+        call writeconsolemsg(userindex, "�no has logrado esconderte!", fonttypenames.fonttype_info)
         userlist(userindex).flags.ultimomensaje = 4
     end if
     '[/cdt]
@@ -179,8 +115,8 @@ dim modnave as long
 modnave = modnavegacion(userlist(userindex).clase)
 
 if userlist(userindex).stats.userskills(eskill.navegacion) / modnave < barco.minskill then
-    call senddata(sendtarget.toindex, userindex, 0, "||no tenes suficientes conocimientos para usar este barco." & fonttype_info)
-    call senddata(sendtarget.toindex, userindex, 0, "||para usar este barco necesitas " & barco.minskill * modnave & " puntos en navegacion." & fonttype_info)
+    call writeconsolemsg(userindex, "no tenes suficientes conocimientos para usar este barco.", fonttypenames.fonttype_info)
+    call writeconsolemsg(userindex, "para usar este barco necesitas " & barco.minskill * modnave & " puntos en navegacion.", fonttypenames.fonttype_info)
     exit sub
 end if
 
@@ -192,7 +128,14 @@ if userlist(userindex).flags.navegando = 0 then
     userlist(userindex).char.head = 0
     
     if userlist(userindex).flags.muerto = 0 then
-        userlist(userindex).char.body = barco.ropaje
+        '(nacho)
+        if userlist(userindex).faccion.armadareal = 1 then
+            userlist(userindex).char.body = ifragatareal
+        elseif userlist(userindex).faccion.fuerzascaos = 1 then
+            userlist(userindex).char.body = ifragatacaos
+        else
+            userlist(userindex).char.body = barco.ropaje
+        end if
     else
         userlist(userindex).char.body = ifragatafantasmal
     end if
@@ -230,8 +173,8 @@ else
     end if
 end if
 
-call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-call senddata(sendtarget.toindex, userindex, 0, "naveg")
+call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+call writenavigatetoggle(userindex)
 
 end sub
 
@@ -243,7 +186,7 @@ if userlist(userindex).flags.targetobjinvindex > 0 then
    if objdata(userlist(userindex).flags.targetobjinvindex).objtype = eobjtype.otminerales and objdata(userlist(userindex).flags.targetobjinvindex).minskill <= userlist(userindex).stats.userskills(eskill.mineria) / modfundicion(userlist(userindex).clase) then
         call dolingotes(userindex)
    else
-        call senddata(sendtarget.toindex, userindex, 0, "||no tenes conocimientos de mineria suficientes para trabajar este mineral." & fonttype_info)
+        call writeconsolemsg(userindex, "no tenes conocimientos de mineria suficientes para trabajar este mineral.", fonttypenames.fonttype_info)
    end if
 
 end if
@@ -310,7 +253,7 @@ function carpinterotienemateriales(byval userindex as integer, byval itemindex a
     
     if objdata(itemindex).madera > 0 then
             if not tieneobjetos(le�a, objdata(itemindex).madera, userindex) then
-                    call senddata(sendtarget.toindex, userindex, 0, "||no tenes suficientes madera." & fonttype_info)
+                    call writeconsolemsg(userindex, "no tenes suficientes madera.", fonttypenames.fonttype_info)
                     carpinterotienemateriales = false
                     exit function
             end if
@@ -323,21 +266,21 @@ end function
 function herrerotienemateriales(byval userindex as integer, byval itemindex as integer) as boolean
     if objdata(itemindex).lingh > 0 then
             if not tieneobjetos(lingotehierro, objdata(itemindex).lingh, userindex) then
-                    call senddata(sendtarget.toindex, userindex, 0, "||no tenes suficientes lingotes de hierro." & fonttype_info)
+                    call writeconsolemsg(userindex, "no tenes suficientes lingotes de hierro.", fonttypenames.fonttype_info)
                     herrerotienemateriales = false
                     exit function
             end if
     end if
     if objdata(itemindex).lingp > 0 then
             if not tieneobjetos(lingoteplata, objdata(itemindex).lingp, userindex) then
-                    call senddata(sendtarget.toindex, userindex, 0, "||no tenes suficientes lingotes de plata." & fonttype_info)
+                    call writeconsolemsg(userindex, "no tenes suficientes lingotes de plata.", fonttypenames.fonttype_info)
                     herrerotienemateriales = false
                     exit function
             end if
     end if
     if objdata(itemindex).lingo > 0 then
             if not tieneobjetos(lingoteoro, objdata(itemindex).lingo, userindex) then
-                    call senddata(sendtarget.toindex, userindex, 0, "||no tenes suficientes lingotes de oro." & fonttype_info)
+                    call writeconsolemsg(userindex, "no tenes suficientes lingotes de oro.", fonttypenames.fonttype_info)
                     herrerotienemateriales = false
                     exit function
             end if
@@ -375,13 +318,13 @@ if puedeconstruir(userindex, itemindex) and puedeconstruirherreria(itemindex) th
     call herreroquitarmateriales(userindex, itemindex)
     ' agregar fx
     if objdata(itemindex).objtype = eobjtype.otweapon then
-        call senddata(sendtarget.toindex, userindex, 0, "||has construido el arma!." & fonttype_info)
+        call writeconsolemsg(userindex, "has construido el arma!.", fonttypenames.fonttype_info)
     elseif objdata(itemindex).objtype = eobjtype.otescudo then
-        call senddata(sendtarget.toindex, userindex, 0, "||has construido el escudo!." & fonttype_info)
+        call writeconsolemsg(userindex, "has construido el escudo!.", fonttypenames.fonttype_info)
     elseif objdata(itemindex).objtype = eobjtype.otcasco then
-        call senddata(sendtarget.toindex, userindex, 0, "||has construido el casco!." & fonttype_info)
+        call writeconsolemsg(userindex, "has construido el casco!.", fonttypenames.fonttype_info)
     elseif objdata(itemindex).objtype = eobjtype.otarmadura then
-        call senddata(sendtarget.toindex, userindex, 0, "||has construido la armadura!." & fonttype_info)
+        call writeconsolemsg(userindex, "has construido la armadura!.", fonttypenames.fonttype_info)
     end if
     dim miobj as obj
     miobj.amount = 1
@@ -391,9 +334,13 @@ if puedeconstruir(userindex, itemindex) and puedeconstruirherreria(itemindex) th
     end if
     call subirskill(userindex, herreria)
     call updateuserinv(true, userindex, 0)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & martilloherrero)
+    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(martilloherrero))
     
 end if
+
+userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+if userlist(userindex).reputacion.pleberep > maxrep then _
+    userlist(userindex).reputacion.pleberep = maxrep
 
 userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 
@@ -418,10 +365,10 @@ if carpinterotienemateriales(userindex, itemindex) and _
    userlist(userindex).stats.userskills(eskill.carpinteria) >= _
    objdata(itemindex).skcarpinteria and _
    puedeconstruircarpintero(itemindex) and _
-   userlist(userindex).invent.herramientaeqpobjindex = serrucho_carpintero then
+   userlist(userindex).invent.weaponeqpobjindex = serrucho_carpintero then
 
     call carpinteroquitarmateriales(userindex, itemindex)
-    call senddata(sendtarget.toindex, userindex, 0, "||has construido el objeto!" & fonttype_info)
+    call writeconsolemsg(userindex, "has construido el objeto!.", fonttypenames.fonttype_info)
     
     dim miobj as obj
     miobj.amount = 1
@@ -432,8 +379,12 @@ if carpinterotienemateriales(userindex, itemindex) and _
     
     call subirskill(userindex, carpinteria)
     call updateuserinv(true, userindex, 0)
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "tw" & laburocarpintero)
+    call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(laburocarpintero))
 end if
+
+userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+if userlist(userindex).reputacion.pleberep > maxrep then _
+    userlist(userindex).reputacion.pleberep = maxrep
 
 userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 
@@ -442,11 +393,11 @@ end sub
 private function mineralesparalingote(byval lingote as iminerales) as integer
     select case lingote
         case iminerales.hierrocrudo
-            mineralesparalingote = 13
+            mineralesparalingote = 14
         case iminerales.platacruda
-            mineralesparalingote = 25
+            mineralesparalingote = 20
         case iminerales.orocrudo
-            mineralesparalingote = 50
+            mineralesparalingote = 35
         case else
             mineralesparalingote = 10000
     end select
@@ -463,7 +414,7 @@ dim obji as integer
     
     if userlist(userindex).invent.object(slot).amount < mineralesparalingote(obji) or _
         objdata(obji).objtype <> eobjtype.otminerales then
-            call senddata(sendtarget.toindex, userindex, 0, "||no tienes suficientes minerales para hacer un lingote." & fonttype_info)
+            call writeconsolemsg(userindex, "no tienes suficientes minerales para hacer un lingote.", fonttypenames.fonttype_info)
             exit sub
     end if
     
@@ -472,7 +423,7 @@ dim obji as integer
         userlist(userindex).invent.object(slot).amount = 0
         userlist(userindex).invent.object(slot).objindex = 0
     end if
-    call senddata(sendtarget.toindex, userindex, 0, "||has obtenido un lingote!!!" & fonttype_info)
+    
     dim npos as worldpos
     dim miobj as obj
     miobj.amount = 1
@@ -481,20 +432,17 @@ dim obji as integer
         call tiraritemalpiso(userlist(userindex).pos, miobj)
     end if
     call updateuserinv(false, userindex, slot)
-    call senddata(sendtarget.toindex, userindex, 0, "||�has obtenido un lingote!" & fonttype_info)
-    
+    call writeconsolemsg(userindex, "�has obtenido un lingote!", fonttypenames.fonttype_info)
 
-
-userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
-
+    userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 end sub
 
-function modnavegacion(byval clase as string) as integer
+function modnavegacion(byval clase as eclass) as integer
 
-select case ucase$(clase)
-    case "pirata"
+select case clase
+    case eclass.pirat
         modnavegacion = 1
-    case "pescador"
+    case eclass.fisher
         modnavegacion = 1.2
     case else
         modnavegacion = 2.3
@@ -503,12 +451,12 @@ end select
 end function
 
 
-function modfundicion(byval clase as string) as integer
+function modfundicion(byval clase as eclass) as integer
 
-select case ucase$(clase)
-    case "minero"
+select case clase
+    case eclass.miner
         modfundicion = 1
-    case "herrero"
+    case eclass.blacksmith
         modfundicion = 1.2
     case else
         modfundicion = 3
@@ -516,10 +464,10 @@ end select
 
 end function
 
-function modcarpinteria(byval clase as string) as integer
+function modcarpinteria(byval clase as eclass) as integer
 
-select case ucase$(clase)
-    case "carpintero"
+select case clase
+    case eclass.carpenter
         modcarpinteria = 1
     case else
         modcarpinteria = 3
@@ -527,12 +475,12 @@ end select
 
 end function
 
-function modherreria(byval clase as string) as integer
+function modherreria(byval clase as eclass) as integer
 
-select case ucase$(clase)
-    case "herrero"
+select case clase
+    case eclass.blacksmith
         modherreria = 1
-    case "minero"
+    case eclass.miner
         modherreria = 1.2
     case else
         modherreria = 4
@@ -540,13 +488,13 @@ end select
 
 end function
 
-function moddomar(byval clase as string) as integer
-    select case ucase$(clase)
-        case "druida"
+function moddomar(byval clase as eclass) as integer
+    select case clase
+        case eclass.druid
             moddomar = 6
-        case "cazador"
+        case eclass.hunter
             moddomar = 6
-        case "clerigo"
+        case eclass.cleric
             moddomar = 7
         case else
             moddomar = 10
@@ -579,12 +527,12 @@ sub dodomar(byval userindex as integer, byval npcindex as integer)
 if userlist(userindex).nromacotas < maxmascotas then
     
     if npclist(npcindex).maestrouser = userindex then
-        call senddata(sendtarget.toindex, userindex, 0, "||la criatura ya te ha aceptado como su amo." & fonttype_info)
+        call writeconsolemsg(userindex, "la criatura ya te ha aceptado como su amo.", fonttypenames.fonttype_info)
         exit sub
     end if
     
     if npclist(npcindex).maestronpc > 0 or npclist(npcindex).maestrouser > 0 then
-        call senddata(sendtarget.toindex, userindex, 0, "||la criatura ya tiene amo." & fonttype_info)
+        call writeconsolemsg(userindex, "la criatura ya tiene amo.", fonttypenames.fonttype_info)
         exit sub
     end if
     
@@ -599,16 +547,16 @@ if userlist(userindex).nromacotas < maxmascotas then
         
         call followamo(npcindex)
         
-        call senddata(sendtarget.toindex, userindex, 0, "||la criatura te ha aceptado como su amo." & fonttype_info)
+        call writeconsolemsg(userindex, "la criatura te ha aceptado como su amo.", fonttypenames.fonttype_info)
         call subirskill(userindex, domar)
     else
         if not userlist(userindex).flags.ultimomensaje = 5 then
-            call senddata(sendtarget.toindex, userindex, 0, "||no has logrado domar la criatura." & fonttype_info)
+            call writeconsolemsg(userindex, "no has logrado domar la criatura.", fonttypenames.fonttype_info)
             userlist(userindex).flags.ultimomensaje = 5
         end if
     end if
 else
-    call senddata(sendtarget.toindex, userindex, 0, "||no podes controlar mas criaturas." & fonttype_info)
+    call writeconsolemsg(userindex, "no podes controlar mas criaturas.", fonttypenames.fonttype_info)
 end if
 end sub
 
@@ -640,14 +588,15 @@ sub doadmininvisible(byval userindex as integer)
         userlist(userindex).flags.admininvisible = 0
         userlist(userindex).flags.invisible = 0
         userlist(userindex).flags.oculto = 0
+        userlist(userindex).counters.tiempooculto = 0
         userlist(userindex).char.body = userlist(userindex).flags.oldbody
         userlist(userindex).char.head = userlist(userindex).flags.oldhead
         
     end if
     
     'vuelve a ser visible por la fuerza
-    call changeuserchar(sendtarget.tomap, 0, userlist(userindex).pos.map, userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
-    call senddata(sendtarget.tomap, 0, userlist(userindex).pos.map, "nover" & userlist(userindex).char.charindex & ",0")
+    call changeuserchar(userindex, userlist(userindex).char.body, userlist(userindex).char.head, userlist(userindex).char.heading, userlist(userindex).char.weaponanim, userlist(userindex).char.shieldanim, userlist(userindex).char.cascoanim)
+    call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(userlist(userindex).char.charindex, false))
 end sub
 
 sub tratardehacerfogata(byval map as integer, byval x as integer, byval y as integer, byval userindex as integer)
@@ -666,18 +615,23 @@ with posmadera
     .y = y
 end with
 
+if mapdata(map, x, y).objinfo.objindex <> 58 then
+    call writeconsolemsg(userindex, "necesitas clickear sobre le�a para hacer ramitas", fonttypenames.fonttype_info)
+    exit sub
+end if
+
 if distancia(posmadera, userlist(userindex).pos) > 2 then
-    call senddata(sendtarget.toindex, userindex, 0, "||est�s demasiado lejos para prender la fogata." & fonttype_info)
+    call writeconsolemsg(userindex, "est�s demasiado lejos para prender la fogata.", fonttypenames.fonttype_info)
     exit sub
 end if
 
 if userlist(userindex).flags.muerto = 1 then
-    call senddata(sendtarget.toindex, userindex, 0, "||no puedes hacer fogatas estando muerto." & fonttype_info)
+    call writeconsolemsg(userindex, "no puedes hacer fogatas estando muerto.", fonttypenames.fonttype_info)
     exit sub
 end if
 
 if mapdata(map, x, y).objinfo.amount < 3 then
-    call senddata(sendtarget.toindex, userindex, 0, "||necesitas por lo menos tres troncos para hacer una fogata." & fonttype_info)
+    call writeconsolemsg(userindex, "necesitas por lo menos tres troncos para hacer una fogata.", fonttypenames.fonttype_info)
     exit sub
 end if
 
@@ -696,16 +650,16 @@ if exito = 1 then
     obj.objindex = fogata_apag
     obj.amount = mapdata(map, x, y).objinfo.amount \ 3
     
-    call senddata(sendtarget.toindex, userindex, 0, "||has hecho " & obj.amount & " fogatas." & fonttype_info)
+    call writeconsolemsg(userindex, "has hecho " & obj.amount & " fogatas.", fonttypenames.fonttype_info)
     
-    call makeobj(sendtarget.tomap, 0, map, obj, map, x, y)
+    call makeobj(map, obj, map, x, y)
     
     'seteamos la fogata como el nuevo targetobj del user
     userlist(userindex).flags.targetobj = fogata_apag
 else
     '[cdt 17-02-2004]
     if not userlist(userindex).flags.ultimomensaje = 10 then
-        call senddata(sendtarget.toindex, userindex, 0, "||no has podido hacer la fogata." & fonttype_info)
+        call writeconsolemsg(userindex, "no has podido hacer la fogata.", fonttypenames.fonttype_info)
         userlist(userindex).flags.ultimomensaje = 10
     end if
     '[/cdt]
@@ -723,68 +677,49 @@ dim suerte as integer
 dim res as integer
 
 
-if ucase$(userlist(userindex).clase) = "pescador" then
+if userlist(userindex).clase = eclass.fisher then
     call quitarsta(userindex, esfuerzopescarpescador)
 else
     call quitarsta(userindex, esfuerzopescargeneral)
 end if
 
-if userlist(userindex).stats.userskills(eskill.pesca) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= -1 then
-                    suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 11 then
-                    suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 21 then
-                    suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 31 then
-                    suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 41 then
-                    suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 51 then
-                    suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 61 then
-                    suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 71 then
-                    suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 81 then
-                    suerte = 13
-elseif userlist(userindex).stats.userskills(eskill.pesca) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.pesca) >= 91 then
-                    suerte = 7
-end if
+dim skill as integer
+skill = userlist(userindex).stats.userskills(eskill.pesca)
+suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
+
 res = randomnumber(1, suerte)
 
 if res < 6 then
     dim npos as worldpos
     dim miobj as obj
     
-    miobj.amount = 1
+    if userlist(userindex).clase = eclass.fisher then
+        miobj.amount = randomnumber(1, 4)
+    else
+        miobj.amount = 1
+    end if
     miobj.objindex = pescado
     
     if not meteritemeninventario(userindex, miobj) then
         call tiraritemalpiso(userlist(userindex).pos, miobj)
     end if
     
-    call senddata(sendtarget.toindex, userindex, 0, "||�has pescado un lindo pez!" & fonttype_info)
+    call writeconsolemsg(userindex, "�has pescado un lindo pez!", fonttypenames.fonttype_info)
     
 else
     '[cdt 17-02-2004]
     if not userlist(userindex).flags.ultimomensaje = 6 then
-      call senddata(sendtarget.toindex, userindex, 0, "||�no has pescado nada!" & fonttype_info)
+      call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
       userlist(userindex).flags.ultimomensaje = 6
     end if
     '[/cdt]
 end if
 
 call subirskill(userindex, pesca)
+
+userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+if userlist(userindex).reputacion.pleberep > maxrep then _
+    userlist(userindex).reputacion.pleberep = maxrep
 
 userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 
@@ -802,7 +737,7 @@ dim suerte as integer
 dim res as integer
 dim espescador as boolean
 
-if ucase(userlist(userindex).clase) = "pescador" then
+if userlist(userindex).clase = eclass.fisher then
     call quitarsta(userindex, esfuerzopescarpescador)
     espescador = true
 else
@@ -815,20 +750,7 @@ iskill = userlist(userindex).stats.userskills(eskill.pesca)
 ' m = (60-11)/(1-10)
 ' y = mx - m*10 + 11
 
-select case iskill
-case 0:         suerte = 0
-case 1 to 10:   suerte = 60
-case 11 to 20:  suerte = 54
-case 21 to 30:  suerte = 49
-case 31 to 40:  suerte = 43
-case 41 to 50:  suerte = 38
-case 51 to 60:  suerte = 32
-case 61 to 70:  suerte = 27
-case 71 to 80:  suerte = 21
-case 81 to 90:  suerte = 16
-case 91 to 100: suerte = 11
-case else:      suerte = 0
-end select
+suerte = int(-0.00125 * iskill * iskill - 0.3 * iskill + 49)
 
 if suerte > 0 then
     res = randomnumber(1, suerte)
@@ -854,15 +776,19 @@ if suerte > 0 then
             call tiraritemalpiso(userlist(userindex).pos, miobj)
         end if
         
-        call senddata(sendtarget.toindex, userindex, 0, "||�has pescado algunos peces!" & fonttype_info)
+        call writeconsolemsg(userindex, "�has pescado algunos peces!", fonttypenames.fonttype_info)
         
     else
-        call senddata(sendtarget.toindex, userindex, 0, "||�no has pescado nada!" & fonttype_info)
+        call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
     end if
     
     call subirskill(userindex, pesca)
 end if
 
+    userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+    if userlist(userindex).reputacion.pleberep > maxrep then _
+        userlist(userindex).reputacion.pleberep = maxrep
+        
 exit sub
 
 errhandler:
@@ -874,18 +800,31 @@ public sub dorobar(byval ladronindex as integer, byval victimaindex as integer)
 if not mapinfo(userlist(victimaindex).pos.map).pk then exit sub
 
 if userlist(ladronindex).flags.seguro then
-    call senddata(sendtarget.toindex, ladronindex, 0, "||debes quitar el seguro para robar" & fonttype_fight)
+    call writeconsolemsg(ladronindex, "debes quitar el seguro para robar", fonttypenames.fonttype_fight)
     exit sub
 end if
 
 if triggerzonapelea(ladronindex, victimaindex) <> trigger6_ausente then exit sub
 
 if userlist(victimaindex).faccion.fuerzascaos = 1 and userlist(ladronindex).faccion.fuerzascaos = 1 then
-    call senddata(sendtarget.toindex, ladronindex, 0, "||no puedes robar a otros miembros de las fuerzas del caos" & fonttype_fight)
+    call writeconsolemsg(ladronindex, "no puedes robar a otros miembros de las fuerzas del caos", fonttypenames.fonttype_fight)
     exit sub
 end if
 
-if userlist(victimaindex).flags.privilegios = playertype.user then
+call quitarsta(ladronindex, 15)
+
+dim guanteshurto as boolean
+'tiene los guantes de hurto equipados?
+guanteshurto = true
+if userlist(ladronindex).invent.anilloeqpobjindex = 0 then
+    guanteshurto = false
+else
+    if objdata(userlist(ladronindex).invent.anilloeqpobjindex).defensamagicamin <> 0 then guanteshurto = false
+    if objdata(userlist(ladronindex).invent.anilloeqpobjindex).defensamagicamax <> 0 then guanteshurto = false
+end if
+
+
+if userlist(victimaindex).flags.privilegios and playertype.user then
     dim suerte as integer
     dim res as integer
     
@@ -916,26 +855,33 @@ if userlist(victimaindex).flags.privilegios = playertype.user then
     elseif userlist(ladronindex).stats.userskills(eskill.robar) <= 90 _
        and userlist(ladronindex).stats.userskills(eskill.robar) >= 81 then
                         suerte = 10
-    elseif userlist(ladronindex).stats.userskills(eskill.robar) <= 100 _
+    elseif userlist(ladronindex).stats.userskills(eskill.robar) < 100 _
        and userlist(ladronindex).stats.userskills(eskill.robar) >= 91 then
+                        suerte = 7
+    elseif userlist(ladronindex).stats.userskills(eskill.robar) = 100 then
                         suerte = 5
     end if
     res = randomnumber(1, suerte)
-    
+        
     if res < 3 then 'exito robo
        
-        if (randomnumber(1, 50) < 25) and (ucase$(userlist(ladronindex).clase) = "ladron") then
+        if (randomnumber(1, 50) < 25) and (userlist(ladronindex).clase = eclass.thief) then
             if tieneobjetosrobables(victimaindex) then
                 call robarobjeto(ladronindex, victimaindex)
             else
-                call senddata(sendtarget.toindex, ladronindex, 0, "||" & userlist(victimaindex).name & " no tiene objetos." & fonttype_info)
+                call writeconsolemsg(ladronindex, userlist(victimaindex).name & " no tiene objetos.", fonttypenames.fonttype_info)
             end if
         else 'roba oro
             if userlist(victimaindex).stats.gld > 0 then
                 dim n as integer
                 
-                if ucase$(userlist(ladronindex).clase) = "ladron" then
-                    n = randomnumber(100, 1000)
+                if userlist(ladronindex).clase = eclass.thief then
+                ' si no tine puestos los guantes de hurto roba un 20% menos. pablo (toxicwaste)
+                    if guanteshurto then
+                        n = randomnumber(100, 1000)
+                    else
+                        n = randomnumber(80, 800)
+                    end if
                 else
                     n = randomnumber(1, 100)
                 end if
@@ -946,15 +892,16 @@ if userlist(victimaindex).flags.privilegios = playertype.user then
                 if userlist(ladronindex).stats.gld > maxoro then _
                     userlist(ladronindex).stats.gld = maxoro
                 
-                call senddata(sendtarget.toindex, ladronindex, 0, "||le has robado " & n & " monedas de oro a " & userlist(victimaindex).name & fonttype_info)
+                call writeconsolemsg(ladronindex, "le has robado " & n & " monedas de oro a " & userlist(victimaindex).name, fonttypenames.fonttype_info)
             else
-                call senddata(sendtarget.toindex, ladronindex, 0, "||" & userlist(victimaindex).name & " no tiene oro." & fonttype_info)
+                call writeconsolemsg(ladronindex, userlist(victimaindex).name & " no tiene oro.", fonttypenames.fonttype_info)
             end if
         end if
     else
-        call senddata(sendtarget.toindex, ladronindex, 0, "||�no has logrado robar nada!" & fonttype_info)
-        call senddata(sendtarget.toindex, victimaindex, 0, "||�" & userlist(ladronindex).name & " ha intentado robarte!" & fonttype_info)
-        call senddata(sendtarget.toindex, victimaindex, 0, "||�" & userlist(ladronindex).name & " es un criminal!" & fonttype_info)
+        call writeconsolemsg(ladronindex, "�no has logrado robar nada!", fonttypenames.fonttype_info)
+        call writeconsolemsg(victimaindex, "�" & userlist(ladronindex).name & " ha intentado robarte!", fonttypenames.fonttype_info)
+        call writeconsolemsg(victimaindex, "�" & userlist(ladronindex).name & " es un criminal!", fonttypenames.fonttype_info)
+        call flushbuffer(victimaindex)
     end if
 
     if not criminal(ladronindex) then
@@ -1045,79 +992,105 @@ if flag then
         call tiraritemalpiso(userlist(ladronindex).pos, miobj)
     end if
     
-    call senddata(sendtarget.toindex, ladronindex, 0, "||has robado " & miobj.amount & " " & objdata(miobj.objindex).name & fonttype_info)
+    if userlist(ladronindex).clase = eclass.thief then
+        call writeconsolemsg(ladronindex, "has robado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+    else
+        call writeconsolemsg(ladronindex, "has hurtado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+    end if
 else
-    call senddata(sendtarget.toindex, ladronindex, 0, "||no has logrado robar un objetos." & fonttype_info)
+    call writeconsolemsg(ladronindex, "no has logrado robar ning�n objeto.", fonttypenames.fonttype_info)
 end if
 
 end sub
+
 public sub doapu�alar(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as integer)
-
+'***************************************************
+'autor: nacho (integer) & unknown (orginal version)
+'last modification: 07/20/06
+'***************************************************
 dim suerte as integer
-dim res as integer
+dim skill as integer
 
-if userlist(userindex).stats.userskills(eskill.apu�alar) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= -1 then
-                    suerte = 200
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 11 then
-                    suerte = 190
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 21 then
-                    suerte = 180
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 31 then
-                    suerte = 170
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 41 then
-                    suerte = 160
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 51 then
-                    suerte = 150
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 61 then
-                    suerte = 140
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 71 then
-                    suerte = 130
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 81 then
-                    suerte = 120
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) < 100 _
-   and userlist(userindex).stats.userskills(eskill.apu�alar) >= 91 then
-                    suerte = 110
-elseif userlist(userindex).stats.userskills(eskill.apu�alar) = 100 then
-                    suerte = 100
-end if
+skill = userlist(userindex).stats.userskills(eskill.apu�alar)
 
-if ucase$(userlist(userindex).clase) = "asesino" then
-    res = randomnumber(0, suerte)
-    if res < 25 then res = 0
-else
-    res = randomnumber(0, suerte * 1.25)
-end if
+select case userlist(userindex).clase
+    case eclass.assasin
+        suerte = int((((0.0000003 * skill - 0.00002) * skill + 0.00098) * skill + 0.0425) * 100)
+    
+    case eclass.cleric, eclass.paladin
+        suerte = int((((0.00000003 * skill + 0.000006) * skill + 0.000107) * skill + 0.0493) * 100)
+    
+    case eclass.bard
+        suerte = int((((0.00000002 * skill + 0.000002) * skill + 0.00032) * skill + 0.0481) * 100)
+    
+    case else
+        suerte = int((0.000361 * skill + 0.0439) * 100)
+end select
 
-if res < 15 then
+
+if randomnumber(0, 100) < suerte then
     if victimuserindex <> 0 then
-        userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - int(da�o * 1.5)
-        call senddata(sendtarget.toindex, userindex, 0, "||has apu�alado a " & userlist(victimuserindex).name & " por " & int(da�o * 1.5) & fonttype_fight)
-        call senddata(sendtarget.toindex, victimuserindex, 0, "||te ha apu�alado " & userlist(userindex).name & " por " & int(da�o * 1.5) & fonttype_fight)
+        if userlist(userindex).clase = eclass.assasin then
+            da�o = int(da�o * 1.4)
+        else
+            da�o = int(da�o * 1.5)
+        end if
+        
+        userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - da�o
+        call writeconsolemsg(userindex, "has apu�alado a " & userlist(victimuserindex).name & " por " & da�o, fonttypenames.fonttype_fight)
+        call writeconsolemsg(victimuserindex, "te ha apu�alado " & userlist(userindex).name & " por " & da�o, fonttypenames.fonttype_fight)
     else
         npclist(victimnpcindex).stats.minhp = npclist(victimnpcindex).stats.minhp - int(da�o * 2)
-        call senddata(sendtarget.toindex, userindex, 0, "||has apu�alado la criatura por " & int(da�o * 2) & fonttype_fight)
+        call writeconsolemsg(userindex, "has apu�alado la criatura por " & int(da�o * 2), fonttypenames.fonttype_fight)
         call subirskill(userindex, apu�alar)
         '[alejo]
         call calculardarexp(userindex, victimnpcindex, int(da�o * 2))
     end if
 else
-    call senddata(sendtarget.toindex, userindex, 0, "||�no has logrado apu�alar a tu enemigo!" & fonttype_fight)
+    call writeconsolemsg(userindex, "�no has logrado apu�alar a tu enemigo!", fonttypenames.fonttype_fight)
+end if
+
+'pablo (toxicwaste): revisar, saque este porque hac�a que se me cuelgue.
+'call flushbuffer(victimuserindex)
+end sub
+
+public sub dogolpecritico(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as integer)
+'***************************************************
+'autor: pablo (toxicwaste)
+'last modification: 28/01/2007
+'***************************************************
+dim suerte as integer
+dim skill as integer
+
+if userlist(userindex).clase <> eclass.bandit then exit sub
+if userlist(userindex).invent.weaponeqpslot = 0 then exit sub
+if objdata(userlist(userindex).invent.weaponeqpobjindex).name <> "espada vikinga" then exit sub
+
+
+skill = userlist(userindex).stats.userskills(eskill.wrestling)
+
+suerte = int((((0.00000003 * skill + 0.000006) * skill + 0.000107) * skill + 0.0493) * 100)
+
+if randomnumber(0, 100) < suerte then
+    da�o = int(da�o * 0.5)
+    if victimuserindex <> 0 then
+        userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - da�o
+        call writeconsolemsg(userindex, "has golpeado cr�ticamente a " & userlist(victimuserindex).name & " por " & da�o, fonttypenames.fonttype_fight)
+        call writeconsolemsg(victimuserindex, userlist(userindex).name & " te ha golpeado cr�ticamente por " & da�o, fonttypenames.fonttype_fight)
+    else
+        npclist(victimnpcindex).stats.minhp = npclist(victimnpcindex).stats.minhp - da�o
+        call writeconsolemsg(userindex, "has golpeado cr�ticamente a la criatura por " & da�o, fonttypenames.fonttype_fight)
+        '[alejo]
+        call calculardarexp(userindex, victimnpcindex, da�o)
+    end if
 end if
 
 end sub
 
 public sub quitarsta(byval userindex as integer, byval cantidad as integer)
-userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - cantidad
-if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
+    userlist(userindex).stats.minsta = userlist(userindex).stats.minsta - cantidad
+    if userlist(userindex).stats.minsta < 0 then userlist(userindex).stats.minsta = 0
+    call writeupdatesta(userindex)
 end sub
 
 public sub dotalar(byval userindex as integer)
@@ -1127,51 +1100,24 @@ dim suerte as integer
 dim res as integer
 
 
-if ucase$(userlist(userindex).clase) = "le�ador" then
+if userlist(userindex).clase = eclass.lumberjack then
     call quitarsta(userindex, esfuerzotalarle�ador)
 else
     call quitarsta(userindex, esfuerzotalargeneral)
 end if
 
-if userlist(userindex).stats.userskills(eskill.talar) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= -1 then
-                    suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 11 then
-                    suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 21 then
-                    suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 31 then
-                    suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 41 then
-                    suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 51 then
-                    suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 61 then
-                    suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 71 then
-                    suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 81 then
-                    suerte = 13
-elseif userlist(userindex).stats.userskills(eskill.talar) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.talar) >= 91 then
-                    suerte = 7
-end if
+dim skill as integer
+skill = userlist(userindex).stats.userskills(eskill.talar)
+suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
+
 res = randomnumber(1, suerte)
 
 if res < 6 then
     dim npos as worldpos
     dim miobj as obj
     
-    if ucase$(userlist(userindex).clase) = "le�ador" then
-        miobj.amount = randomnumber(1, 5)
+    if userlist(userindex).clase = eclass.lumberjack then
+        miobj.amount = randomnumber(1, 4)
     else
         miobj.amount = 1
     end if
@@ -1185,18 +1131,22 @@ if res < 6 then
         
     end if
     
-    call senddata(sendtarget.toindex, userindex, 0, "||�has conseguido algo de le�a!" & fonttype_info)
+    call writeconsolemsg(userindex, "�has conseguido algo de le�a!", fonttypenames.fonttype_info)
     
 else
     '[cdt 17-02-2004]
     if not userlist(userindex).flags.ultimomensaje = 8 then
-        call senddata(sendtarget.toindex, userindex, 0, "||�no has obtenido le�a!" & fonttype_info)
+        call writeconsolemsg(userindex, "�no has obtenido le�a!", fonttypenames.fonttype_info)
         userlist(userindex).flags.ultimomensaje = 8
     end if
     '[/cdt]
 end if
 
 call subirskill(userindex, talar)
+
+userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+if userlist(userindex).reputacion.pleberep > maxrep then _
+    userlist(userindex).reputacion.pleberep = maxrep
 
 userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 
@@ -1207,34 +1157,6 @@ errhandler:
 
 end sub
 
-sub volvercriminal(byval userindex as integer)
-
-if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
-
-if userlist(userindex).flags.privilegios < playertype.semidios then
-    userlist(userindex).reputacion.burguesrep = 0
-    userlist(userindex).reputacion.noblerep = 0
-    userlist(userindex).reputacion.pleberep = 0
-    userlist(userindex).reputacion.bandidorep = userlist(userindex).reputacion.bandidorep + vlasalto
-    if userlist(userindex).reputacion.bandidorep > maxrep then _
-        userlist(userindex).reputacion.bandidorep = maxrep
-    if userlist(userindex).faccion.armadareal = 1 then call expulsarfaccionreal(userindex)
-end if
-
-end sub
-
-sub volverciudadano(byval userindex as integer)
-
-if mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).trigger = 6 then exit sub
-
-userlist(userindex).reputacion.ladronesrep = 0
-userlist(userindex).reputacion.bandidorep = 0
-userlist(userindex).reputacion.asesinorep = 0
-userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlasalto
-if userlist(userindex).reputacion.pleberep > maxrep then _
-    userlist(userindex).reputacion.pleberep = maxrep
-end sub
-
 public sub domineria(byval userindex as integer)
 on error goto errhandler
 
@@ -1242,43 +1164,16 @@ dim suerte as integer
 dim res as integer
 dim metal as integer
 
-if ucase$(userlist(userindex).clase) = "minero" then
+if userlist(userindex).clase = eclass.miner then
     call quitarsta(userindex, esfuerzoexcavarminero)
 else
     call quitarsta(userindex, esfuerzoexcavargeneral)
 end if
 
-if userlist(userindex).stats.userskills(eskill.mineria) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= -1 then
-                    suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 11 then
-                    suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 21 then
-                    suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 31 then
-                    suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 41 then
-                    suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 51 then
-                    suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 61 then
-                    suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 71 then
-                    suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 81 then
-                    suerte = 10
-elseif userlist(userindex).stats.userskills(eskill.mineria) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.mineria) >= 91 then
-                    suerte = 7
-end if
+dim skill as integer
+skill = userlist(userindex).stats.userskills(eskill.mineria)
+suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
+
 res = randomnumber(1, suerte)
 
 if res <= 5 then
@@ -1289,8 +1184,8 @@ if res <= 5 then
     
     miobj.objindex = objdata(userlist(userindex).flags.targetobj).mineralindex
     
-    if ucase$(userlist(userindex).clase) = "minero" then
-        miobj.amount = randomnumber(1, 6)
+    if userlist(userindex).clase = eclass.miner then
+        miobj.amount = randomnumber(1, 5)
     else
         miobj.amount = 1
     end if
@@ -1298,18 +1193,22 @@ if res <= 5 then
     if not meteritemeninventario(userindex, miobj) then _
         call tiraritemalpiso(userlist(userindex).pos, miobj)
     
-    call senddata(sendtarget.toindex, userindex, 0, "||�has extraido algunos minerales!" & fonttype_info)
+    call writeconsolemsg(userindex, "�has extraido algunos minerales!", fonttypenames.fonttype_info)
     
 else
     '[cdt 17-02-2004]
     if not userlist(userindex).flags.ultimomensaje = 9 then
-        call senddata(sendtarget.toindex, userindex, 0, "||�no has conseguido nada!" & fonttype_info)
+        call writeconsolemsg(userindex, "�no has conseguido nada!", fonttypenames.fonttype_info)
         userlist(userindex).flags.ultimomensaje = 9
     end if
     '[/cdt]
 end if
 
 call subirskill(userindex, mineria)
+
+userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
+if userlist(userindex).reputacion.pleberep > maxrep then _
+    userlist(userindex).reputacion.pleberep = maxrep
 
 userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
 
@@ -1319,8 +1218,6 @@ errhandler:
     call logerror("error en sub domineria")
 
 end sub
-
-
 
 public sub domeditar(byval userindex as integer)
 
@@ -1343,12 +1240,12 @@ if userlist(userindex).counters.bpuedemeditar = false then
 end if
 
 if userlist(userindex).stats.minman >= userlist(userindex).stats.maxman then
-    call senddata(sendtarget.toindex, userindex, 0, "||has terminado de meditar." & fonttype_info)
-    call senddata(sendtarget.toindex, userindex, 0, "medok")
+    call writeconsolemsg(userindex, "has terminado de meditar.", fonttypenames.fonttype_info)
+    call writemeditatetoggle(userindex)
     userlist(userindex).flags.meditando = false
     userlist(userindex).char.fx = 0
     userlist(userindex).char.loops = 0
-    call senddata(sendtarget.topcarea, userindex, userlist(userindex).pos.map, "cfx" & userlist(userindex).char.charindex & "," & 0 & "," & 0)
+    call senddata(sendtarget.topcarea, userindex, preparemessagecreatefx(userlist(userindex).char.charindex, 0, 0))
     exit sub
 end if
 
@@ -1379,73 +1276,140 @@ elseif userlist(userindex).stats.userskills(eskill.meditar) <= 80 _
 elseif userlist(userindex).stats.userskills(eskill.meditar) <= 90 _
    and userlist(userindex).stats.userskills(eskill.meditar) >= 81 then
                     suerte = 10
-elseif userlist(userindex).stats.userskills(eskill.meditar) <= 100 _
+elseif userlist(userindex).stats.userskills(eskill.meditar) < 100 _
    and userlist(userindex).stats.userskills(eskill.meditar) >= 91 then
+                    suerte = 7
+elseif userlist(userindex).stats.userskills(eskill.meditar) = 100 then
                     suerte = 5
 end if
 res = randomnumber(1, suerte)
 
 if res = 1 then
-    cant = porcentaje(userlist(userindex).stats.maxman, 3)
+    
+    cant = porcentaje(userlist(userindex).stats.maxman, porcentajerecuperomana)
+    if cant <= 0 then cant = 1
     userlist(userindex).stats.minman = userlist(userindex).stats.minman + cant
     if userlist(userindex).stats.minman > userlist(userindex).stats.maxman then _
         userlist(userindex).stats.minman = userlist(userindex).stats.maxman
     
     if not userlist(userindex).flags.ultimomensaje = 22 then
-        call senddata(sendtarget.toindex, userindex, 0, "||�has recuperado " & cant & " puntos de mana!" & fonttype_info)
+        call writeconsolemsg(userindex, "�has recuperado " & cant & " puntos de mana!", fonttypenames.fonttype_info)
         userlist(userindex).flags.ultimomensaje = 22
     end if
     
-    call senddata(sendtarget.toindex, userindex, 0, "asm" & userlist(userindex).stats.minman)
+    call writeupdatemana(userindex)
     call subirskill(userindex, meditar)
 end if
 
 end sub
 
+public sub dohurtar(byval userindex as integer, byval victimaindex as integer)
+'***************************************************
+'author: pablo (toxicwaste)
+'last modif: 28/01/2007
+'implements the pick pocket skill of the bandit :)
+'***************************************************
+if userlist(userindex).clase <> eclass.bandit then exit sub
+'esto es precario y feo, pero por ahora no se me ocurri� nada mejor.
+'uso el slot de los anillos para "equipar" los guantes.
+'y los reconozco porque les puse defensamagicamin y max = 0
+if userlist(userindex).invent.anilloeqpobjindex = 0 then
+    exit sub
+else
+    if objdata(userlist(userindex).invent.anilloeqpobjindex).defensamagicamin <> 0 then exit sub
+    if objdata(userlist(userindex).invent.anilloeqpobjindex).defensamagicamax <> 0 then exit sub
+end if
 
+dim res as integer
+res = randomnumber(1, 100)
+if (res < 20) then
+    if tieneobjetosrobables(victimaindex) then
+        call robarobjeto(userindex, victimaindex)
+        call writeconsolemsg(victimaindex, "�" & userlist(userindex).name & " es un bandido!", fonttypenames.fonttype_info)
+    else
+        call writeconsolemsg(userindex, userlist(victimaindex).name & " no tiene objetos.", fonttypenames.fonttype_info)
+    end if
+end if
+
+end sub
+
+public sub dohandinmo(byval userindex as integer, byval victimaindex as integer)
+'***************************************************
+'author: pablo (toxicwaste)
+'last modif: 17/02/2007
+'implements the special skill of the thief
+'***************************************************
+if userlist(victimaindex).flags.paralizado = 1 then exit sub
+if userlist(userindex).clase <> eclass.thief then exit sub
+    
+'una vez m�s, la forma de reconocer los guantes es medio pat�tica.
+if userlist(userindex).invent.anilloeqpobjindex = 0 then
+    exit sub
+else
+    if objdata(userlist(userindex).invent.anilloeqpobjindex).defensamagicamin <> 0 then exit sub
+    if objdata(userlist(userindex).invent.anilloeqpobjindex).defensamagicamax <> 0 then exit sub
+end if
+
+    
+dim res as integer
+res = randomnumber(0, 100)
+if res < (userlist(userindex).stats.userskills(eskill.wrestling) / 4) then
+    userlist(victimaindex).flags.paralizado = 1
+    userlist(victimaindex).counters.paralisis = intervaloparalizado / 2
+    call writeparalizeok(victimaindex)
+    call writeconsolemsg(userindex, "tu golpe ha dejado inm�vil a tu oponente", fonttypenames.fonttype_info)
+    call writeconsolemsg(victimaindex, "�el golpe te ha dejado inm�vil!", fonttypenames.fonttype_info)
+end if
+
+end sub
 
 public sub desarmar(byval userindex as integer, byval victimindex as integer)
 
 dim suerte as integer
 dim res as integer
 
-if userlist(userindex).stats.userskills(eskill.wresterling) <= 10 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= -1 then
+if userlist(userindex).stats.userskills(eskill.wrestling) <= 10 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= -1 then
                     suerte = 35
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 20 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 11 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 20 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 11 then
                     suerte = 30
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 30 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 21 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 30 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 21 then
                     suerte = 28
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 40 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 31 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 40 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 31 then
                     suerte = 24
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 50 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 41 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 50 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 41 then
                     suerte = 22
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 60 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 51 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 60 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 51 then
                     suerte = 20
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 70 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 61 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 70 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 61 then
                     suerte = 18
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 80 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 71 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 80 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 71 then
                     suerte = 15
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 90 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 81 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) <= 90 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 81 then
                     suerte = 10
-elseif userlist(userindex).stats.userskills(eskill.wresterling) <= 100 _
-   and userlist(userindex).stats.userskills(eskill.wresterling) >= 91 then
+elseif userlist(userindex).stats.userskills(eskill.wrestling) < 100 _
+   and userlist(userindex).stats.userskills(eskill.wrestling) >= 91 then
+                    suerte = 7
+elseif userlist(userindex).stats.userskills(eskill.wrestling) = 100 then
                     suerte = 5
 end if
 res = randomnumber(1, suerte)
 
 if res <= 2 then
         call desequipar(victimindex, userlist(victimindex).invent.weaponeqpslot)
-        call senddata(sendtarget.toindex, userindex, 0, "||has logrado desarmar a tu oponente!" & fonttype_fight)
-        if userlist(victimindex).stats.elv < 20 then call senddata(sendtarget.toindex, victimindex, 0, "||tu oponente te ha desarmado!" & fonttype_fight)
+        call writeconsolemsg(userindex, "has logrado desarmar a tu oponente!", fonttypenames.fonttype_fight)
+        if userlist(victimindex).stats.elv < 20 then
+            call writeconsolemsg(victimindex, "tu oponente te ha desarmado!", fonttypenames.fonttype_fight)
+        end if
+        call flushbuffer(victimindex)
     end if
 end sub
 

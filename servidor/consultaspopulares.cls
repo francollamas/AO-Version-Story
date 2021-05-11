@@ -11,6 +11,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
+'**************************************************************
+' consultaspopulares.cls
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 'modulo de consultas popluares
 'en realidad el modulo inicial guardaba los datos de las votaciones
@@ -67,7 +86,7 @@ dim i as integer
     end if
 end sub
 
-public function dovotar(byval userindex as integer, opcion as integer) as string
+public function dovotar(byval userindex as integer, byval opcion as integer) as string
 on error goto errorh
 dim yavoto as boolean
 dim charfile as string
@@ -121,13 +140,13 @@ end function
 
 public function sendinfoencuesta(byval userindex as integer) as string
 dim i as integer
-    call senddata(sendtarget.toindex, userindex, 0, "||consulta popular numero " & pencuestaactualnum & fonttype_guild)
-    call senddata(sendtarget.toindex, userindex, 0, "||" & pencuestaactualtex & fonttype_guild)
-    call senddata(sendtarget.toindex, userindex, 0, "|| opciones de voto: " & fonttype_guildmsg)
+    call writeconsolemsg(userindex, "consulta popular numero " & pencuestaactualnum, fonttypenames.fonttype_guild)
+    call writeconsolemsg(userindex, pencuestaactualtex, fonttypenames.fonttype_guild)
+    call writeconsolemsg(userindex, " opciones de voto: ", fonttypenames.fonttype_guildmsg)
     for i = 1 to ubound(popciones)
-        call senddata(sendtarget.toindex, userindex, 0, "||(opcion " & i & "): " & getvar(app.path & archivoconfig, "encuesta" & pencuestaactualnum, "opcion" & i) & fonttype_guildmsg)
+        call writeconsolemsg(userindex, "(opcion " & i & "): " & getvar(app.path & archivoconfig, "encuesta" & pencuestaactualnum, "opcion" & i), fonttypenames.fonttype_guildmsg)
     next i
-    call senddata(sendtarget.toindex, userindex, 0, "|| para votar una opcion, escribe /encuesta numerodeopcion, por ejemplo para votar la opcion 1, escribe /encuesta 1. tu voto no podra ser cambiado." & fonttype_veneno)
+    call writeconsolemsg(userindex, " para votar una opcion, escribe /encuesta numerodeopcion, por ejemplo para votar la opcion 1, escribe /encuesta 1. tu voto no podra ser cambiado.", fonttypenames.fonttype_veneno)
 end function
 
 

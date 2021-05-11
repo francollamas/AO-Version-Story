@@ -1,20 +1,18 @@
 attribute vb_name = "modnuevotimer"
-'argentum online 0.9.0.2
+'argentum online 0.11.6
 'copyright (c) 2002 m�rquez pablo ignacio
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -43,8 +41,10 @@ dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
 
-if tactual - userlist(userindex).counters.timerlanzarspell >= 40 * intervalouserpuedecastear then
-    if actualizar then userlist(userindex).counters.timerlanzarspell = tactual
+if tactual - userlist(userindex).counters.timerlanzarspell >= intervalouserpuedecastear then
+    if actualizar then
+        userlist(userindex).counters.timerlanzarspell = tactual
+    end if
     intervalopermitelanzarspell = true
 else
     intervalopermitelanzarspell = false
@@ -52,20 +52,60 @@ end if
 
 end function
 
-
 public function intervalopermiteatacar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
 dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
 
-if tactual - userlist(userindex).counters.timerpuedeatacar >= 40 * intervalouserpuedeatacar then
-    if actualizar then userlist(userindex).counters.timerpuedeatacar = tactual
+if tactual - userlist(userindex).counters.timerpuedeatacar >= intervalouserpuedeatacar then
+    if actualizar then
+        userlist(userindex).counters.timerpuedeatacar = tactual
+    end if
     intervalopermiteatacar = true
 else
     intervalopermiteatacar = false
 end if
 end function
 
+public function intervalopermitemagiagolpe(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+    dim tactual as long
+    
+    if userlist(userindex).counters.timermagiagolpe > userlist(userindex).counters.timerlanzarspell then
+        exit function
+    end if
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    if tactual - userlist(userindex).counters.timerlanzarspell >= intervalomagiagolpe then
+        if actualizar then
+            userlist(userindex).counters.timermagiagolpe = tactual
+            userlist(userindex).counters.timerpuedeatacar = tactual
+        end if
+        intervalopermitemagiagolpe = true
+    else
+        intervalopermitemagiagolpe = false
+    end if
+end function
+
+public function intervalopermitegolpemagia(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
+    dim tactual as long
+    
+    if userlist(userindex).counters.timergolpemagia > userlist(userindex).counters.timerpuedeatacar then
+        exit function
+    end if
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    if tactual - userlist(userindex).counters.timerpuedeatacar >= intervalogolpemagia then
+        if actualizar then
+            userlist(userindex).counters.timergolpemagia = tactual
+            userlist(userindex).counters.timerlanzarspell = tactual
+        end if
+        intervalopermitegolpemagia = true
+    else
+        intervalopermitegolpemagia = false
+    end if
+end function
 
 ' ataque cuerpo a cuerpo
 'public function intervalopermiteatacar(byval userindex as integer, optional byval actualizar as boolean = true) as boolean
@@ -73,7 +113,7 @@ end function
 '
 'tactual = gettickcount() and &h7fffffff''
 '
-'if tactual - userlist(userindex).counters.timerpuedeatacar >= 40 * intervalouserpuedeatacar then
+'if tactual - userlist(userindex).counters.timerpuedeatacar >= intervalouserpuedeatacar then
 '    if actualizar then userlist(userindex).counters.timerpuedeatacar = tactual
 '    intervalopermiteatacar = true
 'else
@@ -87,7 +127,7 @@ dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
 
-if tactual - userlist(userindex).counters.timerpuedetrabajar >= 40 * intervalouserpuedetrabajar then
+if tactual - userlist(userindex).counters.timerpuedetrabajar >= intervalouserpuedetrabajar then
     if actualizar then userlist(userindex).counters.timerpuedetrabajar = tactual
     intervalopermitetrabajar = true
 else
@@ -115,8 +155,8 @@ dim tactual as long
 
 tactual = gettickcount() and &h7fffffff
 
-if tactual - userlist(userindex).counters.timerusar >= intervaloflechascazadores then
-    if actualizar then userlist(userindex).counters.timerusar = tactual
+if tactual - userlist(userindex).counters.timerpuedeusararco >= intervaloflechascazadores then
+    if actualizar then userlist(userindex).counters.timerpuedeusararco = tactual
     intervalopermiteusararcos = true
 else
     intervalopermiteusararcos = false

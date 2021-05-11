@@ -11,6 +11,25 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = true
 attribute vb_predeclaredid = false
 attribute vb_exposed = false
+'**************************************************************
+' clsclan.cls
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 ''
@@ -193,22 +212,20 @@ public function getleader() as string
     getleader = getvar(guildinfofile, "guild" & p_guildnumber, "leader")
 end function
 
-public function getmemberlist(byval separador as string) as string
-dim oldq    as integer
-dim tempstr as string
-
+public function getmemberlist() as string()
+    dim oldq    as integer
+    dim list() as string
+    dim i as long
+    
     oldq = me.cantidaddemiembros
     
-    while oldq > 0
-        tempstr = tempstr & getvar(membersfile, "members", "member" & oldq) & separador
-        oldq = oldq - 1
-    wend
+    redim list(oldq - 1) as string
     
-    if len(tempstr) > 0 then
-        tempstr = left$(tempstr, len(tempstr) - len(separador))
-    end if
+    for i = 1 to oldq
+        list(i - 1) = getvar(membersfile, "members", "member" & i)
+    next i
     
-    getmemberlist = tempstr
+    getmemberlist = list
 end function
 
 public sub conectarmiembro(byval userindex as integer)
@@ -231,7 +248,7 @@ dim cantp   as integer
 dim cantps  as string
 dim oldqs  as string
     
-    if dir(charpath & nombre & ".chr") <> vbnullstring then
+    if lenb(dir$(charpath & nombre & ".chr")) <> 0 then
         call writevar(charpath & nombre & ".chr", "guild", "guildindex", p_guildnumber)
         call writevar(charpath & nombre & ".chr", "guild", "aspirantea", "0")
         'cantps = getvar(charpath & nombre & ".chr", "guild", "clanesparticipo")
@@ -260,7 +277,7 @@ dim i           as integer
 dim esmiembro   as boolean
 dim miembrode   as string
 
-    if dir(charpath & nombre & ".chr") <> vbnullstring then
+    if lenb(dir$(charpath & nombre & ".chr")) <> 0 then
         oldq = cint(getvar(membersfile, "init", "nromembers"))
         i = 1
         nombre = ucase$(nombre)
@@ -282,7 +299,7 @@ dim miembrode   as string
             'lo echo a el
             miembrode = getvar(charpath & nombre & ".chr", "guild", "miembro")
             if not instr(1, miembrode, p_guildname, vbtextcompare) > 0 then
-                if miembrode <> vbnullstring then
+                if lenb(miembrode) <> 0 then
                     miembrode = miembrode & ","
                 end if
                 miembrode = miembrode & p_guildname
@@ -298,25 +315,25 @@ end sub
 'aspirantes
 '
 
-public function getaspirantes(byval separador as string) as string
-dim oldq    as integer
-dim tempstr as string
-
+public function getaspirantes() as string()
+    dim oldq    as integer
+    dim list() as string
+    dim i as long
+    
     oldq = me.cantidadaspirantes()
     
-    while oldq > 0
-        tempstr = tempstr & getvar(solicitudesfile, "solicitud" & oldq, "nombre") & separador
-        oldq = oldq - 1
-    wend
-    
-    if len(tempstr) > 0 then
-        tempstr = left$(tempstr, len(tempstr) - len(separador))
+    if oldq > 1 then
+        redim list(oldq - 1) as string
+    else
+        redim list(0) as string
     end if
     
-    getaspirantes = tempstr
-
+    for i = 1 to oldq
+        list(i - 1) = getvar(solicitudesfile, "solicitud" & i, "nombre")
+    next i
+    
+    getaspirantes = list
 end function
-
 
 public function cantidadaspirantes() as integer
 dim temps as string
@@ -330,7 +347,7 @@ dim temps as string
 
 end function
 
-public function detallessolicitudaspirante(byval nroaspirante as integer)
+public function detallessolicitudaspirante(byval nroaspirante as integer) as string
     detallessolicitudaspirante = getvar(solicitudesfile, "solicitud" & nroaspirante, "detalle")
 end function
 
@@ -387,7 +404,7 @@ dim i       as integer
     call writevar(charpath & nombre & ".chr", "guild", "aspirantea", "0")
     pedidos = getvar(charpath & nombre & ".chr", "guild", "pedidos")
     if not instr(1, pedidos, p_guildname, vbtextcompare) > 0 then
-        if pedidos <> vbnullstring then
+        if lenb(pedidos) <> 0 then
             pedidos = pedidos & ","
         end if
         pedidos = pedidos & p_guildname
@@ -496,7 +513,7 @@ dim temps   as string
 end sub
 
 public function yavoto(byref votante) as boolean
-    yavoto = (trim$(getvar(votacionesfile, "votos", votante)) <> vbnullstring)
+    yavoto = ((lenb(trim$(getvar(votacionesfile, "votos", votante)))) <> 0)
 end function
 
 private function contarvotos(byref cantganadores as integer) as string
@@ -525,7 +542,7 @@ on error goto errh
             tempv = getvar(votacionesfile, "votos", temps)
             
             'si voto a alguien contabilizamos el voto
-            if tempv <> vbnullstring then
+            if lenb(tempv) <> 0 then
                 if not isnull(d.at(tempv)) then  'cuantos votos tiene?
                     call d.atput(tempv, cint(d.at(tempv)) + 1)
                 else
@@ -552,6 +569,8 @@ dim fechasufragio   as date
 dim temps           as string
 dim ganador         as string
 dim cantganadores   as integer
+dim list()          as string
+dim i               as long
 
     revisarelecciones = false
     temps = trim$(getvar(guildinfofile, "guild" & p_guildnumber, "eleccionesfinalizan"))
@@ -567,7 +586,13 @@ dim cantganadores   as integer
                 'empate en la votacion
                 call setguildnews("*empate en la votaci�n. " & ganador & " con " & cantganadores & " votos ganaron las elecciones del clan")
             elseif cantganadores = 1 then
-                if instr(1, me.getmemberlist(","), ganador, vbtextcompare) > 0 then
+                list = me.getmemberlist()
+                
+                for i = 0 to ubound(list())
+                    if ganador = list(i) then exit for
+                next i
+                
+                if i <= ubound(list()) then
                     call setguildnews("*" & ganador & " gan� la elecci�n del clan*")
                     call me.setleader(ganador)
                     revisarelecciones = true
@@ -788,10 +813,15 @@ end sub
 '
 
 private sub replaceinvalidchars(byref s as string)
-    s = replace(s, chr(13), vbnullstring)
-    s = replace(s, chr(10), vbnullstring)
-    s = replace(s, "�", vbnullstring)   'morgo usaba esto como "separador"
-    s = replace(s, endc, vbnullstring)
+    if instrb(s, chr$(13)) <> 0 then
+        s = replace(s, chr$(13), vbnullstring)
+    end if
+    if instrb(s, chr$(10)) <> 0 then
+        s = replace(s, chr$(10), vbnullstring)
+    end if
+    if instrb(s, "�") <> 0 then
+        s = replace(s, "�", vbnullstring)   'morgo usaba esto como "separador"
+    end if
 end sub
 
 

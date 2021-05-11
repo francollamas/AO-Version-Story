@@ -186,7 +186,7 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -194,18 +194,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -234,6 +232,8 @@ option explicit
 '<-------------------------nuevo-------------------------->
 '<-------------------------nuevo-------------------------->
 '<-------------------------nuevo-------------------------->
+
+public lasactionbuy as boolean
 public lastindex1 as integer
 public lastindex2 as integer
 
@@ -260,10 +260,8 @@ end if
 end sub
 
 private sub command2_click()
-senddata ("finban")
+    call writebankend
 end sub
-
-
 
 private sub form_deactivate()
 'me.setfocus
@@ -277,7 +275,6 @@ image1(0).picture = loadpicture(app.path & "\graficos\bot�ncomprar.jpg")
 image1(1).picture = loadpicture(app.path & "\graficos\bot�nvender.jpg")
 
 end sub
-
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
 if image1(0).tag = 0 then
@@ -294,20 +291,21 @@ private sub image1_click(index as integer)
 
 call audio.playwave(snd_click)
 
-if list1(index).list(list1(index).listindex) = "nada" or _
+if list1(index).list(list1(index).listindex) = "" or _
    list1(index).listindex < 0 then exit sub
 
 select case index
     case 0
         frmbancoobj.list1(0).setfocus
         lastindex1 = list1(0).listindex
-        
-        senddata ("reti" & "," & list1(0).listindex + 1 & "," & cantidad.text)
+        lasactionbuy = true
+        call writebankextractitem(list1(0).listindex + 1, cantidad.text)
         
    case 1
         lastindex2 = list1(1).listindex
+        lasactionbuy = false
         if not inventario.equipped(list1(1).listindex + 1) then
-            senddata ("depo" & "," & list1(1).listindex + 1 & "," & cantidad.text)
+            call writebankdeposit(list1(1).listindex + 1, cantidad.text)
         else
             addtorichtextbox frmmain.rectxt, "no podes depositar el item porque lo estas usando.", 2, 51, 223, 1, 1
             exit sub
@@ -393,7 +391,15 @@ select case index
         end select
         call drawgrhtohdc(picture1.hwnd, picture1.hdc, inventario.grhindex(list1(1).listindex + 1), sr, dr)
 end select
-picture1.refresh
+
+if label1(2).caption = 0 then ' 27/08/2006 - gs > no mostrar imagen ni nada, cuando no ahi nada que mostrar.
+    label1(3).visible = false
+    label1(4).visible = false
+    picture1.visible = false
+else
+    picture1.visible = true
+    picture1.refresh
+end if
 
 end sub
 '<-------------------------nuevo-------------------------->

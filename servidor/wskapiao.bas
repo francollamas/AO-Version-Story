@@ -1,4 +1,23 @@
 attribute vb_name = "wskapiao"
+'**************************************************************
+' wskapiao.bas
+'
+'**************************************************************
+
+'**************************************************************************
+'this program is free software; you can redistribute it and/or modify
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
+'
+'this program is distributed in the hope that it will be useful,
+'but without any warranty; without even the implied warranty of
+'merchantability or fitness for a particular purpose.  see the
+'affero general public license for more details.
+'
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'**************************************************************************
+
 option explicit
 
 ''
@@ -20,8 +39,7 @@ private const sd_send as long = &h1
 private const sd_both as long = &h2
 
 
-private const max_tiempoidle_colallena = 1 'minutos
-private const max_colasalida_count = 800
+private const max_tiempoidle_colallena = 5 'minutos
 
 public declare sub sleep lib "kernel32" (byval dwmilliseconds as long)
 
@@ -122,40 +140,10 @@ on error goto hayerror
 buscaslotsock = wsapisock2usr.item(cstr(s))
 exit function
 
-hayerror:
+hayerror:   ' the socket was already removed
+
 buscaslotsock = -1
-
-
-'
-'dim pri as long, ult as long, med as long
-'
-'if wsapisockchachecant > 0 then
-'    'busqueda dicotomica :d
-'    pri = 1
-'    ult = wsapisockchachecant
-'    med = int((pri + ult) / 2)
-'
-'    do while (pri <= ult) and (wsapisockchache(med).sock <> s)
-'        if s < wsapisockchache(med).sock then
-'            ult = med - 1
-'        else
-'            pri = med + 1
-'        end if
-'        med = int((pri + ult) / 2)
-'    loop
-'
-'    if pri <= ult then
-'        if cacheind then
-'            buscaslotsock = med
-'        else
-'            buscaslotsock = wsapisockchache(med).slot
-'        end if
-'    else
-'        buscaslotsock = -1
-'    end if
-'else
-'    buscaslotsock = -1
-'end if
+err.clear
 
 #end if
 end function
@@ -228,7 +216,7 @@ public function wndproc(byval hwnd as long, byval msg as long, byval wparam as l
 on error resume next
 
 dim ret as long
-dim tmp as string
+dim tmp() as byte
 
 dim s as long, e as long
 dim n as integer
@@ -269,7 +257,6 @@ case 1025
 '            exit function
 '        end if
 '
-'        userlist(n).sockpuedoenviar = true
 
 '        call intentarenviardatosencolados(n)
 '
@@ -303,11 +290,9 @@ case 1025
         'call wsaasyncselect(s, hwndmsg, byval 1025, byval (0))
         
         '4k de buffer
-        'buffer externo
-        tmp = space$(size_rcvbuf)   'si cambias este valor, tambien hacelo mas abajo
-                            'donde dice ret = 8192 :)
+        redim preserve tmp(size_rcvbuf - 1) as byte
         
-        ret = recv(s, tmp, len(tmp), 0)
+        ret = recv(s, tmp(0), size_rcvbuf, 0)
         ' comparo por = 0 ya que esto es cuando se cierra
         ' "gracefully". (mas abajo)
         if ret < 0 then
@@ -335,20 +320,21 @@ case 1025
         
         'call wsaasyncselect(s, hwndmsg, byval 1025, byval (fd_read or fd_write or fd_close or fd_accept))
         
-        tmp = left(tmp, ret)
+        redim preserve tmp(ret - 1) as byte
         
         'call logapisock("wndproc:fd_read:n=" & n & ":tmp=" & tmp)
         
         call eventosockread(n, tmp)
         
     case fd_close
+        'debug.print wsagetselecterror(lparam)
         n = buscaslotsock(s)
         if s <> socklisten then call apiclosesocket(s)
         
         call logapisock("wndproc:fd_close:n=" & n & ":err=" & wsagetasyncerror(lparam))
         
         if n > 0 then
-            call borraslotsock(userlist(n).connid)
+            call borraslotsock(s)
             userlist(n).connid = -1
             userlist(n).connidvalida = false
             call eventosockclose(n)
@@ -364,7 +350,7 @@ end function
 
 'retorna 0 cuando se envi� o se metio en la cola,
 'retorna <> 0 cuando no se pudo enviar o no se pudo meter en la cola
-public function wsapienviar(byval slot as integer, byval str as string, optional encolar as boolean = true) as long
+public function wsapienviar(byval slot as integer, byref str as string, optional encolar as boolean = true) as long
 #if usarquesocket = 1 then
 
 'if frmmain.superlog.value = 1 then logcustom ("wsapienviar:: slot=" & slot & " str=" & str & " len(str)=" & len(str) & " encolar=" & encolar)
@@ -372,32 +358,35 @@ public function wsapienviar(byval slot as integer, byval str as string, optional
 dim ret as string
 dim ulterror as long
 dim retorno as long
+dim data() as byte
+
+redim preserve data(len(str) - 1) as byte
+
+data = strconv(str, vbfromunicode)
+
+#if seguridadalkon then
+    call security.datasent(slot, data)
+#end if
 
 retorno = 0
 
 'debug.print ">>>> " & str
 
+
 if userlist(slot).connid <> -1 and userlist(slot).connidvalida then
-    if ((userlist(slot).colasalida.count = 0)) or (not encolar) then
-        ret = send(byval userlist(slot).connid, byval str, byval len(str), byval 0)
-        if ret < 0 then
-            ulterror = err.lastdllerror
-            if ulterror = wsaewouldblock then
-                userlist(slot).sockpuedoenviar = false
-                if encolar then
-                    userlist(slot).colasalida.add str 'metelo en la cola vite'
-                    'logcustom ("encolados datos:" & str)
-                end if
-            end if
-            retorno = ulterror
-        end if
-    else
-        if userlist(slot).colasalida.count < max_colasalida_count or userlist(slot).counters.idlecount < max_tiempoidle_colallena then
-            userlist(slot).colasalida.add str 'metelo en la cola vite'
+    ret = send(byval userlist(slot).connid, data(0), byval ubound(data()) + 1, byval 0)
+    if ret < 0 then
+        ulterror = err.lastdllerror
+        if ulterror = wsaewouldblock then
             
-        else
-            retorno = -1
+#if seguridadalkon then
+            call security.datastored(slot)
+#end if
+            
+            ' wsaewouldblock, put the data again in the outgoingdata buffer
+            call userlist(slot).outgoingdata.writeasciistringfixed(str)
         end if
+        retorno = ulterror
     end if
 elseif userlist(slot).connid <> -1 and not userlist(slot).connidvalida then
     if not userlist(slot).counters.saliendo then
@@ -447,38 +436,6 @@ errhandler:
 
 #end if
 end sub
-
-
-public sub intentarenviardatosencolados(byval n as integer)
-#if usarquesocket = 1 then
-
-dim dale as boolean
-dim ret as long
-
-dale = userlist(n).colasalida.count > 0
-do while dale
-    ret = wsapienviar(n, userlist(n).colasalida.item(1), false)
-    if ret <> 0 then
-        if ret = wsaewouldblock then
-            dale = false
-        else
-            'y aca que hacemo' ?? help! i need somebody, help!
-            dale = false
-            debug.print "error al enviar el dato desde la cola " & ret & ": " & getwsaerrorstring(ret)
-            call logapisock("intentarenviardatosencolados: n=" & n & " " & getwsaerrorstring(ret))
-            call closesocketsl(n)
-            call cerrar_usuario(n)
-        end if
-    else
-    '    debug.print "dato de la cola enviado"
-        userlist(n).colasalida.remove 1
-        dale = (userlist(n).colasalida.count > 0)
-    end if
-loop
-
-#end if
-end sub
-
 
 public sub eventosockaccept(byval sockid as long)
 #if usarquesocket = 1 then
@@ -533,24 +490,23 @@ public sub eventosockaccept(byval sockid as long)
 
     nuevosock = ret
     
-    'seteamos el tama�o del buffer de entrada a 512 bytes
+    'seteamos el tama�o del buffer de entrada
     if setsockopt(nuevosock, sol_socket, so_rcvbuffer, size_rcvbuf, 4) <> 0 then
         i = err.lastdllerror
         call logcriticevent("error al setear el tama�o del buffer de entrada " & i & ": " & getwsaerrorstring(i))
     end if
-    'seteamos el tama�o del buffer de salida a 1 kb
+    'seteamos el tama�o del buffer de salida
     if setsockopt(nuevosock, sol_socket, so_sndbuffer, size_sndbuf, 4) <> 0 then
         i = err.lastdllerror
         call logcriticevent("error al setear el tama�o del buffer de salida " & i & ": " & getwsaerrorstring(i))
     end if
 
-    if false then
     'if securityip.ipsecuritysuperalimiteconexiones(sa.sin_addr) then
-        tstr = "errlimite de conexiones para su ip alcanzado." & endc
-        call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
-        call wsapiclosesocket(nuevosock)
-        exit sub
-    end if
+        'tstr = "limite de conexiones para su ip alcanzado."
+        'call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
+        'call wsapiclosesocket(nuevosock)
+        'exit sub
+    'end if
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -563,13 +519,21 @@ public sub eventosockaccept(byval sockid as long)
     
     if newindex <= maxusers then
         
+        'make sure both outgoing and incoming data buffers are clean
+        call userlist(newindex).incomingdata.readasciistringfixed(userlist(newindex).incomingdata.length)
+        call userlist(newindex).outgoingdata.readasciistringfixed(userlist(newindex).outgoingdata.length)
+
+#if seguridadalkon then
+        call security.newconnection(newindex)
+#end if
+        
         userlist(newindex).ip = getascip(sa.sin_addr)
         'busca si esta banneada la ip
         for i = 1 to banips.count
             if banips.item(i) = userlist(newindex).ip then
                 'call apiclosesocket(nuevosock)
-                tstr = "errsu ip se encuentra bloqueada en este servidor." & endc
-                call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
+                call writeerrormsg(newindex, "su ip se encuentra bloqueada en este servidor.")
+                call flushbuffer(newindex)
                 'call securityip.iprestarconexion(sa.sin_addr)
                 call wsapiclosesocket(nuevosock)
                 exit sub
@@ -578,52 +542,48 @@ public sub eventosockaccept(byval sockid as long)
         
         if newindex > lastuser then lastuser = newindex
         
-        userlist(newindex).sockpuedoenviar = true
         userlist(newindex).connid = nuevosock
         userlist(newindex).connidvalida = true
-        set userlist(newindex).commandsbuffer = new ccolaarray
-        set userlist(newindex).colasalida = new collection
         
         call agregaslotsock(nuevosock, newindex)
     else
-        tstr = "errserver lleno." & endc
-        dim aaa as long
-        aaa = send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
-        'call securityip.iprestarconexion(sa.sin_addr)
+        dim str as string
+        dim data() as byte
+        
+        str = protocol.preparemessageerrormsg("el server se haya lleno en este momento. disculpe las molestias ocasionadas.")
+        
+        redim preserve data(len(str) - 1) as byte
+        
+        data = strconv(str, vbfromunicode)
+        
+#if seguridadalkon then
+        call security.datasent(security.no_slot, data)
+#end if
+        
+        call send(byval nuevosock, data(0), byval ubound(data()) + 1, byval 0)
         call wsapiclosesocket(nuevosock)
     end if
     
 #end if
 end sub
 
-public sub eventosockread(byval slot as integer, byref datos as string)
+public sub eventosockread(byval slot as integer, byref datos() as byte)
 #if usarquesocket = 1 then
 
-dim t() as string
-dim loopc as long
-
-userlist(slot).rdbuffer = userlist(slot).rdbuffer & datos
-
-t = split(userlist(slot).rdbuffer, endc)
-if ubound(t) > 0 then
-    userlist(slot).rdbuffer = t(ubound(t))
+with userlist(slot)
     
-    for loopc = 0 to ubound(t) - 1
-        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        '%%% si esta opcion se activa soluciona %%%
-        '%%% el problema del speedhack          %%%
-        '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        if clientscommandsqueue = 1 then
-            if t(loopc) <> "" then if not userlist(slot).commandsbuffer.push(t(loopc)) then call closesocket(slot)
-        else ' no encolamos los comandos (muy viejo)
-              if userlist(slot).connid <> -1 then
-                call handledata(slot, t(loopc))
-              else
-                exit sub
-              end if
-        end if
-    next loopc
-end if
+#if seguridadalkon then
+    call security.datareceived(slot, datos)
+#end if
+    
+    call .incomingdata.writeblock(datos)
+    
+    if .connid <> -1 then
+        call handleincomingdata(slot)
+    else
+        exit sub
+    end if
+end with
 
 #end if
 end sub
@@ -635,6 +595,10 @@ public sub eventosockclose(byval slot as integer)
     'si estamos ac� es porque se cerr� la conexi�n, no es un /salir, y no queremos banearlo....
     if centinela.revisandouserindex = slot then _
         call modcentinela.centinelauserlogout
+    
+#if seguridadalkon then
+    call security.userdisconnected(slot)
+#end if
     
     if userlist(slot).flags.userlogged then
         call closesocketsl(slot)
@@ -661,11 +625,19 @@ dim i as long
         'call resetuserslot(i)
     next i
     
+    for i = 1 to maxusers
+        set userlist(i).incomingdata = nothing
+        set userlist(i).outgoingdata = nothing
+    next i
+    
     ' no 'ta el preserve :p
     redim userlist(1 to maxusers)
     for i = 1 to maxusers
         userlist(i).connid = -1
         userlist(i).connidvalida = false
+        
+        set userlist(i).incomingdata = new clsbytequeue
+        set userlist(i).outgoingdata = new clsbytequeue
     next i
     
     lastuser = 1
@@ -679,7 +651,6 @@ dim i as long
 
 #end if
 end sub
-
 
 public sub wsapiclosesocket(byval socket as long)
 #if usarquesocket = 1 then

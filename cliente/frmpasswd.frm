@@ -1,5 +1,5 @@
 version 5.00
-begin vb.form frmpasswdsinpadrinos 
+begin vb.form frmpasswd 
    borderstyle     =   3  'fixed dialog
    clientheight    =   4050
    clientleft      =   45
@@ -44,7 +44,9 @@ begin vb.form frmpasswdsinpadrinos
    begin vb.textbox txtpasswdcheck 
       borderstyle     =   0  'none
       height          =   255
+      imemode         =   3  'disable
       left            =   765
+      passwordchar    =   "*"
       tabindex        =   7
       top             =   2910
       width           =   3510
@@ -52,7 +54,9 @@ begin vb.form frmpasswdsinpadrinos
    begin vb.textbox txtpasswd 
       borderstyle     =   0  'none
       height          =   255
+      imemode         =   3  'disable
       left            =   765
+      passwordchar    =   "*"
       tabindex        =   5
       top             =   2295
       width           =   3510
@@ -123,7 +127,7 @@ begin vb.form frmpasswdsinpadrinos
    end
    begin vb.label label2 
       alignment       =   2  'center
-      caption         =   $"frmpasswdsinpadrinos.frx":0000
+      caption         =   $"frmpasswd.frx":0000
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -160,12 +164,12 @@ begin vb.form frmpasswdsinpadrinos
       width           =   1035
    end
 end
-attribute vb_name = "frmpasswdsinpadrinos"
+attribute vb_name = "frmpasswd"
 attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -173,18 +177,16 @@ attribute vb_exposed = false
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -224,22 +226,17 @@ if checkdatos() then
     useremail = txtcorreo.text
     
     if not checkmailstring(useremail) then
-            msgbox "direccion de mail invalida."
-            exit sub
+        msgbox "direccion de mail invalida."
+        exit sub
     end if
     
 #if usarwrench = 1 then
     frmmain.socket1.hostname = curserverip
     frmmain.socket1.remoteport = curserverport
 #end if
-
-    'sendnewchar = true
+    
     estadologin = crearnuevopj
     
-    me.mousepointer = 11
-
-    estadologin = crearnuevopj
-
 #if usarwrench = 1 then
     if not frmmain.socket1.connected then
 #else
@@ -249,13 +246,14 @@ if checkdatos() then
         unload me
         
     else
-        call login(validarloginmsg(cint(brk)))
+        call login
     end if
 end if
 
 end sub
 
 private sub command2_click()
-unload me
+    estadologin = e_modo.dados
+    unload me
 end sub
 

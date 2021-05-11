@@ -1,5 +1,5 @@
 attribute vb_name = "carteles"
-'argentum online 0.9.0.9
+'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
 'copyright (c) 2002 otto perez
@@ -7,18 +7,16 @@ attribute vb_name = "carteles"
 'copyright (c) 2002 mat�as fernando peque�o
 '
 'this program is free software; you can redistribute it and/or modify
-'it under the terms of the gnu general public license as published by
-'the free software foundation; either version 2 of the license, or
-'any later version.
+'it under the terms of the affero general public license;
+'either version 1 of the license, or any later version.
 '
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
-'you should have received a copy of the gnu general public license
-'along with this program; if not, write to the free software
-'foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
+'you should have received a copy of the affero general public license
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
 '
 'argentum online is based on baronsoft's vb6 online rpg
 'you can contact the original creator of ore at aaron@baronsoft.com
@@ -94,8 +92,8 @@ call ddrawtransgrhindextosurface(backbuffersurface, textura, xposcartel, yposcar
 dim j as integer, desp as integer
 
 for j = 0 to ubound(leyendaformateada)
-dialogos.drawtext x, y + desp, leyendaformateada(j), vbwhite
-  desp = desp + (frmmain.font.size) + 5
+    drawtext x, y + desp, leyendaformateada(j), vbwhite, frmmain.font
+    desp = desp + (frmmain.font.size) + 5
 next
 end sub
 

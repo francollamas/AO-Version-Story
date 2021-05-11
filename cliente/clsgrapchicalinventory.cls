@@ -26,7 +26,7 @@ attribute vb_exposed = false
 'this program is distributed in the hope that it will be useful,
 'but without any warranty; without even the implied warranty of
 'merchantability or fitness for a particular purpose.  see the
-'gnu general public license for more details.
+'affero general public license for more details.
 '
 'you should have received a copy of the gnu general public license
 'along with this program; if not, write to the free software
@@ -164,7 +164,11 @@ public property get amount(byval slot as byte) as long
 'last modify date: 27/07/04
 'retrieves the selected item's amount
 '***************************************************
-    amount = userinventory(slot).amount
+    if slot = flagoro then
+        amount = usergld
+    elseif slot >= lbound(userinventory) and slot <= ubound(userinventory) then
+        amount = userinventory(slot).amount
+    end if
 end property
 
 public property get objindex(byval slot as byte) as integer
@@ -466,6 +470,10 @@ private sub inventorywindow_mousemove(button as integer, shift as integer, x as 
     dim temp_y as integer
     dim tempitem as integer
     
+    'exit if it got outside the control's area
+    if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
+        exit sub
+    
     temp_x = x \ tilepixelwidth
     temp_y = y \ tilepixelheight
     
@@ -485,6 +493,10 @@ private sub inventorywindow_mouseup(button as integer, shift as integer, x as si
 '***************************************************
     'store previously selected item
     dim prevselitem as long
+    
+    'exit if it got outside the control's area
+    if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
+        exit sub
     
     prevselitem = invselecteditem
 
