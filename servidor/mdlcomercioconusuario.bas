@@ -25,7 +25,7 @@ option explicit
 private const max_oro_logueable as long = 50000
 private const max_obj_logueable as long = 1000
 
-public const max_offer_slots as integer = 30 '20
+public const max_offer_slots as integer = 20
 public const gold_offer_slot as integer = max_offer_slots + 1
 
 public type tcomerciousuario
@@ -37,6 +37,11 @@ public type tcomerciousuario
     cant(1 to max_offer_slots) as long 'cuantos objetos desea dar
     acepto as boolean
     confirmo as boolean
+end type
+
+private type tofferitem
+    objindex as integer
+    amount as long
 end type
 
 'origen: origen de la transaccion, originador del comando
@@ -52,6 +57,13 @@ public sub iniciarcomercioconusuario(byval origen as integer, byval destino as i
     'si ambos pusieron /comerciar entonces
     if userlist(origen).comusu.destusu = destino and _
        userlist(destino).comusu.destusu = origen then
+       
+       if userlist(origen).flags.comerciando or userlist(destino).flags.comerciando then
+            call writeconsolemsg(origen, "no puedes comerciar en este momento", fonttypenames.fonttype_talk)
+            call writeconsolemsg(destino, "no puedes comerciar en este momento", fonttypenames.fonttype_talk)
+            exit sub
+        end if
+        
         'actualiza el inventario del usuario
         call updateuserinv(true, origen, 0)
         'decirle al origen que abra la ventanita.
@@ -88,14 +100,18 @@ public sub enviaroferta(byval userindex as integer, byval offerslot as byte)
 '***************************************************
     dim objindex as integer
     dim objamount as long
+    dim otheruserindex as integer
     
-    with userlist(userindex)
+    
+    otheruserindex = userlist(userindex).comusu.destusu
+    
+    with userlist(otheruserindex)
         if offerslot = gold_offer_slot then
             objindex = ioro
-            objamount = userlist(.comusu.destusu).comusu.goldamount
+            objamount = .comusu.goldamount
         else
-            objindex = userlist(.comusu.destusu).comusu.objeto(offerslot)
-            objamount = userlist(.comusu.destusu).comusu.cant(offerslot)
+            objindex = .comusu.objeto(offerslot)
+            objamount = .comusu.cant(offerslot)
         end if
     end with
    
@@ -135,20 +151,53 @@ end sub
 public sub aceptarcomerciousu(byval userindex as integer)
 '***************************************************
 'autor: unkown
-'last modification: 25/11/2009
+'last modification: 06/05/2010
 '25/11/2009: zama - ahora se traspasan hasta 5 items + oro al comerciar
+'06/05/2010: zama - ahora valida si los usuarios tienen los items que ofertan.
 '***************************************************
     dim tradingobj as obj
     dim otrouserindex as integer
-    dim terminarahora as boolean
     dim offerslot as integer
 
     userlist(userindex).comusu.acepto = true
     
     otrouserindex = userlist(userindex).comusu.destusu
     
+    ' acepto el otro?
     if userlist(otrouserindex).comusu.acepto = false then
         exit sub
+    end if
+    
+    ' user valido?
+    if otrouserindex <= 0 or otrouserindex > maxusers then
+        call fincomerciarusu(userindex)
+        exit sub
+    end if
+    
+    
+    ' aceptaron ambos, chequeo que tengan los items que ofertaron
+    if not hasoffereditems(userindex) then
+        
+        call writeconsolemsg(userindex, "���el comercio se cancel� porque no posees los �tems que ofertaste!!!", fonttypenames.fonttype_fight)
+        call writeconsolemsg(otrouserindex, "���el comercio se cancel� porque " & userlist(userindex).name & " no posee los �tems que ofert�!!!", fonttypenames.fonttype_fight)
+        
+        call fincomerciarusu(userindex)
+        call fincomerciarusu(otrouserindex)
+        call protocol.flushbuffer(otrouserindex)
+        
+        exit sub
+        
+    elseif not hasoffereditems(otrouserindex) then
+        
+        call writeconsolemsg(userindex, "���el comercio se cancel� porque " & userlist(otrouserindex).name & " no posee los �tems que ofert�!!!", fonttypenames.fonttype_fight)
+        call writeconsolemsg(otrouserindex, "���el comercio se cancel� porque no posees los �tems que ofertaste!!!", fonttypenames.fonttype_fight)
+        
+        call fincomerciarusu(userindex)
+        call fincomerciarusu(otrouserindex)
+        call protocol.flushbuffer(otrouserindex)
+        
+        exit sub
+        
     end if
     
     ' envio los items a quien corresponde
@@ -173,7 +222,7 @@ public sub aceptarcomerciousu(byval userindex as integer)
             elseif .comusu.objeto(offerslot) > 0 then
                 tradingobj.objindex = .comusu.objeto(offerslot)
                 tradingobj.amount = .comusu.cant(offerslot)
-                
+                                
                 'quita el objeto y se lo da al otro
                 if not meteritemeninventario(otrouserindex, tradingobj) then
                     call tiraritemalpiso(userlist(otrouserindex).pos, tradingobj)
@@ -216,7 +265,7 @@ public sub aceptarcomerciousu(byval userindex as integer)
             elseif .comusu.objeto(offerslot) > 0 then
                 tradingobj.objindex = .comusu.objeto(offerslot)
                 tradingobj.amount = .comusu.cant(offerslot)
-                
+                                
                 'quita el objeto y se lo da al otro
                 if not meteritemeninventario(userindex, tradingobj) then
                     call tiraritemalpiso(userlist(userindex).pos, tradingobj)
@@ -244,7 +293,8 @@ public sub aceptarcomerciousu(byval userindex as integer)
     ' end trade
     call fincomerciarusu(userindex)
     call fincomerciarusu(otrouserindex)
- 
+    call protocol.flushbuffer(otrouserindex)
+    
 end sub
 
 public sub agregaroferta(byval userindex as integer, byval offerslot as byte, byval objindex as integer, byval amount as long, byval isgold as boolean)
@@ -339,7 +389,7 @@ with userlist(userindex)
     if comercioinvalido = true then
         call fincomerciarusu(userindex)
         
-        if otrouserindex <= 0 or otrouserindex > maxusers then
+        if otrouserindex > 0 and otrouserindex <= maxusers then
             call fincomerciarusu(otrouserindex)
             call protocol.flushbuffer(otrouserindex)
         end if
@@ -349,5 +399,64 @@ with userlist(userindex)
 end with
 
 puedeseguircomerciando = true
+
+end function
+
+private function hasoffereditems(byval userindex as integer) as boolean
+'***************************************************
+'autor: zama
+'last modification: 05/06/2010
+'checks whether the user has the offered items in his inventory or not.
+'***************************************************
+
+    dim offereditems(max_offer_slots - 1) as tofferitem
+    dim slot as long
+    dim slotaux as long
+    dim slotcount as long
+    
+    dim objindex as integer
+    
+    with userlist(userindex).comusu
+        
+        ' agrupo los items que son iguales
+        for slot = 1 to max_offer_slots
+                    
+            objindex = .objeto(slot)
+            
+            if objindex > 0 then
+            
+                for slotaux = 0 to slotcount - 1
+                    
+                    if objindex = offereditems(slotaux).objindex then
+                        ' son iguales, aumento la cantidad
+                        offereditems(slotaux).amount = offereditems(slotaux).amount + .cant(slot)
+                        exit for
+                    end if
+                    
+                next slotaux
+                
+                ' no encontro otro igual, lo agrego
+                if slotaux = slotcount then
+                    offereditems(slotcount).objindex = objindex
+                    offereditems(slotcount).amount = .cant(slot)
+                    
+                    slotcount = slotcount + 1
+                end if
+                
+            end if
+            
+        next slot
+        
+        ' chequeo que tengan la cantidad en el inventario
+        for slot = 0 to slotcount - 1
+            if not hasenoughitems(userindex, offereditems(slot).objindex, offereditems(slot).amount) then exit function
+        next slot
+        
+        ' compruebo que tenga el oro que oferta
+        if userlist(userindex).stats.gld < .goldamount then exit function
+        
+    end with
+    
+    hasoffereditems = true
 
 end function

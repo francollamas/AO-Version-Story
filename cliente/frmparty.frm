@@ -169,7 +169,7 @@ private cbotonlidergrupo as clsgraphicalbutton
 private cbotonexpulsar as clsgraphicalbutton
 private cbotonsalirparty as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 
 private spartychat as string
@@ -179,23 +179,36 @@ private const offset_buttons as integer = 43 ' pixels
 
 
 private sub form_load()
-    ' handles form movement (drag and drop).
-    set clsformulario = new clsformmovementmanager
-    clsformulario.initialize me
+        ' handles form movement (drag and drop).
+        '<ehheader>
+        on error goto form_load_err
+        '</ehheader>
+100     set clsformulario = new clsformmovementmanager
+102     clsformulario.initialize me
     
-    lstmembers.clear
+104     lstmembers.clear
         
-    if espartyleader then
-        me.picture = loadpicture(app.path & "\graficos\ventanapartylider.jpg")
-        me.height = leader_form_height
-    else
-        me.picture = loadpicture(app.path & "\graficos\ventanapartymiembro.jpg")
-        me.height = normal_form_height
-    end if
+106     if espartyleader then
+108         me.picture = loadpicture(app.path & "\graficos\ventanapartylider.jpg")
+110         me.height = leader_form_height
+        else
+112         me.picture = loadpicture(app.path & "\graficos\ventanapartymiembro.jpg")
+114         me.height = normal_form_height
+        end if
     
-    call loadbuttons
+116     call loadbuttons
 
-    mirandoparty = true
+118     mirandoparty = true
+        '<ehfooter>
+        exit sub
+
+form_load_err:
+        msgbox err.description & vbcrlf & _
+               "in argentum.frmparty.form_load " & _
+               "at line " & erl, _
+               vbexclamation + vbokonly, "application error"
+        resume next
+        '</ehfooter>
 end sub
 
 private sub loadbuttons()
@@ -210,7 +223,7 @@ private sub loadbuttons()
     set cbotonexpulsar = new clsgraphicalbutton
     set cbotonsalirparty = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonagregar.initialize(imgagregar, grhpath & "botonagregarparty.jpg", _
@@ -254,7 +267,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub form_unload(cancel as integer)
@@ -331,7 +344,7 @@ end sub
 private sub lstmembers_mousedown(button as integer, shift as integer, x as single, y as single)
 
     if espartyleader then
-        lastpressed.toggletonormal
+        lastbuttonpressed.toggletonormal
     end if
     
 end sub
@@ -385,7 +398,7 @@ private sub sendtxt_keyup(keycode as integer, shift as integer)
 end sub
 
 private sub txttoadd_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub txttoadd_keypress(keyascii as integer)

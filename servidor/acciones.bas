@@ -293,6 +293,8 @@ dim suerte as byte
 dim exito as byte
 dim obj as obj
 
+dim skillsupervivencia as byte
+
 dim pos as worldpos
 pos.map = map
 pos.x = x
@@ -309,11 +311,15 @@ with userlist(userindex)
         exit sub
     end if
     
-    if .stats.userskills(supervivencia) > 1 and .stats.userskills(supervivencia) < 6 then
+    skillsupervivencia = .stats.userskills(eskill.supervivencia)
+    
+    if skillsupervivencia < 6 then
         suerte = 3
-    elseif .stats.userskills(supervivencia) >= 6 and .stats.userskills(supervivencia) <= 10 then
+        
+    elseif skillsupervivencia <= 10 then
         suerte = 2
-    elseif .stats.userskills(supervivencia) >= 10 and .stats.userskills(supervivencia) then
+        
+    else
         suerte = 1
     end if
     
@@ -329,7 +335,8 @@ with userlist(userindex)
             call makeobj(obj, map, x, y)
             
             'las fogatas prendidas se deben eliminar
-            dim fogatita as new cgarbage
+            dim fogatita as cgarbage
+            set fogatita = new cgarbage
             fogatita.map = map
             fogatita.x = x
             fogatita.y = y

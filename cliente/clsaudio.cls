@@ -173,6 +173,10 @@ dim lastposy as integer
 'states wether sound effects are currently activated or not
 dim seffectsactivated as boolean
 
+''
+'determines wether last music played was a mp3 or not.
+private lastplaymp3 as boolean
+
 '**** used by mp3 playing. *****
 dim imc   as imediacontrol
 dim iba   as ibasicaudio
@@ -681,6 +685,8 @@ on error goto errhandler
     if lenb(file) > 0 then _
         currentmusicfile = file
     
+    lastplaymp3 = false
+    
     if not musicactivated then exit function
     
     if not music then exit function
@@ -912,7 +918,7 @@ public function musicmp3load(byval filepath as string, optional byval volume as 
     
     set iba = imc
     
-    if soundvolume > 0 then soundvolume = 0
+    if volume > 0 then volume = 0
     if volume < -4000 then volume = -4000
     
     iba.volume = volume
@@ -948,6 +954,11 @@ public function musicmp3play(optional byval filepath as string = "") as boolean
 '* modify date: 20/5/2003             *
 '**************************************
     on error goto errorhandl
+    
+    if lenb(filepath) > 0 then _
+        currentmusicfile = filepath
+    
+    lastplaymp3 = true
     
     if not musicactivated then exit function
     
@@ -1028,20 +1039,20 @@ end function
 ''
 ' set the volume to the current mp3.
 '
-' @param    soundvolume the new volume to the current mp3.
+' @param    volume the new volume to the current mp3.
 ' @return   true    if the volume was properly change, false otherwise.
 
-public function musicmp3volumeset(byval soundvolume as long) as boolean
+public function musicmp3volumeset(byval volume as long) as boolean
 '**************************************
 '* created by: fredrik alexandersson  *
 '* modify date: 20/5/2003             *
 '**************************************
     on error goto errorhandl
     
-    if soundvolume > 0 then soundvolume = 0
-    if soundvolume < -4000 then soundvolume = -4000
+    if volume > 0 then volume = 0
+    if volume < -4000 then volume = -4000
     
-    iba.volume = soundvolume
+    iba.volume = volume
 
     musicmp3volumeset = true
     exit function
@@ -1080,9 +1091,17 @@ public property let musicactivated(byval nvalue as boolean)
     mactivated = nvalue
     
     if nvalue then
-        call playmidi(currentmusicfile)
+        if lastplaymp3 then
+            call musicmp3play(currentmusicfile)
+        else
+            call playmidi(currentmusicfile)
+        end if
     else
-        call stopmidi
+        if lastplaymp3 then
+            call musicmp3stop
+        else
+            call stopmidi
+        end if
     end if
 end property
 

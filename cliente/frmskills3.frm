@@ -902,7 +902,7 @@ private cskillnames(1 to numskills) as clsgraphicalbutton
 private cbtonaceptar as clsgraphicalbutton
 private cbotoncancelar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private bpuedemagia as boolean
 private bpuedemeditar as boolean
@@ -946,7 +946,7 @@ private sub loadbuttons()
     set cbtonaceptar = new clsgraphicalbutton
     set cbotoncancelar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbtonaceptar.initialize(imgaceptar, grhpath & "botonaceptarskills.jpg", _
                                     grhpath & "botonaceptarrolloverskills.jpg", _
@@ -1240,7 +1240,7 @@ private sub restarskillpoint(byval skillindex as integer)
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
     lblhelp.caption = ""
 end sub
 
@@ -1616,7 +1616,7 @@ private sub imgtalar_mousemove(button as integer, shift as integer, x as single,
 end sub
 
 private sub lblhelp_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub showhelp(byval eeskill as eskill)

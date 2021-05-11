@@ -417,7 +417,7 @@ public sub expulsarfaccionreal(byval userindex as integer, optional expulsado as
 '***************************************************
 'author: unknown
 'last modification: -
-'
+' 09/28/2010 c4b3z0n - arreglado rt6 overflow, el desequipar() del escudo, pon�a de parametro el objindex del escudo en vez del eqpslot.
 '***************************************************
 
 with userlist(userindex)
@@ -436,7 +436,7 @@ with userlist(userindex)
     
     if .invent.escudoeqpobjindex <> 0 then
         'desequipamos el escudo de caos si est� equipado
-        if objdata(.invent.escudoeqpobjindex).real = 1 then call desequipar(userindex, .invent.escudoeqpobjindex)
+        if objdata(.invent.escudoeqpobjindex).real = 1 then call desequipar(userindex, .invent.escudoeqpslot)
     end if
     
     if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)
@@ -448,7 +448,7 @@ public sub expulsarfaccioncaos(byval userindex as integer, optional expulsado as
 '***************************************************
 'author: unknown
 'last modification: -
-'
+' 09/28/2010 c4b3z0n - arreglado rt6 overflow, el desequipar() del escudo, pon�a de parametro el objindex del escudo en vez del eqpslot.
 '***************************************************
 
 with userlist(userindex)
@@ -467,7 +467,7 @@ with userlist(userindex)
     
     if .invent.escudoeqpobjindex <> 0 then
         'desequipamos el escudo de caos si est� equipado
-        if objdata(.invent.escudoeqpobjindex).caos = 1 then call desequipar(userindex, .invent.escudoeqpobjindex)
+        if objdata(.invent.escudoeqpobjindex).caos = 1 then call desequipar(userindex, .invent.escudoeqpslot)
     end if
     
     if .flags.navegando then call refreshcharstatus(userindex) 'actualizamos la barca si esta navegando (niconz)

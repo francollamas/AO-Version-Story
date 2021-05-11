@@ -92,7 +92,7 @@ private clsformulario as clsformmovementmanager
 private cbotoninvocar as clsgraphicalbutton
 private cbotonsalir as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_load()
     ' handles form movement (drag and drop).
@@ -112,7 +112,7 @@ private sub loadbuttons()
     set cbotoninvocar = new clsgraphicalbutton
     set cbotonsalir = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotoninvocar.initialize(imginvocar, grhpath & "botoninvocar.jpg", _
@@ -125,7 +125,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imginvocar_click()
@@ -137,5 +137,5 @@ private sub imgsalir_click()
 end sub
 
 private sub lstcriaturas_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

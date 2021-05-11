@@ -74,57 +74,31 @@ sub quitarmascotanpc(byval maestro as integer)
     npclist(maestro).mascotas = npclist(maestro).mascotas - 1
 end sub
 
-sub muerenpc(byval npcindex as integer, byval userindex as integer)
+public sub muerenpc(byval npcindex as integer, byval userindex as integer)
 '********************************************************
 'author: unknown
 'llamado cuando la vida de un npc llega a cero.
-'last modify date: 24/01/2007
+'last modify date: 13/07/2010
 '22/06/06: (nacho) chequeamos si es pretoriano
 '24/01/2007: pablo (toxicwaste): agrego para actualizaci�n de tag si cambia de status.
+'22/05/2010: zama - los caos ya no suben nobleza ni plebe al atacar npcs.
+'23/05/2010: zama - el usuario pierde la pertenencia del npc.
+'13/07/2010: zama - optimizaciones de logica en la seleccion de pretoriano, y el posible cambio de alencion del usuario.
 '********************************************************
 on error goto errhandler
+
     dim minpc as npc
     minpc = npclist(npcindex)
     dim eracriminal as boolean
-    dim ispretoriano as boolean
+    dim pretorianoindex as integer
    
-    if (espretoriano(npcindex) = 4) then
-        'solo nos importa si fue matado en el mapa pretoriano.
-        ispretoriano = true
-        if npclist(npcindex).pos.map = mapa_pretoriano then
-            'seteamos todos estos 'flags' acorde para que cambien solos de alcoba
-            dim i as integer
-            dim j as integer
-            dim npci as integer
-        
-            for i = 8 to 90
-                for j = 8 to 90
-                
-                    npci = mapdata(npclist(npcindex).pos.map, i, j).npcindex
-                    if npci > 0 then
-                        if espretoriano(npci) > 0 and npci <> npcindex then
-                            if npclist(npcindex).pos.x > 50 then
-                                if npclist(npci).pos.x > 50 then npclist(npci).invent.armoureqpslot = 1
-                            else
-                                if npclist(npci).pos.x <= 50 then npclist(npci).invent.armoureqpslot = 5
-                            end if
-                        end if
-                    end if
-                next j
-            next i
-            call crearclanpretoriano(npclist(npcindex).pos.x)
-        end if
-    elseif espretoriano(npcindex) > 0 then
-        ispretoriano = true
-        if npclist(npcindex).pos.map = mapa_pretoriano then
-            npclist(npcindex).invent.armoureqpslot = 0
-            pretorianosvivos = pretorianosvivos - 1
-        end if
+   ' es pretoriano?
+    if minpc.npctype = enpctype.pretoriano then
+        call clanpretoriano(minpc.clanindex).muerepretoriano(npcindex)
     end if
-   
+      
     'quitamos el npc
     call quitarnpc(npcindex)
-    
     
     if userindex > 0 then ' lo mato un usuario?
         with userlist(userindex)
@@ -182,47 +156,59 @@ on error goto errhandler
                     if .reputacion.asesinorep > maxrep then _
                         .reputacion.asesinorep = maxrep
                 end if
-            elseif minpc.stats.alineacion = 1 then
-                .reputacion.pleberep = .reputacion.pleberep + vlcazador
-                if .reputacion.pleberep > maxrep then _
-                    .reputacion.pleberep = maxrep
-                    
-            elseif minpc.stats.alineacion = 2 then
-                .reputacion.noblerep = .reputacion.noblerep + vlasesino / 2
-                if .reputacion.noblerep > maxrep then _
-                    .reputacion.noblerep = maxrep
-                    
-            elseif minpc.stats.alineacion = 4 then
-                .reputacion.pleberep = .reputacion.pleberep + vlcazador
-                if .reputacion.pleberep > maxrep then _
-                    .reputacion.pleberep = maxrep
-                    
+                
+            elseif not escaos(userindex) then
+                if minpc.stats.alineacion = 1 then
+                    .reputacion.pleberep = .reputacion.pleberep + vlcazador
+                    if .reputacion.pleberep > maxrep then _
+                        .reputacion.pleberep = maxrep
+                        
+                elseif minpc.stats.alineacion = 2 then
+                    .reputacion.noblerep = .reputacion.noblerep + vlasesino / 2
+                    if .reputacion.noblerep > maxrep then _
+                        .reputacion.noblerep = maxrep
+                        
+                elseif minpc.stats.alineacion = 4 then
+                    .reputacion.pleberep = .reputacion.pleberep + vlcazador
+                    if .reputacion.pleberep > maxrep then _
+                        .reputacion.pleberep = maxrep
+                        
+                end if
             end if
             
-            if criminal(userindex) and esarmada(userindex) then call expulsarfaccionreal(userindex)
-            if not criminal(userindex) and escaos(userindex) then call expulsarfaccioncaos(userindex)
+            dim escriminal as boolean
+            escriminal = criminal(userindex)
             
-            if eracriminal and not criminal(userindex) then
-                call refreshcharstatus(userindex)
-            elseif not eracriminal and criminal(userindex) then
+            ' cambio de alienacion?
+            if eracriminal <> escriminal then
+                
+                ' se volvio pk?
+                if escriminal then
+                    if esarmada(userindex) then call expulsarfaccionreal(userindex)
+                
+                ' se volvio ciuda
+                else
+                    if escaos(userindex) then call expulsarfaccioncaos(userindex)
+                end if
+                
                 call refreshcharstatus(userindex)
             end if
-            
+                        
             call checkuserlevel(userindex)
+            
+            if npcindex = .flags.paralizedbynpcindex then
+                call removeparalisis(userindex)
+            end if
             
         end with
     end if ' userindex > 0
    
     if minpc.maestrouser = 0 then
-        'tiramos el oro
-       ' call npctiraroro(minpc)
         'tiramos el inventario
-        call npc_tirar_items(minpc, ispretoriano)
+        call npc_tirar_items(minpc, minpc.npctype = enpctype.pretoriano)
         'respawn o no
         call respawnnpc(minpc)
     end if
-   
-    
     
 exit sub
 
@@ -341,7 +327,7 @@ private sub resetnpcmaininfo(byval npcindex as integer)
 '***************************************************
 'author: unknown
 'last modification: -
-'
+'22/05/2010: zama - ahora se resetea el due�o del npc tambi�n.
 '***************************************************
 
     with npclist(npcindex)
@@ -355,9 +341,11 @@ private sub resetnpcmaininfo(byval npcindex as integer)
         
         if .maestrouser > 0 then call quitarmascota(.maestrouser, npcindex)
         if .maestronpc > 0 then call quitarmascotanpc(.maestronpc)
+        if .owner > 0 then call perdionpc(.owner)
         
         .maestrouser = 0
         .maestronpc = 0
+        .owner = 0
         
         .mascotas = 0
         .movement = 0
@@ -379,6 +367,7 @@ private sub resetnpcmaininfo(byval npcindex as integer)
         .veneno = 0
         .desc = vbnullstring
         
+        .clanindex = 0
         
         dim j as long
         for j = 1 to .nrospells
@@ -401,8 +390,6 @@ on error goto errhandler
 
     with npclist(npcindex)
         .flags.npcactive = false
-        
-        .owner = 0 ' murio, no necesita mas due�os :p.
         
         if inmapbounds(.pos.map, .pos.x, .pos.y) then
             call erasenpcchar(npcindex)
@@ -486,7 +473,8 @@ private function testspawntrigger(pos as worldpos, optional puedeagua as boolean
     
 end function
 
-sub crearnpc(nronpc as integer, mapa as integer, origpos as worldpos)
+public function crearnpc(nronpc as integer, mapa as integer, origpos as worldpos, _
+                         optional byval customhead as integer) as integer
 '***************************************************
 'author: unknown
 'last modification: -
@@ -511,7 +499,11 @@ dim y as integer
 
     nindex = opennpc(nronpc) 'conseguimos un indice
     
-    if nindex > maxnpcs then exit sub
+    if nindex > maxnpcs then exit function
+    
+    ' cabeza customizada
+    if customhead <> 0 then npclist(nindex).char.head = customhead
+    
     puedeagua = npclist(nindex).flags.aguavalida
     puedetierra = iif(npclist(nindex).flags.tierrainvalida = 1, false, true)
     
@@ -571,7 +563,7 @@ dim y as integer
                     npclist(nindex).pos.x = x
                     npclist(nindex).pos.y = y
                     call makenpcchar(true, map, nindex, map, x, y)
-                    exit sub
+                    exit function
                 else
                     altpos.x = 50
                     altpos.y = 50
@@ -581,11 +573,11 @@ dim y as integer
                         npclist(nindex).pos.x = newpos.x
                         npclist(nindex).pos.y = newpos.y
                         call makenpcchar(true, newpos.map, nindex, newpos.map, newpos.x, newpos.y)
-                        exit sub
+                        exit function
                     else
                         call quitarnpc(nindex)
                         call logerror(maxspawnattemps & " iteraciones en crearnpc mapa:" & mapa & " nronpc:" & nronpc)
-                        exit sub
+                        exit function
                     end if
                 end if
             end if
@@ -599,8 +591,10 @@ dim y as integer
             
     'crea el npc
     call makenpcchar(true, map, nindex, map, x, y)
-            
-end sub
+    
+    crearnpc = nindex
+    
+end function
 
 public sub makenpcchar(byval tomap as boolean, sndindex as integer, npcindex as integer, byval map as integer, byval x as integer, byval y as integer)
 '***************************************************
@@ -677,15 +671,17 @@ numchars = numchars - 1
 
 end sub
 
-public sub movenpcchar(byval npcindex as integer, byval nheading as byte)
+public function movenpcchar(byval npcindex as integer, byval nheading as byte) as boolean
 '***************************************************
 'autor: unknown (orginal version)
 'last modification: 06/04/2009
 '06/04/2009: zama - now npcs can force to change position with dead character
 '01/08/2009: zama - now npcs can't force to chance position with a dead character if that means to change the terrain the character is in
+'26/09/2010: zama - turn sub into function to know if npc has moved or not.
 '***************************************************
 
 on error goto errh
+
     dim npos as worldpos
     dim userindex as integer
     
@@ -694,19 +690,19 @@ on error goto errh
         call headtopos(nheading, npos)
         
         ' es una posicion legal
-        if legalposnpc(.pos.map, npos.x, npos.y, .flags.aguavalida = 1, .maestrouser <> 0) then
+        if legalposnpc(npos.map, npos.x, npos.y, .flags.aguavalida = 1, .maestrouser <> 0) then
             
-            if .flags.aguavalida = 0 and hayagua(.pos.map, npos.x, npos.y) then exit sub
-            if .flags.tierrainvalida = 1 and not hayagua(.pos.map, npos.x, npos.y) then exit sub
+            if .flags.aguavalida = 0 and hayagua(.pos.map, npos.x, npos.y) then exit function
+            if .flags.tierrainvalida = 1 and not hayagua(.pos.map, npos.x, npos.y) then exit function
             
             userindex = mapdata(.pos.map, npos.x, npos.y).userindex
             ' si hay un usuario a donde se mueve el npc, entonces esta muerto
             if userindex > 0 then
                 
                 ' no se traslada caspers de agua a tierra
-                if hayagua(.pos.map, npos.x, npos.y) and not hayagua(.pos.map, .pos.x, .pos.y) then exit sub
+                if hayagua(.pos.map, npos.x, npos.y) and not hayagua(.pos.map, .pos.x, .pos.y) then exit function
                 ' no se traslada caspers de tierra a agua
-                if not hayagua(.pos.map, npos.x, npos.y) and hayagua(.pos.map, .pos.x, .pos.y) then exit sub
+                if not hayagua(.pos.map, npos.x, npos.y) and hayagua(.pos.map, .pos.x, .pos.y) then exit function
                 
                 with userlist(userindex)
                     ' actualizamos posicion y mapa
@@ -730,6 +726,9 @@ on error goto errh
             mapdata(.pos.map, npos.x, npos.y).npcindex = npcindex
             call checkupdateneedednpc(npcindex, nheading)
         
+            ' npc has moved
+            movenpcchar = true
+        
         elseif .maestrouser = 0 then
             if .movement = tipoai.npcpathfinding then
                 'someone has blocked the npc's way, we must to seek a new path!
@@ -737,11 +736,12 @@ on error goto errh
             end if
         end if
     end with
-exit sub
+    
+    exit function
 
 errh:
-    logerror ("error en move npc " & npcindex)
-end sub
+    logerror ("error en move npc " & npcindex & ". error: " & err.number & " - " & err.description)
+end function
 
 function nextopennpc() as integer
 '***************************************************
@@ -768,17 +768,22 @@ end function
 sub npcenvenenaruser(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 10/07/2010
+'10/07/2010: zama - now npcs can't poison dead users.
 '***************************************************
 
-dim n as integer
-n = randomnumber(1, 100)
-if n < 30 then
-    userlist(userindex).flags.envenenado = 1
-    call writeconsolemsg(userindex, "��la criatura te ha envenenado!!", fonttypenames.fonttype_fight)
-end if
-
+    dim n as integer
+    
+    with userlist(userindex)
+        if .flags.muerto = 1 then exit sub
+        
+        n = randomnumber(1, 100)
+        if n < 30 then
+            .flags.envenenado = 1
+            call writeconsolemsg(userindex, "��la criatura te ha envenenado!!", fonttypenames.fonttype_fight)
+        end if
+    end with
+    
 end sub
 
 function spawnnpc(byval npcindex as integer, pos as worldpos, byval fx as boolean, byval respawn as boolean) as integer
@@ -800,7 +805,7 @@ dim map as integer
 dim x as integer
 dim y as integer
 
-nindex = opennpc(npcindex, respawn)   'conseguimos un indice
+nindex = opennpc(npcindex, respawn)    'conseguimos un indice
 
 if nindex > maxnpcs then
     spawnnpc = 0
@@ -906,16 +911,15 @@ public function opennpc(byval npcnumber as integer, optional byval respawn = tru
 '
 'el que ose desafiar esta ley, se las tendr� que ver
 'conmigo. para leer los npcs se deber� usar la
-'nueva clase clsinireader.
+'nueva clase clsinimanager.
 '
 'alejo
 '
 '###################################################
     dim npcindex as integer
-    dim leer as clsinireader
+    dim leer as clsinimanager
     dim loopc as long
     dim ln as string
-    dim aux as string
     
     set leer = leernpcs
     

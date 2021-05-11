@@ -41,7 +41,7 @@ attribute vb_exposed = false
 option explicit
 
 private const maximopersonajesporip = 15
-private m_coleccion as new collection
+private m_coleccion as collection
 
 public function maxpersonajes(sip as string) as boolean
     dim i as long
@@ -56,7 +56,8 @@ public function maxpersonajes(sip as string) as boolean
     next i
 
 #if seguridadalkon then
-    dim oip as new useripadress
+    dim oip as useripadress
+    set oip = new useripadress
     oip.ip = sip
     oip.personajescreados = 1
     m_coleccion.add oip
@@ -83,3 +84,6 @@ errhandler:
 end function
 
 
+private sub class_initialize()
+    set m_coleccion = new collection
+end sub

@@ -264,7 +264,7 @@ private clsformulario as clsformmovementmanager
 private cbotonconfirmar as clsgraphicalbutton
 private cbotonsalir as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private const max_desc_length as integer = 520
 private const max_codex_length as integer = 100
@@ -287,7 +287,7 @@ private sub loadbuttons()
     set cbotonconfirmar = new clsgraphicalbutton
     set cbotonsalir = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonconfirmar.initialize(imgconfirmar, grhpath & "botonconfirmarcodex.jpg", _
@@ -300,7 +300,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgconfirmar_click()
@@ -347,7 +347,7 @@ private sub txtcodex1_change(index as integer)
 end sub
 
 private sub txtcodex1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub txtdesc_change()

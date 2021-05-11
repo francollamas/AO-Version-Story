@@ -33,28 +33,33 @@ public function tieneobjetosrobables(byval userindex as integer) as boolean
 '***************************************************
 'author: unknown
 'last modification: -
-'
+' 22/05/2010: los items newbies ya no son robables.
 '***************************************************
 
 '17/09/02
 'agregue que la funci�n se asegure que el objeto no es un barco
 
-on error resume next
+on error goto errhandler
 
-dim i as integer
-dim objindex as integer
-
-for i = 1 to userlist(userindex).currentinventoryslots
-    objindex = userlist(userindex).invent.object(i).objindex
-    if objindex > 0 then
+    dim i as integer
+    dim objindex as integer
+    
+    for i = 1 to userlist(userindex).currentinventoryslots
+        objindex = userlist(userindex).invent.object(i).objindex
+        if objindex > 0 then
             if (objdata(objindex).objtype <> eobjtype.otllaves and _
-                objdata(objindex).objtype <> eobjtype.otbarcos) then
+                objdata(objindex).objtype <> eobjtype.otbarcos and _
+                not itemnewbie(objindex)) then
                   tieneobjetosrobables = true
                   exit function
             end if
+        end if
+    next i
     
-    end if
-next i
+    exit function
+
+errhandler:
+    call logerror("error en tieneobjetosrobables. error: " & err.number & " - " & err.description)
 end function
 
 function clasepuedeusaritem(byval userindex as integer, byval objindex as integer, optional byref smotivo as string) as boolean
@@ -66,7 +71,6 @@ function clasepuedeusaritem(byval userindex as integer, byval objindex as intege
 
 on error goto manejador
 
-    dim flag as boolean
     
     'admins can use anything!
     if userlist(userindex).flags.privilegios and playertype.user then
@@ -112,7 +116,7 @@ with userlist(userindex)
     
     '[barrin 17-12-03] si el usuario dej� de ser newbie, y estaba en el newbie dungeon
     'es transportado a su hogar de origen ;)
-    if ucase$(mapinfo(.pos.map).restringir) = "newbie" then
+    if mapinfo(.pos.map).restringir = erestrict.restrict_newbie then
         
         dim dedonde as worldpos
         
@@ -193,7 +197,6 @@ on error goto errhandler
 with userlist(userindex)
     'si el pjta tiene oro lo tiramos
     if (cantidad > 0) and (cantidad <= .stats.gld) then
-            dim i as byte
             dim miobj as obj
             'info debug
             dim loops as integer
@@ -354,49 +357,58 @@ end sub
 sub dropobj(byval userindex as integer, byval slot as byte, byval num as integer, byval map as integer, byval x as integer, byval y as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 11/5/2010
+'11/5/2010 - zama: arreglo bug que permitia apilar mas de 10k de items.
 '***************************************************
 
-dim obj as obj
+dim dropobj as obj
+dim mapobj as obj
 
 with userlist(userindex)
     if num > 0 then
-    
-        if num > .invent.object(slot).amount then num = .invent.object(slot).amount
         
-        obj.objindex = .invent.object(slot).objindex
-        obj.amount = num
+        dropobj.objindex = .invent.object(slot).objindex
         
-        if (itemnewbie(obj.objindex) and (.flags.privilegios and playertype.user)) then
+        if (itemnewbie(dropobj.objindex) and (.flags.privilegios and playertype.user)) then
             call writeconsolemsg(userindex, "no puedes tirar objetos newbie.", fonttypenames.fonttype_info)
             exit sub
         end if
         
+        dropobj.amount = minimoint(num, .invent.object(slot).amount)
+
         'check objeto en el suelo
-        if mapdata(.pos.map, x, y).objinfo.objindex = 0 or mapdata(.pos.map, x, y).objinfo.objindex = obj.objindex then
-            if num + mapdata(.pos.map, x, y).objinfo.amount > max_inventory_objs then
-                num = max_inventory_objs - mapdata(.pos.map, x, y).objinfo.amount
+        mapobj.objindex = mapdata(.pos.map, x, y).objinfo.objindex
+        mapobj.amount = mapdata(.pos.map, x, y).objinfo.amount
+        
+        if mapobj.objindex = 0 or mapobj.objindex = dropobj.objindex then
+        
+            if mapobj.amount = max_inventory_objs then
+                call writeconsolemsg(userindex, "no hay espacio en el piso.", fonttypenames.fonttype_info)
+                exit sub
             end if
             
-            call makeobj(obj, map, x, y)
-            call quitaruserinvitem(userindex, slot, num)
+            if dropobj.amount + mapobj.amount > max_inventory_objs then
+                dropobj.amount = max_inventory_objs - mapobj.amount
+            end if
+            
+            call makeobj(dropobj, map, x, y)
+            call quitaruserinvitem(userindex, slot, dropobj.amount)
             call updateuserinv(false, userindex, slot)
             
-            if objdata(obj.objindex).objtype = eobjtype.otbarcos then
+            if objdata(dropobj.objindex).objtype = eobjtype.otbarcos then
                 call writeconsolemsg(userindex, "��atenci�n!! �acabas de tirar tu barca!", fonttypenames.fonttype_talk)
             end if
             
-            if not .flags.privilegios and playertype.user then call loggm(.name, "tir� cantidad:" & num & " objeto:" & objdata(obj.objindex).name)
+            if not .flags.privilegios and playertype.user then call loggm(.name, "tir� cantidad:" & num & " objeto:" & objdata(dropobj.objindex).name)
             
             'log de objetos que se tiran al piso. pablo (toxicwaste) 07/09/07
             'es un objeto que tenemos que loguear?
-            if objdata(obj.objindex).log = 1 then
-                call logdesarrollo(.name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
-            elseif obj.amount > 5000 then 'es mucha cantidad? > sub� a 5000 el minimo porque si no se llenaba el log de cosas al pedo. (niconz)
+            if objdata(dropobj.objindex).log = 1 then
+                call logdesarrollo(.name & " tir� al piso " & dropobj.amount & " " & objdata(dropobj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
+            elseif dropobj.amount > 5000 then 'es mucha cantidad? > sub� a 5000 el minimo porque si no se llenaba el log de cosas al pedo. (niconz)
                 'si no es de los prohibidos de loguear, lo logueamos.
-                if objdata(obj.objindex).nolog <> 1 then
-                    call logdesarrollo(.name & " tir� al piso " & obj.amount & " " & objdata(obj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
+                if objdata(dropobj.objindex).nolog <> 1 then
+                    call logdesarrollo(.name & " tir� al piso " & dropobj.amount & " " & objdata(dropobj.objindex).name & " mapa: " & map & " x: " & x & " y: " & y)
                 end if
             end if
         else
@@ -457,14 +469,12 @@ function meteritemeninventario(byval userindex as integer, byref miobj as obj) a
 '***************************************************
 
 on error goto errhandler
-
-    dim x as integer
-    dim y as integer
     dim slot as byte
     
     with userlist(userindex)
         '�el user ya tiene un objeto del mismo tipo?
         slot = 1
+        
         do until .invent.object(slot).objindex = miobj.objindex and _
                  .invent.object(slot).amount + miobj.amount <= max_inventory_objs
            slot = slot + 1
@@ -487,7 +497,7 @@ on error goto errhandler
            .invent.nroitems = .invent.nroitems + 1
         end if
     
-        if slot > max_normal_inventory_slots and slot < max_inventory_slots then
+        if slot > max_normal_inventory_slots and slot <= max_inventory_slots then
             if not itemsecae(miobj.objindex) then
                 call writeconsolemsg(userindex, "no puedes contener objetos especiales en tu " & objdata(.invent.mochilaeqpobjindex).name & ".", fonttypenames.fonttype_fight)
                 meteritemeninventario = false
@@ -532,7 +542,6 @@ sub getobj(byval userindex as integer)
             if objdata(mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex).agarrable <> 1 then
                 dim x as integer
                 dim y as integer
-                dim slot as byte
                 
                 x = .pos.x
                 y = .pos.y
@@ -560,7 +569,7 @@ sub getobj(byval userindex as integer)
                         if objdata(miobj.objindex).log = 1 then
                             objpos = " mapa: " & .pos.map & " x: " & .pos.x & " y: " & .pos.y
                             call logdesarrollo(.name & " junt� del piso " & miobj.amount & " " & objdata(miobj.objindex).name & objpos)
-                        elseif miobj.amount > max_inventory_objs - 1000 then 'es mucha cantidad?
+                        elseif miobj.amount > 5000 then 'es mucha cantidad?
                             'si no es de los prohibidos de loguear, lo logueamos.
                             if objdata(miobj.objindex).nolog <> 1 then
                                 objpos = " mapa: " & .pos.map & " x: " & .pos.x & " y: " & .pos.y
@@ -577,7 +586,7 @@ sub getobj(byval userindex as integer)
 
 end sub
 
-sub desequipar(byval userindex as integer, byval slot as byte)
+public sub desequipar(byval userindex as integer, byval slot as byte)
 '***************************************************
 'author: unknown
 'last modification: -
@@ -1149,38 +1158,49 @@ sub useinvitem(byval userindex as integer, byval slot as byte)
                             .flags.targetobjx, .flags.targetobjy, userindex)
                     end if
                 else
-                
+                    
                     select case objindex
-                        case ca�a_pesca, red_pesca
-                            if .invent.weaponeqpobjindex = ca�a_pesca or .invent.weaponeqpobjindex = red_pesca then
+                    
+                        case ca�a_pesca, red_pesca, ca�a_pesca_newbie
+                            
+                            ' lo tiene equipado?
+                            if .invent.weaponeqpobjindex = objindex then
                                 call writemultimessage(userindex, emessages.workrequesttarget, eskill.pesca)  'call writeworkrequesttarget(userindex, eskill.pesca)
                             else
                                  call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
                             end if
                             
-                        case hacha_le�ador, hacha_le�a_elfica
-                            if .invent.weaponeqpobjindex = hacha_le�ador or .invent.weaponeqpobjindex = hacha_le�a_elfica then
+                        case hacha_le�ador, hacha_le�a_elfica, hacha_le�ador_newbie
+                            
+                            ' lo tiene equipado?
+                            if .invent.weaponeqpobjindex = objindex then
                                 call writemultimessage(userindex, emessages.workrequesttarget, eskill.talar)
                             else
                                 call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
                             end if
                             
-                        case piquete_minero
-                            if .invent.weaponeqpobjindex = piquete_minero then
+                        case piquete_minero, piquete_minero_newbie
+                        
+                            ' lo tiene equipado?
+                            if .invent.weaponeqpobjindex = objindex then
                                 call writemultimessage(userindex, emessages.workrequesttarget, eskill.mineria)
                             else
                                 call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
                             end if
                             
-                        case martillo_herrero
-                            if .invent.weaponeqpobjindex = martillo_herrero then
+                        case martillo_herrero, martillo_herrero_newbie
+                        
+                            ' lo tiene equipado?
+                            if .invent.weaponeqpobjindex = objindex then
                                 call writemultimessage(userindex, emessages.workrequesttarget, eskill.herreria)
                             else
                                 call writeconsolemsg(userindex, "debes tener equipada la herramienta para trabajar.", fonttypenames.fonttype_info)
                             end if
                             
-                        case serrucho_carpintero
-                            if .invent.weaponeqpobjindex = serrucho_carpintero then
+                        case serrucho_carpintero, serrucho_carpintero_newbie
+                            
+                            ' lo tiene equipado?
+                            if .invent.weaponeqpobjindex = objindex then
                                 call enivarobjconstruibles(userindex)
                                 call writeshowcarpenterform(userindex)
                             else
@@ -1495,13 +1515,30 @@ sub useinvitem(byval userindex as integer, byval slot as byte)
             case eobjtype.otbarcos
                 'verifica si esta aproximado al agua antes de permitirle navegar
                 if .stats.elv < 25 then
+                    ' solo pirata y trabajador pueden navegar antes
                     if .clase <> eclass.worker and .clase <> eclass.pirat then
                         call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 25 o superior.", fonttypenames.fonttype_info)
                         exit sub
                     else
+                        ' pero a partir de 20
                         if .stats.elv < 20 then
-                            call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 o superior.", fonttypenames.fonttype_info)
+                            
+                            if .clase = eclass.worker and .stats.userskills(eskill.pesca) <> 100 then
+                                call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 y adem�s tu skill en pesca debe ser 100.", fonttypenames.fonttype_info)
+                            else
+                                call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 o superior.", fonttypenames.fonttype_info)
+                            end if
+                            
                             exit sub
+                        else
+                            ' esta entre 20 y 25, si es trabajador necesita tener 100 en pesca
+                            if .clase = eclass.worker then
+                                if .stats.userskills(eskill.pesca) <> 100 then
+                                    call writeconsolemsg(userindex, "para recorrer los mares debes ser nivel 20 o superior y adem�s tu skill en pesca debe ser 100.", fonttypenames.fonttype_info)
+                                    exit sub
+                                end if
+                            end if
+
                         end if
                     end if
                 end if
@@ -1560,7 +1597,7 @@ sub tirartodo(byval userindex as integer)
 '
 '***************************************************
 
-on error resume next
+on error goto errhandler
 
     with userlist(userindex)
         if mapdata(.pos.map, .pos.x, .pos.y).trigger = 6 then exit sub
@@ -1574,6 +1611,10 @@ on error resume next
             call tiraroro(cantidad, userindex)
     end with
 
+    exit sub
+
+errhandler:
+    call logerror("error en tirartodo. error: " & err.number & " - " & err.description)
 end sub
 
 public function itemsecae(byval index as integer) as boolean
@@ -1599,6 +1640,7 @@ sub tirartodoslositems(byval userindex as integer)
 'last modification: 12/01/2010 (zama)
 '12/01/2010: zama - ahora los piratas no explotan items solo si estan entre 20 y 25
 '***************************************************
+on error goto errhandler
 
     dim i as byte
     dim nuevapos as worldpos
@@ -1624,7 +1666,7 @@ sub tirartodoslositems(byval userindex as integer)
                         ' si tiene galeon equipado
                         if .invent.barcoobjindex = 476 then
                             ' limitaci�n por nivel, despu�s dropea normalmente
-                            if .stats.elv >= 20 and .stats.elv <= 25 then
+                            if .stats.elv = 20 then
                                 ' no dropea en agua
                                 dropagua = false
                             end if
@@ -1640,6 +1682,11 @@ sub tirartodoslositems(byval userindex as integer)
             end if
         next i
     end with
+    
+    exit sub
+    
+errhandler:
+    call logerror("error en tirartodoslositems. error: " & err.number & " - " & err.description)
 end sub
 
 function itemnewbie(byval itemindex as integer) as boolean
@@ -1738,3 +1785,70 @@ public function getobjtype(byval objindex as integer) as eobjtype
     end if
     
 end function
+
+public sub moveitem(byval userindex as integer, byval originalslot as integer, byval newslot as integer)
+
+dim tmpobj as userobj
+dim newobjindex as integer, originalobjindex as integer
+if (originalslot <= 0) or (newslot <= 0) then exit sub
+
+with userlist(userindex)
+    if (originalslot > .currentinventoryslots) or (newslot > .currentinventoryslots) then exit sub
+    
+    tmpobj = .invent.object(originalslot)
+    .invent.object(originalslot) = .invent.object(newslot)
+    .invent.object(newslot) = tmpobj
+    
+    'viva vb6 y sus putas deficiencias.
+    if .invent.anilloeqpslot = originalslot then
+        .invent.anilloeqpslot = newslot
+    elseif .invent.anilloeqpslot = newslot then
+        .invent.anilloeqpslot = originalslot
+    end if
+    
+    if .invent.armoureqpslot = originalslot then
+        .invent.armoureqpslot = newslot
+    elseif .invent.armoureqpslot = newslot then
+        .invent.armoureqpslot = originalslot
+    end if
+    
+    if .invent.barcoslot = originalslot then
+        .invent.barcoslot = newslot
+    elseif .invent.barcoslot = newslot then
+        .invent.barcoslot = originalslot
+    end if
+    
+    if .invent.cascoeqpslot = originalslot then
+         .invent.cascoeqpslot = newslot
+    elseif .invent.cascoeqpslot = newslot then
+         .invent.cascoeqpslot = originalslot
+    end if
+    
+    if .invent.escudoeqpslot = originalslot then
+        .invent.escudoeqpslot = newslot
+    elseif .invent.escudoeqpslot = newslot then
+        .invent.escudoeqpslot = originalslot
+    end if
+    
+    if .invent.mochilaeqpslot = originalslot then
+        .invent.mochilaeqpslot = newslot
+    elseif .invent.mochilaeqpslot = newslot then
+        .invent.mochilaeqpslot = originalslot
+    end if
+    
+    if .invent.municioneqpslot = originalslot then
+        .invent.municioneqpslot = newslot
+    elseif .invent.municioneqpslot = newslot then
+        .invent.municioneqpslot = originalslot
+    end if
+    
+    if .invent.weaponeqpslot = originalslot then
+        .invent.weaponeqpslot = newslot
+    elseif .invent.weaponeqpslot = newslot then
+        .invent.weaponeqpslot = originalslot
+    end if
+
+    call updateuserinv(false, userindex, originalslot)
+    call updateuserinv(false, userindex, newslot)
+end with
+end sub

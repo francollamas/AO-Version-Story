@@ -219,7 +219,7 @@ private cbotondejaranuncio as clsgraphicalbutton
 private cbotondejarmsg as clsgraphicalbutton
 private cbotoncerrar as clsgraphicalbutton
 private cbotonlistamsg as clsgraphicalbutton
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 ' para controlar las imagenes de fondo y el envio de posteos
 private foroactual as eforumtype
@@ -342,7 +342,7 @@ private sub loadbuttons()
     set cbotoncerrar = new clsgraphicalbutton
     set cbotonlistamsg = new clsgraphicalbutton
 
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
 
     ' initialize buttons
     call cbotondejaranuncio.initialize(imgdejaranuncio, grhpath & "botondejaranuncioforo.jpg", _
@@ -365,7 +365,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgtab_click(index as integer)
@@ -460,7 +460,7 @@ private sub lsttitulos_click()
 end sub
 
 private sub lsttitulos_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub txtpost_change()
@@ -470,7 +470,7 @@ private sub txtpost_change()
 end sub
 
 private sub txtpost_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub txttitulo_change()

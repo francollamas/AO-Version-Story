@@ -22,14 +22,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   4
       left            =   5430
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   14
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   480
    end
@@ -38,14 +38,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   3
       left            =   5430
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   13
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   480
    end
@@ -54,14 +54,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   2
       left            =   5430
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   12
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   480
    end
@@ -70,14 +70,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   1
       left            =   5430
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   11
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   480
    end
@@ -129,14 +129,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   1
       left            =   870
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   10
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   480
    end
@@ -145,13 +145,13 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   64
       tabindex        =   9
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   960
    end
@@ -168,13 +168,13 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   64
       tabindex        =   8
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   960
    end
@@ -183,14 +183,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   2
       left            =   870
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   7
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   480
    end
@@ -199,13 +199,13 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   64
       tabindex        =   6
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   960
    end
@@ -214,14 +214,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   3
       left            =   870
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   5
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   480
    end
@@ -230,13 +230,13 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   64
       tabindex        =   4
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   960
    end
@@ -245,14 +245,14 @@ begin vb.form frmcarp
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   4
       left            =   870
-      scaleheight     =   31
+      scaleheight     =   32
       scalemode       =   3  'pixel
       scalewidth      =   32
       tabindex        =   3
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   480
    end
@@ -502,7 +502,7 @@ private cbotoncerrar as clsgraphicalbutton
 private cbotonconstruir(0 to 4) as clsgraphicalbutton
 private cbotonmejorar(0 to 4) as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private usarmacro as boolean
 
@@ -548,7 +548,7 @@ private sub loadbuttons()
     set cbotonmejorar(2) = new clsgraphicalbutton
     set cbotonmejorar(3) = new clsgraphicalbutton
 
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarcarpinteria.jpg", _
                                     grhpath & "botoncerrarrollovercarpinteria.jpg", _
@@ -603,8 +603,9 @@ private sub loaddefaultvalues()
 
     cargando = true
     
-    maxconstitem = cint((userlvl - 4) / 5)
+    maxconstitem = cint((userlvl - 2) * 0.2)
     maxconstitem = iif(maxconstitem < 1, 1, maxconstitem)
+    maxconstitem = iif(userclase = eclass.worker, maxconstitem, 1)
     
     for i = 1 to maxconstitem
         cboitemsciclo.additem i
@@ -766,7 +767,17 @@ end sub
 
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
+end sub
+
+private sub form_unload(cancel as integer)
+    dim i as long
+    
+    for i = 1 to max_list_items
+        set invmaderascarpinteria(i) = nothing
+    next i
+
+    mirandocarpinteria = false
 end sub
 
 private sub imgcerrar_click()

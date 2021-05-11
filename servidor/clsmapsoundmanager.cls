@@ -55,6 +55,8 @@ public enum e_soundindex
     conversion_barco = 55
     morfar_manzana = 82
     sound_comida = 7
+    muerte_mujer_agua = 211
+    muerte_hombre_agua = 212
 end enum
 
 private sub class_initialize()

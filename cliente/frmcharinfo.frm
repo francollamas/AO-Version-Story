@@ -386,7 +386,7 @@ private cbotonrechazar as clsgraphicalbutton
 private cbotonechar as clsgraphicalbutton
 private cbotonaceptar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 public enum charinfofrmtype
     frmmembers
@@ -417,7 +417,7 @@ private sub loadbuttons()
     set cbotonechar = new clsgraphicalbutton
     set cbotonaceptar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarinfochar.jpg", _
@@ -443,7 +443,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgaceptar_click()
@@ -475,5 +475,5 @@ private sub imgrechazar_click()
 end sub
 
 private sub txtmiembro_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

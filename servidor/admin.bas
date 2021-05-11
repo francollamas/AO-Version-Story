@@ -45,7 +45,7 @@ end type
 public apuestas as tapuestas
 
 public tinicioserver as long
-public estadisticasweb as new clsestadisticasipc
+public estadisticasweb as clsestadisticasipc
 
 'intervalos
 public sanaintervalosindescansar as integer
@@ -56,6 +56,7 @@ public intervalosed as integer
 public intervalohambre as integer
 public intervaloveneno as integer
 public intervaloparalizado as integer
+public const intervaloparalizadoreducido as integer = 37
 public intervaloinvisible as integer
 public intervalofrio as integer
 public intervalowavfx as integer
@@ -83,6 +84,7 @@ public intervaloownednpc as long
 public porcentajerecuperomana as integer
 
 public minutosws as long
+public minutosguardarusuarios as long
 public puerto as integer
 
 public bootdelbackup as byte
@@ -141,7 +143,8 @@ sub worldsave()
 on error resume next
 
     dim loopx as integer
-    dim porc as long
+    dim hfile as integer
+    
     
     call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> iniciando worldsave", fonttypenames.fonttype_server))
     
@@ -165,28 +168,31 @@ on error resume next
         'doevents
         
         if mapinfo(loopx).backup = 1 then
-        
-                call grabarmapa(loopx, app.path & "\worldbackup\mapa" & loopx)
-                frmstat.progressbar1.value = frmstat.progressbar1.value + 1
+            call grabarmapa(loopx, app.path & "\worldbackup\mapa" & loopx)
+            frmstat.progressbar1.value = frmstat.progressbar1.value + 1
         end if
     
     next loopx
     
     frmstat.visible = false
     
-    if fileexist(datpath & "\bknpc.dat", vbnormal) then kill (datpath & "bknpc.dat")
-    'if fileexist(datpath & "\bknpcs-hostiles.dat", vbnormal) then kill (datpath & "bknpcs-hostiles.dat")
+    if fileexist(datpath & "\bknpcs.dat") then kill (datpath & "bknpcs.dat")
     
-    for loopx = 1 to lastnpc
-        if npclist(loopx).flags.backup = 1 then
-                call backupnpc(loopx)
-        end if
-    next
+    hfile = freefile()
+    
+    open datpath & "\bknpcs.dat" for output as hfile
+    
+        for loopx = 1 to lastnpc
+            if npclist(loopx).flags.backup = 1 then
+                call backupnpc(loopx, hfile)
+            end if
+        next loopx
+        
+    close hfile
     
     call saveforums
     
     call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> worldsave ha conclu�do.", fonttypenames.fonttype_server))
-
 end sub
 
 public sub purgarpenas()
@@ -430,9 +436,7 @@ public sub banipcargar()
     
     archivobanip = app.path & "\dat\banips.dat"
     
-    do while banips.count > 0
-        banips.remove 1
-    loop
+    set banips = new collection
     
     archn = freefile()
     open archivobanip for input as #archn
@@ -496,7 +500,7 @@ public sub bancharacter(byval banneruserindex as integer, byval username as stri
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 03/02/07
-'
+'22/05/2010: ya no se peude banear admins de mayor rango si estan online.
 '***************************************************
 
     dim tuser as integer
@@ -550,30 +554,31 @@ public sub bancharacter(byval banneruserindex as integer, byval username as stri
         else
             if (userlist(tuser).flags.privilegios and rank) > (.flags.privilegios and rank) then
                 call writeconsolemsg(banneruserindex, "no puedes banear a al alguien de mayor jerarqu�a.", fonttypenames.fonttype_info)
+            else
+            
+                call logban(tuser, banneruserindex, reason)
+                call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("servidor> " & .name & " ha baneado a " & userlist(tuser).name & ".", fonttypenames.fonttype_server))
+                
+                'ponemos el flag de ban a 1
+                userlist(tuser).flags.ban = 1
+                
+                if (userlist(tuser).flags.privilegios and rank) = (.flags.privilegios and rank) then
+                    .flags.ban = 1
+                    call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " banned by the server por bannear un administrador.", fonttypenames.fonttype_fight))
+                    call closesocket(banneruserindex)
+                end if
+                
+                call loggm(.name, "ban a " & username)
+                
+                'ponemos el flag de ban a 1
+                call writevar(charpath & username & ".chr", "flags", "ban", "1")
+                'ponemos la pena
+                cantpenas = val(getvar(charpath & username & ".chr", "penas", "cant"))
+                call writevar(charpath & username & ".chr", "penas", "cant", cantpenas + 1)
+                call writevar(charpath & username & ".chr", "penas", "p" & cantpenas + 1, lcase$(.name) & ": ban por " & lcase$(reason) & " " & date & " " & time)
+                
+                call closesocket(tuser)
             end if
-            
-            call logban(tuser, banneruserindex, reason)
-            call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("servidor> " & .name & " ha baneado a " & userlist(tuser).name & ".", fonttypenames.fonttype_server))
-            
-            'ponemos el flag de ban a 1
-            userlist(tuser).flags.ban = 1
-            
-            if (userlist(tuser).flags.privilegios and rank) = (.flags.privilegios and rank) then
-                .flags.ban = 1
-                call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(.name & " banned by the server por bannear un administrador.", fonttypenames.fonttype_fight))
-                call closesocket(banneruserindex)
-            end if
-            
-            call loggm(.name, "ban a " & username)
-            
-            'ponemos el flag de ban a 1
-            call writevar(charpath & username & ".chr", "flags", "ban", "1")
-            'ponemos la pena
-            cantpenas = val(getvar(charpath & username & ".chr", "penas", "cant"))
-            call writevar(charpath & username & ".chr", "penas", "cant", cantpenas + 1)
-            call writevar(charpath & username & ".chr", "penas", "p" & cantpenas + 1, lcase$(.name) & ": ban por " & lcase$(reason) & " " & date & " " & time)
-            
-            call closesocket(tuser)
         end if
     end with
 end sub

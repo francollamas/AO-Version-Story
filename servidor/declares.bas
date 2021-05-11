@@ -33,11 +33,11 @@ option explicit
 ' modulo de declaraciones. aca hay de todo.
 '
 #if seguridadalkon then
-public ados as new clsantidos
+public ados as clsantidos
 #end if
 
-public aclon as new clsantimassclon
-public trashcollector as new collection
+public aclon as clsantimassclon
+public trashcollector as collection
 
 
 public const maxspawnattemps = 60
@@ -62,12 +62,33 @@ public const ifragatacaos = 189
 public const ibarca = 84
 public const igalera = 85
 public const igaleon = 86
+
+' embarcaciones ciudas
 public const ibarcaciuda = 395
-public const ibarcapk = 396
+public const ibarcaciudaatacable = 552
 public const igaleraciuda = 397
-public const igalerapk = 398
+public const igaleraciudaatacable = 560
 public const igaleonciuda = 399
+public const igaleonciudaatacable = 556
+
+' embarcaciones reales
+public const ibarcareal = 550
+public const ibarcarealatacable = 553
+public const igalerareal = 558
+public const igalerarealatacable = 561
+public const igaleonreal = 554
+public const igaleonrealatacable = 557
+
+' embarcaciones pk
+public const ibarcapk = 396
+public const igalerapk = 398
 public const igaleonpk = 400
+
+' embarcaciones caos
+public const ibarcacaos = 551
+public const igaleracaos = 559
+public const igaleoncaos = 555
+
 
 public enum iminerales
     hierrocrudo = 192
@@ -87,6 +108,15 @@ public enum playertype
     rolemaster = &h20
     chaoscouncil = &h40
     royalcouncil = &h80
+end enum
+
+public enum eprivileges
+    admin = 1
+    dios
+    especial
+    semidios
+    consejero
+    rolemaster
 end enum
 
 public enum eclass
@@ -110,6 +140,8 @@ public enum eciudad
     cbanderbill
     clindos
     carghal
+    carkhein
+    clastcity
 end enum
 
 public enum eraza
@@ -223,6 +255,22 @@ public const ciudad as string = "ciudad"
 public const campo as string = "campo"
 public const dungeon as string = "dungeon"
 
+public enum eterrain
+    terrain_bosque = 0
+    terrain_nieve = 1
+    terrain_desierto = 2
+    terrain_ciudad = 3
+    terrain_campo = 4
+    terrain_dungeon = 5
+end enum
+
+public enum erestrict
+    restrict_no = 0
+    restrict_newbie = 1
+    restrict_armada = 2
+    restrict_caos = 3
+    restrict_faccion = 4
+end enum
 ' <<<<<< targets >>>>>>
 public enum targettype
     uusuarios = 1
@@ -269,6 +317,7 @@ end enum
 public const guardias as integer = 6
 
 public const max_oro_edit as long = 5000000
+public const max_vida_edit as long = 30000
 
 
 public const standard_bounty_hunter_message as string = "se te ha otorgado un premio por ayudar al proyecto reportando bugs, el mismo est� disponible en tu b�veda."
@@ -296,6 +345,12 @@ public const maxchars as integer = 10000
 public const hacha_le�ador as integer = 127
 public const hacha_le�a_elfica as integer = 1005
 public const piquete_minero as integer = 187
+
+public const hacha_le�ador_newbie as integer = 561
+public const piquete_minero_newbie as integer = 562
+public const ca�a_pesca_newbie as integer = 563
+public const serrucho_carpintero_newbie as integer = 564
+public const martillo_herrero_newbie as integer = 565
 
 public const daga as integer = 15
 public const fogata_apag as integer = 136
@@ -351,7 +406,7 @@ public const maxskillpoints as byte = 100
 
 ''
 ' cantidad de ciudades
-public const numciudades as byte = 5
+public const numciudades as byte = 6
 
 
 ''
@@ -396,6 +451,10 @@ public enum peces_posibles
     pescado4 = 546
 end enum
 
+public const num_peces as integer = 4
+public listapeces(1 to num_peces) as integer
+
+
 '%%%%%%%%%% constantes de indices %%%%%%%%%%%%%%%
 public enum eskill
     magia = 1
@@ -439,7 +498,7 @@ public const adicionalhpguerrero as byte = 2 'hp adicionales cuando sube de nive
 public const adicionalhpcazador as byte = 1 'hp adicionales cuando sube de nivel
 
 public const aumentostdef as byte = 15
-public const aumentostbandido as byte = aumentostdef + 23
+public const aumentostbandido as byte = aumentostdef + 3
 public const aumentostladron as byte = aumentostdef + 3
 public const aumentostmago as byte = aumentostdef - 1
 public const aumentosttrabajador as byte = aumentostdef + 25
@@ -533,6 +592,7 @@ public enum eobjtype
     otmanchas = 35          'no se usa
     otarbolelfico = 36
     otmochilas = 37
+    otyacimientopez = 38
     otcualquiera = 1000
 end enum
 
@@ -572,6 +632,23 @@ public const exp_fallo_skill as byte = 20
 ' ************************ tipos *******************************
 ' **************************************************************
 ' **************************************************************
+
+public type tobservacion
+    creador as string
+    fecha as date
+    
+    detalles as string
+end type
+
+public type trecord
+    usuario as string
+    motivo as string
+    creador as string
+    fecha as date
+    
+    numobs as byte
+    obs() as tobservacion
+end type
 
 public type thechizo
     nombre as string
@@ -1066,9 +1143,11 @@ public type userflags
     ignorado as boolean
     
     enconsulta as boolean
+    senddenounces as boolean
     
     statschanged as byte
     privilegios as playertype
+    privespecial as boolean
     
     valcode as integer
     
@@ -1100,10 +1179,15 @@ public type userflags
     
     mimetizado as byte
     
-    centinelaok as boolean 'centinela
+    centinelaindex as byte ' indice del centinela que lo revisa
+    centinelaok as boolean
     
     lastmap as integer
     traveling as byte 'travelin band �?
+    
+    paralizedby as string
+    paralizedbyindex as integer
+    paralizedbynpcindex as integer
 end type
 
 public type usercounters
@@ -1411,6 +1495,9 @@ public type npc
     
     'hogar
     ciudad as byte
+    
+    'para diferenciar entre clanes
+    clanindex as integer
 end type
 
 '**********************************************************
@@ -1435,21 +1522,26 @@ type mapinfo
     music as string
     name as string
     startpos as worldpos
+    ondeathgoto as worldpos
+    
     mapversion as integer
     pk as boolean
     magiasinefecto as byte
     noencriptarmp as byte
+    
+    ' anti magias/habilidades
     invisinefecto as byte
     resusinefecto as byte
+    ocultarsinefecto as byte
+    invocarsinefecto as byte
     
     robonpcspermitido as byte
     
     terreno as string
     zona as string
-    restringir as string
+    restringir as byte
     backup as byte
 end type
-
 
 '********** v a r i a b l e s     p u b l i c a s ***********
 
@@ -1513,6 +1605,7 @@ public minutos as string
 public haciendobk as boolean
 public puedecrearpersonajes as integer
 public serversologms as integer
+public numrecords as integer
 
 ''
 'esta activada la verificacion md5 ?
@@ -1539,7 +1632,7 @@ public armasherrero() as integer
 public armadurasherrero() as integer
 public objcarpintero() as integer
 public md5s() as string
-public banips as new collection
+public banips as collection
 public parties(1 to max_parties) as clsparty
 public modclase(1 to numclases) as modclase
 public modraza(1 to numrazas) as modraza
@@ -1548,10 +1641,11 @@ public distribucionenteravida(1 to 5) as integer
 public distribucionsemienteravida(1 to 4) as integer
 public ciudades(1 to numciudades) as worldpos
 public distancetocities() as homedistance
+public records() as trecord
 '*********************************************************
 
 type homedistance
-    distancetocity(1 to 5) as integer
+    distancetocity(1 to numciudades) as integer
 end type
 
 public nix as worldpos
@@ -1559,13 +1653,16 @@ public ullathorpe as worldpos
 public banderbill as worldpos
 public lindos as worldpos
 public arghal as worldpos
+public arkhein as worldpos
+public nemahuak as worldpos
 
 public prision as worldpos
 public libertad as worldpos
 
-public ayuda as new ccola
-public consultapopular as new consultaspopulares
-public sonidosmapas as new soundmapinfo
+public ayuda as ccola
+public denuncias as ccola
+public consultapopular as consultaspopulares
+public sonidosmapas as soundmapinfo
 
 public declare function gettickcount lib "kernel32" () as long
 
@@ -1723,6 +1820,9 @@ public enum egmcommands
     changemapinfonoresu     '/modmapinfo resusinefecto
     changemapinfoland       '/modmapinfo terreno
     changemapinfozone       '/modmapinfo zona
+    changemapinfostealnpc   '/modmapinfo robonpc
+    changemapinfonoocultar  '/modmapinfo ocultarsinefecto
+    changemapinfonoinvocar  '/modmapinfo invocarsinefecto
     savechars               '/grabar
     cleansos                '/borrar sos
     showserverform          '/show int
@@ -1738,6 +1838,19 @@ public enum egmcommands
     ignored                 '/ignorado
     checkslot               '/slot
     setinivar               '/setinivar llave clave valor
+    createpretorianclan     '/crearpretorianos
+    removepretorianclan     '/eliminarpretorianos
+    enabledenounces         '/denuncias
+    showdenounceslist       '/show denuncias
+    mapmessage              '/mapmsg
+    setdialog               '/setdialog
+    impersonate             '/impersonar
+    imitate                 '/mimetizar
+    recordadd
+    recordremove
+    recordaddobs
+    recordlistrequest
+    recorddetailsrequest
 end enum
 
 public const matrix_initial_map as integer = 1
@@ -1780,3 +1893,22 @@ public const gnomo_m_ultima_cabeza as integer = 484
 ' por ahora la dejo constante.. si se quisiera extender la propiedad de paralziar, se podria hacer
 ' una nueva variable en el dat.
 public const guante_hurto as integer = 873
+
+public const espada_vikinga as integer = 123
+'''''''
+'' pretorianos
+'''''''
+public clanpretoriano() as clsclanpretoriano
+
+public const max_denounces as integer = 20
+
+'mensajes de los npcs enlistadores (nobles):
+public const mensaje_rey_caos as string = "�esperabas pasar desapercibido, intruso? los servidores del demonio no son bienvenidos, �guardias, a �l!"
+public const mensaje_rey_criminal_noenlistable as string = "tus pecados son grandes, pero a�n as� puedes redimirte. el pasado deja huellas, pero a�n puedes limpiar tu alma."
+public const mensaje_rey_criminal_enlistable as string = "limpia tu reputaci�n y paga por los delitos cometidos. un miembro de la armada real debe tener un comportamiento ejemplar."
+
+public const mensaje_demonio_real as string = "lacayo de tancredo, ve y dile a tu gente que nadie pisar� estas tierras si no se arrodilla ante mi."
+public const mensaje_demonio_ciudadano_noenlistable as string = "tu indecisi�n te ha condenado a una vida sin sentido, a�n tienes elecci�n... pero ten mucho cuidado, mis hordas nunca descansan."
+public const mensaje_demonio_ciudadano_enlistable as string = "siento el miedo por tus venas. deja de ser escoria y �nete a mis filas, sabr�s que es el mejor camino."
+
+public administradores as clsinimanager

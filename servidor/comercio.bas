@@ -41,8 +41,10 @@ public const reductor_precioventa as byte = 3
 public sub comercio(byval modo as emodocomercio, byval userindex as integer, byval npcindex as integer, byval slot as integer, byval cantidad as integer)
 '*************************************************
 'author: nacho (integer)
-'last modified: 27/07/08 (markoxx) | new changes in the way of trading (now when you buy it rounds to ceil and when you sell it rounds to floor)
+'last modified: 07/06/2010
+'27/07/08 (markoxx) | new changes in the way of trading (now when you buy it rounds to ceil and when you sell it rounds to floor)
 '  - 06/13/08 (niconz)
+'07/06/2010: zama - los objetos se loguean si superan la cantidad de 1k (antes era solo si eran 1k).
 '*************************************************
     dim precio as long
     dim objeto as obj
@@ -95,7 +97,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
         'es un objeto que tenemos que loguear?
         if objdata(objeto.objindex).log = 1 then
             call logdesarrollo(userlist(userindex).name & " compr� del npc " & objeto.amount & " " & objdata(objeto.objindex).name)
-        elseif objeto.amount = 1000 then 'es mucha cantidad?
+        elseif objeto.amount >= 1000 then 'es mucha cantidad?
             'si no es de los prohibidos de loguear, lo logueamos.
             if objdata(objeto.objindex).nolog <> 1 then
                 call logdesarrollo(userlist(userindex).name & " compr� del npc " & objeto.amount & " " & objdata(objeto.objindex).name)
@@ -173,7 +175,7 @@ public sub comercio(byval modo as emodocomercio, byval userindex as integer, byv
         'es un objeto que tenemos que loguear?
         if objdata(objeto.objindex).log = 1 then
             call logdesarrollo(userlist(userindex).name & " vendi� al npc " & objeto.amount & " " & objdata(objeto.objindex).name)
-        elseif objeto.amount = 1000 then 'es mucha cantidad?
+        elseif objeto.amount >= 1000 then 'es mucha cantidad?
             'si no es de los prohibidos de loguear, lo logueamos.
             if objdata(objeto.objindex).nolog <> 1 then
                 call logdesarrollo(userlist(userindex).name & " vendi� al npc " & objeto.amount & " " & objdata(objeto.objindex).name)

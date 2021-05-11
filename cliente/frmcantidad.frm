@@ -95,7 +95,7 @@ private clsformulario as clsformmovementmanager
 
 private cbotontirar as clsgraphicalbutton
 private cbotontirartodo as clsgraphicalbutton
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_load()
     ' handles form movement (drag and drop).
@@ -116,7 +116,7 @@ private sub loadbuttons()
     set cbotontirar = new clsgraphicalbutton
     set cbotontirartodo = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
 
     call cbotontirar.initialize(imgtirar, grhpath & "botontirar.jpg", grhpath & "botontirarrollover.jpg", _
                         grhpath & "botontirarclick.jpg", me)
@@ -126,7 +126,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgtirar_click()
@@ -185,5 +185,5 @@ private sub txtcantidad_keypress(keyascii as integer)
 end sub
 
 private sub txtcantidad_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

@@ -98,14 +98,17 @@ end function
 public function puedecrearparty(byval userindex as integer) as boolean
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 05/22/2010 (marco)
+' - 05/22/2010 : staff members aren't allowed to party anyone. (marco)
 '***************************************************
-
-    puedecrearparty = true
-'    if userlist(userindex).stats.elv < minpartylevel then
     
-    if cint(userlist(userindex).stats.useratributos(eatributos.carisma)) * userlist(userindex).stats.userskills(eskill.liderazgo) < 100 then
+    puedecrearparty = true
+    
+    if (userlist(userindex).flags.privilegios and playertype.user) = 0 then
+    'staff members aren't allowed to party anyone.
+        call writeconsolemsg(userindex, "�los miembros del staff no pueden crear partys!", fonttypenames.fonttype_party)
+        puedecrearparty = false
+    elseif cint(userlist(userindex).stats.useratributos(eatributos.carisma)) * userlist(userindex).stats.userskills(eskill.liderazgo) < 100 then
         call writeconsolemsg(userindex, "tu carisma y liderazgo no son suficientes para liderar una party.", fonttypenames.fonttype_party)
         puedecrearparty = false
     elseif userlist(userindex).flags.muerto = 1 then
@@ -163,39 +166,70 @@ end sub
 public sub solicitaringresoaparty(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 05/22/2010 (marco)
+' - 05/22/2010 : staff members aren't allowed to party anyone. (marco)
+'18/09/2010: zama - ahora le avisa al funda de la party cuando alguien quiere ingresar a la misma.
+'18/09/2010: zama - contemple mas ecepciones (solo se le puede mandar party al lider)
 '***************************************************
 
-'esto es enviado por el pj para solicitar el ingreso a la party
-dim tint as integer
+    'esto es enviado por el pj para solicitar el ingreso a la party
+    dim targetuserindex as integer
+    dim partyindex as integer
 
     with userlist(userindex)
+    
+        'staff members aren't allowed to party anyone
+        if (.flags.privilegios and playertype.user) = 0 then
+            call writeconsolemsg(userindex, "�los miembros del staff no pueden unirse a partys!", fonttypenames.fonttype_party)
+            exit sub
+        end if
+        
         if .partyindex > 0 then
             'si ya esta en una party
             call writeconsolemsg(userindex, "ya perteneces a una party, escribe /salirparty para abandonarla", fonttypenames.fonttype_party)
             .partysolicitud = 0
             exit sub
         end if
+        
+        ' muerto?
         if .flags.muerto = 1 then
             call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_info)
             .partysolicitud = 0
             exit sub
         end if
-        tint = .flags.targetuser
-        if tint > 0 then
-            if userlist(tint).partyindex > 0 then
-                .partysolicitud = userlist(tint).partyindex
-                call writeconsolemsg(userindex, "el fundador decidir� si te acepta en la party.", fonttypenames.fonttype_party)
+        
+        targetuserindex = .flags.targetuser
+        ' target valido?
+        if targetuserindex > 0 then
+        
+            partyindex = userlist(targetuserindex).partyindex
+            ' tiene party?
+            if partyindex > 0 then
+            
+                ' es el lider?
+                if parties(partyindex).espartyleader(targetuserindex) then
+                    .partysolicitud = partyindex
+                    call writeconsolemsg(userindex, "el lider decidir� si te acepta en la party.", fonttypenames.fonttype_party)
+                    call writeconsolemsg(targetuserindex, .name & " solicita ingresar a tu party.", fonttypenames.fonttype_party)
+                
+                ' no es lider
+                else
+                    call writeconsolemsg(userindex, userlist(targetuserindex).name & " no es lider de la party.", fonttypenames.fonttype_party)
+                end if
+            
+            ' no tiene party
             else
-                call writeconsolemsg(userindex, userlist(tint).name & " no es fundador de ninguna party.", fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, userlist(targetuserindex).name & " no pertenece a ninguna party.", fonttypenames.fonttype_party)
                 .partysolicitud = 0
                 exit sub
             end if
+        
+        ' target inv�lido
         else
             call writeconsolemsg(userindex, "para ingresar a una party debes hacer click sobre el fundador y luego escribir /party", fonttypenames.fonttype_party)
             .partysolicitud = 0
         end if
+        
     end with
 
 end sub

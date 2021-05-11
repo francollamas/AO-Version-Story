@@ -252,7 +252,7 @@ private cbotonvender as clsgraphicalbutton
 private cbotoncomprar as clsgraphicalbutton
 private cbotoncruz as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub cantidad_change()
     if val(cantidad.text) < 1 then
@@ -305,7 +305,7 @@ private sub loadbuttons()
     set cbotoncomprar = new clsgraphicalbutton
     set cbotoncruz = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonvender.initialize(imgvender, grhpath & "botonvender.jpg", _
@@ -324,7 +324,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 ''
@@ -440,7 +440,7 @@ private sub picinvnpc_click()
 end sub
 
 private sub picinvnpc_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 
@@ -481,5 +481,5 @@ private sub picinvuser_click()
 end sub
 
 private sub picinvuser_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

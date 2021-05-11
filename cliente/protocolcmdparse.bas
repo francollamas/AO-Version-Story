@@ -32,30 +32,22 @@ public enum enumber_types
 end enum
 
 public sub auxwritewhisper(byval username as string, byval mensaje as string)
+'***************************************************
+'author: unknown
+'last modification: 03/12/2010
+'03/12/2010: enanoh - ahora se env�a el nick en vez del index del usuario.
+'***************************************************
     if lenb(username) = 0 then exit sub
     
-    dim i as long
-    dim namelength as long
     
     if (instrb(username, "+") <> 0) then
         username = replace$(username, "+", " ")
     end if
     
     username = ucase$(username)
-    namelength = len(username)
     
-    i = 1
-    do while i <= lastchar
-        if ucase$(charlist(i).nombre) = username or ucase$(left$(charlist(i).nombre, namelength + 2)) = username & " <" then
-            exit do
-        else
-            i = i + 1
-        end if
-    loop
+    call writewhisper(username, mensaje)
     
-    if i <= lastchar then
-        call writewhisper(i, mensaje)
-    end if
 end sub
 
 ''
@@ -71,6 +63,7 @@ public sub parseusercommand(byval rawcommand as string)
 'interpreta, valida y ejecuta el comando ingresado
 '26/03/2009: zama - flexibilizo la cantidad de parametros de /nene,  /onlinemap y /telep
 '16/11/2009: zama - ahora el /ct admite radio
+'18/09/2010: zama - agrego el comando /mod username vida xxx
 '***************************************************
     dim tmpargos() as string
     
@@ -209,7 +202,7 @@ public sub parseusercommand(byval rawcommand as string)
                 call writemeditate
         
             case "/consulta"
-                call writeconsulta
+                call writeconsultation
             
             case "/resucitar"
                 call writeresucitate
@@ -518,7 +511,7 @@ public sub parseusercommand(byval rawcommand as string)
                     'avisar que falta el parametro
                     call showconsolemsg("faltan par�metros. utilice /acceptparty nickname.")
                 end if
-
+                    
             '
             ' begin gm commands
             '
@@ -631,9 +624,14 @@ public sub parseusercommand(byval rawcommand as string)
                             
                         case "int"
                             call writeshowserverform
-                            
+                        
+                        case "denuncias"
+                            call writeshowdenounceslist
                     end select
                 end if
+                
+            case "/denuncias"
+                call writeenabledenounces
                 
             case "/ira"
                 if notnullarguments then
@@ -739,11 +737,18 @@ public sub parseusercommand(byval rawcommand as string)
                         case "agregar"
                             tmpint = eeditoptions.eo_addgold
                         
+                        case "vida"
+                            tmpint = eeditoptions.eo_vida
+                         
+                        case "poss"
+                            tmpint = eeditoptions.eo_poss
+                         
                         case else
                             tmpint = -1
                     end select
                     
                     if tmpint > 0 then
+                        
                         if cantidadargumentos = 3 then
                             call writeeditchar(argumentosall(0), tmpint, argumentosall(2), "")
                         else
@@ -897,6 +902,14 @@ public sub parseusercommand(byval rawcommand as string)
             case "/rmsg"
                 if notnullarguments then
                     call writeservermessage(argumentosraw)
+                else
+                    'avisar que falta el parametro
+                    call showconsolemsg("escriba un mensaje.")
+                end if
+            
+            case "/mapmsg"
+                if notnullarguments then
+                    call writemapmessage(argumentosraw)
                 else
                     'avisar que falta el parametro
                     call showconsolemsg("escriba un mensaje.")
@@ -1422,6 +1435,43 @@ public sub parseusercommand(byval rawcommand as string)
             case "/centinelaactivado"
                 call writetogglecentinelactivated
                 
+            case "/crearpretorianos"
+            
+                if cantidadargumentos = 3 then
+                    
+                    if validnumber(argumentosall(0), enumber_types.ent_integer) and _
+                       validnumber(argumentosall(1), enumber_types.ent_byte) and _
+                       validnumber(argumentosall(2), enumber_types.ent_byte) then
+                       
+                        call writecreatepretorianclan(val(argumentosall(0)), val(argumentosall(1)), _
+                                                      val(argumentosall(2)))
+                    else
+                        'faltan o sobran los parametros con el formato propio
+                        call showconsolemsg("formato incorrecto. utilice /crearpretorianos mapa x y.")
+                    end if
+                    
+                else
+                    'avisar que falta el parametro
+                    call showconsolemsg("faltan par�metros. utilice /crearpretorianos mapa x y.")
+                end if
+                
+            case "/eliminarpretorianos"
+            
+                if cantidadargumentos = 1 then
+                    
+                    if validnumber(argumentosall(0), enumber_types.ent_integer) then
+                       
+                        call writedeletepretorianclan(val(argumentosall(0)))
+                    else
+                        'faltan o sobran los parametros con el formato propio
+                        call showconsolemsg("formato incorrecto. utilice /eliminarpretorianos mapa.")
+                    end if
+                    
+                else
+                    'avisar que falta el parametro
+                    call showconsolemsg("faltan par�metros. utilice /eliminarpretorianos mapa.")
+                end if
+            
             case "/dobackup"
                 call writedobackup
                 
@@ -1449,19 +1499,29 @@ public sub parseusercommand(byval rawcommand as string)
                             call writechangemapinforestricted(argumentosall(1))
                         
                         case "magiasinefecto" '/modmapinfo magiasinefecto
-                            call writechangemapinfonomagic(argumentosall(1))
+                            call writechangemapinfonomagic(argumentosall(1) = "1")
                         
                         case "invisinefecto" '/modmapinfo invisinefecto
-                            call writechangemapinfonoinvi(argumentosall(1))
+                            call writechangemapinfonoinvi(argumentosall(1) = "1")
                         
                         case "resusinefecto" '/modmapinfo resusinefecto
-                            call writechangemapinfonoresu(argumentosall(1))
+                            call writechangemapinfonoresu(argumentosall(1) = "1")
                         
                         case "terreno" '/modmapinfo terreno
                             call writechangemapinfoland(argumentosall(1))
                         
                         case "zona" '/modmapinfo zona
                             call writechangemapinfozone(argumentosall(1))
+                            
+                        case "robonpc" '/modmapinfo robonpc
+                            call writechangemapinfostealnpc(argumentosall(1) = "1")
+                            
+                        case "ocultarsinefecto" '/modmapinfo ocultarsinefecto
+                            call writechangemapinfonoocultar(argumentosall(1) = "1")
+                            
+                        case "invocarsinefecto" '/modmapinfo invocarsinefecto
+                            call writechangemapinfonoinvocar(argumentosall(1) = "1")
+                            
                     end select
                 else
                     'avisar que falta el parametro
@@ -1536,6 +1596,20 @@ public sub parseusercommand(byval rawcommand as string)
             case "/hogar"
                 call writehome
                 
+            case "/setdialog"
+                if notnullarguments then
+                    call writesetdialog(argumentosraw)
+                else
+                    'avisar que falta el parametro
+                    call showconsolemsg("faltan par�metros. utilice /setdialog dialogo.")
+                end if
+            
+            case "/impersonar"
+                call writeimpersonate
+                
+            case "/mimetizar"
+                call writeimitate
+            
 #if seguridadalkon then
             case else
                 call parseusercommandex(comando, cantidadargumentos, argumentosall, argumentosraw)

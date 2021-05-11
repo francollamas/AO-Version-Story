@@ -5,7 +5,7 @@ begin vb.form frmcomerciarusu
    clientheight    =   8850
    clientleft      =   0
    clienttop       =   0
-   clientwidth     =   10005
+   clientwidth     =   9975
    clipcontrols    =   0   'false
    controlbox      =   0   'false
    linktopic       =   "form1"
@@ -13,7 +13,7 @@ begin vb.form frmcomerciarusu
    minbutton       =   0   'false
    scaleheight     =   590
    scalemode       =   3  'pixel
-   scalewidth      =   667
+   scalewidth      =   665
    showintaskbar   =   0   'false
    startupposition =   2  'centerscreen
    begin vb.picturebox picinvoroprop 
@@ -184,7 +184,6 @@ begin vb.form frmcomerciarusu
       _extenty        =   2858
       _version        =   393217
       backcolor       =   0
-      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       disablenoscroll =   -1  'true
@@ -266,20 +265,20 @@ attribute vb_exposed = false
 
 option explicit
 
-private clsformulario as new clsformmovementmanager
+private clsformulario as clsformmovementmanager
 
 private cbotonaceptar as clsgraphicalbutton
 private cbotoncancelar as clsgraphicalbutton
 private cbotonrechazar as clsgraphicalbutton
 private cbotonconfirmar as clsgraphicalbutton
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private const gold_offer_slot as byte = inv_offer_slots + 1
 
 private scommercechat as string
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgaceptar_click()
@@ -462,7 +461,7 @@ private sub form_load()
     call printcommercemsg("> una vez termines de formar tu oferta, debes presionar en ""confirmar"", tras lo cual ya no podr�s modificarla.", fonttypenames.fonttype_guildmsg)
     call printcommercemsg("> luego que el otro usuario confirme su oferta, podr�s aceptarla o rechazarla. si la rechazas, se terminar� el comercio.", fonttypenames.fonttype_guildmsg)
     call printcommercemsg("> cuando ambos acepten la oferta del otro, se realizar� el intercambio.", fonttypenames.fonttype_guildmsg)
-    call printcommercemsg("> si se intercambian m�s �tems de los que pueden entrar en tu inventario, es probable que caigan al suelo, as� que presta mucha atenc�n a esto.", fonttypenames.fonttype_guildmsg)
+    call printcommercemsg("> si se intercambian m�s �tems de los que pueden entrar en tu inventario, es probable que caigan al suelo, as� que presta mucha atenci�n a esto.", fonttypenames.fonttype_guildmsg)
     
 end sub
 
@@ -476,7 +475,7 @@ private sub loadbuttons()
     set cbotonrechazar = new clsgraphicalbutton
     set cbotoncancelar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarcomusu.jpg", _
                                         grhpath & "botonaceptarrollovercomusu.jpg", _
@@ -514,11 +513,11 @@ private sub picinvcomercio_click()
 end sub
 
 private sub picinvcomercio_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub picinvofertaotro_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub picinvofertaprop_click()
@@ -526,7 +525,7 @@ private sub picinvofertaprop_click()
 end sub
 
 private sub picinvofertaprop_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub picinvoroofertaotro_click()
@@ -589,6 +588,30 @@ private sub sendtxt_keyup(keycode as integer, shift as integer)
     end if
 end sub
 
+private sub txtagregar_change()
+'**************************************************************
+'author: unknown
+'last modify date: 03/10/2009
+'**************************************************************
+    'make sure only valid chars are inserted (with shift + insert they can paste illegal chars)
+    dim i as long
+    dim tempstr as string
+    dim charascii as integer
+    
+    for i = 1 to len(txtagregar.text)
+        charascii = asc(mid$(txtagregar.text, i, 1))
+        
+        if charascii >= 48 and charascii <= 57 then
+            tempstr = tempstr & chr$(charascii)
+        end if
+    next i
+    
+    if tempstr <> txtagregar.text then
+        'we only set it if it's different, otherwise the event will be raised
+        'constantly and the client will crush
+        txtagregar.text = tempstr
+    end if
+end sub
 
 private sub txtagregar_keydown(keycode as integer, shift as integer)
 if not ((keycode >= 48 and keycode <= 57) or keycode = vbkeyback or _

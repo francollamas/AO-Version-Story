@@ -132,10 +132,10 @@ private clsformulario as clsformmovementmanager
 
 private cbotonaceptar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub aliados_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub form_load()
@@ -154,7 +154,7 @@ private sub loadbuttons()
     grhpath = dirgraficos
 
     set cbotonaceptar = new clsgraphicalbutton
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarguildnews.jpg", grhpath & "botonaceptarrolloverguildnews.jpg", _
                                     grhpath & "botonaceptarclickguildnews.jpg", me)
@@ -162,7 +162,11 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
+end sub
+
+private sub form_unload(cancel as integer)
+    bshowguildnews = false
 end sub
 
 private sub imgaceptar_click()
@@ -172,6 +176,6 @@ private sub imgaceptar_click()
 end sub
 
 private sub imgaceptar_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 

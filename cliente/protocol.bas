@@ -148,6 +148,9 @@ private enum serverpacketid
     showmotdeditionform     ' zmotd
     showgmpanelform         ' abpanel
     usernamelist            ' listusu
+    showdenounces
+    recordlist
+    recorddetails
     
     showguildalign
     showpartyform
@@ -290,7 +293,8 @@ private enum clientpacketid
     showguildnews
     sharenpc                '/compartirnpc
     stopsharingnpc          '/nocompartirnpc
-    consulta
+    consultation
+    moveitem                'drag and drop
 end enum
 
 public enum fonttypenames
@@ -465,7 +469,12 @@ public sub handleincomingdata()
 '***************************************************
 on error resume next
 
-    select case incomingdata.peekbyte()
+    dim packet as byte
+
+    packet = incomingdata.peekbyte()
+    debug.print packet
+    
+    select case packet
         case serverpacketid.logged                  ' logged
             call handlelogged
         
@@ -746,7 +755,16 @@ on error resume next
         
         case serverpacketid.showsosform             ' rsos and msos
             call handleshowsosform
-        
+            
+        case serverpacketid.showdenounces
+            call handleshowdenounces
+            
+        case serverpacketid.recorddetails
+            call handlerecorddetails
+            
+        case serverpacketid.recordlist
+            call handlerecordlist
+            
         case serverpacketid.showmotdeditionform     ' zmotd
             call handleshowmotdeditionform
         
@@ -801,7 +819,13 @@ on error resume next
 end sub
 
 public sub handlemultimessage()
-
+'***************************************************
+'author: unknown
+'last modification: 11/16/2010
+' 09/28/2010: c4b3z0n - ahora se le saco la "," a los minutos de distancia del /hogar, ya que a veces quedaba "12,5 minutos y 30segundos"
+' 09/21/2010: c4b3z0n - now the fragshooter operates taking the screen after the change of killed charindex to ghost only if target charindex is visible to the client, else it will take screenshot like before.
+' 11/16/2010: amraphen - recoded how the fragshooter works.
+'***************************************************
     dim bodypart as byte
     dim da�o as integer
     
@@ -956,33 +980,70 @@ with incomingdata
             end select
 
         case emessages.havekilleduser
-            dim level as long
-            call showconsolemsg(mensaje_has_matado_a & charlist(.readinteger).nombre & mensaje_22, 255, 0, 0, true, false)
-            level = .readlong
-            call showconsolemsg(mensaje_has_ganado_expe_1 & level & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+            dim killeduser as integer
+            dim exp as long
+            
+            killeduser = .readinteger
+            exp = .readlong
+            
+            call showconsolemsg(mensaje_has_matado_a & charlist(killeduser).nombre & mensaje_22, 255, 0, 0, true, false)
+            call showconsolemsg(mensaje_has_ganado_expe_1 & exp & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+            
+            'sacamos un screenshot si est� activado el fragshooter:
             if clientsetup.bkill and clientsetup.bactive then
-                if level / 2 > clientsetup.bymurderedlevel then
-                    iscapturepending = true
+                if exp \ 2 > clientsetup.bymurderedlevel then
+                    fragshooternickname = charlist(killeduser).nombre
+                    fragshooterkilledsomeone = true
+                    
+                    fragshootercapturepending = true
                 end if
             end if
+            
         case emessages.userkill
-            call showconsolemsg(charlist(.readinteger).nombre & mensaje_te_ha_matado, 255, 0, 0, true, false)
-            if clientsetup.bdie and clientsetup.bactive then _
-                iscapturepending = true
+            dim killeruser as integer
+            
+            killeruser = .readinteger
+            
+            call showconsolemsg(charlist(killeruser).nombre & mensaje_te_ha_matado, 255, 0, 0, true, false)
+            
+            'sacamos un screenshot si est� activado el fragshooter:
+            if clientsetup.bdie and clientsetup.bactive then
+                fragshooternickname = charlist(killeruser).nombre
+                fragshooterkilledsomeone = false
+                
+                fragshootercapturepending = true
+            end if
+                
         case emessages.earnexp
-            call showconsolemsg(mensaje_has_ganado_expe_1 & .readlong & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+            'call showconsolemsg(mensaje_has_ganado_expe_1 & .readlong & mensaje_has_ganado_expe_2, 255, 0, 0, true, false)
+        
         case emessages.gohome
             dim distance as byte
             dim hogar as string
             dim tiempo as integer
+            dim msg as string
+            
             distance = .readbyte
             tiempo = .readinteger
             hogar = .readasciistring
-            call showconsolemsg("est�s a " & distance & " mapas de distancia de " & hogar & ", este viaje durar� " & tiempo & " segundos.", 255, 0, 0, true)
+            
+            if tiempo >= 60 then
+                if tiempo mod 60 = 0 then
+                    msg = tiempo / 60 & " minutos."
+                else
+                    msg = cint(tiempo \ 60) & " minutos y " & tiempo mod 60 & " segundos."  'agregado el cint() asi el n�mero no es con , [c4b3z0n - 09/28/2010]
+                end if
+            else
+                msg = tiempo & " segundos."
+            end if
+            
+            call showconsolemsg("te encuentras a " & distance & " mapas de la " & hogar & ", este viaje durar� " & msg, 255, 0, 0, true)
             traveling = true
+        
         case emessages.finishhome
             call showconsolemsg(mensaje_hogar, 255, 255, 255)
             traveling = false
+        
         case emessages.cancelgohome
             call showconsolemsg(mensaje_hogar_cancel, 255, 0, 0, true)
             traveling = false
@@ -1005,13 +1066,15 @@ private sub handlelogged()
     call incomingdata.readbyte
     
     ' variable initialization
+    userclase = incomingdata.readbyte
     enginerun = true
     nombres = true
+    brain = false
     
     'set connected state
     call setconnected
     
-    if bshowtutorial then frmtutorial.show
+    if bshowtutorial then frmtutorial.show vbmodeless
     
     'show tip
     if tipf = "1" and primeravez then
@@ -1093,56 +1156,7 @@ private sub handledisconnect()
     if frmmain.winsock1.state <> sckclosed then _
         frmmain.winsock1.close
 #end if
-    
-    'hide main form
-    frmmain.visible = false
-    
-    'stop audio
-    call audio.stopwave
-    frmmain.isplaying = playloop.plnone
-    
-    'show connection form
-    frmconnect.visible = true
-    
-    'reset global vars
-    userdescansar = false
-    userparalizado = false
-    pausa = false
-    userciego = false
-    usermeditar = false
-    usernavegando = false
-    brain = false
-    bfogata = false
-    skillpoints = 0
-    comerciando = false
-    'new
-    traveling = false
-    'delete all kind of dialogs
-    call cleandialogs
-    
-    'reset some char variables...
-    for i = 1 to lastchar
-        charlist(i).invisible = false
-    next i
-    
-    'unload all forms except frmmain and frmconnect
-    dim frm as form
-    
-    for each frm in forms
-        if frm.name <> frmmain.name and frm.name <> frmconnect.name then
-            unload frm
-        end if
-    next
-    
-    for i = 1 to max_inventory_slots
-        call inventario.setitem(i, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
-    next i
-    
-#if seguridadalkon then
-    call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
-#end if
-
-    call audio.playmidi("2.mid")
+    resetallinfo
 end sub
 
 ''
@@ -1157,11 +1171,14 @@ private sub handlecommerceend()
     'remove packet id
     call incomingdata.readbyte
     
-    'reset vars
-    comerciando = false
+    set invcomusu = nothing
+    set invcomnpc = nothing
     
     'hide form
     unload frmcomerciar
+    
+    'reset vars
+    comerciando = false
 end sub
 
 ''
@@ -1196,6 +1213,9 @@ private sub handlecommerceinit()
     
     'remove packet id
     call incomingdata.readbyte
+    
+    set invcomusu = new clsgrapchicalinventory
+    set invcomnpc = new clsgrapchicalinventory
     
     ' initialize commerce inventories
     call invcomusu.initialize(directdraw, frmcomerciar.picinvuser, inventario.maxobjs)
@@ -1245,7 +1265,10 @@ private sub handlebankinit()
     'remove packet id
     call incomingdata.readbyte
     
-        bankgold = incomingdata.readlong
+    set invbanco(0) = new clsgrapchicalinventory
+    set invbanco(1) = new clsgrapchicalinventory
+    
+    bankgold = incomingdata.readlong
     call invbanco(0).initialize(directdraw, frmbancoobj.picbancoinv, max_bancoinventory_slots)
     call invbanco(1).initialize(directdraw, frmbancoobj.picinv, inventario.maxobjs)
     
@@ -1288,15 +1311,23 @@ private sub handleusercommerceinit()
     
     'remove packet id
     call incomingdata.readbyte
+    
     tradingusername = incomingdata.readasciistring
+    
+    set invcomusu = new clsgrapchicalinventory
+    set invoffercomusu(0) = new clsgrapchicalinventory
+    set invoffercomusu(1) = new clsgrapchicalinventory
+    set invorocomusu(0) = new clsgrapchicalinventory
+    set invorocomusu(1) = new clsgrapchicalinventory
+    set invorocomusu(2) = new clsgrapchicalinventory
     
     ' initialize commerce inventories
     call invcomusu.initialize(directdraw, frmcomerciarusu.picinvcomercio, inventario.maxobjs)
     call invoffercomusu(0).initialize(directdraw, frmcomerciarusu.picinvofertaprop, inv_offer_slots)
     call invoffercomusu(1).initialize(directdraw, frmcomerciarusu.picinvofertaotro, inv_offer_slots)
-    call invorocomusu(0).initialize(directdraw, frmcomerciarusu.picinvoroprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
-    call invorocomusu(1).initialize(directdraw, frmcomerciarusu.picinvoroofertaprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
-    call invorocomusu(2).initialize(directdraw, frmcomerciarusu.picinvoroofertaotro, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2)
+    call invorocomusu(0).initialize(directdraw, frmcomerciarusu.picinvoroprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2, , , , true)
+    call invorocomusu(1).initialize(directdraw, frmcomerciarusu.picinvoroofertaprop, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2, , , , true)
+    call invorocomusu(2).initialize(directdraw, frmcomerciarusu.picinvoroofertaotro, inv_gold_slots, , tilepixelwidth * 2, tilepixelheight, tilepixelwidth / 2, , , , true)
 
     'fill user inventory
     for i = 1 to max_inventory_slots
@@ -1381,6 +1412,7 @@ private sub handleshowblacksmithform()
         call writecraftblacksmith(macrobltindex)
     else
         frmherrero.show , frmmain
+        mirandoherreria = true
     end if
 end sub
 
@@ -1400,6 +1432,7 @@ private sub handleshowcarpenterform()
         call writecraftcarpenter(macrobltindex)
     else
         frmcarp.show , frmmain
+        mirandocarpinteria = true
     end if
 end sub
 
@@ -1682,9 +1715,10 @@ end sub
 private sub handleupdategold()
 '***************************************************
 'autor: juan mart�n sotuyo dodero (maraxus)
-'last modification: 08/14/07
-'last modified by: lucas tavolaro ortiz (tavo)
-'- 08/14/07: added gldlbl color variation depending on user gold and level
+'last modification: 09/21/10
+'last modified by: c4b3z0n
+'- 08/14/07: tavo - added gldlbl color variation depending on user gold and level
+'- 09/21/10: c4b3z0n - modified color change of gold only if the player's level is greater than 12 (not newbie).
 '***************************************************
     'check packet is complete
     if incomingdata.length < 5 then
@@ -1698,7 +1732,7 @@ private sub handleupdategold()
     'get data and update form
     usergld = incomingdata.readlong()
     
-    if usergld >= clng(userlvl) * 10000 then
+    if usergld >= clng(userlvl) * 10000 and userlvl > 12 then 'si el nivel es mayor de 12, es decir, no es newbie.
         'changes color
         frmmain.gldlbl.forecolor = &hff& 'red
     else
@@ -2070,7 +2104,7 @@ private sub handlechatoverhead()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2124,7 +2158,7 @@ private sub handleconsolemessage()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2205,7 +2239,7 @@ private sub handleguildchat()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2286,7 +2320,7 @@ private sub handlecommercechat()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2362,7 +2396,7 @@ private sub handleshowmessagebox()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2450,7 +2484,7 @@ private sub handlecharactercreate()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -2650,8 +2684,9 @@ end sub
 private sub handlecharacterchange()
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 25/08/2009
+'last modification: 21/09/2010 - c4b3z0n
 '25/08/2009: zama - changed a variable used incorrectly.
+'21/09/2010: c4b3z0n - added code for fragshooter. if its waiting for the death of certain userindex, and it dies, then the capture of the screen will occur.
 '***************************************************
     if incomingdata.length < 18 then
         err.raise incomingdata.notenoughdataerrcode
@@ -2690,7 +2725,7 @@ private sub handlecharacterchange()
         end if
         
         .muerto = (headindex = casper_head)
-
+        
         .heading = incomingdata.readbyte()
         
         tempint = incomingdata.readinteger()
@@ -2800,24 +2835,28 @@ private sub handleplaymidi()
 'last modification: 05/17/06
 '
 '***************************************************
-    if incomingdata.length < 4 then
+    if incomingdata.length < 5 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
     end if
     
-    dim currentmidi as byte
+    dim currentmidi as integer
+    dim loops as integer
     
     'remove packet id
     call incomingdata.readbyte
     
-    currentmidi = incomingdata.readbyte()
+    currentmidi = incomingdata.readinteger()
+    loops = incomingdata.readinteger()
     
     if currentmidi then
-        call audio.playmidi(cstr(currentmidi) & ".mid", incomingdata.readinteger())
-    else
-        'remove the bytes to prevent errors
-        call incomingdata.readinteger
+        if currentmidi > mp3_initial_index then
+            call audio.musicmp3play(app.path & "\mp3\" & currentmidi & ".mp3")
+        else
+            call audio.playmidi(cstr(currentmidi) & ".mid", loops)
+        end if
     end if
+    
 end sub
 
 ''
@@ -2865,7 +2904,7 @@ private sub handleguildlist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3147,7 +3186,7 @@ private sub handlechangeinventoryslot()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3311,7 +3350,7 @@ private sub handlechangebankslot()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3370,7 +3409,7 @@ private sub handlechangespellslot()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3457,7 +3496,7 @@ private sub handleblacksmithweapons()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3483,6 +3522,10 @@ on error goto errhandler
             .objindex = buffer.readinteger()
             .upgrade = buffer.readinteger()
         end with
+    next i
+    
+    for i = 1 to max_list_items
+        set invlingosherreria(i) = new clsgrapchicalinventory
     next i
     
     with frmherrero
@@ -3552,7 +3595,7 @@ private sub handleblacksmitharmors()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3637,7 +3680,7 @@ private sub handlecarpenterobjects()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3662,6 +3705,10 @@ on error goto errhandler
             .objindex = buffer.readinteger()
             .upgrade = buffer.readinteger()
         end with
+    next i
+    
+    for i = 1 to max_list_items
+        set invmaderascarpinteria(i) = new clsgrapchicalinventory
     next i
     
     with frmcarp
@@ -3745,7 +3792,7 @@ private sub handleerrormessage()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3753,7 +3800,7 @@ on error goto errhandler
     
     call msgbox(buffer.readasciistring())
     
-    if frmconnect.visible then
+    if frmconnect.visible and (not frmcrearpersonaje.visible) then
 #if usarwrench = 1 then
         frmmain.socket1.disconnect
         frmmain.socket1.cleanup
@@ -3824,7 +3871,7 @@ private sub handleshowsignal()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -3866,7 +3913,7 @@ private sub handlechangenpcinventoryslot()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4041,7 +4088,7 @@ private sub handleaddforummessage()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4143,6 +4190,7 @@ private sub handlediceroll()
 'last modification: 05/17/06
 '
 '***************************************************
+
     if incomingdata.length < 6 then
         err.raise incomingdata.notenoughdataerrcode
         exit sub
@@ -4156,7 +4204,7 @@ private sub handlediceroll()
     useratributos(eatributos.inteligencia) = incomingdata.readbyte()
     useratributos(eatributos.carisma) = incomingdata.readbyte()
     useratributos(eatributos.constitucion) = incomingdata.readbyte()
-    
+         
     with frmcrearpersonaje
         .lblatributos(eatributos.fuerza) = useratributos(eatributos.fuerza)
         .lblatributos(eatributos.agilidad) = useratributos(eatributos.agilidad)
@@ -4230,13 +4278,13 @@ private sub handlesendskills()
     'remove packet id
     call incomingdata.readbyte
     
-    userclase = incomingdata.readbyte
     dim i as long
-    
+
     for i = 1 to numskills
         userskills(i) = incomingdata.readbyte()
         porcentajeskills(i) = incomingdata.readbyte()
     next i
+    
     llegaronskills = true
 end sub
 
@@ -4256,7 +4304,7 @@ private sub handletrainercreaturelist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4303,7 +4351,7 @@ private sub handleguildnews()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4332,7 +4380,7 @@ on error goto errhandler
         frmguildnews.txtclanesaliados.text = stemp & guildlist(i) & vbcrlf
     next i
     
-    if clientsetup.bguildnews then frmguildnews.show vbmodeless, frmmain
+    if clientsetup.bguildnews or bshowguildnews then frmguildnews.show vbmodeless, frmmain
     
     'if we got here then packet is complete, copy data back to original queue
     call incomingdata.copybuffer(buffer)
@@ -4365,7 +4413,7 @@ private sub handleofferdetails()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4404,7 +4452,7 @@ private sub handlealianceproposalslist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4454,7 +4502,7 @@ private sub handlepeaceproposalslist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4504,7 +4552,7 @@ private sub handlecharacterinfo()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4603,7 +4651,7 @@ private sub handleguildleaderinfo()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4680,7 +4728,7 @@ private sub handleguilddetails()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4800,7 +4848,7 @@ private sub handleshowuserrequest()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -4928,7 +4976,7 @@ private sub handlechangeusertradeslot()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     dim offerslot as byte
@@ -5004,7 +5052,7 @@ private sub handlespawnlist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5051,7 +5099,7 @@ private sub handleshowsosform()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5083,7 +5131,53 @@ on error goto 0
         err.raise error
 end sub
 
+''
+' handles the showdenounces message.
 
+private sub handleshowdenounces()
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'
+'***************************************************
+    if incomingdata.length < 3 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+    
+    dim denouncelist() as string
+    dim denounceindex as long
+    
+    denouncelist = split(buffer.readasciistring(), separator)
+    
+    with fonttypes(fonttypenames.fonttype_guildmsg)
+        for denounceindex = 0 to ubound(denouncelist())
+            call addtorichtextbox(frmmain.rectxt, denouncelist(denounceindex), .red, .green, .blue, .bold, .italic)
+        next denounceindex
+    end with
+    
+    'if we got here then packet is complete, copy data back to original queue
+    call incomingdata.copybuffer(buffer)
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
+end sub
 
 ''
 ' handles the showsosform message.
@@ -5101,7 +5195,7 @@ private sub handleshowpartyform()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5153,7 +5247,7 @@ private sub handleshowmotdeditionform()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5208,7 +5302,7 @@ private sub handleusernamelist()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5274,7 +5368,7 @@ private sub handleguildmemberinfo()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5336,7 +5430,7 @@ private sub handleupdatetagandstatus()
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(incomingdata)
     
     'remove packet id
@@ -5515,16 +5609,17 @@ end sub
 ' @param    chat the chat text to be sent to the user.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writewhisper(byval charindex as integer, byval chat as string)
+public sub writewhisper(byval charname as string, byval chat as string)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
+'last modification: 03/12/10
 'writes the "whisper" message to the outgoing data buffer
+'03/12/10: enanoh - ahora se env�a el nick y no el charindex.
 '***************************************************
     with outgoingdata
         call .writebyte(clientpacketid.whisper)
         
-        call .writeinteger(charindex)
+        call .writeasciistring(charname)
         
         call .writeasciistring(chat)
     end with
@@ -6909,17 +7004,17 @@ public sub writeresucitate()
 end sub
 
 ''
-' writes the "consulta" message to the outgoing data buffer.
+' writes the "consultation" message to the outgoing data buffer.
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeconsulta()
+public sub writeconsultation()
 '***************************************************
 'author: zama
 'last modification: 01/05/2010
-'writes the "consulta" message to the outgoing data buffer
+'writes the "consultation" message to the outgoing data buffer
 '***************************************************
-    call outgoingdata.writebyte(clientpacketid.consulta)
+    call outgoingdata.writebyte(clientpacketid.consultation)
 
 end sub
 
@@ -8457,6 +8552,25 @@ public sub writeservermessage(byval message as string)
         call .writeasciistring(message)
     end with
 end sub
+''
+' writes the "mapmessage" message to the outgoing data buffer.
+'
+' @param    message the message to be sent to players.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writemapmessage(byval message as string)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'writes the "mapmessage" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.mapmessage)
+        
+        call .writeasciistring(message)
+    end with
+end sub
 
 ''
 ' writes the "nicktoip" message to the outgoing data buffer.
@@ -9666,6 +9780,46 @@ public sub writechangemapinfopk(byval ispk as boolean)
 end sub
 
 ''
+' writes the "changemapinfonoocultar" message to the outgoing data buffer.
+'
+' @param    permitirocultar true if the map permits to hide, false otherwise.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writechangemapinfonoocultar(byval permitirocultar as boolean)
+'***************************************************
+'author: zama
+'last modification: 19/09/2010
+'writes the "changemapinfonoocultar" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfonoocultar)
+        
+        call .writeboolean(permitirocultar)
+    end with
+end sub
+
+''
+' writes the "changemapinfonoinvocar" message to the outgoing data buffer.
+'
+' @param    permitirinvocar true if the map permits to invoke, false otherwise.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writechangemapinfonoinvocar(byval permitirinvocar as boolean)
+'***************************************************
+'author: zama
+'last modification: 18/09/2010
+'writes the "changemapinfonoinvocar" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfonoinvocar)
+        
+        call .writeboolean(permitirinvocar)
+    end with
+end sub
+
+''
 ' writes the "changemapinfobackup" message to the outgoing data buffer.
 '
 ' @param    backup true if the map is to be backuped, false otherwise.
@@ -9806,6 +9960,26 @@ public sub writechangemapinfozone(byval zone as string)
 end sub
 
 ''
+' writes the "changemapinfostealnpc" message to the outgoing data buffer.
+'
+' @param    forbid true if stealnpc forbiden.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writechangemapinfostealnpc(byval forbid as boolean)
+'***************************************************
+'author: zama
+'last modification: 25/07/2010
+'writes the "changemapinfostealnpc" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.changemapinfostealnpc)
+        
+        call .writeboolean(forbid)
+    end with
+end sub
+
+''
 ' writes the "savechars" message to the outgoing data buffer.
 '
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
@@ -9848,6 +10022,36 @@ public sub writeshowserverform()
 '***************************************************
     call outgoingdata.writebyte(clientpacketid.gmcommands)
     call outgoingdata.writebyte(egmcommands.showserverform)
+end sub
+
+''
+' writes the "showdenounceslist" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeshowdenounceslist()
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'writes the "showdenounceslist" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.showdenounceslist)
+end sub
+
+''
+' writes the "enabledenounces" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeenabledenounces()
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'writes the "enabledenounces" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.enabledenounces)
 end sub
 
 ''
@@ -10106,6 +10310,48 @@ public sub writesetinivar(byref sllave as string, byref sclave as string, byref 
 end sub
 
 ''
+' writes the "createpretorianclan" message to the outgoing data buffer.
+'
+' @param    map         the map in which create the pretorian clan.
+' @param    x           the x pos where the king is settled.
+' @param    y           the y pos where the king is settled.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writecreatepretorianclan(byval map as integer, byval x as byte, byval y as byte)
+'***************************************************
+'author: zama
+'last modification: 29/10/2010
+'writes the "createpretorianclan" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.createpretorianclan)
+        call .writeinteger(map)
+        call .writebyte(x)
+        call .writebyte(y)
+    end with
+end sub
+
+''
+' writes the "deletepretorianclan" message to the outgoing data buffer.
+'
+' @param    map         the map which contains the pretorian clan to be removed.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writedeletepretorianclan(byval map as integer)
+'***************************************************
+'author: zama
+'last modification: 29/10/2010
+'writes the "deletepretorianclan" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.removepretorianclan)
+        call .writeinteger(map)
+    end with
+end sub
+
+''
 ' flushes the outgoing data buffer of the user.
 '
 ' @param    userindex user whose outgoing data buffer will be flushed.
@@ -10167,3 +10413,289 @@ private sub senddata(byref sddata as string)
 #end if
 
 end sub
+
+''
+' writes the "mapmessage" message to the outgoing data buffer.
+'
+' @param    dialog the new dialog of the npc.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writesetdialog(byval dialog as string)
+'***************************************************
+'author: amraphen
+'last modification: 18/11/2010
+'writes the "setdialog" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.setdialog)
+        
+        call .writeasciistring(dialog)
+    end with
+end sub
+
+''
+' writes the "impersonate" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeimpersonate()
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'writes the "impersonate" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.impersonate)
+end sub
+
+''
+' writes the "imitate" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeimitate()
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'writes the "imitate" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.imitate)
+end sub
+
+''
+' writes the "recordaddobs" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecordaddobs(byval recordindex as byte, byval observation as string)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recordaddobs" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.recordaddobs)
+        
+        call .writebyte(recordindex)
+        call .writeasciistring(observation)
+    end with
+end sub
+
+''
+' writes the "recordadd" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecordadd(byval nickname as string, byval reason as string)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recordadd" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.recordadd)
+        
+        call .writeasciistring(nickname)
+        call .writeasciistring(reason)
+    end with
+end sub
+
+''
+' writes the "recordremove" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecordremove(byval recordindex as byte)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recordremove" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.recordremove)
+        
+        call .writebyte(recordindex)
+    end with
+end sub
+
+''
+' writes the "recordlistrequest" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecordlistrequest()
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recordlistrequest" message to the outgoing data buffer
+'***************************************************
+    call outgoingdata.writebyte(clientpacketid.gmcommands)
+    call outgoingdata.writebyte(egmcommands.recordlistrequest)
+end sub
+
+''
+' writes the "recorddetailsrequest" message to the outgoing data buffer.
+'
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecorddetailsrequest(byval recordindex as byte)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recorddetailsrequest" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.gmcommands)
+        call .writebyte(egmcommands.recorddetailsrequest)
+        
+        call .writebyte(recordindex)
+    end with
+end sub
+
+''
+' handles the recordlist message.
+
+private sub handlerecordlist()
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'
+'***************************************************
+    if incomingdata.length < 2 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+    
+    dim numrecords as byte
+    dim i as long
+    
+    numrecords = buffer.readbyte
+    
+    'se limpia el listbox y se agregan los usuarios
+    frmpanelgm.lstusers.clear
+    for i = 1 to numrecords
+        frmpanelgm.lstusers.additem buffer.readasciistring
+    next i
+    
+    'if we got here then packet is complete, copy data back to original queue
+    call incomingdata.copybuffer(buffer)
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the recorddetails message.
+
+private sub handlerecorddetails()
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'
+'***************************************************
+    if incomingdata.length < 2 then
+        err.raise incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
+    dim tmpstr as string
+    call buffer.copybuffer(incomingdata)
+    
+    'remove packet id
+    call buffer.readbyte
+       
+    with frmpanelgm
+        .txtcreador.text = buffer.readasciistring
+        .txtdescrip.text = buffer.readasciistring
+        
+        'status del pj
+        if buffer.readboolean then
+            .lblestado.forecolor = vbgreen
+            .lblestado.caption = "online"
+        else
+            .lblestado.forecolor = vbred
+            .lblestado.caption = "offline"
+        end if
+        
+        'ip del personaje
+        tmpstr = buffer.readasciistring
+        if lenb(tmpstr) then
+            .txtip.text = tmpstr
+        else
+            .txtip.text = "usuario offline"
+        end if
+        
+        'tiempo online
+        tmpstr = buffer.readasciistring
+        if lenb(tmpstr) then
+            .txttimeon.text = tmpstr
+        else
+            .txttimeon.text = "usuario offline"
+        end if
+        
+        'observaciones
+        tmpstr = buffer.readasciistring
+        if lenb(tmpstr) then
+            .txtobs.text = tmpstr
+        else
+            .txtobs.text = "sin observaciones"
+        end if
+    end with
+    
+    'if we got here then packet is complete, copy data back to original queue
+    call incomingdata.copybuffer(buffer)
+    
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+
+    if error <> 0 then _
+        err.raise error
+end sub
+
+
+''
+' writes the "moveitem" message to the outgoing data buffer.
+'
+public sub writemoveitem(byval originalslot as integer, byval newslot as integer, byval movetype as emovetype)
+'***************************************************
+'author: budi
+'last modification: 05/01/2011
+'writes the "moveitem" message to the outgoing data buffer
+'***************************************************
+    with outgoingdata
+        call .writebyte(clientpacketid.moveitem)
+        call .writebyte(originalslot)
+        call .writebyte(newslot)
+        call .writebyte(movetype)
+    end with
+end sub
+

@@ -65,9 +65,9 @@ begin vb.form frmbancoobj
       appearance      =   0  'flat
       backcolor       =   &h00000000&
       forecolor       =   &h80000008&
-      height          =   3795
+      height          =   3840
       left            =   540
-      scaleheight     =   3765
+      scaleheight     =   3810
       scalewidth      =   2400
       tabindex        =   4
       top             =   2400
@@ -77,9 +77,9 @@ begin vb.form frmbancoobj
       appearance      =   0  'flat
       backcolor       =   &h00000000&
       forecolor       =   &h80000008&
-      height          =   3795
+      height          =   3840
       left            =   4020
-      scaleheight     =   16.617
+      scaleheight     =   16.816
       scalemode       =   0  'user
       scalewidth      =   825.806
       tabindex        =   3
@@ -280,7 +280,7 @@ private cbotonretiraroro as clsgraphicalbutton
 private cbotondepositaroro as clsgraphicalbutton
 private cbotoncerrar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 
 public lasactionbuy as boolean
@@ -339,14 +339,14 @@ private sub loadbuttons()
     dim grhpath as string
     
     grhpath = dirgraficos
-    'cmdmoverbov(1).picture = loadpicture(app.path & "\graficos\flechasubirobjeto.jpg") ' www.gs-zone.org
-    'cmdmoverbov(0).picture = loadpicture(app.path & "\graficos\flechabajarobjeto.jpg") ' www.gs-zone.org
+    'cmdmoverbov(1).picture = loadpicture(app.path & "\graficos\flechasubirobjeto.jpg")
+    'cmdmoverbov(0).picture = loadpicture(app.path & "\graficos\flechabajarobjeto.jpg")
     
     set cbotonretiraroro = new clsgraphicalbutton
     set cbotondepositaroro = new clsgraphicalbutton
     set cbotoncerrar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
 
 
     call cbotondepositaroro.initialize(imgdepositaroro, "", grhpath & "botondepositaoroapretado.jpg", grhpath & "botondepositaoroapretado.jpg", me)
@@ -359,7 +359,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    call lastpressed.toggletonormal
+    call lastbuttonpressed.toggletonormal
 end sub
 
 private sub image1_click(index as integer)
@@ -429,7 +429,7 @@ private sub picbancoinv_click()
 end sub
 
 private sub picbancoinv_mousemove(button as integer, shift as integer, x as single, y as single)
-    call lastpressed.toggletonormal
+    call lastbuttonpressed.toggletonormal
 end sub
 
 private sub picinv_click()
@@ -466,7 +466,7 @@ private sub picinv_click()
 end sub
 
 private sub picinv_mousemove(button as integer, shift as integer, x as single, y as single)
-    call lastpressed.toggletonormal
+    call lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcerrar_click()

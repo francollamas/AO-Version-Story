@@ -53,6 +53,10 @@ option explicit
 private const num_custom_keys as byte = 27
 
 ''
+'number of key configurations
+private const num_custom_configs as byte = 9
+
+''
 'error raised in case the key file doesn't exist
 private const error_no_key_file as long = vbobjecterror + 16
 
@@ -62,7 +66,11 @@ private const key_config_file as string = "\init\bindkeys.bin"
 
 ''
 'array of mapped keys
-private mappedkeys(1 to num_custom_keys) as integer
+private mappedkeys(0 to num_custom_configs, 1 to num_custom_keys) as integer
+
+''
+'active key configuration
+private activeconfig as byte
 
 
 ''
@@ -246,28 +254,57 @@ end function
 public sub loadcustomkeys()
 '***************************************************
 'author: rapsodius
-'last modification: 08/21/07
-'
+'last modification: 18/11/2010
+'16/11/2010: amraphen - adapt� el procedimiento para cargar todas las configuraciones de teclas.
+'18/11/2010: amraphen - modifiqu� la forma en que se cargan los bindings y ahora carga los del formato viejo.
 '***************************************************
-    dim i as long
-    dim filenum as integer
-    filenum = freefile()
-    
-    'inits keyboard config with default configurations
-    call loaddefaults
+dim i as long
+dim j as long
+dim filenum as integer
+
+     'si no existe el archivo lo creamos con los bindings default:
+    if not fileexist(app.path & key_config_file, vbarchive) then
+        for i = 0 to num_custom_configs
+            call loaddefaults(i)
+        next i
         
-    open app.path & key_config_file for binary access read lock read write as filenum
+        activeconfig = 1
+        
+        call savecustomkeys
+    else 'existe el archivo, verificamos qu� formato tiene:
+        
+        filenum = freefile
     
-    for i = 1 to num_custom_keys
-        get filenum, , mappedkeys(i)
-        if lenb(readablename(mappedkeys(i))) = 0 then
-            close filenum
-            call err.raise(error_no_key_file)
-            exit sub
+        if filelen(app.path & key_config_file) < (num_custom_configs * num_custom_keys * 2) + 1 then
+            'formato viejo
+            open app.path & key_config_file for binary access read lock read write as filenum
+            
+            activeconfig = 1
+            
+            for i = 0 to num_custom_configs
+                call loaddefaults(i)
+            next i
+            
+            for j = 1 to num_custom_keys
+                get filenum, , mappedkeys(activeconfig, j)
+            next j
+        else
+            'formato nuevo
+            open app.path & key_config_file for binary access read lock read write as filenum
+            
+            get filenum, , activeconfig
+            
+            for i = 0 to num_custom_configs
+                for j = 1 to num_custom_keys
+                    get filenum, , mappedkeys(i, j)
+                next j
+            next i
         end if
-    next i
-    
-    close filenum
+        
+        close filenum
+        
+        call savecustomkeys
+    end if
 end sub
 
 ''
@@ -276,20 +313,29 @@ end sub
 public sub savecustomkeys()
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
-'
+'last modification: 18/11/10
+'16/11/2010: amraphen - adapt� el procedimiento para guardar todas las configuraciones de teclas.
+'18/11/2010: amraphen - ahora se guarda la configuraci�n activa.
 '***************************************************
-    dim filenum as integer
-    dim i as long
+dim i as long
+dim j as long
+dim filenum as integer
+
     filenum = freefile()
     
     open app.path & key_config_file for binary access write as filenum
     
-    for i = 1 to num_custom_keys
-        put filenum, , mappedkeys(i)
+    'guardo la configuraci�n activa:
+    put filenum, , activeconfig
+    
+    'guardo las distintas configuraciones:
+    for i = 0 to num_custom_configs
+        for j = 1 to num_custom_keys
+            put filenum, , mappedkeys(i, j)
+        next j
     next i
     
-    close #filenum
+    close filenum
 end sub
 
 ''
@@ -301,11 +347,12 @@ end sub
 public property get bindedkey(byval index as ekeytype) as integer
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
-'
+'last modification: 16/11/2010
+'16/11/2010: amraphen - adapt� la propiedad para que cargue el bind de la tecla en la configuraci�n activa.
 '***************************************************
     if index < 1 or index > num_custom_keys then exit property
-    bindedkey = mappedkeys(index)
+    
+    bindedkey = mappedkeys(activeconfig, index)
 end property
 
 ''
@@ -317,8 +364,8 @@ end property
 public property let bindedkey(byval index as ekeytype, byval newval as integer)
 '***************************************************
 'author: rapsodius
-'last modification: 08/05/07
-'
+'last modification: 16/11/2010
+'16/11/2010: amraphen - adapt� la propiedad para que guarde el bind de la tecla en la configuraci�n activa.
 '***************************************************
     if index < 1 or index > num_custom_keys then exit property
     
@@ -330,45 +377,47 @@ public property let bindedkey(byval index as ekeytype, byval newval as integer)
         exit property
     end if
     
-    mappedkeys(index) = newval
+    mappedkeys(activeconfig, index) = newval
 end property
 
 ''
 'loads default keys
+'
+'@param keyconfig index of the key configuration to change
 
-public sub loaddefaults()
+public sub loaddefaults(byval keyconfig as byte)
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
-'
+'last modification: 16/11/2010
+'16/11/2010: amraphen - adapt� el procedimiento para que cargue los bindings por default en una sola configuraci�n.
 '***************************************************
-    mappedkeys(ekeytype.mkeyup) = keycodeconstants.vbkeyup
-    mappedkeys(ekeytype.mkeydown) = keycodeconstants.vbkeydown
-    mappedkeys(ekeytype.mkeyleft) = keycodeconstants.vbkeyleft
-    mappedkeys(ekeytype.mkeyright) = keycodeconstants.vbkeyright
-    mappedkeys(ekeytype.mkeytogglemusic) = keycodeconstants.vbkeym
-    mappedkeys(ekeytype.mkeytogglesound) = keycodeconstants.vbkeys
-    mappedkeys(ekeytype.mkeytogglefxs) = keycodeconstants.vbkeyf
-    mappedkeys(ekeytype.mkeyrequestrefresh) = keycodeconstants.vbkeyl
-    mappedkeys(ekeytype.mkeytogglenames) = keycodeconstants.vbkeyn
-    mappedkeys(ekeytype.mkeygetobject) = keycodeconstants.vbkeya
-    mappedkeys(ekeytype.mkeyequipobject) = keycodeconstants.vbkeye
-    mappedkeys(ekeytype.mkeytamanimal) = keycodeconstants.vbkeyd
-    mappedkeys(ekeytype.mkeysteal) = keycodeconstants.vbkeyr
-    mappedkeys(ekeytype.mkeytogglesafemode) = keycodeconstants.vbkeymultiply
-    mappedkeys(ekeytype.mkeytoggleresuscitationsafe) = keycodeconstants.vbkeyend
-    mappedkeys(ekeytype.mkeyhide) = keycodeconstants.vbkeyo
-    mappedkeys(ekeytype.mkeydropobject) = keycodeconstants.vbkeyt
-    mappedkeys(ekeytype.mkeyuseobject) = keycodeconstants.vbkeyu
-    mappedkeys(ekeytype.mkeyattack) = keycodeconstants.vbkeycontrol
-    mappedkeys(ekeytype.mkeytalk) = keycodeconstants.vbkeyreturn
-    mappedkeys(ekeytype.mkeytalkwithguild) = keycodeconstants.vbkeydelete
-    mappedkeys(ekeytype.mkeytakescreenshot) = keycodeconstants.vbkeyf2
-    mappedkeys(ekeytype.mkeyshowoptions) = keycodeconstants.vbkeyf5
-    mappedkeys(ekeytype.mkeymeditate) = keycodeconstants.vbkeyf6
-    mappedkeys(ekeytype.mkeycastspellmacro) = keycodeconstants.vbkeyf7
-    mappedkeys(ekeytype.mkeyworkmacro) = keycodeconstants.vbkeyf8
-    mappedkeys(ekeytype.mkeyexitgame) = keycodeconstants.vbkeyf12
+    mappedkeys(keyconfig, ekeytype.mkeyup) = keycodeconstants.vbkeyup
+    mappedkeys(keyconfig, ekeytype.mkeydown) = keycodeconstants.vbkeydown
+    mappedkeys(keyconfig, ekeytype.mkeyleft) = keycodeconstants.vbkeyleft
+    mappedkeys(keyconfig, ekeytype.mkeyright) = keycodeconstants.vbkeyright
+    mappedkeys(keyconfig, ekeytype.mkeytogglemusic) = keycodeconstants.vbkeym
+    mappedkeys(keyconfig, ekeytype.mkeytogglesound) = keycodeconstants.vbkeys
+    mappedkeys(keyconfig, ekeytype.mkeytogglefxs) = keycodeconstants.vbkeyf
+    mappedkeys(keyconfig, ekeytype.mkeyrequestrefresh) = keycodeconstants.vbkeyl
+    mappedkeys(keyconfig, ekeytype.mkeytogglenames) = keycodeconstants.vbkeyn
+    mappedkeys(keyconfig, ekeytype.mkeygetobject) = keycodeconstants.vbkeya
+    mappedkeys(keyconfig, ekeytype.mkeyequipobject) = keycodeconstants.vbkeye
+    mappedkeys(keyconfig, ekeytype.mkeytamanimal) = keycodeconstants.vbkeyd
+    mappedkeys(keyconfig, ekeytype.mkeysteal) = keycodeconstants.vbkeyr
+    mappedkeys(keyconfig, ekeytype.mkeytogglesafemode) = keycodeconstants.vbkeymultiply
+    mappedkeys(keyconfig, ekeytype.mkeytoggleresuscitationsafe) = keycodeconstants.vbkeyend
+    mappedkeys(keyconfig, ekeytype.mkeyhide) = keycodeconstants.vbkeyo
+    mappedkeys(keyconfig, ekeytype.mkeydropobject) = keycodeconstants.vbkeyt
+    mappedkeys(keyconfig, ekeytype.mkeyuseobject) = keycodeconstants.vbkeyu
+    mappedkeys(keyconfig, ekeytype.mkeyattack) = keycodeconstants.vbkeycontrol
+    mappedkeys(keyconfig, ekeytype.mkeytalk) = keycodeconstants.vbkeyreturn
+    mappedkeys(keyconfig, ekeytype.mkeytalkwithguild) = keycodeconstants.vbkeydelete
+    mappedkeys(keyconfig, ekeytype.mkeytakescreenshot) = keycodeconstants.vbkeyf2
+    mappedkeys(keyconfig, ekeytype.mkeyshowoptions) = keycodeconstants.vbkeyf5
+    mappedkeys(keyconfig, ekeytype.mkeymeditate) = keycodeconstants.vbkeyf6
+    mappedkeys(keyconfig, ekeytype.mkeycastspellmacro) = keycodeconstants.vbkeyf7
+    mappedkeys(keyconfig, ekeytype.mkeyworkmacro) = keycodeconstants.vbkeyf8
+    mappedkeys(keyconfig, ekeytype.mkeyexitgame) = keycodeconstants.vbkeyf12
 end sub
 
 ''
@@ -380,15 +429,15 @@ end sub
 public function keyassigned(byval keycode as integer) as boolean
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
-'
+'last modification: 16/11/2010
+'16/11/2010: amraphen - adapt� la funci�n para que trabaje sobre la configuraci�n activa.
 '***************************************************
-    dim counter as long
+dim counter as long
     
     keyassigned = false
     
     for counter = 1 to num_custom_keys
-        if mappedkeys(counter) = keycode then
+        if mappedkeys(activeconfig, counter) = keycode then
             keyassigned = true
             exit for
         end if
@@ -400,13 +449,55 @@ end function
 '
 '@return the number of customizable keys
 
-public property get count() as byte
+public property get keycount() as byte
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
+'last modification: 16/11/2010
+'16/11/2010: amraphen - cambi� el nombre para evitar confusiones.
+'***************************************************
+    keycount = num_custom_keys
+end property
+
+'
+'@return the number of customizable key configurations
+
+public property get configcount() as byte
+'***************************************************
+'author: amraphen
+'last modification: 16/11/2010
 '
 '***************************************************
-    count = num_custom_keys
+    configcount = num_custom_configs
+end property
+
+''
+'sets the currently active key configuration index
+'
+'@param newval new currently active key configuration index
+
+public property let currentconfig(byval newval as byte)
+'***************************************************
+'author: amraphen
+'last modification: 16/11/2010
+'
+'***************************************************
+    if newval < 0 or newval > num_custom_configs then exit property
+    
+    activeconfig = newval
+end property
+
+''
+'retrieves the currently active key configuration index
+'
+'@return the currently active key configuration index
+
+public property get currentconfig() as byte
+'***************************************************
+'author: amraphen
+'last modification: 16/11/2010
+'
+'***************************************************
+    currentconfig = activeconfig
 end property
 
 ''
@@ -415,19 +506,12 @@ end property
 private sub class_initialize()
 '***************************************************
 'author: rapsodius
-'last modification: 08/04/07
-'
+'last modification: 18/11/2010
+'16/11/2010: amraphen - adapt� el procedimiento para que trabaje sobre las distintas configuraciones de teclas.
+'18/11/2010: amraphen - ahora el manejo de errores se hace desde el sub loadcustomkeys
 '***************************************************
-on error goto errhand:
+
     call loadcustomkeys
-    exit sub
-    
-errhand:
-    if err.number = error_no_key_file then
-        call loaddefaults
-        call savecustomkeys
-        resume next
-    end if
 end sub
 
 ''
@@ -441,3 +525,4 @@ private sub class_terminate()
 '***************************************************
     call savecustomkeys
 end sub
+

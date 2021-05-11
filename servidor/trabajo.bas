@@ -39,7 +39,6 @@ public sub dopermaneceroculto(byval userindex as integer)
 'last modif: 11/19/2009
 'chequea si ya debe mostrarse
 'pablo (toxicwaste): cambie los ordenes de prioridades porque sino no andaba.
-'11/19/2009: pato - ahora el bandido se oculta la mitad del tiempo de las dem�s clases.
 '13/01/2010: zama - now hidden on boat pirats recover the proper boat body.
 '13/01/2010: zama - arreglo condicional para que el bandido camine oculto.
 '********************************************************
@@ -47,15 +46,9 @@ on error goto errhandler
     with userlist(userindex)
         .counters.tiempooculto = .counters.tiempooculto - 1
         if .counters.tiempooculto <= 0 then
-            
-            if .clase = eclass.bandit then
-                .counters.tiempooculto = int(intervalooculto / 2)
-            else
-                .counters.tiempooculto = intervalooculto
-            end if
-            
             if .clase = eclass.hunter and .stats.userskills(eskill.ocultarse) > 90 then
                 if .invent.armoureqpobjindex = 648 or .invent.armoureqpobjindex = 360 then
+                    .counters.tiempooculto = intervalooculto
                     exit sub
                 end if
             end if
@@ -65,7 +58,7 @@ on error goto errhandler
             if .flags.navegando = 1 then
                 if .clase = eclass.pirat then
                     ' pierde la apariencia de fragata fantasmal
-                    call toogleboatbody(userindex)
+                    call toggleboatbody(userindex)
                     call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                     call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                         ningunescudo, ninguncasco)
@@ -117,7 +110,12 @@ on error goto errhandler
             suerte = suerte + (-0.0088 * (100 - skill))
             suerte = suerte + (0.9571)
             suerte = suerte * intervalooculto
-            .counters.tiempooculto = suerte
+            
+            if .clase = eclass.bandit then
+                .counters.tiempooculto = int(suerte / 2)
+            else
+                .counters.tiempooculto = suerte
+            end if
             
             ' no es pirata o es uno sin barca
             if .flags.navegando = 0 then
@@ -160,6 +158,8 @@ public sub donavega(byval userindex as integer, byref barco as objdata, byval sl
 'author: unknown
 'last modification: 13/01/2010 (zama)
 '13/01/2010: zama - el pirata pierde el ocultar si desequipa barca.
+'16/09/2010: zama - ahora siempre se va el invi para los clientes al equipar la barca (evita cortes de cabeza).
+'10/12/2010: pato - limpio las variables del inventario que hacen referencia a la barca, sino el pirata que la �ltima barca que equipo era el gale�n no explotaba(y capaz no la ten�a equipada :p).
 '***************************************************
 
     dim modnave as single
@@ -173,25 +173,28 @@ public sub donavega(byval userindex as integer, byref barco as objdata, byval sl
             exit sub
         end if
         
-        .invent.barcoobjindex = .invent.object(slot).objindex
-        .invent.barcoslot = slot
-        
         ' no estaba navegando
         if .flags.navegando = 0 then
+            .invent.barcoobjindex = .invent.object(slot).objindex
+            .invent.barcoslot = slot
             
             .char.head = 0
             
             ' no esta muerto
             if .flags.muerto = 0 then
             
-                call toogleboatbody(userindex)
+                call toggleboatbody(userindex)
                 
-                if .clase = eclass.pirat then
-                    if .flags.oculto = 1 then
-                        .flags.oculto = 0
-                        call setinvisible(userindex, .char.charindex, false)
-                        call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
-                    end if
+                ' pierde el ocultar
+                if .flags.oculto = 1 then
+                    .flags.oculto = 0
+                    call setinvisible(userindex, .char.charindex, false)
+                    call writeconsolemsg(userindex, "�has vuelto a ser visible!", fonttypenames.fonttype_info)
+                end if
+               
+                ' siempre se ve la barca (nunca esta invisible), pero solo para el cliente.
+                if .flags.invisible = 1 then
+                    call setinvisible(userindex, .char.charindex, false)
                 end if
                 
             ' esta muerto
@@ -207,6 +210,9 @@ public sub donavega(byval userindex as integer, byref barco as objdata, byval sl
         
         ' estaba navegando
         else
+            .invent.barcoobjindex = 0
+            .invent.barcoslot = 0
+        
             ' no esta muerto
             if .flags.muerto = 0 then
                 .char.head = .origchar.head
@@ -232,7 +238,13 @@ public sub donavega(byval userindex as integer, byref barco as objdata, byval sl
                     .char.weaponanim = getweaponanim(userindex, .invent.weaponeqpobjindex)
                 if .invent.cascoeqpobjindex > 0 then _
                     .char.cascoanim = objdata(.invent.cascoeqpobjindex).cascoanim
-                    
+                
+                
+                ' al dejar de navegar, si estaba invisible actualizo los clientes
+                if .flags.invisible = 1 then
+                    call setinvisible(userindex, .char.charindex, true)
+                end if
+                
             ' esta muerto
             else
                 .char.body = icuerpomuerto
@@ -308,11 +320,11 @@ errhandler:
     call logerror("error en fundirarmas. error " & err.number & " : " & err.description)
 end sub
 
-function tieneobjetos(byval itemindex as integer, byval cant as integer, byval userindex as integer) as boolean
+function tieneobjetos(byval itemindex as integer, byval cant as long, byval userindex as integer) as boolean
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 10/07/2010
+'10/07/2010: zama - ahora cant es long para evitar un overflow.
 '***************************************************
 
     dim i as integer
@@ -562,13 +574,28 @@ end function
 public sub herreroconstruiritem(byval userindex as integer, byval itemindex as integer)
 '***************************************************
 'author: unknown
-'last modification: 16/11/2009
-'16/11/2009: zama - implementado nuevo sistema de construccion de items
+'last modification: 30/05/2010
+'16/11/2009: zama - implementado nuevo sistema de construccion de items.
+'22/05/2010: zama - los caos ya no suben plebe al trabajar.
+'30/05/2010: zama - los pks no suben plebe al trabajar.
 '***************************************************
 dim cantidaditems as integer
 dim tienemateriales as boolean
+dim otrouserindex as integer
 
 with userlist(userindex)
+    if .flags.comerciando then
+        otrouserindex = .comusu.destusu
+            
+        if otrouserindex > 0 and otrouserindex <= maxusers then
+            call writeconsolemsg(userindex, "��comercio cancelado, no puedes comerciar mientras trabajas!!", fonttypenames.fonttype_talk)
+            call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+            
+            call limpiarcomercioseguro(userindex)
+            call protocol.flushbuffer(otrouserindex)
+        end if
+    end if
+        
     cantidaditems = .construir.porciclo
     
     if .construir.cantidad < cantidaditems then _
@@ -622,15 +649,19 @@ with userlist(userindex)
         
         call herreroquitarmateriales(userindex, itemindex, cantidaditems)
         ' agregar fx
-        if objdata(itemindex).objtype = eobjtype.otweapon then
-            call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " armas!", "el arma!"), fonttypenames.fonttype_info)
-        elseif objdata(itemindex).objtype = eobjtype.otescudo then
-            call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " escudos!", "el escudo!"), fonttypenames.fonttype_info)
-        elseif objdata(itemindex).objtype = eobjtype.otcasco then
-            call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " cascos!", "el casco!"), fonttypenames.fonttype_info)
-        elseif objdata(itemindex).objtype = eobjtype.otarmadura then
-            call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " armaduras", "la armadura!"), fonttypenames.fonttype_info)
-        end if
+        
+        select case objdata(itemindex).objtype
+        
+            case eobjtype.otweapon
+                call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " armas!", "el arma!"), fonttypenames.fonttype_info)
+            case eobjtype.otescudo
+                call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " escudos!", "el escudo!"), fonttypenames.fonttype_info)
+            case is = eobjtype.otcasco
+                call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " cascos!", "el casco!"), fonttypenames.fonttype_info)
+            case eobjtype.otarmadura
+                call writeconsolemsg(userindex, "has construido " & iif(cantidaditems > 1, cantidaditems & " armaduras", "la armadura!"), fonttypenames.fonttype_info)
+        
+        end select
         
         dim miobj as obj
         
@@ -646,13 +677,14 @@ with userlist(userindex)
         end if
         
         call subirskill(userindex, eskill.herreria, true)
-        call updateuserinv(true, userindex, 0)
         call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(martilloherrero, .pos.x, .pos.y))
-    
-        .reputacion.pleberep = .reputacion.pleberep + vlproleta
-        if .reputacion.pleberep > maxrep then _
-            .reputacion.pleberep = maxrep
-    
+        
+        if not criminal(userindex) then
+            .reputacion.pleberep = .reputacion.pleberep + vlproleta
+            if .reputacion.pleberep > maxrep then _
+                .reputacion.pleberep = maxrep
+        end if
+        
         .counters.trabajando = .counters.trabajando + 1
     end if
 end with
@@ -679,101 +711,127 @@ end function
 public sub carpinteroconstruiritem(byval userindex as integer, byval itemindex as integer)
 '***************************************************
 'author: unknown
-'last modification: 16/11/2009
+'last modification: 28/05/2010
 '24/08/2008: zama - validates if the player has the required skill
 '16/11/2009: zama - implementado nuevo sistema de construccion de items
+'22/05/2010: zama - los caos ya no suben plebe al trabajar.
+'28/05/2010: zama - los pks no suben plebe al trabajar.
 '***************************************************
-dim cantidaditems as integer
-dim tienemateriales as boolean
+on error goto errhandler
 
-with userlist(userindex)
-    cantidaditems = .construir.porciclo
+    dim cantidaditems as integer
+    dim tienemateriales as boolean
+    dim weaponindex as integer
+    dim otrouserindex as integer
     
-    if .construir.cantidad < cantidaditems then _
-        cantidaditems = .construir.cantidad
-        
-    if .construir.cantidad > 0 then _
-        .construir.cantidad = .construir.cantidad - cantidaditems
-        
-    if cantidaditems = 0 then
-        call writestopworking(userindex)
-        exit sub
-    end if
-
-    if round(.stats.userskills(eskill.carpinteria) \ modcarpinteria(.clase), 0) >= _
-       objdata(itemindex).skcarpinteria and _
-       puedeconstruircarpintero(itemindex) and _
-       .invent.weaponeqpobjindex = serrucho_carpintero then
-       
-        ' calculo cuantos item puede construir
-        while cantidaditems > 0 and not tienemateriales
-            if carpinterotienemateriales(userindex, itemindex, cantidaditems) then
-                tienemateriales = true
-            else
-                cantidaditems = cantidaditems - 1
+    with userlist(userindex)
+        if .flags.comerciando then
+            otrouserindex = .comusu.destusu
+                
+            if otrouserindex > 0 and otrouserindex <= maxusers then
+                call writeconsolemsg(userindex, "��comercio cancelado, no puedes comerciar mientras trabajas!!", fonttypenames.fonttype_talk)
+                call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+                
+                call limpiarcomercioseguro(userindex)
+                call protocol.flushbuffer(otrouserindex)
             end if
-        wend
+        end if
         
-        ' no tiene los materiales ni para construir 1 item?
-        if not tienemateriales then
-            ' para que muestre el mensaje
-            call carpinterotienemateriales(userindex, itemindex, 1, true)
+        weaponindex = .invent.weaponeqpobjindex
+    
+        if weaponindex <> serrucho_carpintero and weaponindex <> serrucho_carpintero_newbie then
+            call writeconsolemsg(userindex, "debes tener equipado el serrucho para trabajar.", fonttypenames.fonttype_info)
             call writestopworking(userindex)
             exit sub
         end if
-       
-        'sacamos energ�a
-        if .clase = eclass.worker then
-            'chequeamos que tenga los puntos antes de sacarselos
-            if .stats.minsta >= gasto_energia_trabajador then
-                .stats.minsta = .stats.minsta - gasto_energia_trabajador
-                call writeupdatesta(userindex)
-            else
-                call writeconsolemsg(userindex, "no tienes suficiente energ�a.", fonttypenames.fonttype_info)
+        
+        cantidaditems = .construir.porciclo
+        
+        if .construir.cantidad < cantidaditems then _
+            cantidaditems = .construir.cantidad
+            
+        if .construir.cantidad > 0 then _
+            .construir.cantidad = .construir.cantidad - cantidaditems
+            
+        if cantidaditems = 0 then
+            call writestopworking(userindex)
+            exit sub
+        end if
+    
+        if round(.stats.userskills(eskill.carpinteria) \ modcarpinteria(.clase), 0) >= _
+           objdata(itemindex).skcarpinteria and _
+           puedeconstruircarpintero(itemindex) then
+           
+            ' calculo cuantos item puede construir
+            while cantidaditems > 0 and not tienemateriales
+                if carpinterotienemateriales(userindex, itemindex, cantidaditems) then
+                    tienemateriales = true
+                else
+                    cantidaditems = cantidaditems - 1
+                end if
+            wend
+            
+            ' no tiene los materiales ni para construir 1 item?
+            if not tienemateriales then
+                ' para que muestre el mensaje
+                call carpinterotienemateriales(userindex, itemindex, 1, true)
+                call writestopworking(userindex)
                 exit sub
             end if
-        else
-            'chequeamos que tenga los puntos antes de sacarselos
-            if .stats.minsta >= gasto_energia_no_trabajador then
-                .stats.minsta = .stats.minsta - gasto_energia_no_trabajador
-                call writeupdatesta(userindex)
+           
+            'sacamos energ�a
+            if .clase = eclass.worker then
+                'chequeamos que tenga los puntos antes de sacarselos
+                if .stats.minsta >= gasto_energia_trabajador then
+                    .stats.minsta = .stats.minsta - gasto_energia_trabajador
+                    call writeupdatesta(userindex)
+                else
+                    call writeconsolemsg(userindex, "no tienes suficiente energ�a.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
             else
-                call writeconsolemsg(userindex, "no tienes suficiente energ�a.", fonttypenames.fonttype_info)
-                exit sub
+                'chequeamos que tenga los puntos antes de sacarselos
+                if .stats.minsta >= gasto_energia_no_trabajador then
+                    .stats.minsta = .stats.minsta - gasto_energia_no_trabajador
+                    call writeupdatesta(userindex)
+                else
+                    call writeconsolemsg(userindex, "no tienes suficiente energ�a.", fonttypenames.fonttype_info)
+                    exit sub
+                end if
             end if
+            
+            call carpinteroquitarmateriales(userindex, itemindex, cantidaditems)
+            call writeconsolemsg(userindex, "has construido " & cantidaditems & _
+                                iif(cantidaditems = 1, " objeto!", " objetos!"), fonttypenames.fonttype_info)
+            
+            dim miobj as obj
+            miobj.amount = cantidaditems
+            miobj.objindex = itemindex
+            if not meteritemeninventario(userindex, miobj) then
+                call tiraritemalpiso(.pos, miobj)
+            end if
+            
+            'log de construcci�n de items. pablo (toxicwaste) 10/09/07
+            if objdata(miobj.objindex).log = 1 then
+                call logdesarrollo(.name & " ha constru�do " & miobj.amount & " " & objdata(miobj.objindex).name)
+            end if
+            
+            call subirskill(userindex, eskill.carpinteria, true)
+            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(laburocarpintero, .pos.x, .pos.y))
+            
+            if not criminal(userindex) then
+                .reputacion.pleberep = .reputacion.pleberep + vlproleta
+                if .reputacion.pleberep > maxrep then _
+                    .reputacion.pleberep = maxrep
+            end if
+            
+            .counters.trabajando = .counters.trabajando + 1
         end if
-        
-        call carpinteroquitarmateriales(userindex, itemindex, cantidaditems)
-        call writeconsolemsg(userindex, "has construido " & cantidaditems & _
-                            iif(cantidaditems = 1, " objeto!", " objetos!"), fonttypenames.fonttype_info)
-        
-        dim miobj as obj
-        miobj.amount = cantidaditems
-        miobj.objindex = itemindex
-        if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(.pos, miobj)
-        end if
-        
-        'log de construcci�n de items. pablo (toxicwaste) 10/09/07
-        if objdata(miobj.objindex).log = 1 then
-            call logdesarrollo(.name & " ha constru�do " & miobj.amount & " " & objdata(miobj.objindex).name)
-        end if
-        
-        call subirskill(userindex, eskill.carpinteria, true)
-        call updateuserinv(true, userindex, 0)
-        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(laburocarpintero, .pos.x, .pos.y))
+    end with
     
-    
-        .reputacion.pleberep = .reputacion.pleberep + vlproleta
-        if .reputacion.pleberep > maxrep then _
-            .reputacion.pleberep = maxrep
-    
-        .counters.trabajando = .counters.trabajando + 1
-    
-    elseif .invent.weaponeqpobjindex <> serrucho_carpintero then
-        call writeconsolemsg(userindex, "debes tener equipado el serrucho para trabajar.", fonttypenames.fonttype_info)
-    end if
-end with
+    exit sub
+errhandler:
+    call logerror("error en carpinteroconstruiritem. error " & err.number & " : " & err.description & ". userindex:" & userindex & ". itemindex:" & itemindex)
 end sub
 
 private function mineralesparalingote(byval lingote as iminerales) as integer
@@ -806,8 +864,21 @@ public sub dolingotes(byval userindex as integer)
     dim obji as integer
     dim cantidaditems as integer
     dim tieneminerales as boolean
-
+    dim otrouserindex as integer
+    
     with userlist(userindex)
+        if .flags.comerciando then
+            otrouserindex = .comusu.destusu
+                
+            if otrouserindex > 0 and otrouserindex <= maxusers then
+                call writeconsolemsg(userindex, "��comercio cancelado, no puedes comerciar mientras trabajas!!", fonttypenames.fonttype_talk)
+                call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+                
+                call limpiarcomercioseguro(userindex)
+                call protocol.flushbuffer(otrouserindex)
+            end if
+        end if
+        
         cantidaditems = maximoint(1, cint((.stats.elv - 4) / 5))
 
         slot = .flags.targetobjinvslot
@@ -838,6 +909,7 @@ public sub dolingotes(byval userindex as integer)
         if not meteritemeninventario(userindex, miobj) then
             call tiraritemalpiso(.pos, miobj)
         end if
+        
         call updateuserinv(false, userindex, slot)
         call writeconsolemsg(userindex, "�has obtenido " & cantidaditems & " lingote" & _
                             iif(cantidaditems = 1, "", "s") & "!", fonttypenames.fonttype_info)
@@ -857,8 +929,21 @@ dim i as integer
 dim num as integer
 dim slot as byte
 dim lingotes(2) as integer
+dim otrouserindex as integer
 
     with userlist(userindex)
+        if .flags.comerciando then
+            otrouserindex = .comusu.destusu
+                
+            if otrouserindex > 0 and otrouserindex <= maxusers then
+                call writeconsolemsg(userindex, "��comercio cancelado, no puedes comerciar mientras trabajas!!", fonttypenames.fonttype_talk)
+                call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+                
+                call limpiarcomercioseguro(userindex)
+                call protocol.flushbuffer(otrouserindex)
+            end if
+        end if
+        
         slot = .flags.targetobjinvslot
         
         with .invent.object(slot)
@@ -878,24 +963,24 @@ dim lingotes(2) as integer
         lingotes(1) = (objdata(.flags.targetobjinvindex).lingp * num) * 0.01
         lingotes(2) = (objdata(.flags.targetobjinvindex).lingo * num) * 0.01
     
-    dim miobj(2) as obj
-    
-    for i = 0 to 2
-        miobj(i).amount = lingotes(i)
-        miobj(i).objindex = lingotehierro + i 'una gran negrada pero pr�ctica
-        if miobj(i).amount > 0 then
-            if not meteritemeninventario(userindex, miobj(i)) then
-                call tiraritemalpiso(.pos, miobj(i))
+        dim miobj(2) as obj
+        
+        for i = 0 to 2
+            miobj(i).amount = lingotes(i)
+            miobj(i).objindex = lingotehierro + i 'una gran negrada pero pr�ctica
+            
+            if miobj(i).amount > 0 then
+                if not meteritemeninventario(userindex, miobj(i)) then
+                    call tiraritemalpiso(.pos, miobj(i))
+                end if
             end if
-            call updateuserinv(true, userindex, slot)
-        end if
-    next i
+        next i
+        
+        call updateuserinv(false, userindex, slot)
+        call writeconsolemsg(userindex, "�has obtenido el " & num & "% de los lingotes utilizados para la construcci�n del objeto!", fonttypenames.fonttype_info)
     
-    call writeconsolemsg(userindex, "�has obtenido el " & num & "% de los lingotes utilizados para la construcci�n del objeto!", fonttypenames.fonttype_info)
-
-    .counters.trabajando = .counters.trabajando + 1
-
-end with
+        .counters.trabajando = .counters.trabajando + 1
+    end with
 
 end sub
 
@@ -906,10 +991,24 @@ public sub doupgrade(byval userindex as integer, byval itemindex as integer)
 '12/08/2009: pato - implementado nuevo sistema de mejora de items
 '***************************************************
 dim itemupgrade as integer
+dim weaponindex as integer
+dim otrouserindex as integer
 
 itemupgrade = objdata(itemindex).upgrade
 
 with userlist(userindex)
+    if .flags.comerciando then
+        otrouserindex = .comusu.destusu
+            
+        if otrouserindex > 0 and otrouserindex <= maxusers then
+            call writeconsolemsg(userindex, "��comercio cancelado, no puedes comerciar mientras trabajas!!", fonttypenames.fonttype_talk)
+            call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+            
+            call limpiarcomercioseguro(userindex)
+            call protocol.flushbuffer(otrouserindex)
+        end if
+    end if
+        
     'sacamos energ�a
     if .clase = eclass.worker then
         'chequeamos que tenga los puntos antes de sacarselos
@@ -935,10 +1034,14 @@ with userlist(userindex)
     if not tienematerialesupgrade(userindex, itemindex) then exit sub
     
     if puedeconstruirherreria(itemupgrade) then
-        if .invent.weaponeqpobjindex <> martillo_herrero then
+        
+        weaponindex = .invent.weaponeqpobjindex
+    
+        if weaponindex <> martillo_herrero and weaponindex <> martillo_herrero_newbie then
             call writeconsolemsg(userindex, "debes equiparte el martillo de herrero.", fonttypenames.fonttype_info)
             exit sub
         end if
+        
         if round(.stats.userskills(eskill.herreria) / modherreria(.clase), 0) < objdata(itemupgrade).skherreria then
             call writeconsolemsg(userindex, "no tienes suficientes skills.", fonttypenames.fonttype_info)
             exit sub
@@ -962,10 +1065,13 @@ with userlist(userindex)
         call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(martilloherrero, .pos.x, .pos.y))
     
     elseif puedeconstruircarpintero(itemupgrade) then
-        if .invent.weaponeqpobjindex <> serrucho_carpintero then
-            call writeconsolemsg(userindex, "debes equiparte el serrucho.", fonttypenames.fonttype_info)
+        
+        weaponindex = .invent.weaponeqpobjindex
+        if weaponindex <> serrucho_carpintero and weaponindex <> serrucho_carpintero_newbie then
+            call writeconsolemsg(userindex, "debes equiparte un serrucho.", fonttypenames.fonttype_info)
             exit sub
         end if
+        
         if round(.stats.userskills(eskill.carpinteria) \ modcarpinteria(.clase), 0) < objdata(itemupgrade).skcarpinteria then
             call writeconsolemsg(userindex, "no tienes suficientes skills.", fonttypenames.fonttype_info)
             exit sub
@@ -1000,9 +1106,7 @@ with userlist(userindex)
     
     if objdata(itemindex).log = 1 then _
         call logdesarrollo(.name & " ha mejorado el �tem " & objdata(itemindex).name & " a " & objdata(itemupgrade).name)
-    
-    call updateuserinv(true, userindex, 0)
-    
+        
     .reputacion.pleberep = .reputacion.pleberep + vlproleta
     if .reputacion.pleberep > maxrep then _
         .reputacion.pleberep = maxrep
@@ -1341,11 +1445,11 @@ dim supervivenciaskill as byte
 
 supervivenciaskill = userlist(userindex).stats.userskills(eskill.supervivencia)
 
-if supervivenciaskill >= 0 and supervivenciaskill < 6 then
+if supervivenciaskill < 6 then
     suerte = 3
-elseif supervivenciaskill >= 6 and supervivenciaskill <= 34 then
+elseif supervivenciaskill <= 34 then
     suerte = 2
-elseif supervivenciaskill >= 35 then
+else
     suerte = 1
 end if
 
@@ -1379,64 +1483,72 @@ end sub
 public sub dopescar(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: 16/11/2009
+'last modification: 28/05/2010
 '16/11/2009: zama - implementado nuevo sistema de extraccion.
+'11/05/2010: zama - arreglo formula de maximo de items contruibles/extraibles.
+'05/13/2010: pato - refix a la formula de maximo de items construibles/extraibles.
+'22/05/2010: zama - los caos ya no suben plebe al trabajar.
+'28/05/2010: zama - los pks no suben plebe al trabajar.
 '***************************************************
 on error goto errhandler
 
 dim suerte as integer
 dim res as integer
 dim cantidaditems as integer
-
-if userlist(userindex).clase = eclass.worker then
-    call quitarsta(userindex, esfuerzopescarpescador)
-else
-    call quitarsta(userindex, esfuerzopescargeneral)
-end if
-
 dim skill as integer
-skill = userlist(userindex).stats.userskills(eskill.pesca)
-suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
 
-res = randomnumber(1, suerte)
-
-if res <= 6 then
-    dim miobj as obj
-    
-    if userlist(userindex).clase = eclass.worker then
-        with userlist(userindex)
-            cantidaditems = 1 + maximoint(1, cint((.stats.elv - 4) / 5))
-        end with
-        
-        miobj.amount = randomnumber(1, cantidaditems)
+with userlist(userindex)
+    if .clase = eclass.worker then
+        call quitarsta(userindex, esfuerzopescarpescador)
     else
-        miobj.amount = 1
-    end if
-    miobj.objindex = pescado
-    
-    if not meteritemeninventario(userindex, miobj) then
-        call tiraritemalpiso(userlist(userindex).pos, miobj)
+        call quitarsta(userindex, esfuerzopescargeneral)
     end if
     
-    call writeconsolemsg(userindex, "�has pescado un lindo pez!", fonttypenames.fonttype_info)
     
-    call subirskill(userindex, eskill.pesca, true)
-else
-    '[cdt 17-02-2004]
-    if not userlist(userindex).flags.ultimomensaje = 6 then
-      call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
-      userlist(userindex).flags.ultimomensaje = 6
+    skill = .stats.userskills(eskill.pesca)
+    suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
+    
+    res = randomnumber(1, suerte)
+    
+    if res <= 6 then
+        dim miobj as obj
+        
+        if .clase = eclass.worker then
+            cantidaditems = maxitemsextraibles(.stats.elv)
+            
+            miobj.amount = randomnumber(1, cantidaditems)
+        else
+            miobj.amount = 1
+        end if
+        
+        miobj.objindex = pescado
+        
+        if not meteritemeninventario(userindex, miobj) then
+            call tiraritemalpiso(.pos, miobj)
+        end if
+        
+        call writeconsolemsg(userindex, "�has pescado un lindo pez!", fonttypenames.fonttype_info)
+        
+        call subirskill(userindex, eskill.pesca, true)
+    else
+        '[cdt 17-02-2004]
+        if not .flags.ultimomensaje = 6 then
+          call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
+          .flags.ultimomensaje = 6
+        end if
+        '[/cdt]
+        
+        call subirskill(userindex, eskill.pesca, false)
     end if
-    '[/cdt]
     
-    call subirskill(userindex, eskill.pesca, false)
-end if
-
-userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
-if userlist(userindex).reputacion.pleberep > maxrep then _
-    userlist(userindex).reputacion.pleberep = maxrep
-
-userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
+    if not criminal(userindex) then
+        .reputacion.pleberep = .reputacion.pleberep + vlproleta
+        if .reputacion.pleberep > maxrep then _
+            .reputacion.pleberep = maxrep
+    end if
+    
+    .counters.trabajando = .counters.trabajando + 1
+end with
 
 exit sub
 
@@ -1452,63 +1564,68 @@ public sub dopescarred(byval userindex as integer)
 '***************************************************
 on error goto errhandler
 
-dim iskill as integer
-dim suerte as integer
-dim res as integer
-dim espescador as boolean
-
-if userlist(userindex).clase = eclass.worker then
-    call quitarsta(userindex, esfuerzopescarpescador)
-    espescador = true
-else
-    call quitarsta(userindex, esfuerzopescargeneral)
-    espescador = false
-end if
-
-iskill = userlist(userindex).stats.userskills(eskill.pesca)
-
-' m = (60-11)/(1-10)
-' y = mx - m*10 + 11
-
-suerte = int(-0.00125 * iskill * iskill - 0.3 * iskill + 49)
-
-if suerte > 0 then
-    res = randomnumber(1, suerte)
+    dim iskill as integer
+    dim suerte as integer
+    dim res as integer
+    dim espescador as boolean
+    dim cantidaditems as integer
     
-    if res < 6 then
-        dim miobj as obj
-        dim pecesposibles(1 to 4) as integer
-        
-        pecesposibles(1) = pescado1
-        pecesposibles(2) = pescado2
-        pecesposibles(3) = pescado3
-        pecesposibles(4) = pescado4
-        
-        if espescador = true then
-            miobj.amount = randomnumber(1, 5)
+    with userlist(userindex)
+    
+        if .clase = eclass.worker then
+            call quitarsta(userindex, esfuerzopescarpescador)
+            espescador = true
         else
-            miobj.amount = 1
-        end if
-        miobj.objindex = pecesposibles(randomnumber(lbound(pecesposibles), ubound(pecesposibles)))
-        
-        if not meteritemeninventario(userindex, miobj) then
-            call tiraritemalpiso(userlist(userindex).pos, miobj)
+            call quitarsta(userindex, esfuerzopescargeneral)
+            espescador = false
         end if
         
-        call writeconsolemsg(userindex, "�has pescado algunos peces!", fonttypenames.fonttype_info)
+        iskill = .stats.userskills(eskill.pesca)
         
-        call subirskill(userindex, eskill.pesca, true)
-    else
-        call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
-        call subirskill(userindex, eskill.pesca, false)
-    end if
-end if
+        ' m = (60-11)/(1-10)
+        ' y = mx - m*10 + 11
+        
+        suerte = int(-0.00125 * iskill * iskill - 0.3 * iskill + 49)
 
-    userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
-    if userlist(userindex).reputacion.pleberep > maxrep then _
-        userlist(userindex).reputacion.pleberep = maxrep
+        if suerte > 0 then
+            res = randomnumber(1, suerte)
+            
+            if res <= 6 then
+            
+                dim miobj as obj
+                
+                if espescador then
+                    cantidaditems = maxitemsextraibles(.stats.elv)
+                    miobj.amount = randomnumber(1, cantidaditems)
+                else
+                    miobj.amount = 1
+                end if
+                
+                miobj.objindex = listapeces(randomnumber(1, num_peces))
+                
+                if not meteritemeninventario(userindex, miobj) then
+                    call tiraritemalpiso(.pos, miobj)
+                end if
+                
+                call writeconsolemsg(userindex, "�has pescado algunos peces!", fonttypenames.fonttype_info)
+                
+                call subirskill(userindex, eskill.pesca, true)
+            else
+                if not .flags.ultimomensaje = 6 then
+                  call writeconsolemsg(userindex, "�no has pescado nada!", fonttypenames.fonttype_info)
+                  .flags.ultimomensaje = 6
+                end if
+                
+                call subirskill(userindex, eskill.pesca, false)
+            end if
+        end if
         
-exit sub
+        .reputacion.pleberep = .reputacion.pleberep + vlproleta
+        if .reputacion.pleberep > maxrep then .reputacion.pleberep = maxrep
+    
+    end with
+    
+    exit sub
 
 errhandler:
     call logerror("error en dopescarred")
@@ -1536,30 +1653,39 @@ public sub dorobar(byval ladronindex as integer, byval victimaindex as integer)
 
 on error goto errhandler
 
+    dim otrouserindex as integer
+
     if not mapinfo(userlist(victimaindex).pos.map).pk then exit sub
     
-    if userlist(ladronindex).flags.seguro then
-        if not criminal(victimaindex) then
-            call writeconsolemsg(ladronindex, "debes quitarte el seguro para robarle a un ciudadano.", fonttypenames.fonttype_fight)
-            exit sub
-        end if
-    else
-        if userlist(ladronindex).faccion.armadareal = 1 then
-            call writeconsolemsg(ladronindex, "los miembros del ej�rcito real no tienen permitido robarle a ciudadanos.", fonttypenames.fonttype_fight)
-            exit sub
-        end if
+    if userlist(victimaindex).flags.enconsulta then
+        call writeconsolemsg(ladronindex, "���no puedes robar a usuarios en consulta!!!", fonttypenames.fonttype_info)
+        exit sub
     end if
-    
-    if triggerzonapelea(ladronindex, victimaindex) <> trigger6_ausente then exit sub
-    
     
     with userlist(ladronindex)
     
+        if .flags.seguro then
+            if not criminal(victimaindex) then
+                call writeconsolemsg(ladronindex, "debes quitarte el seguro para robarle a un ciudadano.", fonttypenames.fonttype_fight)
+                exit sub
+            end if
+        else
+            if .faccion.armadareal = 1 then
+                if not criminal(victimaindex) then
+                    call writeconsolemsg(ladronindex, "los miembros del ej�rcito real no tienen permitido robarle a ciudadanos.", fonttypenames.fonttype_fight)
+                    exit sub
+                end if
+            end if
+        end if
+        
         ' caos robando a caos?
         if userlist(victimaindex).faccion.fuerzascaos = 1 and .faccion.fuerzascaos = 1 then
             call writeconsolemsg(ladronindex, "no puedes robar a otros miembros de la legi�n oscura.", fonttypenames.fonttype_fight)
             exit sub
         end if
+        
+        if triggerzonapelea(ladronindex, victimaindex) <> trigger6_ausente then exit sub
+    
         
         ' tiene energia?
         if .stats.minsta < 15 then
@@ -1587,33 +1713,44 @@ on error goto errhandler
             
             robarskill = .stats.userskills(eskill.robar)
                 
-            if robarskill <= 10 and robarskill >= -1 then
+            if robarskill <= 10 then
                 suerte = 35
-            elseif robarskill <= 20 and robarskill >= 11 then
+            elseif robarskill <= 20 then
                 suerte = 30
-            elseif robarskill <= 30 and robarskill >= 21 then
+            elseif robarskill <= 30 then
                 suerte = 28
-            elseif robarskill <= 40 and robarskill >= 31 then
+            elseif robarskill <= 40 then
                 suerte = 24
-            elseif robarskill <= 50 and robarskill >= 41 then
+            elseif robarskill <= 50 then
                 suerte = 22
-            elseif robarskill <= 60 and robarskill >= 51 then
+            elseif robarskill <= 60 then
                 suerte = 20
-            elseif robarskill <= 70 and robarskill >= 61 then
+            elseif robarskill <= 70 then
                 suerte = 18
-            elseif robarskill <= 80 and robarskill >= 71 then
+            elseif robarskill <= 80 then
                 suerte = 15
-            elseif robarskill <= 90 and robarskill >= 81 then
+            elseif robarskill <= 90 then
                 suerte = 10
-            elseif robarskill < 100 and robarskill >= 91 then
+            elseif robarskill < 100 then
                 suerte = 7
-            elseif robarskill = 100 then
+            else
                 suerte = 5
             end if
             
             res = randomnumber(1, suerte)
                 
             if res < 3 then 'exito robo
+                if userlist(victimaindex).flags.comerciando then
+                    otrouserindex = userlist(victimaindex).comusu.destusu
+                        
+                    if otrouserindex > 0 and otrouserindex <= maxusers then
+                        call writeconsolemsg(victimaindex, "��comercio cancelado, te est�n robando!!", fonttypenames.fonttype_talk)
+                        call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+                        
+                        call limpiarcomercioseguro(victimaindex)
+                        call protocol.flushbuffer(otrouserindex)
+                    end if
+                end if
                
                 if (randomnumber(1, 50) < 25) and (.clase = eclass.thief) then
                     if tieneobjetosrobables(victimaindex) then
@@ -1623,7 +1760,7 @@ on error goto errhandler
                     end if
                 else 'roba oro
                     if userlist(victimaindex).stats.gld > 0 then
-                        dim n as integer
+                        dim n as long
                         
                         if .clase = eclass.thief then
                         ' si no tine puestos los guantes de hurto roba un 50% menos. pablo (toxicwaste)
@@ -1656,7 +1793,6 @@ on error goto errhandler
             else
                 call writeconsolemsg(ladronindex, "�no has logrado robar nada!", fonttypenames.fonttype_info)
                 call writeconsolemsg(victimaindex, "�" & .name & " ha intentado robarte!", fonttypenames.fonttype_info)
-                call writeconsolemsg(victimaindex, "�" & .name & " es un criminal!", fonttypenames.fonttype_info)
                 call flushbuffer(victimaindex)
                 
                 call subirskill(ladronindex, eskill.robar, false)
@@ -1696,6 +1832,7 @@ public function objesrobable(byval victimaindex as integer, byval slot as intege
 'last modification: -
 ' agregu� los barcos
 ' esta funcion determina qu� objetos son robables.
+' 22/05/2010: los items newbies ya no son robables.
 '***************************************************
 
 dim oi as integer
@@ -1707,7 +1844,8 @@ objdata(oi).objtype <> eobjtype.otllaves and _
 userlist(victimaindex).invent.object(slot).equipped = 0 and _
 objdata(oi).real = 0 and _
 objdata(oi).caos = 0 and _
-objdata(oi).objtype <> eobjtype.otbarcos
+objdata(oi).objtype <> eobjtype.otbarcos and _
+not itemnewbie(oi)
 
 end function
 
@@ -1725,72 +1863,75 @@ public sub robarobjeto(byval ladronindex as integer, byval victimaindex as integ
 
 dim flag as boolean
 dim i as integer
+
 flag = false
 
-if randomnumber(1, 12) < 6 then 'comenzamos por el principio o el final?
-    i = 1
-    do while not flag and i <= userlist(victimaindex).currentinventoryslots
-        'hay objeto en este slot?
-        if userlist(victimaindex).invent.object(i).objindex > 0 then
-           if objesrobable(victimaindex, i) then
-                 if randomnumber(1, 10) < 4 then flag = true
-           end if
-        end if
-        if not flag then i = i + 1
-    loop
-else
-    i = 20
-    do while not flag and i > 0
-      'hay objeto en este slot?
-      if userlist(victimaindex).invent.object(i).objindex > 0 then
-         if objesrobable(victimaindex, i) then
-               if randomnumber(1, 10) < 4 then flag = true
-         end if
-      end if
-      if not flag then i = i - 1
-    loop
-end if
-
-if flag then
-    dim miobj as obj
-    dim num as byte
-    dim objamount as integer
-    
-    objamount = userlist(victimaindex).invent.object(i).amount
-    
-    'cantidad al azar entre el 5% y el 10% del total, con minimo 1.
-    num = maximoint(1, randomnumber(objamount * 0.05, objamount * 0.1))
-                                
-    miobj.amount = num
-    miobj.objindex = userlist(victimaindex).invent.object(i).objindex
-    
-    userlist(victimaindex).invent.object(i).amount = objamount - num
-                
-    if userlist(victimaindex).invent.object(i).amount <= 0 then
-          call quitaruserinvitem(victimaindex, cbyte(i), 1)
-    end if
-            
-    call updateuserinv(false, victimaindex, cbyte(i))
-                
-    if not meteritemeninventario(ladronindex, miobj) then
-        call tiraritemalpiso(userlist(ladronindex).pos, miobj)
-    end if
-    
-    if userlist(ladronindex).clase = eclass.thief then
-        call writeconsolemsg(ladronindex, "has robado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+with userlist(victimaindex)
+    if randomnumber(1, 12) < 6 then 'comenzamos por el principio o el final?
+        i = 1
+        do while not flag and i <= .currentinventoryslots
+            'hay objeto en este slot?
+            if .invent.object(i).objindex > 0 then
+               if objesrobable(victimaindex, i) then
+                     if randomnumber(1, 10) < 4 then flag = true
+               end if
+            end if
+            if not flag then i = i + 1
+        loop
     else
-        call writeconsolemsg(ladronindex, "has hurtado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+        i = .currentinventoryslots
+        do while not flag and i > 0
+          'hay objeto en este slot?
+          if .invent.object(i).objindex > 0 then
+             if objesrobable(victimaindex, i) then
+                   if randomnumber(1, 10) < 4 then flag = true
+             end if
+          end if
+          if not flag then i = i - 1
+        loop
     end if
-else
-    call writeconsolemsg(ladronindex, "no has logrado robar ning�n objeto.", fonttypenames.fonttype_info)
-end if
+    
+    if flag then
+        dim miobj as obj
+        dim num as integer
+        dim objamount as integer
+        
+        objamount = .invent.object(i).amount
+        
+        'cantidad al azar entre el 5% y el 10% del total, con minimo 1.
+        num = maximoint(1, randomnumber(objamount * 0.05, objamount * 0.1))
+                                    
+        miobj.amount = num
+        miobj.objindex = .invent.object(i).objindex
+        
+        .invent.object(i).amount = objamount - num
+                    
+        if .invent.object(i).amount <= 0 then
+              call quitaruserinvitem(victimaindex, cbyte(i), 1)
+        end if
+                
+        call updateuserinv(false, victimaindex, cbyte(i))
+                    
+        if not meteritemeninventario(ladronindex, miobj) then
+            call tiraritemalpiso(userlist(ladronindex).pos, miobj)
+        end if
+        
+        if userlist(ladronindex).clase = eclass.thief then
+            call writeconsolemsg(ladronindex, "has robado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+        else
+            call writeconsolemsg(ladronindex, "has hurtado " & miobj.amount & " " & objdata(miobj.objindex).name, fonttypenames.fonttype_info)
+        end if
+    else
+        call writeconsolemsg(ladronindex, "no has logrado robar ning�n objeto.", fonttypenames.fonttype_info)
+    end if
 
-'if exiting, cancel de quien es robado
-call cancelexit(victimaindex)
+    'if exiting, cancel de quien es robado
+    call cancelexit(victimaindex)
+end with
 
 end sub
 
-public sub doapu�alar(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as integer)
+public sub doapu�alar(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as long)
 '***************************************************
 'autor: nacho (integer) & unknown (orginal version)
 'last modification: 04/17/08 - (niconz)
@@ -1825,9 +1966,11 @@ if randomnumber(0, 100) < suerte then
             da�o = round(da�o * 1.5, 0)
         end if
         
-        userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - da�o
-        call writeconsolemsg(userindex, "has apu�alado a " & userlist(victimuserindex).name & " por " & da�o, fonttypenames.fonttype_fight)
-        call writeconsolemsg(victimuserindex, "te ha apu�alado " & userlist(userindex).name & " por " & da�o, fonttypenames.fonttype_fight)
+        with userlist(victimuserindex)
+            .stats.minhp = .stats.minhp - da�o
+            call writeconsolemsg(userindex, "has apu�alado a " & .name & " por " & da�o, fonttypenames.fonttype_fight)
+            call writeconsolemsg(victimuserindex, "te ha apu�alado " & userlist(userindex).name & " por " & da�o, fonttypenames.fonttype_fight)
+        end with
         
         call flushbuffer(victimuserindex)
     else
@@ -1851,55 +1994,73 @@ public sub doacuchillar(byval userindex as integer, byval victimnpcindex as inte
 'last modification: 12/01/2010
 '***************************************************
 
-    if userlist(userindex).clase <> eclass.pirat then exit sub
-    if userlist(userindex).invent.weaponeqpslot = 0 then exit sub
-
-    if randomnumber(0, 100) < prob_acuchillar then
+    if randomnumber(1, 100) <= prob_acuchillar then
         da�o = int(da�o * da�o_acuchillar)
         
         if victimuserindex <> 0 then
-            userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - da�o
-            call writeconsolemsg(userindex, "has acuchillado a " & userlist(victimuserindex).name & " por " & da�o, fonttypenames.fonttype_fight)
-            call writeconsolemsg(victimuserindex, userlist(userindex).name & " te ha acuchillado por " & da�o, fonttypenames.fonttype_fight)
+        
+            with userlist(victimuserindex)
+                .stats.minhp = .stats.minhp - da�o
+                call writeconsolemsg(userindex, "has acuchillado a " & .name & " por " & da�o, fonttypenames.fonttype_fight)
+                call writeconsolemsg(victimuserindex, userlist(userindex).name & " te ha acuchillado por " & da�o, fonttypenames.fonttype_fight)
+            end with
+            
         else
+        
             npclist(victimnpcindex).stats.minhp = npclist(victimnpcindex).stats.minhp - da�o
             call writeconsolemsg(userindex, "has acuchillado a la criatura por " & da�o, fonttypenames.fonttype_fight)
             call calculardarexp(userindex, victimnpcindex, da�o)
+        
         end if
     end if
     
 end sub
 
-public sub dogolpecritico(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as integer)
+public sub dogolpecritico(byval userindex as integer, byval victimnpcindex as integer, byval victimuserindex as integer, byval da�o as long)
 '***************************************************
 'autor: pablo (toxicwaste)
 'last modification: 28/01/2007
+'01/06/2010: zama - valido si tiene arma equipada antes de preguntar si es vikinga.
 '***************************************************
-dim suerte as integer
-dim skill as integer
-
-if userlist(userindex).clase <> eclass.bandit then exit sub
-if userlist(userindex).invent.weaponeqpslot = 0 then exit sub
-if objdata(userlist(userindex).invent.weaponeqpobjindex).name <> "espada vikinga" then exit sub
-
-
-skill = userlist(userindex).stats.userskills(eskill.wrestling)
-
-suerte = int((((0.00000003 * skill + 0.000006) * skill + 0.000107) * skill + 0.0893) * 100)
-
-if randomnumber(0, 100) < suerte then
-    da�o = int(da�o * 0.75)
-    if victimuserindex <> 0 then
-        userlist(victimuserindex).stats.minhp = userlist(victimuserindex).stats.minhp - da�o
-        call writeconsolemsg(userindex, "has golpeado cr�ticamente a " & userlist(victimuserindex).name & " por " & da�o & ".", fonttypenames.fonttype_fight)
-        call writeconsolemsg(victimuserindex, userlist(userindex).name & " te ha golpeado cr�ticamente por " & da�o & ".", fonttypenames.fonttype_fight)
-    else
-        npclist(victimnpcindex).stats.minhp = npclist(victimnpcindex).stats.minhp - da�o
-        call writeconsolemsg(userindex, "has golpeado cr�ticamente a la criatura por " & da�o & ".", fonttypenames.fonttype_fight)
-        '[alejo]
-        call calculardarexp(userindex, victimnpcindex, da�o)
+    dim suerte as integer
+    dim skill as integer
+    dim weaponindex as integer
+    
+    with userlist(userindex)
+        ' es bandido?
+        if .clase <> eclass.bandit then exit sub
+        
+        weaponindex = .invent.weaponeqpobjindex
+        
+        ' es una espada vikinga?
+        if weaponindex <> espada_vikinga then exit sub
+    
+        skill = .stats.userskills(eskill.wrestling)
+    end with
+    
+    suerte = int((((0.00000003 * skill + 0.000006) * skill + 0.000107) * skill + 0.0893) * 100)
+    
+    if randomnumber(1, 100) <= suerte then
+    
+        da�o = int(da�o * 0.75)
+        
+        if victimuserindex <> 0 then
+            
+            with userlist(victimuserindex)
+                .stats.minhp = .stats.minhp - da�o
+                call writeconsolemsg(userindex, "has golpeado cr�ticamente a " & .name & " por " & da�o & ".", fonttypenames.fonttype_fight)
+                call writeconsolemsg(victimuserindex, userlist(userindex).name & " te ha golpeado cr�ticamente por " & da�o & ".", fonttypenames.fonttype_fight)
+            end with
+            
+        else
+        
+            npclist(victimnpcindex).stats.minhp = npclist(victimnpcindex).stats.minhp - da�o
+            call writeconsolemsg(userindex, "has golpeado cr�ticamente a la criatura por " & da�o & ".", fonttypenames.fonttype_fight)
+            call calculardarexp(userindex, victimnpcindex, da�o)
+            
+        end if
+        
     end if
-end if
 
 end sub
 
@@ -1926,68 +2087,71 @@ end sub
 public sub dotalar(byval userindex as integer, optional byval darmaderaelfica as boolean = false)
 '***************************************************
 'autor: unknown
-'last modification: 16/11/2009
+'last modification: 28/05/2010
 '16/11/2009: zama - ahora se puede dar madera elfica.
 '16/11/2009: zama - implementado nuevo sistema de extraccion.
+'11/05/2010: zama - arreglo formula de maximo de items contruibles/extraibles.
+'05/13/2010: pato - refix a la formula de maximo de items construibles/extraibles.
+'22/05/2010: zama - los caos ya no suben plebe al trabajar.
+'28/05/2010: zama - los pks no suben plebe al trabajar.
 '***************************************************
 on error goto errhandler
 
 dim suerte as integer
 dim res as integer
 dim cantidaditems as integer
-
-if userlist(userindex).clase = eclass.worker then
-    call quitarsta(userindex, esfuerzotalarle�ador)
-else
-    call quitarsta(userindex, esfuerzotalargeneral)
-end if
-
 dim skill as integer
-skill = userlist(userindex).stats.userskills(eskill.talar)
-suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
 
-res = randomnumber(1, suerte)
-
-if res <= 6 then
-    dim miobj as obj
-    
-    if userlist(userindex).clase = eclass.worker then
-        with userlist(userindex)
-            cantidaditems = 1 + maximoint(1, cint((.stats.elv - 4) / 5))
-        end with
-        
-        miobj.amount = randomnumber(1, cantidaditems)
+with userlist(userindex)
+    if .clase = eclass.worker then
+        call quitarsta(userindex, esfuerzotalarle�ador)
     else
-        miobj.amount = 1
+        call quitarsta(userindex, esfuerzotalargeneral)
     end if
     
-    miobj.objindex = iif(darmaderaelfica, le�aelfica, le�a)
+    skill = .stats.userskills(eskill.talar)
+    suerte = int(-0.00125 * skill * skill - 0.3 * skill + 49)
     
+    res = randomnumber(1, suerte)
     
-    if not meteritemeninventario(userindex, miobj) then
+    if res <= 6 then
+        dim miobj as obj
         
-        call tiraritemalpiso(userlist(userindex).pos, miobj)
+        if .clase = eclass.worker then
+            cantidaditems = maxitemsextraibles(.stats.elv)
+            
+            miobj.amount = randomnumber(1, cantidaditems)
+        else
+            miobj.amount = 1
+        end if
         
+        miobj.objindex = iif(darmaderaelfica, le�aelfica, le�a)
+        
+        if not meteritemeninventario(userindex, miobj) then
+            call tiraritemalpiso(.pos, miobj)
+        end if
+        
+        call writeconsolemsg(userindex, "�has conseguido algo de le�a!", fonttypenames.fonttype_info)
+        
+        call subirskill(userindex, eskill.talar, true)
+    else
+        '[cdt 17-02-2004]
+        if not .flags.ultimomensaje = 8 then
+            call writeconsolemsg(userindex, "�no has obtenido le�a!", fonttypenames.fonttype_info)
+            .flags.ultimomensaje = 8
+        end if
+        '[/cdt]
+        call subirskill(userindex, eskill.talar, false)
     end if
     
-    call writeconsolemsg(userindex, "�has conseguido algo de le�a!", fonttypenames.fonttype_info)
-    
-    call subirskill(userindex, eskill.talar, true)
-else
-    '[cdt 17-02-2004]
-    if not userlist(userindex).flags.ultimomensaje = 8 then
-        call writeconsolemsg(userindex, "�no has obtenido le�a!", fonttypenames.fonttype_info)
-        userlist(userindex).flags.ultimomensaje = 8
+    if not criminal(userindex) then
+        .reputacion.pleberep = .reputacion.pleberep + vlproleta
+        if .reputacion.pleberep > maxrep then _
+            .reputacion.pleberep = maxrep
     end if
-    '[/cdt]
-    call subirskill(userindex, eskill.talar, false)
-end if
-
-userlist(userindex).reputacion.pleberep = userlist(userindex).reputacion.pleberep + vlproleta
-if userlist(userindex).reputacion.pleberep > maxrep then _
-    userlist(userindex).reputacion.pleberep = maxrep
-
-userlist(userindex).counters.trabajando = userlist(userindex).counters.trabajando + 1
+    
+    .counters.trabajando = .counters.trabajando + 1
+end with
 
 exit sub
 
@@ -1999,8 +2163,12 @@ end sub
 public sub domineria(byval userindex as integer)
 '***************************************************
 'autor: unknown
-'last modification: 16/11/2009
+'last modification: 28/05/2010
 '16/11/2009: zama - implementado nuevo sistema de extraccion.
+'11/05/2010: zama - arreglo formula de maximo de items contruibles/extraibles.
+'05/13/2010: pato - refix a la formula de maximo de items construibles/extraibles.
+'22/05/2010: zama - los caos ya no suben plebe al trabajar.
+'28/05/2010: zama - los pks no suben plebe al trabajar.
 '***************************************************
 on error goto errhandler
 
@@ -2028,8 +2196,8 @@ with userlist(userindex)
         
         miobj.objindex = objdata(.flags.targetobj).mineralindex
         
-        if userlist(userindex).clase = eclass.worker then
-            cantidaditems = 1 + maximoint(1, cint((.stats.elv - 4) / 5))
+        if .clase = eclass.worker then
+            cantidaditems = maxitemsextraibles(.stats.elv)
             
             miobj.amount = randomnumber(1, cantidaditems)
         else
@@ -2052,11 +2220,13 @@ with userlist(userindex)
         call subirskill(userindex, eskill.mineria, false)
     end if
     
-    .reputacion.pleberep = .reputacion.pleberep + vlproleta
-    if .reputacion.pleberep > maxrep then _
-        .reputacion.pleberep = maxrep
+    if not criminal(userindex) then
+        .reputacion.pleberep = .reputacion.pleberep + vlproleta
+        if .reputacion.pleberep > maxrep then _
+            .reputacion.pleberep = maxrep
+    end if
     
-    .counters.trabajando = userlist(userindex).counters.trabajando + 1
+    .counters.trabajando = .counters.trabajando + 1
 end with
 
 exit sub
@@ -2106,27 +2276,27 @@ public sub domeditar(byval userindex as integer)
         
         meditarskill = .stats.userskills(eskill.meditar)
         
-        if meditarskill <= 10 and meditarskill >= -1 then
+        if meditarskill <= 10 then
             suerte = 35
-        elseif meditarskill <= 20 and meditarskill >= 11 then
+        elseif meditarskill <= 20 then
             suerte = 30
-        elseif meditarskill <= 30 and meditarskill >= 21 then
+        elseif meditarskill <= 30 then
             suerte = 28
-        elseif meditarskill <= 40 and meditarskill >= 31 then
+        elseif meditarskill <= 40 then
             suerte = 24
-        elseif meditarskill <= 50 and meditarskill >= 41 then
+        elseif meditarskill <= 50 then
             suerte = 22
-        elseif meditarskill <= 60 and meditarskill >= 51 then
+        elseif meditarskill <= 60 then
             suerte = 20
-        elseif meditarskill <= 70 and meditarskill >= 61 then
+        elseif meditarskill <= 70 then
             suerte = 18
-        elseif meditarskill <= 80 and meditarskill >= 71 then
+        elseif meditarskill <= 80 then
             suerte = 15
-        elseif meditarskill <= 90 and meditarskill >= 81 then
+        elseif meditarskill <= 90 then
             suerte = 10
-        elseif meditarskill < 100 and meditarskill >= 91 then
+        elseif meditarskill < 100 then
             suerte = 7
-        elseif meditarskill = 100 then
+        else
             suerte = 5
         end if
         res = randomnumber(1, suerte)
@@ -2264,6 +2434,8 @@ public sub dohurtar(byval userindex as integer, byval victimaindex as integer)
 'implements the pick pocket skill of the bandit :)
 '03/03/2010 - pato: s�lo se puede hurtar si no est� en trigger 6 :)
 '***************************************************
+dim otrouserindex as integer
+
 if triggerzonapelea(userindex, victimaindex) <> trigger6_ausente then exit sub
 
 if userlist(userindex).clase <> eclass.bandit then exit sub
@@ -2276,6 +2448,19 @@ dim res as integer
 res = randomnumber(1, 100)
 if (res < 20) then
     if tieneobjetosrobables(victimaindex) then
+    
+        if userlist(victimaindex).flags.comerciando then
+            otrouserindex = userlist(victimaindex).comusu.destusu
+                
+            if otrouserindex > 0 and otrouserindex <= maxusers then
+                call writeconsolemsg(victimaindex, "��comercio cancelado, te est�n robando!!", fonttypenames.fonttype_talk)
+                call writeconsolemsg(otrouserindex, "��comercio cancelado por el otro usuario!!", fonttypenames.fonttype_talk)
+                
+                call limpiarcomercioseguro(victimaindex)
+                call protocol.flushbuffer(otrouserindex)
+            end if
+        end if
+                
         call robarobjeto(userindex, victimaindex)
         call writeconsolemsg(victimaindex, "�" & userlist(userindex).name & " es un bandido!", fonttypenames.fonttype_info)
     else
@@ -2291,21 +2476,25 @@ public sub dohandinmo(byval userindex as integer, byval victimaindex as integer)
 'last modif: 17/02/2007
 'implements the special skill of the thief
 '***************************************************
-if userlist(victimaindex).flags.paralizado = 1 then exit sub
-if userlist(userindex).clase <> eclass.thief then exit sub
+    if userlist(victimaindex).flags.paralizado = 1 then exit sub
+    if userlist(userindex).clase <> eclass.thief then exit sub
+        
     
-
-if userlist(userindex).invent.anilloeqpobjindex <> guante_hurto then exit sub
-    
-dim res as integer
-res = randomnumber(0, 100)
-if res < (userlist(userindex).stats.userskills(eskill.wrestling) / 4) then
-    userlist(victimaindex).flags.paralizado = 1
-    userlist(victimaindex).counters.paralisis = intervaloparalizado / 2
-    call writeparalizeok(victimaindex)
-    call writeconsolemsg(userindex, "tu golpe ha dejado inm�vil a tu oponente", fonttypenames.fonttype_info)
-    call writeconsolemsg(victimaindex, "�el golpe te ha dejado inm�vil!", fonttypenames.fonttype_info)
-end if
+    if userlist(userindex).invent.anilloeqpobjindex <> guante_hurto then exit sub
+        
+    dim res as integer
+    res = randomnumber(0, 100)
+    if res < (userlist(userindex).stats.userskills(eskill.wrestling) / 4) then
+        userlist(victimaindex).flags.paralizado = 1
+        userlist(victimaindex).counters.paralisis = intervaloparalizado / 2
+        
+        userlist(victimaindex).flags.paralizedbyindex = userindex
+        userlist(victimaindex).flags.paralizedby = userlist(userindex).name
+        
+        call writeparalizeok(victimaindex)
+        call writeconsolemsg(userindex, "tu golpe ha dejado inm�vil a tu oponente", fonttypenames.fonttype_info)
+        call writeconsolemsg(victimaindex, "�el golpe te ha dejado inm�vil!", fonttypenames.fonttype_info)
+    end if
 
 end sub
 
@@ -2339,13 +2528,61 @@ public sub desarmar(byval userindex as integer, byval victimindex as integer)
     
 end sub
 
-
 public function maxitemsconstruibles(byval userindex as integer) as integer
 '***************************************************
 'author: zama
 'last modification: 29/01/2010
-'
+'11/05/2010: zama - arreglo formula de maximo de items contruibles/extraibles.
+'05/13/2010: pato - refix a la formula de maximo de items construibles/extraibles.
 '***************************************************
-    maxitemsconstruibles = maximoint(1, cint((userlist(userindex).stats.elv - 4) / 5))
+    
+    with userlist(userindex)
+        if .clase = eclass.worker then
+            maxitemsconstruibles = maximoint(1, cint((.stats.elv - 2) * 0.2))
+        else
+            maxitemsconstruibles = 1
+        end if
+    end with
 end function
+
+public function maxitemsextraibles(byval userlevel as integer) as integer
+'***************************************************
+'author: zama
+'last modification: 14/05/2010
+'***************************************************
+    maxitemsextraibles = maximoint(1, cint((userlevel - 2) * 0.2)) + 1
+end function
+
+public sub imitatenpc(byval userindex as integer, byval npcindex as integer)
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'copies body, head and desc from previously clicked npc.
+'***************************************************
+    
+    with userlist(userindex)
+        
+        ' copy desc
+        .descrm = npclist(npcindex).name
+        
+        ' remove anims (npcs don't use equipment anims yet)
+        .char.cascoanim = ninguncasco
+        .char.shieldanim = ningunescudo
+        .char.weaponanim = ningunarma
+        
+        ' if admin is invisible the store it in old char
+        if .flags.admininvisible = 1 or .flags.invisible = 1 or .flags.oculto = 1 then
+            
+            .flags.oldbody = npclist(npcindex).char.body
+            .flags.oldhead = npclist(npcindex).char.head
+        else
+            .char.body = npclist(npcindex).char.body
+            .char.head = npclist(npcindex).char.head
+            
+            call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
+        end if
+    
+    end with
+    
+end sub
 

@@ -1019,7 +1019,7 @@ option explicit
 private clsformulario as clsformmovementmanager
 
 private cbotoncerrar as clsgraphicalbutton
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private const ancho_barra as byte = 73 'pixeles
 private const bar_left_pos as integer = 361 'pixeles
@@ -1084,7 +1084,7 @@ private sub loadbuttons()
     grhpath = dirgraficos
     
     set cbotoncerrar = new clsgraphicalbutton
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarestadisticas.jpg", _
                                     grhpath & "botoncerrarrolloverestadisticas.jpg", _
@@ -1093,7 +1093,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub form_queryunload(cancel as integer, unloadmode as integer)

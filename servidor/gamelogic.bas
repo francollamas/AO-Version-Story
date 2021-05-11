@@ -121,8 +121,29 @@ on error goto errhandler
                 
                 destpos.map = .tileexit.map
                 
+                if esgm(userindex) then
+                    call loggm(userlist(userindex).name, "utiliz� un teleport hacia el mapa " & _
+                        destpos.map & " (" & destpos.x & "," & destpos.y & ")")
+                end if
+                
+                ' si es un mapa que no admite muertos
+                if mapinfo(destpos.map).ondeathgoto.map <> 0 then
+                    ' si esta muerto no puede entrar
+                    if userlist(userindex).flags.muerto = 1 then
+                        call writeconsolemsg(userindex, "s�lo se permite entrar al mapa a los personajes vivos.", fonttypenames.fonttype_info)
+                        call closeststablepos(userlist(userindex).pos, npos)
+                        
+                        if npos.x <> 0 and npos.y <> 0 then
+                            call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
+                        end if
+                        
+                        exit sub
+                    end if
+                end if
+                
+                
                 '�es mapa de newbies?
-                if ucase$(mapinfo(destpos.map).restringir) = "newbie" then
+                if mapinfo(destpos.map).restringir = erestrict.restrict_newbie then
                     '�el usuario es un newbie?
                     if esnewbie(userindex) or esgm(userindex) then
                         if legalpos(destpos.map, destpos.x, destpos.y, puedeatravesaragua(userindex)) then
@@ -141,7 +162,7 @@ on error goto errhandler
                             call warpuserchar(userindex, npos.map, npos.x, npos.y, false)
                         end if
                     end if
-                elseif ucase$(mapinfo(destpos.map).restringir) = "armada" then '�es mapa de armadas?
+                elseif mapinfo(destpos.map).restringir = erestrict.restrict_armada then '�es mapa de armadas?
                     '�el usuario es armada?
                     if esarmada(userindex) or esgm(userindex) then
                         if legalpos(destpos.map, destpos.x, destpos.y, puedeatravesaragua(userindex)) then
@@ -160,7 +181,7 @@ on error goto errhandler
                             call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
                         end if
                     end if
-                elseif ucase$(mapinfo(destpos.map).restringir) = "caos" then '�es mapa de caos?
+                elseif mapinfo(destpos.map).restringir = erestrict.restrict_caos then '�es mapa de caos?
                     '�el usuario es caos?
                     if escaos(userindex) or esgm(userindex) then
                         if legalpos(destpos.map, destpos.x, destpos.y, puedeatravesaragua(userindex)) then
@@ -179,7 +200,7 @@ on error goto errhandler
                             call warpuserchar(userindex, npos.map, npos.x, npos.y, fxflag)
                         end if
                     end if
-                elseif ucase$(mapinfo(destpos.map).restringir) = "faccion" then '�es mapa de faccionarios?
+                elseif mapinfo(destpos.map).restringir = erestrict.restrict_faccion then '�es mapa de faccionarios?
                     '�el usuario es armada o caos?
                     if esarmada(userindex) or escaos(userindex) or esgm(userindex) then
                         if legalpos(destpos.map, destpos.x, destpos.y, puedeatravesaragua(userindex)) then
@@ -208,7 +229,7 @@ on error goto errhandler
                         end if
                     end if
                 end if
-                
+
                 'te fusite del mapa. la criatura ya no es m�s tuya ni te reconoce como que vos la atacaste.
                 dim an as integer
                 
@@ -253,6 +274,29 @@ function inrangovision(byval userindex as integer, byval x as integer, byval y a
 
 end function
 
+public function invisionrangeandmap(byval userindex as integer, byref otheruserpos as worldpos) as boolean
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'
+'***************************************************
+    
+    with userlist(userindex)
+        
+        ' same map?
+        if .pos.map <> otheruserpos.map then exit function
+    
+        ' in x range?
+        if otheruserpos.x < .pos.x - minxborder or otheruserpos.x > .pos.x + minxborder then exit function
+        
+        ' in y range?
+        if otheruserpos.y < .pos.y - minyborder and otheruserpos.y > .pos.y + minyborder then exit function
+    end with
+
+    invisionrangeandmap = true
+    
+end function
+
 function inrangovisionnpc(byval npcindex as integer, x as integer, y as integer) as boolean
 '***************************************************
 'author: unknown
@@ -286,91 +330,261 @@ function inmapbounds(byval map as integer, byval x as integer, byval y as intege
     
     end function
 
-sub closestlegalpos(pos as worldpos, byref npos as worldpos, optional puedeagua as boolean = false, optional puedetierra as boolean = true)
+private function rhomblegalpos(byref pos as worldpos, byref vx as long, byref vy as long, _
+                               byval distance as long, optional puedeagua as boolean = false, _
+                               optional puedetierra as boolean = true, _
+                               optional byval checkexittile as boolean = false) as boolean
+'***************************************************
+'author: marco vanotti (marco)
+'last modification: -
+' walks all the perimeter of a rhomb of side  "distance + 1",
+' which starts at pos.x - distance and pos.y
+'***************************************************
+
+    dim i as long
+    
+    vx = pos.x - distance
+    vy = pos.y
+    
+    for i = 0 to distance - 1
+        if (legalpos(pos.map, vx + i, vy - i, puedeagua, puedetierra, checkexittile)) then
+            vx = vx + i
+            vy = vy - i
+            rhomblegalpos = true
+            exit function
+        end if
+    next
+    
+    vx = pos.x
+    vy = pos.y - distance
+    
+    for i = 0 to distance - 1
+        if (legalpos(pos.map, vx + i, vy + i, puedeagua, puedetierra, checkexittile)) then
+            vx = vx + i
+            vy = vy + i
+            rhomblegalpos = true
+            exit function
+        end if
+    next
+    
+    vx = pos.x + distance
+    vy = pos.y
+    
+    for i = 0 to distance - 1
+        if (legalpos(pos.map, vx - i, vy + i, puedeagua, puedetierra, checkexittile)) then
+            vx = vx - i
+            vy = vy + i
+            rhomblegalpos = true
+            exit function
+        end if
+    next
+    
+    vx = pos.x
+    vy = pos.y + distance
+    
+    for i = 0 to distance - 1
+        if (legalpos(pos.map, vx - i, vy - i, puedeagua, puedetierra, checkexittile)) then
+            vx = vx - i
+            vy = vy - i
+            rhomblegalpos = true
+            exit function
+        end if
+    next
+    
+    rhomblegalpos = false
+    
+end function
+
+public function rhomblegaltilepos(byref pos as worldpos, byref vx as long, byref vy as long, _
+                                  byval distance as long, byval objindex as integer, byval objamount as long, _
+                                  byval puedeagua as boolean, byval puedetierra as boolean) as boolean
+'***************************************************
+'author: zama
+'last modification: -
+' walks all the perimeter of a rhomb of side  "distance + 1",
+' which starts at pos.x - distance and pos.y
+' and searchs for a valid position to drop items
+'***************************************************
+on error goto errhandler
+
+    dim i as long
+    dim hayobj as boolean
+    
+    dim x as integer
+    dim y as integer
+    dim mapobjindex as integer
+    
+    vx = pos.x - distance
+    vy = pos.y
+    
+    for i = 0 to distance - 1
+        
+        x = vx + i
+        y = vy - i
+        
+        if (legalpos(pos.map, x, y, puedeagua, puedetierra, true)) then
+            
+            ' no hay obj tirado o la suma de lo que hay + lo nuevo <= 10k
+            if not hayobjeto(pos.map, x, y, objindex, objamount) then
+                vx = x
+                vy = y
+                
+                rhomblegaltilepos = true
+                exit function
+            end if
+            
+        end if
+    next
+    
+    vx = pos.x
+    vy = pos.y - distance
+    
+    for i = 0 to distance - 1
+        
+        x = vx + i
+        y = vy + i
+        
+        if (legalpos(pos.map, x, y, puedeagua, puedetierra, true)) then
+            
+            ' no hay obj tirado o la suma de lo que hay + lo nuevo <= 10k
+            if not hayobjeto(pos.map, x, y, objindex, objamount) then
+                vx = x
+                vy = y
+                
+                rhomblegaltilepos = true
+                exit function
+            end if
+        end if
+    next
+    
+    vx = pos.x + distance
+    vy = pos.y
+    
+    for i = 0 to distance - 1
+        
+        x = vx - i
+        y = vy + i
+    
+        if (legalpos(pos.map, x, y, puedeagua, puedetierra, true)) then
+        
+            ' no hay obj tirado o la suma de lo que hay + lo nuevo <= 10k
+            if not hayobjeto(pos.map, x, y, objindex, objamount) then
+                vx = x
+                vy = y
+                
+                rhomblegaltilepos = true
+                exit function
+            end if
+        end if
+    next
+    
+    vx = pos.x
+    vy = pos.y + distance
+    
+    for i = 0 to distance - 1
+        
+        x = vx - i
+        y = vy - i
+    
+        if (legalpos(pos.map, x, y, puedeagua, puedetierra, true)) then
+            ' no hay obj tirado o la suma de lo que hay + lo nuevo <= 10k
+            if not hayobjeto(pos.map, x, y, objindex, objamount) then
+                vx = x
+                vy = y
+                
+                rhomblegaltilepos = true
+                exit function
+            end if
+        end if
+    next
+    
+    rhomblegaltilepos = false
+    
+    exit function
+    
+errhandler:
+    call logerror("error en rhomblegaltilepos. error: " & err.number & " - " & err.description)
+end function
+
+public function hayobjeto(byval mapa as integer, byval x as long, byval y as long, _
+                          byval objindex as integer, byval objamount as long) as boolean
+'***************************************************
+'author: zama
+'last modification: -
+'checks if there's space in a tile to add an itemamount
+'***************************************************
+    dim mapobjindex as integer
+    mapobjindex = mapdata(mapa, x, y).objinfo.objindex
+            
+    ' hay un objeto tirado?
+    if mapobjindex <> 0 then
+        ' es el mismo objeto?
+        if mapobjindex = objindex then
+            ' la suma es menor a 10k?
+            hayobjeto = (mapdata(mapa, x, y).objinfo.amount + objamount > max_inventory_objs)
+        else
+            hayobjeto = true
+        end if
+    else
+        hayobjeto = false
+    end if
+
+end function
+
+sub closestlegalpos(pos as worldpos, byref npos as worldpos, optional puedeagua as boolean = false, _
+                    optional puedetierra as boolean = true, optional byval checkexittile as boolean = false)
 '*****************************************************************
 'author: unknown (original version)
-'last modification: 24/01/2007 (toxicwaste)
+'last modification: 09/14/2010 (marco)
+'history:
+' - 01/24/2007 (toxicwaste)
 'encuentra la posicion legal mas cercana y la guarda en npos
 '*****************************************************************
 
-dim notfound as boolean
-dim loopc as integer
-dim tx as long
-dim ty as long
-
-npos.map = pos.map
-
-do while not legalpos(pos.map, npos.x, npos.y, puedeagua, puedetierra)
-    if loopc > 12 then
-        notfound = true
-        exit do
-    end if
+    dim found as boolean
+    dim loopc as integer
+    dim tx as long
+    dim ty as long
     
-    for ty = pos.y - loopc to pos.y + loopc
-        for tx = pos.x - loopc to pos.x + loopc
-            
-            if legalpos(npos.map, tx, ty, puedeagua, puedetierra) then
+    npos = pos
+    tx = pos.x
+    ty = pos.y
+    
+    loopc = 1
+    
+    ' la primera posicion es valida?
+    if legalpos(pos.map, npos.x, npos.y, puedeagua, puedetierra, checkexittile) then
+        found = true
+    
+    ' busca en las demas posiciones, en forma de "rombo"
+    else
+        while (not found) and loopc <= 12
+            if rhomblegalpos(pos, tx, ty, loopc, puedeagua, puedetierra, checkexittile) then
                 npos.x = tx
                 npos.y = ty
-                '�hay objeto?
-                
-                tx = pos.x + loopc
-                ty = pos.y + loopc
+                found = true
             end if
-        next tx
-    next ty
+        
+            loopc = loopc + 1
+        wend
+        
+    end if
     
-    loopc = loopc + 1
-loop
-
-if notfound = true then
-    npos.x = 0
-    npos.y = 0
-end if
+    if not found then
+        npos.x = 0
+        npos.y = 0
+    end if
 
 end sub
 
 private sub closeststablepos(pos as worldpos, byref npos as worldpos)
 '***************************************************
 'author: unknown
-'last modification: -
+'last modification: 09/14/2010
 'encuentra la posicion legal mas cercana que no sea un portal y la guarda en npos
 '*****************************************************************
 
-    dim notfound as boolean
-    dim loopc as integer
-    dim tx as long
-    dim ty as long
-    
-    npos.map = pos.map
-    
-    do while not legalpos(pos.map, npos.x, npos.y)
-        if loopc > 12 then
-            notfound = true
-            exit do
-        end if
-        
-        for ty = pos.y - loopc to pos.y + loopc
-            for tx = pos.x - loopc to pos.x + loopc
-                
-                if legalpos(npos.map, tx, ty) and mapdata(npos.map, tx, ty).tileexit.map = 0 then
-                    npos.x = tx
-                    npos.y = ty
-                    '�hay objeto?
-                    
-                    tx = pos.x + loopc
-                    ty = pos.y + loopc
-                end if
-            next tx
-        next ty
-        
-        loopc = loopc + 1
-    loop
-    
-    if notfound = true then
-        npos.x = 0
-        npos.y = 0
-    end if
+call closestlegalpos(pos, npos, , , true)
 
 end sub
 
@@ -479,38 +693,43 @@ sub headtopos(byval head as eheading, byref pos as worldpos)
     end select
 end sub
 
-function legalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true) as boolean
+function legalpos(byval map as integer, byval x as integer, byval y as integer, optional byval puedeagua as boolean = false, optional byval puedetierra as boolean = true, optional byval checkexittile as boolean = false) as boolean
 '***************************************************
 'autor: pablo (toxicwaste) & unknown (orginal version)
 'last modification: 23/01/2007
 'checks if the position is legal.
 '***************************************************
 
-'�es un mapa valido?
-if (map <= 0 or map > nummaps) or _
-   (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
-            legalpos = false
-else
-    with mapdata(map, x, y)
-        if puedeagua and puedetierra then
-            legalpos = (.blocked <> 1) and _
-                       (.userindex = 0) and _
-                       (.npcindex = 0)
-        elseif puedetierra and not puedeagua then
-            legalpos = (.blocked <> 1) and _
-                       (.userindex = 0) and _
-                       (.npcindex = 0) and _
-                       (not hayagua(map, x, y))
-        elseif puedeagua and not puedetierra then
-            legalpos = (.blocked <> 1) and _
-                       (.userindex = 0) and _
-                       (.npcindex = 0) and _
-                       (hayagua(map, x, y))
-        else
-            legalpos = false
+    '�es un mapa valido?
+    if (map <= 0 or map > nummaps) or _
+       (x < minxborder or x > maxxborder or y < minyborder or y > maxyborder) then
+                legalpos = false
+    else
+        with mapdata(map, x, y)
+            if puedeagua and puedetierra then
+                legalpos = (.blocked <> 1) and _
+                           (.userindex = 0) and _
+                           (.npcindex = 0)
+            elseif puedetierra and not puedeagua then
+                legalpos = (.blocked <> 1) and _
+                           (.userindex = 0) and _
+                           (.npcindex = 0) and _
+                           (not hayagua(map, x, y))
+            elseif puedeagua and not puedetierra then
+                legalpos = (.blocked <> 1) and _
+                           (.userindex = 0) and _
+                           (.npcindex = 0) and _
+                           (hayagua(map, x, y))
+            else
+                legalpos = false
+            end if
+        end with
+        
+        if checkexittile then
+            legalpos = legalpos and (mapdata(map, x, y).tileexit.map = 0)
         end if
-    end with
-end if
+        
+    end if
 
 end function
 
@@ -645,9 +864,9 @@ function legalposnpc(byval map as integer, byval x as integer, byval y as intege
 'checks if it's a legal pos for the npc to move to.
 '09/23/2009: pato - if userindex is a admininvisible, then is a legal pos.
 '***************************************************
-dim isdeadchar as boolean
-dim userindex as integer
-dim isadmininvisible as boolean
+    dim isdeadchar as boolean
+    dim userindex as integer
+    dim isadmininvisible as boolean
     
     
     if (map <= 0 or map > nummaps) or _
@@ -718,6 +937,7 @@ sub lookattile(byval userindex as integer, byval map as integer, byval x as inte
 'autor: unknown (orginal version)
 'last modification: 26/03/2009
 '13/02/2009: zama - el nombre del gm que aparece por consola al clickearlo, tiene el color correspondiente a su rango
+'07/10/2010: zama - adaptado para que funcione mas de un centinela en paralelo.
 '***************************************************
 
 on error goto errhandler
@@ -900,15 +1120,18 @@ with userlist(userindex)
                     estatus = "(" & minhp & "/" & maxhp & ") "
                 else
                     if .muerto = 0 then
-                        if supervivenciaskill >= 0 and supervivenciaskill <= 10 then
+                    
+                        if supervivenciaskill <= 10 then
                             estatus = "(dudoso) "
-                        elseif supervivenciaskill > 10 and supervivenciaskill <= 20 then
+                            
+                        elseif supervivenciaskill <= 20 then
                             if minhp < (maxhp / 2) then
                                 estatus = "(herido) "
                             else
                                 estatus = "(sano) "
                             end if
-                        elseif supervivenciaskill > 20 and supervivenciaskill <= 30 then
+                            
+                        elseif supervivenciaskill <= 30 then
                             if minhp < (maxhp * 0.5) then
                                 estatus = "(malherido) "
                             elseif minhp < (maxhp * 0.75) then
@@ -916,7 +1139,8 @@ with userlist(userindex)
                             else
                                 estatus = "(sano) "
                             end if
-                        elseif supervivenciaskill > 30 and supervivenciaskill <= 40 then
+                            
+                        elseif supervivenciaskill <= 40 then
                             if minhp < (maxhp * 0.25) then
                                 estatus = "(muy malherido) "
                             elseif minhp < (maxhp * 0.5) then
@@ -926,7 +1150,8 @@ with userlist(userindex)
                             else
                                 estatus = "(sano) "
                             end if
-                        elseif supervivenciaskill > 40 and supervivenciaskill < 60 then
+                            
+                        elseif supervivenciaskill < 60 then
                             if minhp < (maxhp * 0.05) then
                                 estatus = "(agonizando) "
                             elseif minhp < (maxhp * 0.1) then
@@ -942,31 +1167,76 @@ with userlist(userindex)
                             else
                                 estatus = "(intacto) "
                             end if
-                        elseif supervivenciaskill >= 60 then
-                            estatus = "(" & minhp & "/" & maxhp & ") "
                         else
-                            estatus = "�error!"
+                            estatus = "(" & minhp & "/" & maxhp & ") "
                         end if
                     end if
                 end if
                 
                 if len(npclist(tempcharindex).desc) > 1 then
-                    call writechatoverhead(userindex, npclist(tempcharindex).desc, npclist(tempcharindex).char.charindex, vbwhite)
-                elseif tempcharindex = centinelanpcindex then
-                    'enviamos nuevamente el texto del centinela seg�n quien pregunta
-                    call modcentinela.centinelasendclave(userindex)
+                    stat = npclist(tempcharindex).desc
+                    
+                    '�es el rey o el demonio?
+                    if npclist(tempcharindex).npctype = enpctype.noble then
+                        if npclist(tempcharindex).flags.faccion = 0 then 'es el rey.
+                            'si es de la legi�n oscura y usuario com�n mostramos el mensaje correspondiente y lo ejecutamos:
+                            if userlist(userindex).faccion.fuerzascaos = 1 then
+                                stat = mensaje_rey_caos
+                                if .privilegios and playertype.user then
+                                    if .muerto = 0 then call userdie(userindex)
+                                end if
+                            elseif criminal(userindex) then
+                            'nos fijamos si es criminal enlistable o no enlistable:
+                                if userlist(userindex).faccion.ciudadanosmatados > 0 or _
+                                userlist(userindex).faccion.reenlistadas > 4 then 'es criminal no enlistable.
+                                    stat = mensaje_rey_criminal_noenlistable
+                                else 'es criminal enlistable.
+                                    stat = mensaje_rey_criminal_enlistable
+                                end if
+                            end if
+                        else 'es el demonio
+                            'si es de la armada real y usuario com�n mostramos el mensaje correspondiente y lo ejecutamos:
+                            if userlist(userindex).faccion.armadareal = 1 then
+                                stat = mensaje_demonio_real
+                                '
+                                if .privilegios and playertype.user then
+                                    if .muerto = 0 then call userdie(userindex)
+                                end if
+                            elseif not criminal(userindex) then
+                            'nos fijamos si es ciudadano enlistable o no enlistable:
+                                if userlist(userindex).faccion.recibioexpinicialreal = 1 or _
+                                userlist(userindex).faccion.reenlistadas > 4 then 'es ciudadano no enlistable.
+                                    stat = mensaje_demonio_ciudadano_noenlistable
+                                else 'es ciudadano enlistable.
+                                    stat = mensaje_demonio_ciudadano_enlistable
+                                end if
+                            end if
+                        end if
+                    end if
+                    
+                    'enviamos el mensaje propiamente dicho:
+                    call writechatoverhead(userindex, stat, npclist(tempcharindex).char.charindex, vbwhite)
                 else
-                    if npclist(tempcharindex).maestrouser > 0 then
-                        call writeconsolemsg(userindex, estatus & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name & ".", fonttypenames.fonttype_info)
+                
+                    dim centinelaindex as integer
+                    centinelaindex = escentinela(tempcharindex)
+                    
+                    if centinelaindex <> 0 then
+                        'enviamos nuevamente el texto del centinela seg�n quien pregunta
+                        call modcentinela.centinelasendclave(userindex, centinelaindex)
                     else
-                        sdesc = estatus & npclist(tempcharindex).name
-                        if npclist(tempcharindex).owner > 0 then sdesc = sdesc & " le pertenece a " & userlist(npclist(tempcharindex).owner).name
-                        sdesc = sdesc & "."
-                        
-                        call writeconsolemsg(userindex, sdesc, fonttypenames.fonttype_info)
-                        
-                        if .privilegios and (playertype.dios or playertype.admin) then
-                            call writeconsolemsg(userindex, "le peg� primero: " & npclist(tempcharindex).flags.attackedfirstby & ".", fonttypenames.fonttype_info)
+                        if npclist(tempcharindex).maestrouser > 0 then
+                            call writeconsolemsg(userindex, estatus & npclist(tempcharindex).name & " es mascota de " & userlist(npclist(tempcharindex).maestrouser).name & ".", fonttypenames.fonttype_info)
+                        else
+                            sdesc = estatus & npclist(tempcharindex).name
+                            if npclist(tempcharindex).owner > 0 then sdesc = sdesc & " le pertenece a " & userlist(npclist(tempcharindex).owner).name
+                            sdesc = sdesc & "."
+                            
+                            call writeconsolemsg(userindex, sdesc, fonttypenames.fonttype_info)
+                            
+                            if .privilegios and (playertype.dios or playertype.admin) then
+                                call writeconsolemsg(userindex, "le peg� primero: " & npclist(tempcharindex).flags.attackedfirstby & ".", fonttypenames.fonttype_info)
+                            end if
                         end if
                     end if
                 end if
@@ -1138,4 +1408,110 @@ public function esobjetofijo(byval objtype as eobjtype) as boolean
                    objtype = eobjtype.otcarteles or _
                    objtype = eobjtype.otarboles or _
                    objtype = eobjtype.otyacimiento
+end function
+
+public function restrictstringtobyte(byref restrict as string) as byte
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 04/18/2011
+'
+'***************************************************
+restrict = ucase$(restrict)
+
+select case restrict
+    case "newbie"
+        restrictstringtobyte = 1
+        
+    case "armada"
+        restrictstringtobyte = 2
+        
+    case "caos"
+        restrictstringtobyte = 3
+        
+    case "faccion"
+        restrictstringtobyte = 4
+        
+    case else
+        restrictstringtobyte = 0
+end select
+end function
+
+public function restrictbytetostring(byval restrict as byte) as string
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 04/18/2011
+'
+'***************************************************
+select case restrict
+    case 1
+        restrictbytetostring = "newbie"
+        
+    case 2
+        restrictbytetostring = "armada"
+        
+    case 3
+        restrictbytetostring = "caos"
+        
+    case 4
+        restrictbytetostring = "faccion"
+        
+    case 0
+        restrictbytetostring = "no"
+end select
+end function
+
+public function terrainstringtobyte(byref restrict as string) as byte
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 04/18/2011
+'
+'***************************************************
+restrict = ucase$(restrict)
+
+select case restrict
+    case "nieve"
+        terrainstringtobyte = 1
+        
+    case "desierto"
+        terrainstringtobyte = 2
+        
+    case "ciudad"
+        terrainstringtobyte = 3
+        
+    case "campo"
+        terrainstringtobyte = 4
+        
+    case "dungeon"
+        terrainstringtobyte = 5
+        
+    case else
+        terrainstringtobyte = 0
+end select
+end function
+
+public function terrainbytetostring(byval restrict as byte) as string
+'***************************************************
+'author: torres patricio (pato)
+'last modification: 04/18/2011
+'
+'***************************************************
+select case restrict
+    case 1
+        terrainbytetostring = "nieve"
+        
+    case 2
+        terrainbytetostring = "desierto"
+        
+    case 3
+        terrainbytetostring = "ciudad"
+        
+    case 4
+        terrainbytetostring = "campo"
+        
+    case 5
+        terrainbytetostring = "dungeon"
+        
+    case 0
+        terrainbytetostring = "bosque"
+end select
 end function

@@ -5,15 +5,747 @@ begin vb.form frmpanelgm
    caption         =   "panel gm"
    clientheight    =   8475
    clientleft      =   45
-   clienttop       =   330
-   clientwidth     =   4200
+   clienttop       =   630
+   clientwidth     =   4215
    clipcontrols    =   0   'false
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
    scaleheight     =   8475
-   scalewidth      =   4200
+   scalewidth      =   4215
    startupposition =   1  'centerowner
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   7395
+      index           =   7
+      left            =   120
+      tabindex        =   88
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdrefresh 
+         caption         =   "actualizar"
+         height          =   495
+         left            =   2160
+         tabindex        =   109
+         top             =   2100
+         width           =   1695
+      end
+      begin vb.textbox txtnuevadescrip 
+         height          =   765
+         left            =   120
+         maxlength       =   40
+         multiline       =   -1  'true
+         scrollbars      =   2  'vertical
+         tabindex        =   107
+         top             =   6120
+         width           =   3735
+      end
+      begin vb.commandbutton cmdaddfollow 
+         caption         =   "agregar seguimiento"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   120
+         tabindex        =   105
+         top             =   6960
+         width           =   3735
+      end
+      begin vb.textbox txtnuevousuario 
+         height          =   285
+         left            =   120
+         tabindex        =   104
+         top             =   5580
+         width           =   3735
+      end
+      begin vb.commandbutton cmdaddobs 
+         caption         =   "agregar observaci�n"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   120
+         tabindex        =   102
+         top             =   4800
+         width           =   3735
+      end
+      begin vb.textbox txtobs 
+         height          =   975
+         left            =   120
+         locked          =   -1  'true
+         multiline       =   -1  'true
+         scrollbars      =   2  'vertical
+         tabindex        =   101
+         top             =   3780
+         width           =   3735
+      end
+      begin vb.textbox txtdescrip 
+         height          =   675
+         left            =   120
+         locked          =   -1  'true
+         maxlength       =   40
+         multiline       =   -1  'true
+         scrollbars      =   2  'vertical
+         tabindex        =   99
+         top             =   2880
+         width           =   3735
+      end
+      begin vb.textbox txtcreador 
+         height          =   315
+         left            =   2160
+         locked          =   -1  'true
+         tabindex        =   97
+         top             =   1620
+         width           =   1695
+      end
+      begin vb.textbox txttimeon 
+         height          =   315
+         left            =   2160
+         locked          =   -1  'true
+         tabindex        =   95
+         top             =   1080
+         width           =   1695
+      end
+      begin vb.textbox txtip 
+         height          =   315
+         left            =   2160
+         locked          =   -1  'true
+         tabindex        =   93
+         top             =   540
+         width           =   1695
+      end
+      begin vb.listbox lstusers 
+         height          =   2400
+         left            =   120
+         tabindex        =   89
+         top             =   240
+         width           =   1695
+      end
+      begin vb.label label2 
+         autosize        =   -1  'true
+         caption         =   "estado:"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   195
+         left            =   2160
+         tabindex        =   108
+         top             =   60
+         width           =   660
+      end
+      begin vb.label label9 
+         caption         =   "descripci�n"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   255
+         left            =   120
+         tabindex        =   106
+         top             =   5880
+         width           =   1575
+      end
+      begin vb.line line1 
+         x1              =   0
+         x2              =   4200
+         y1              =   5280
+         y2              =   5280
+      end
+      begin vb.label label8 
+         caption         =   "usuario"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   255
+         left            =   120
+         tabindex        =   103
+         top             =   5340
+         width           =   1575
+      end
+      begin vb.label label7 
+         caption         =   "observaciones"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   120
+         tabindex        =   100
+         top             =   3600
+         width           =   1575
+      end
+      begin vb.label label6 
+         caption         =   "descripci�n"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   120
+         tabindex        =   98
+         top             =   2700
+         width           =   1575
+      end
+      begin vb.label label5 
+         caption         =   "creador"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   2160
+         tabindex        =   96
+         top             =   1440
+         width           =   1575
+      end
+      begin vb.label label4 
+         caption         =   "logueado hace:"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   2160
+         tabindex        =   94
+         top             =   900
+         width           =   1575
+      end
+      begin vb.label label3 
+         caption         =   "ip:"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   255
+         left            =   2160
+         tabindex        =   92
+         top             =   360
+         width           =   1095
+      end
+      begin vb.label lblestado 
+         backcolor       =   &h0080ff80&
+         backstyle       =   0  'transparent
+         caption         =   "online"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         forecolor       =   &h00008000&
+         height          =   255
+         left            =   2880
+         tabindex        =   91
+         top             =   60
+         width           =   735
+      end
+      begin vb.label label1 
+         caption         =   "usuarios marcados"
+         beginproperty font 
+            name            =   "ms sans serif"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   255
+         left            =   120
+         tabindex        =   90
+         top             =   0
+         width           =   1695
+      end
+   end
+   begin vb.commandbutton cmdcerrar 
+      caption         =   "cerrar"
+      causesvalidation=   0   'false
+      height          =   375
+      left            =   0
+      tabindex        =   0
+      top             =   8160
+      width           =   4215
+   end
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   1455
+      index           =   1
+      left            =   120
+      tabindex        =   1
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdgmsg 
+         caption         =   "/gmsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   240
+         tabindex        =   11
+         top             =   600
+         width           =   1095
+      end
+      begin vb.commandbutton cmdhora 
+         caption         =   "/hora"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   240
+         tabindex        =   10
+         top             =   120
+         width           =   855
+      end
+      begin vb.commandbutton cmdrmsg 
+         caption         =   "/rmsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1440
+         tabindex        =   9
+         top             =   600
+         width           =   1095
+      end
+      begin vb.commandbutton cmdrealmsg 
+         caption         =   "/realmsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   240
+         tabindex        =   8
+         top             =   1080
+         width           =   1095
+      end
+      begin vb.commandbutton cmdcaosmsg 
+         caption         =   "/caosmsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1440
+         tabindex        =   7
+         top             =   1080
+         width           =   1095
+      end
+      begin vb.commandbutton cmdciumsg 
+         caption         =   "/ciumsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2640
+         tabindex        =   6
+         top             =   1080
+         width           =   1095
+      end
+      begin vb.commandbutton cmdtalkas 
+         caption         =   "/talkas"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2880
+         tabindex        =   5
+         top             =   120
+         width           =   855
+      end
+      begin vb.commandbutton cmdmotdcambia 
+         caption         =   "/motdcambia"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1320
+         tabindex        =   4
+         top             =   120
+         width           =   1335
+      end
+      begin vb.commandbutton cmdsmsg 
+         caption         =   "/smsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2640
+         tabindex        =   3
+         top             =   600
+         width           =   1095
+      end
+   end
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   1815
+      index           =   6
+      left            =   120
+      tabindex        =   56
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdshowcmsg 
+         caption         =   "/showcmsg"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   80
+         top             =   1080
+         width           =   1335
+      end
+      begin vb.commandbutton cmdbanclan 
+         caption         =   "/banclan"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   79
+         top             =   1440
+         width           =   3015
+      end
+      begin vb.commandbutton cmdmiembrosclan 
+         caption         =   "/miembrosclan"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1920
+         tabindex        =   78
+         top             =   1080
+         width           =   1575
+      end
+      begin vb.commandbutton cmdbanipreload 
+         caption         =   "/banipreload"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1440
+         tabindex        =   77
+         top             =   480
+         width           =   2295
+      end
+      begin vb.commandbutton cmdbaniplist 
+         caption         =   "/baniplist"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   240
+         tabindex        =   76
+         top             =   480
+         width           =   1095
+      end
+      begin vb.commandbutton cmdip2nick 
+         caption         =   "/ip2nick"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   240
+         tabindex        =   75
+         top             =   120
+         width           =   1095
+      end
+      begin vb.commandbutton cmdbanip 
+         caption         =   "/banip"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   1440
+         tabindex        =   74
+         top             =   120
+         width           =   975
+      end
+      begin vb.commandbutton cmdunbanip 
+         caption         =   "/unbanip"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2520
+         tabindex        =   73
+         top             =   120
+         width           =   1215
+      end
+   end
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   1935
+      index           =   4
+      left            =   120
+      tabindex        =   22
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdshowname 
+         caption         =   "/showname"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   63
+         top             =   600
+         width           =   1215
+      end
+      begin vb.commandbutton cmdrem 
+         caption         =   "/rem"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   600
+         tabindex        =   62
+         top             =   1560
+         width           =   2895
+      end
+      begin vb.commandbutton cmdinvisible 
+         caption         =   "/invisible"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   600
+         tabindex        =   61
+         top             =   120
+         width           =   1215
+      end
+      begin vb.commandbutton cmdsetdesc 
+         caption         =   "/setdesc"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   60
+         top             =   1080
+         width           =   1215
+      end
+      begin vb.commandbutton cmdnave 
+         caption         =   "/nave"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   600
+         tabindex        =   59
+         top             =   600
+         width           =   1215
+      end
+      begin vb.commandbutton cmdchatcolor 
+         caption         =   "/chatcolor"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   600
+         tabindex        =   58
+         top             =   1080
+         width           =   1215
+      end
+      begin vb.commandbutton cmdignorado 
+         caption         =   "/ignorado"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   57
+         top             =   120
+         width           =   1215
+      end
+   end
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   2415
+      index           =   5
+      left            =   120
+      tabindex        =   55
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdcc 
+         caption         =   "/cc"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   720
+         tabindex        =   72
+         top             =   720
+         width           =   2655
+      end
+      begin vb.commandbutton cmdlimpiar 
+         caption         =   "/limpiar"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   71
+         top             =   120
+         width           =   1095
+      end
+      begin vb.commandbutton cmdct 
+         caption         =   "/ct"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   720
+         tabindex        =   70
+         top             =   1200
+         width           =   1095
+      end
+      begin vb.commandbutton cmddt 
+         caption         =   "/dt"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   69
+         top             =   1200
+         width           =   1095
+      end
+      begin vb.commandbutton cmdlluvia 
+         caption         =   "/lluvia"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   720
+         tabindex        =   68
+         top             =   120
+         width           =   1095
+      end
+      begin vb.commandbutton cmdmassdest 
+         caption         =   "/massdest"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   67
+         top             =   2040
+         width           =   1095
+      end
+      begin vb.commandbutton cmdpiso 
+         caption         =   "/piso"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   720
+         tabindex        =   66
+         top             =   2040
+         width           =   1095
+      end
+      begin vb.commandbutton cmdci 
+         caption         =   "/ci"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   720
+         tabindex        =   65
+         top             =   1680
+         width           =   1095
+      end
+      begin vb.commandbutton cmddest 
+         caption         =   "/dest"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2280
+         tabindex        =   64
+         top             =   1680
+         width           =   1095
+      end
+   end
+   begin vb.frame frame 
+      borderstyle     =   0  'none
+      height          =   2415
+      index           =   2
+      left            =   120
+      tabindex        =   2
+      top             =   360
+      width           =   3975
+      begin vb.commandbutton cmdonlinereal 
+         caption         =   "/onlinereal"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   21
+         top             =   1560
+         width           =   1335
+      end
+      begin vb.commandbutton cmdonlinecaos 
+         caption         =   "/onlinecaos"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2160
+         tabindex        =   20
+         top             =   1560
+         width           =   1335
+      end
+      begin vb.commandbutton cmdnene 
+         caption         =   "/nene"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   19
+         top             =   1080
+         width           =   1335
+      end
+      begin vb.commandbutton cmdshow_sos 
+         caption         =   "/show sos"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   18
+         top             =   120
+         width           =   1335
+      end
+      begin vb.commandbutton cmdtrabajando 
+         caption         =   "/trabajando"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   17
+         top             =   600
+         width           =   1335
+      end
+      begin vb.commandbutton cmdocultando 
+         caption         =   "/ocultando"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2160
+         tabindex        =   16
+         top             =   600
+         width           =   1335
+      end
+      begin vb.commandbutton cmdonlinegm 
+         caption         =   "/onlinegm"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   480
+         tabindex        =   15
+         top             =   2040
+         width           =   3015
+      end
+      begin vb.commandbutton cmdonlinemap 
+         caption         =   "/onlinemap"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2160
+         tabindex        =   14
+         top             =   1080
+         width           =   1335
+      end
+      begin vb.commandbutton cmdborrar_sos 
+         caption         =   "/borrar sos"
+         causesvalidation=   0   'false
+         height          =   315
+         left            =   2160
+         tabindex        =   13
+         top             =   120
+         width           =   1335
+      end
+   end
    begin vb.frame frame 
       borderstyle     =   0  'none
       height          =   7695
@@ -365,438 +1097,6 @@ begin vb.form frmpanelgm
          width           =   1095
       end
    end
-   begin vb.commandbutton cmdcerrar 
-      caption         =   "cerrar"
-      causesvalidation=   0   'false
-      height          =   375
-      left            =   0
-      tabindex        =   0
-      top             =   8160
-      width           =   4215
-   end
-   begin vb.frame frame 
-      borderstyle     =   0  'none
-      height          =   1455
-      index           =   1
-      left            =   120
-      tabindex        =   1
-      top             =   360
-      width           =   3975
-      begin vb.commandbutton cmdgmsg 
-         caption         =   "/gmsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   240
-         tabindex        =   11
-         top             =   600
-         width           =   1095
-      end
-      begin vb.commandbutton cmdhora 
-         caption         =   "/hora"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   240
-         tabindex        =   10
-         top             =   120
-         width           =   855
-      end
-      begin vb.commandbutton cmdrmsg 
-         caption         =   "/rmsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1440
-         tabindex        =   9
-         top             =   600
-         width           =   1095
-      end
-      begin vb.commandbutton cmdrealmsg 
-         caption         =   "/realmsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   240
-         tabindex        =   8
-         top             =   1080
-         width           =   1095
-      end
-      begin vb.commandbutton cmdcaosmsg 
-         caption         =   "/caosmsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1440
-         tabindex        =   7
-         top             =   1080
-         width           =   1095
-      end
-      begin vb.commandbutton cmdciumsg 
-         caption         =   "/ciumsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2640
-         tabindex        =   6
-         top             =   1080
-         width           =   1095
-      end
-      begin vb.commandbutton cmdtalkas 
-         caption         =   "/talkas"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2880
-         tabindex        =   5
-         top             =   120
-         width           =   855
-      end
-      begin vb.commandbutton cmdmotdcambia 
-         caption         =   "/motdcambia"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1320
-         tabindex        =   4
-         top             =   120
-         width           =   1335
-      end
-      begin vb.commandbutton cmdsmsg 
-         caption         =   "/smsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2640
-         tabindex        =   3
-         top             =   600
-         width           =   1095
-      end
-   end
-   begin vb.frame frame 
-      borderstyle     =   0  'none
-      height          =   2415
-      index           =   5
-      left            =   120
-      tabindex        =   55
-      top             =   360
-      width           =   3975
-      begin vb.commandbutton cmdcc 
-         caption         =   "/cc"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   720
-         tabindex        =   72
-         top             =   720
-         width           =   2655
-      end
-      begin vb.commandbutton cmdlimpiar 
-         caption         =   "/limpiar"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   71
-         top             =   120
-         width           =   1095
-      end
-      begin vb.commandbutton cmdct 
-         caption         =   "/ct"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   720
-         tabindex        =   70
-         top             =   1200
-         width           =   1095
-      end
-      begin vb.commandbutton cmddt 
-         caption         =   "/dt"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   69
-         top             =   1200
-         width           =   1095
-      end
-      begin vb.commandbutton cmdlluvia 
-         caption         =   "/lluvia"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   720
-         tabindex        =   68
-         top             =   120
-         width           =   1095
-      end
-      begin vb.commandbutton cmdmassdest 
-         caption         =   "/massdest"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   67
-         top             =   2040
-         width           =   1095
-      end
-      begin vb.commandbutton cmdpiso 
-         caption         =   "/piso"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   720
-         tabindex        =   66
-         top             =   2040
-         width           =   1095
-      end
-      begin vb.commandbutton cmdci 
-         caption         =   "/ci"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   720
-         tabindex        =   65
-         top             =   1680
-         width           =   1095
-      end
-      begin vb.commandbutton cmddest 
-         caption         =   "/dest"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   64
-         top             =   1680
-         width           =   1095
-      end
-   end
-   begin vb.frame frame 
-      borderstyle     =   0  'none
-      height          =   2415
-      index           =   2
-      left            =   120
-      tabindex        =   2
-      top             =   360
-      width           =   3975
-      begin vb.commandbutton cmdonlinereal 
-         caption         =   "/onlinereal"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   21
-         top             =   1560
-         width           =   1335
-      end
-      begin vb.commandbutton cmdonlinecaos 
-         caption         =   "/onlinecaos"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2160
-         tabindex        =   20
-         top             =   1560
-         width           =   1335
-      end
-      begin vb.commandbutton cmdnene 
-         caption         =   "/nene"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   19
-         top             =   1080
-         width           =   1335
-      end
-      begin vb.commandbutton cmdshow_sos 
-         caption         =   "/show sos"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   18
-         top             =   120
-         width           =   1335
-      end
-      begin vb.commandbutton cmdtrabajando 
-         caption         =   "/trabajando"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   17
-         top             =   600
-         width           =   1335
-      end
-      begin vb.commandbutton cmdocultando 
-         caption         =   "/ocultando"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2160
-         tabindex        =   16
-         top             =   600
-         width           =   1335
-      end
-      begin vb.commandbutton cmdonlinegm 
-         caption         =   "/onlinegm"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   15
-         top             =   2040
-         width           =   3015
-      end
-      begin vb.commandbutton cmdonlinemap 
-         caption         =   "/onlinemap"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2160
-         tabindex        =   14
-         top             =   1080
-         width           =   1335
-      end
-      begin vb.commandbutton cmdborrar_sos 
-         caption         =   "/borrar sos"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2160
-         tabindex        =   13
-         top             =   120
-         width           =   1335
-      end
-   end
-   begin vb.frame frame 
-      borderstyle     =   0  'none
-      height          =   1815
-      index           =   6
-      left            =   120
-      tabindex        =   56
-      top             =   360
-      width           =   3975
-      begin vb.commandbutton cmdshowcmsg 
-         caption         =   "/showcmsg"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   80
-         top             =   1080
-         width           =   1335
-      end
-      begin vb.commandbutton cmdbanclan 
-         caption         =   "/banclan"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   480
-         tabindex        =   79
-         top             =   1440
-         width           =   3015
-      end
-      begin vb.commandbutton cmdmiembrosclan 
-         caption         =   "/miembrosclan"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1920
-         tabindex        =   78
-         top             =   1080
-         width           =   1575
-      end
-      begin vb.commandbutton cmdbanipreload 
-         caption         =   "/banipreload"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1440
-         tabindex        =   77
-         top             =   480
-         width           =   2295
-      end
-      begin vb.commandbutton cmdbaniplist 
-         caption         =   "/baniplist"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   240
-         tabindex        =   76
-         top             =   480
-         width           =   1095
-      end
-      begin vb.commandbutton cmdip2nick 
-         caption         =   "/ip2nick"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   240
-         tabindex        =   75
-         top             =   120
-         width           =   1095
-      end
-      begin vb.commandbutton cmdbanip 
-         caption         =   "/banip"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   1440
-         tabindex        =   74
-         top             =   120
-         width           =   975
-      end
-      begin vb.commandbutton cmdunbanip 
-         caption         =   "/unbanip"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2520
-         tabindex        =   73
-         top             =   120
-         width           =   1215
-      end
-   end
-   begin vb.frame frame 
-      borderstyle     =   0  'none
-      height          =   1935
-      index           =   4
-      left            =   120
-      tabindex        =   22
-      top             =   360
-      width           =   3975
-      begin vb.commandbutton cmdshowname 
-         caption         =   "/showname"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   63
-         top             =   600
-         width           =   1215
-      end
-      begin vb.commandbutton cmdrem 
-         caption         =   "/rem"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   600
-         tabindex        =   62
-         top             =   1560
-         width           =   2895
-      end
-      begin vb.commandbutton cmdinvisible 
-         caption         =   "/invisible"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   600
-         tabindex        =   61
-         top             =   120
-         width           =   1215
-      end
-      begin vb.commandbutton cmdsetdesc 
-         caption         =   "/setdesc"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   60
-         top             =   1080
-         width           =   1215
-      end
-      begin vb.commandbutton cmdnave 
-         caption         =   "/nave"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   600
-         tabindex        =   59
-         top             =   600
-         width           =   1215
-      end
-      begin vb.commandbutton cmdchatcolor 
-         caption         =   "/chatcolor"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   600
-         tabindex        =   58
-         top             =   1080
-         width           =   1215
-      end
-      begin vb.commandbutton cmdignorado 
-         caption         =   "/ignorado"
-         causesvalidation=   0   'false
-         height          =   315
-         left            =   2280
-         tabindex        =   57
-         top             =   120
-         width           =   1215
-      end
-   end
    begin mscomctllib.tabstrip tabstrip 
       causesvalidation=   0   'false
       height          =   1935
@@ -808,7 +1108,7 @@ begin vb.form frmpanelgm
       _extenty        =   3413
       _version        =   393216
       beginproperty tabs {1efb6598-857c-11d1-b16a-00c0f0283628} 
-         numtabs         =   6
+         numtabs         =   7
          beginproperty tab1 {1efb659a-857c-11d1-b16a-00c0f0283628} 
             caption         =   "message"
             imagevartype    =   2
@@ -833,7 +1133,23 @@ begin vb.form frmpanelgm
             caption         =   "admin"
             imagevartype    =   2
          endproperty
+         beginproperty tab7 {1efb659a-857c-11d1-b16a-00c0f0283628} 
+            caption         =   "seguimientos"
+            imagevartype    =   2
+         endproperty
       endproperty
+   end
+   begin vb.menu mnuseguimientos 
+      caption         =   "seguimientos"
+      begin vb.menu mnuira 
+         caption         =   "ir cerca"
+      end
+      begin vb.menu mnusum 
+         caption         =   "sumonear"
+      end
+      begin vb.menu mnudelete 
+         caption         =   "eliminar seguimiento"
+      end
    end
 end
 attribute vb_name = "frmpanelgm"
@@ -893,6 +1209,50 @@ private sub cmdaceptconsecaos_click()
     if lenb(nick) <> 0 then _
         if msgbox("�seguro desea aceptar a " & nick & " como consejero del caos?", vbyesno, "atencion!") = vbyes then _
             call writeacceptchaoscouncilmember(nick)
+end sub
+
+private sub cmdaddfollow_click()
+dim i as long
+
+    for i = 0 to lstusers.listcount
+        if ucase$(lstusers.list(i)) = ucase$(txtnuevousuario.text) then
+            call msgbox("�el usuario ya est� en la lista!", vbokonly + vbexclamation)
+            exit sub
+        end if
+    next i
+            
+    if lenb(txtnuevousuario.text) = 0 then
+        call msgbox("�escribe el nombre de un usuario!", vbokonly + vbexclamation)
+        exit sub
+    end if
+    
+    if lenb(txtnuevadescrip.text) = 0 then
+        call msgbox("�escribe el motivo del seguimiento!", vbokonly + vbexclamation)
+        exit sub
+    end if
+    
+    call writerecordadd(txtnuevousuario.text, txtnuevadescrip.text)
+    
+    txtnuevousuario.text = vbnullstring
+    txtnuevadescrip.text = vbnullstring
+end sub
+
+private sub cmdaddobs_click()
+dim obs as string
+    
+    obs = inputbox("ingrese la observaci�n", "nueva observaci�n")
+    
+    if lenb(obs) = 0 then
+        call msgbox("�escribe una observaci�n!", vbokonly + vbexclamation)
+        exit sub
+    end if
+    
+    if lstusers.listindex = -1 then
+        call msgbox("�seleccione un seguimiento!", vbokonly + vbexclamation)
+        exit sub
+    end if
+    
+    call writerecordaddobs(lstusers.listindex + 1, obs)
 end sub
 
 private sub cmdadvertencia_click()
@@ -1075,7 +1435,7 @@ private sub cmdconden_click()
 end sub
 
 private sub cmdconsulta_click()
-    writeconsulta
+    writeconsultation
 end sub
 
 private sub cmdct_click()
@@ -1411,6 +1771,11 @@ private sub cmdrealmsg_click()
         call writeroyalarmymessage(tstr)
 end sub
 
+private sub cmdrefresh_click()
+    call clearrecorddetails
+    call writerecordlistrequest
+end sub
+
 private sub cmdrem_click()
     '/rem
     dim tstr as string
@@ -1567,7 +1932,15 @@ end sub
 
 private sub form_load()
     call showtab(1)
+    
+    'actualiza los usuarios online
     call cmdactualiza_click
+    
+    'actualiza los seguimientos
+    call cmdrefresh_click
+    
+    'oculta el men� usado para el popup
+    mnuseguimientos.visible = false
 end sub
 
 private sub cmdactualiza_click()
@@ -1581,6 +1954,56 @@ end sub
 
 private sub form_queryunload(cancel as integer, unloadmode as integer)
     unload me
+end sub
+
+private sub lstusers_mouseup(button as integer, shift as integer, x as single, y as single)
+    if button = vbrightbutton then
+        popupmenu mnuseguimientos
+    else
+        if lstusers.listindex <> -1 then
+            call clearrecorddetails
+            call writerecorddetailsrequest(lstusers.listindex + 1)
+        end if
+    end if
+end sub
+
+private sub clearrecorddetails()
+    txtip.text = vbnullstring
+    txtcreador.text = vbnullstring
+    txtdescrip.text = vbnullstring
+    txtobs.text = vbnullstring
+    txttimeon.text = vbnullstring
+    lblestado.caption = vbnullstring
+end sub
+
+private sub mnudelete_click()
+    with lstusers
+        if .listindex = -1 then
+            call msgbox("�seleccione un usuario para remover el seguimiento!", vbokonly + vbexclamation)
+            exit sub
+        end if
+        
+        if msgbox("�desea eliminar el seguimiento al personaje " & .list(.listindex) & "?", vbyesno) = vbyes then
+            call writerecordremove(.listindex + 1)
+            call clearrecorddetails
+        end if
+    end with
+end sub
+
+private sub mnuira_click()
+    with lstusers
+        if .listindex <> -1 then
+            call writegotochar(.list(.listindex))
+        end if
+    end with
+end sub
+
+private sub mnusum_click()
+    with lstusers
+        if .listindex <> -1 then
+            call writesummonchar(.list(.listindex))
+        end if
+    end with
 end sub
 
 private sub tabstrip_click()

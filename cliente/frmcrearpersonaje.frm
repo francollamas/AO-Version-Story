@@ -223,19 +223,6 @@ begin vb.form frmcrearpersonaje
       top             =   6360
       width           =   615
    end
-   begin vb.picturebox pictemp 
-      autoredraw      =   -1  'true
-      backcolor       =   &h00000000&
-      height          =   975
-      left            =   7080
-      scaleheight     =   61
-      scalemode       =   3  'pixel
-      scalewidth      =   37
-      tabindex        =   15
-      top             =   6360
-      visible         =   0   'false
-      width           =   615
-   end
    begin vb.picturebox pichead 
       appearance      =   0  'flat
       autoredraw      =   -1  'true
@@ -248,7 +235,7 @@ begin vb.form frmcrearpersonaje
       scaleheight     =   24
       scalemode       =   3  'pixel
       scalewidth      =   24
-      tabindex        =   28
+      tabindex        =   27
       top             =   5880
       visible         =   0   'false
       width           =   360
@@ -265,7 +252,7 @@ begin vb.form frmcrearpersonaje
       scaleheight     =   24
       scalemode       =   3  'pixel
       scalewidth      =   24
-      tabindex        =   29
+      tabindex        =   28
       top             =   5880
       visible         =   0   'false
       width           =   360
@@ -282,7 +269,7 @@ begin vb.form frmcrearpersonaje
       scaleheight     =   24
       scalemode       =   3  'pixel
       scalewidth      =   24
-      tabindex        =   30
+      tabindex        =   29
       top             =   5880
       visible         =   0   'false
       width           =   360
@@ -299,7 +286,7 @@ begin vb.form frmcrearpersonaje
       scaleheight     =   24
       scalemode       =   3  'pixel
       scalewidth      =   24
-      tabindex        =   31
+      tabindex        =   30
       top             =   5880
       visible         =   0   'false
       width           =   360
@@ -316,7 +303,7 @@ begin vb.form frmcrearpersonaje
       scaleheight     =   24
       scalemode       =   3  'pixel
       scalewidth      =   24
-      tabindex        =   27
+      tabindex        =   26
       top             =   5880
       visible         =   0   'false
       width           =   360
@@ -545,7 +532,7 @@ begin vb.form frmcrearpersonaje
       forecolor       =   &h00ffffff&
       height          =   375
       left            =   4440
-      tabindex        =   32
+      tabindex        =   31
       top             =   7395
       width           =   1455
    end
@@ -556,8 +543,8 @@ begin vb.form frmcrearpersonaje
       visible         =   0   'false
       x1              =   479
       x2              =   505
-      y1              =   417
-      y2              =   417
+      y1              =   416
+      y2              =   416
    end
    begin vb.line line1 
       bordercolor     =   &h000000ff&
@@ -574,8 +561,8 @@ begin vb.form frmcrearpersonaje
       borderstyle     =   3  'dot
       index           =   1
       visible         =   0   'false
-      x1              =   505
-      x2              =   505
+      x1              =   504
+      x2              =   504
       y1              =   392
       y2              =   416
    end
@@ -605,7 +592,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   5
       left            =   5445
-      tabindex        =   26
+      tabindex        =   25
       top             =   4830
       width           =   225
    end
@@ -625,7 +612,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   4
       left            =   5445
-      tabindex        =   25
+      tabindex        =   24
       top             =   4470
       width           =   225
    end
@@ -645,7 +632,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   3
       left            =   5445
-      tabindex        =   24
+      tabindex        =   23
       top             =   4125
       width           =   225
    end
@@ -665,7 +652,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   2
       left            =   5445
-      tabindex        =   23
+      tabindex        =   22
       top             =   3780
       width           =   225
    end
@@ -685,7 +672,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   1
       left            =   5445
-      tabindex        =   22
+      tabindex        =   21
       top             =   3450
       width           =   225
    end
@@ -706,7 +693,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   5
       left            =   4950
-      tabindex        =   21
+      tabindex        =   20
       top             =   4830
       width           =   225
    end
@@ -727,7 +714,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   4
       left            =   4950
-      tabindex        =   20
+      tabindex        =   19
       top             =   4470
       width           =   225
    end
@@ -748,7 +735,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   3
       left            =   4950
-      tabindex        =   19
+      tabindex        =   18
       top             =   4125
       width           =   225
    end
@@ -769,7 +756,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   2
       left            =   4950
-      tabindex        =   18
+      tabindex        =   17
       top             =   3780
       width           =   225
    end
@@ -790,7 +777,7 @@ begin vb.form frmcrearpersonaje
       height          =   195
       index           =   1
       left            =   4950
-      tabindex        =   17
+      tabindex        =   16
       top             =   3450
       width           =   225
    end
@@ -814,7 +801,7 @@ begin vb.form frmcrearpersonaje
       forecolor       =   &h00ffffff&
       height          =   4935
       left            =   9480
-      tabindex        =   16
+      tabindex        =   15
       top             =   1800
       width           =   1935
    end
@@ -1215,7 +1202,7 @@ private cbotonalineacion as clsgraphicalbutton
 private cbotonvolver as clsgraphicalbutton
 private cbotoncrear as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private picfullstar as picture
 private pichalfstar as picture
@@ -1363,7 +1350,7 @@ private sub iniciargraficos()
     set cbotonvolver = new clsgraphicalbutton
     set cbotoncrear = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonpasswd.initialize(imgpasswd, "", grhpath & "botoncontrase�a.jpg", _
@@ -1510,10 +1497,10 @@ function checkdata() as boolean
         msgbox "seleccione el hogar del personaje."
         exit function
     end if
-    
+    'toqueteado x salvito
     dim i as integer
     for i = 1 to numatributos
-        if useratributos(i) = 0 then
+        if val(lblatributos(i).caption) = 0 then
             msgbox "los atributos del personaje son invalidos."
             exit function
         end if
@@ -1600,7 +1587,7 @@ private sub imgcrear_click()
     for i = 1 to numatributes
         useratributos(i) = val(lblatributos(i).caption)
     next i
-    
+         
     userhogar = lsthogar.listindex + 1
     
     if not checkdata then exit sub
@@ -1814,8 +1801,9 @@ end sub
 
 private sub tanimacion_timer()
     dim sr as rect
-    dim dr as rect
     dim grh as long
+    dim x as long
+    dim y as long
     static frame as byte
     
     if currentgrh = 0 then exit sub
@@ -1833,15 +1821,11 @@ private sub tanimacion_timer()
         sr.right = sr.left + .pixelwidth
         sr.bottom = sr.top + .pixelheight
         
-        dr.left = (picpj.width - .pixelwidth) \ 2 - 2
-        dr.top = (picpj.height - .pixelheight) \ 2 - 2
-        dr.right = dr.left + .pixelwidth
-        dr.bottom = dr.top + .pixelheight
+        x = picpj.width / 2 - .pixelwidth / 2
+        y = (picpj.height - .pixelheight) - 5
         
-        pictemp.backcolor = pictemp.backcolor
-        
-        call drawgrhtohdc(pictemp.hdc, grh, sr, dr)
-        call drawtransparentgrhtohdc(picpj.hdc, pictemp.hdc, dr, dr, vbblack)
+        call drawtransparentgrhtohdc(picpj.hdc, x, y, grh, sr, vbblack)
+        y = y + .pixelheight
     end with
     
     grh = headdata(userhead).head(dir).grhindex
@@ -1852,24 +1836,20 @@ private sub tanimacion_timer()
         sr.right = sr.left + .pixelwidth
         sr.bottom = sr.top + .pixelheight
         
-        dr.left = (picpj.width - .pixelwidth) \ 2 - 2
-        dr.top = dr.bottom + bodydata(userbody).headoffset.y - .pixelheight
-        dr.right = dr.left + .pixelwidth
-        dr.bottom = dr.top + .pixelheight
+        x = picpj.width / 2 - .pixelwidth / 2
+        y = y + bodydata(userbody).headoffset.y - .pixelheight
         
-        pictemp.backcolor = pictemp.backcolor
-        
-        call drawgrhtohdc(pictemp.hdc, grh, sr, dr)
-        call drawtransparentgrhtohdc(picpj.hdc, pictemp.hdc, dr, dr, vbblack)
+        call drawtransparentgrhtohdc(picpj.hdc, x, y, grh, sr, vbblack)
     end with
 end sub
 
 private sub drawhead(byval head as integer, byval picindex as integer)
 
     dim sr as rect
-    dim dr as rect
     dim grh as long
-
+    dim x as long
+    dim y as long
+    
     call drawimageinpicture(pichead(picindex), me.picture, 0, 0, , , pichead(picindex).left, pichead(picindex).top)
     
     grh = headdata(head).head(dir).grhindex
@@ -1880,15 +1860,10 @@ private sub drawhead(byval head as integer, byval picindex as integer)
         sr.right = sr.left + .pixelwidth
         sr.bottom = sr.top + .pixelheight
         
-        dr.left = (pichead(0).width - .pixelwidth) \ 2 + 1
-        dr.top = 0
-        dr.right = dr.left + .pixelwidth
-        dr.bottom = dr.top + .pixelheight
+        x = pichead(picindex).width / 2 - .pixelwidth / 2
+        y = 1
         
-        pictemp.backcolor = pictemp.backcolor
-        
-        call drawgrhtohdc(pictemp.hdc, grh, sr, dr)
-        call drawtransparentgrhtohdc(pichead(picindex).hdc, pictemp.hdc, dr, dr, vbblack)
+        call drawtransparentgrhtohdc(pichead(picindex).hdc, x, y, grh, sr, vbblack)
     end with
     
 end sub
@@ -2151,7 +2126,7 @@ private sub loadhelp()
 end sub
 
 private sub clearlabel()
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
     lblhelp = ""
 end sub
 
@@ -2164,7 +2139,6 @@ private sub txtpasswd_mousemove(button as integer, shift as integer, x as single
 end sub
 
 public sub updatestats()
-    
     call updaterazamod
     call updatestars
 end sub

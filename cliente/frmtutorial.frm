@@ -167,7 +167,7 @@ private clsformulario as clsformmovementmanager
 private cbotonsiguiente as clsgraphicalbutton
 private cbotonanterior as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private type ttutorial
     stitle as string
@@ -205,7 +205,7 @@ private sub loadbuttons()
     set cbotonsiguiente = new clsgraphicalbutton
     set cbotonanterior = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonsiguiente.initialize(imgsiguiente, grhpath & "botonsiguientetutorial.jpg", _
@@ -233,7 +233,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imganterior_click()
@@ -276,6 +276,7 @@ private sub imgsiguiente_click()
 end sub
 
 private sub lblcerrar_click()
+    bshowtutorial = false 'mientras no se pueda tildar/destildar para verlo m�s tarde, esto queda as� :p
     unload me
 end sub
 
@@ -321,5 +322,5 @@ private sub selectpage(byval lpage as long)
 end sub
 
 private sub lblmensaje_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

@@ -44,13 +44,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   1
       left            =   5430
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   13
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   480
    end
@@ -59,13 +59,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   2
       left            =   5400
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   12
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   480
    end
@@ -74,13 +74,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   3
       left            =   5430
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   11
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   480
    end
@@ -89,13 +89,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   4
       left            =   5430
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   10
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   480
    end
@@ -123,13 +123,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   4
       left            =   870
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   9
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   480
    end
@@ -138,12 +138,12 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   1440
       tabindex        =   8
-      top             =   3945
+      top             =   3930
       visible         =   0   'false
       width           =   1440
    end
@@ -152,13 +152,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   3
       left            =   870
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   7
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   480
    end
@@ -167,12 +167,12 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   1440
       tabindex        =   6
-      top             =   3150
+      top             =   3135
       visible         =   0   'false
       width           =   1440
    end
@@ -181,13 +181,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   2
       left            =   870
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   5
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   480
    end
@@ -196,12 +196,12 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   1440
       tabindex        =   4
-      top             =   2355
+      top             =   2340
       visible         =   0   'false
       width           =   1440
    end
@@ -218,12 +218,12 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       left            =   1710
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   1440
       tabindex        =   3
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   1440
    end
@@ -232,13 +232,13 @@ begin vb.form frmherrero
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
       fillstyle       =   0  'solid
-      height          =   465
+      height          =   480
       index           =   1
       left            =   870
-      scaleheight     =   465
+      scaleheight     =   480
       scalewidth      =   480
       tabindex        =   2
-      top             =   1560
+      top             =   1545
       visible         =   0   'false
       width           =   480
    end
@@ -489,7 +489,7 @@ private ultimapestania as byte
 private cpiccerrar as clsgraphicalbutton
 private cpicconstruir(0 to 3) as clsgraphicalbutton
 private cpicmejorar(0 to 3) as clsgraphicalbutton
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private cargando as boolean
 
@@ -529,7 +529,7 @@ private sub cargarimagenes()
     set cpicmejorar(2) = new clsgraphicalbutton
     set cpicmejorar(3) = new clsgraphicalbutton
 
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cpiccerrar.initialize(imgcerrar, imgpath & "botoncerrarherreria.jpg", imgpath & "botoncerrarrolloverherreria.jpg", imgpath & "botoncerrarclickherreria.jpg", me)
     call cpicconstruir(0).initialize(picconstruir0, imgpath & "botonconstruirherreria.jpg", imgpath & "botonconstruirrolloverherreria.jpg", imgpath & "botonconstruirclickherreria.jpg", me)
@@ -610,8 +610,9 @@ private sub form_load()
     
     cargando = true
     
-    maxconstitem = cint((userlvl - 4) / 5)
+    maxconstitem = cint((userlvl - 2) * 0.2)
     maxconstitem = iif(maxconstitem < 1, 1, maxconstitem)
+    maxconstitem = iif(userclase = eclass.worker, maxconstitem, 1)
     
     for i = 1 to maxconstitem
         cboitemsciclo.additem i
@@ -745,7 +746,17 @@ next i
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
+end sub
+
+private sub form_unload(cancel as integer)
+    dim i as long
+    
+    for i = 1 to max_list_items
+        set invlingosherreria(i) = nothing
+    next i
+    
+    mirandoherreria = false
 end sub
 
 private sub imgcerrar_click()
@@ -783,19 +794,19 @@ private sub picconstruir3_click()
 end sub
 
 private sub piclingotes0_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub piclingotes1_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub piclingotes2_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub piclingotes3_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub picmejorar0_click()

@@ -1354,7 +1354,8 @@ on local error goto errhandler
     'check integrity
     if (patchfilehead.lngnumfiles = writtenfiles) then
 #if seguridadalkon then
-        dim md5 as new clsmd5
+        dim md5 as clsmd5
+        set md5 = new clsmd5
         md5.md5reset
         debug.print md5.getmd5file(outputfilepath)
         md5.md5reset

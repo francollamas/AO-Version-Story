@@ -41,7 +41,7 @@ private const separator as string * 1 = vbnullchar
 ''
 'auxiliar bytequeue used as buffer to generate messages not intended to be sent right away.
 'specially usefull to create a message once and send it over to several clients.
-private auxiliarbuffer as new clsbytequeue
+private auxiliarbuffer as clsbytequeue
 
 
 private enum serverpacketid
@@ -142,6 +142,9 @@ private enum serverpacketid
     showmotdeditionform     ' zmotd
     showgmpanelform         ' abpanel
     usernamelist            ' listusu
+    showdenounces
+    recordlist
+    recorddetails
     
     showguildalign
     showpartyform
@@ -284,6 +287,7 @@ private enum clientpacketid
     sharenpc                '/compartir
     stopsharingnpc
     consultation
+    moveitem
 end enum
 
 ''
@@ -330,9 +334,18 @@ public enum eeditoptions
     eo_sex
     eo_raza
     eo_addgold
+    eo_vida
+    eo_poss
 end enum
 
-
+public sub initauxiliarbuffer()
+'***************************************************
+'author: zama
+'last modification: 15/03/2011
+'initializaes auxiliar buffer
+'***************************************************
+    set auxiliarbuffer = new clsbytequeue
+end sub
 
 ''
 ' handles incoming data.
@@ -765,6 +778,9 @@ on error resume next
         case clientpacketid.consultation
             call handleconsultation(userindex)
         
+        case clientpacketid.moveitem
+            call handlemoveitem(userindex)
+            
 #if seguridadalkon then
         case else
             call handleincomingdataex(userindex)
@@ -917,7 +933,7 @@ with userlist(userindex)
         
         case egmcommands.sosshowlist             '/show sos
             call handlesosshowlist(userindex)
-        
+            
         case egmcommands.sosremove               'sosdone
             call handlesosremove(userindex)
         
@@ -1014,6 +1030,9 @@ with userlist(userindex)
         case egmcommands.servermessage           '/rmsg
             call handleservermessage(userindex)
         
+        case egmcommands.mapmessage              '/mapmsg
+            call handlemapmessage(userindex)
+            
         case egmcommands.nicktoip                '/nick2ip
             call handlenicktoip(userindex)
         
@@ -1202,7 +1221,7 @@ with userlist(userindex)
         
         case egmcommands.changemapinfopk         '/modmapinfo pk
             call handlechangemapinfopk(userindex)
-        
+            
         case egmcommands.changemapinfobackup     '/modmapinfo backup
             call handlechangemapinfobackup(userindex)
         
@@ -1224,6 +1243,15 @@ with userlist(userindex)
         case egmcommands.changemapinfozone       '/modmapinfo zona
             call handlechangemapinfozone(userindex)
         
+        case egmcommands.changemapinfostealnpc   '/modmapinfo robonpc
+            call handlechangemapinfostealnpc(userindex)
+            
+        case egmcommands.changemapinfonoocultar  '/modmapinfo ocultarsinefecto
+            call handlechangemapinfonoocultar(userindex)
+            
+        case egmcommands.changemapinfonoinvocar  '/modmapinfo invocarsinefecto
+            call handlechangemapinfonoinvocar(userindex)
+            
         case egmcommands.savechars               '/grabar
             call handlesavechars(userindex)
         
@@ -1268,6 +1296,43 @@ with userlist(userindex)
         
         case egmcommands.setinivar               '/setinivar llave clave valor
             call handlesetinivar(userindex)
+            
+        case egmcommands.createpretorianclan     '/crearpretorianos
+            call handlecreatepretorianclan(userindex)
+         
+        case egmcommands.removepretorianclan     '/eliminarpretorianos
+            call handledeletepretorianclan(userindex)
+                
+        case egmcommands.enabledenounces         '/denuncias
+            call handleenabledenounces(userindex)
+            
+        case egmcommands.showdenounceslist       '/show denuncias
+            call handleshowdenounceslist(userindex)
+        
+        case egmcommands.setdialog               '/setdialog
+            call handlesetdialog(userindex)
+            
+        case egmcommands.impersonate             '/impersonar
+            call handleimpersonate(userindex)
+            
+        case egmcommands.imitate                 '/mimetizar
+            call handleimitate(userindex)
+            
+        case egmcommands.recordadd
+            call handlerecordadd(userindex)
+            
+        case egmcommands.recordaddobs
+            call handlerecordaddobs(userindex)
+            
+        case egmcommands.recordremove
+            call handlerecordremove(userindex)
+            
+        case egmcommands.recordlistrequest
+            call handlerecordlistrequest(userindex)
+            
+        case egmcommands.recorddetailsrequest
+            call handlerecorddetailsrequest(userindex)
+        
     end select
 end with
 
@@ -1297,7 +1362,7 @@ with userlist(userindex)
     else
         if .flags.muerto = 1 then
             'si es un mapa com�n y no est� en cana
-            if ucase$(mapinfo(.pos.map).restringir) = "no" and .counters.pena = 0 then
+            if (mapinfo(.pos.map).restringir = erestrict.restrict_no) and (.counters.pena = 0) then
                 if .flags.traveling = 0 then
                     if ciudades(.hogar).map <> .pos.map then
                         call gohome(userindex)
@@ -1344,7 +1409,7 @@ private sub handleloginexistingchar(byval userindex as integer)
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(userlist(userindex).incomingdata)
     
     'remove packet id
@@ -1463,7 +1528,7 @@ private sub handleloginnewchar(byval userindex as integer)
     
 on error goto errhandler
     'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-    dim buffer as new clsbytequeue
+    dim buffer as clsbytequeue: set buffer = new clsbytequeue
     call buffer.copybuffer(userlist(userindex).incomingdata)
     
     'remove packet id
@@ -1581,7 +1646,7 @@ on error goto errhandler
     with userlist(userindex)
     
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -1604,7 +1669,7 @@ on error goto errhandler
             if .flags.navegando = 1 then
                 if .clase = eclass.pirat then
                     ' pierde la apariencia de fragata fantasmal
-                    call toogleboatbody(userindex)
+                    call toggleboatbody(userindex)
                     call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                     call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                         ningunescudo, ninguncasco)
@@ -1671,7 +1736,7 @@ on error goto errhandler
     with userlist(userindex)
     
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -1695,7 +1760,7 @@ on error goto errhandler
             if .flags.navegando = 1 then
                 if .clase = eclass.pirat then
                     ' pierde la apariencia de fragata fantasmal
-                    call toogleboatbody(userindex)
+                    call toggleboatbody(userindex)
                     call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                     call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                         ningunescudo, ninguncasco)
@@ -1752,9 +1817,10 @@ end sub
 private sub handlewhisper(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 15/07/2009
+'last modification: 03/12/2010
 '28/05/2009: zama - now it doesn't appear any message when private talking to an invisible admin
 '15/07/2009: zama - now invisible admins wisper by console.
+'03/12/2010: enanoh - agregu� susurro a admins en modo consulta y los dioses pueden susurrar en ciertos casos.
 '***************************************************
     if userlist(userindex).incomingdata.length < 5 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -1762,57 +1828,95 @@ private sub handlewhisper(byval userindex as integer)
     end if
     
 on error goto errhandler
+
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
         call buffer.readbyte
         
         dim chat as string
-        dim targetcharindex as integer
         dim targetuserindex as integer
         dim targetpriv as playertype
+        dim userpriv as playertype
+        dim targetname as string
         
-        targetcharindex = buffer.readinteger()
+        targetname = buffer.readasciistring()
         chat = buffer.readasciistring()
         
-        targetuserindex = charindextouserindex(targetcharindex)
+        userpriv = .flags.privilegios
         
         if .flags.muerto then
             call writeconsolemsg(userindex, "��est�s muerto!! los muertos no pueden comunicarse con el mundo de los vivos. ", fonttypenames.fonttype_info)
         else
+            ' offline?
+            targetuserindex = nameindex(targetname)
             if targetuserindex = invalid_index then
-                call writeconsolemsg(userindex, "usuario inexistente.", fonttypenames.fonttype_info)
-            else
-                targetpriv = userlist(targetuserindex).flags.privilegios
-                'a los dioses y admins no vale susurrarles si no sos uno vos mismo (as� no pueden ver si est�n conectados o no)
-                if (targetpriv and (playertype.dios or playertype.admin)) <> 0 and (.flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 then
-                    ' controlamos que no este invisible
-                    if userlist(targetuserindex).flags.admininvisible <> 1 then
-                        call writeconsolemsg(userindex, "no puedes susurrarle a los dioses y admins.", fonttypenames.fonttype_info)
-                    end if
-                'a los consejeros y semidioses no vale susurrarles si sos un pj com�n.
-                elseif (.flags.privilegios and playertype.user) <> 0 and (not targetpriv and playertype.user) <> 0 then
-                    ' controlamos que no este invisible
-                    if userlist(targetuserindex).flags.admininvisible <> 1 then
-                        call writeconsolemsg(userindex, "no puedes susurrarle a los gms.", fonttypenames.fonttype_info)
-                    end if
-                elseif not estapcarea(userindex, targetuserindex) then
-                    call writeconsolemsg(userindex, "est�s muy lejos del usuario.", fonttypenames.fonttype_info)
+                ' admin?
+                if esgmchar(targetname) then
+                    call writeconsolemsg(userindex, "no puedes susurrarle a los administradores.", fonttypenames.fonttype_info)
+                ' whisperer admin? (else say nothing)
+                elseif (userpriv and (playertype.dios or playertype.admin)) <> 0 then
+                    call writeconsolemsg(userindex, "usuario inexistente.", fonttypenames.fonttype_info)
+                end if
                 
+            ' online
+            else
+                ' privilegios
+                targetpriv = userlist(targetuserindex).flags.privilegios
+                
+                ' consejeros, semis y usuarios no pueden susurrar a dioses (salvo en consulta)
+                if (targetpriv and (playertype.dios or playertype.admin)) <> 0 and _
+                   (userpriv and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 and _
+                   not .flags.enconsulta then
+                    
+                    ' no puede
+                    call writeconsolemsg(userindex, "no puedes susurrarle a los administradores.", fonttypenames.fonttype_info)
+
+                ' usuarios no pueden susurrar a semis o conses (salvo en consulta)
+                elseif (userpriv and playertype.user) <> 0 and _
+                       (not targetpriv and playertype.user) <> 0 and _
+                        not .flags.enconsulta then
+                    
+                    ' no puede
+                    call writeconsolemsg(userindex, "no puedes susurrarle a los administradores.", fonttypenames.fonttype_info)
+                
+                ' en rango? (los dioses pueden susurrar a distancia)
+                elseif not estapcarea(userindex, targetuserindex) and _
+                    (userpriv and (playertype.dios or playertype.admin)) = 0 then
+                    
+                    ' no se puede susurrar a admins fuera de su rango
+                    if (targetpriv and (playertype.user)) = 0 and (userpriv and (playertype.dios or playertype.admin)) = 0 then
+                        call writeconsolemsg(userindex, "no puedes susurrarle a los administradores.", fonttypenames.fonttype_info)
+                    
+                    ' whisperer admin? (else say nothing)
+                    elseif (userpriv and (playertype.dios or playertype.admin)) <> 0 then
+                        call writeconsolemsg(userindex, "est�s muy lejos del usuario.", fonttypenames.fonttype_info)
+                    end if
                 else
                     '[consejeros & gms]
-                    if .flags.privilegios and (playertype.consejero or playertype.semidios) then
-                        call loggm(.name, "le dijo a '" & userlist(targetuserindex).name & "' " & chat)
+                    if userpriv and (playertype.consejero or playertype.semidios) then
+                        call loggm(.name, "le susurro a '" & userlist(targetuserindex).name & "' " & chat)
+                    
+                    ' usuarios a administradores
+                    elseif (userpriv and playertype.user) <> 0 and (targetpriv and playertype.user) = 0 then
+                        call loggm(userlist(targetuserindex).name, .name & " le susurro en consulta: " & chat)
                     end if
                     
                     if lenb(chat) <> 0 then
                         'analize chat...
                         call statistics.parsechat(chat)
                         
-                        if not (.flags.admininvisible = 1) then
+                        ' dios susurrando a distancia
+                        if not estapcarea(userindex, targetuserindex) and _
+                            (userpriv and (playertype.dios or playertype.admin)) <> 0 then
+                            
+                            call writeconsolemsg(userindex, "susurraste> " & chat, fonttypenames.fonttype_gm)
+                            call writeconsolemsg(targetuserindex, "gm susurra> " & chat, fonttypenames.fonttype_gm)
+                            
+                        elseif not (.flags.admininvisible = 1) then
                             call writechatoverhead(userindex, chat, .char.charindex, vbblue)
                             call writechatoverhead(targetuserindex, chat, .char.charindex, vbblue)
                             call flushbuffer(targetuserindex)
@@ -1957,7 +2061,7 @@ private sub handlewalk(byval userindex as integer)
                 if .flags.navegando = 1 then
                     if .clase = eclass.pirat then
                         ' pierde la apariencia de fragata fantasmal
-                        call toogleboatbody(userindex)
+                        call toggleboatbody(userindex)
                         call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                         call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                         ningunescudo, ninguncasco)
@@ -2045,7 +2149,7 @@ private sub handleattack(byval userindex as integer)
             if .flags.navegando = 1 then
                 if .clase = eclass.pirat then
                     ' pierde la apariencia de fragata fantasmal
-                    call toogleboatbody(userindex)
+                    call toggleboatbody(userindex)
                     call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                     call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                         ningunescudo, ninguncasco)
@@ -2314,7 +2418,7 @@ on error goto errhandler
     with userlist(userindex)
     
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -2615,10 +2719,18 @@ private sub handlework(byval userindex as integer)
         call cancelexit(userindex)
         
         select case skill
+        
             case robar, magia, domar
-                call writemultimessage(userindex, emessages.workrequesttarget, skill) 'call writeworkrequesttarget(userindex, skill)
+                call writemultimessage(userindex, emessages.workrequesttarget, skill)
+                
             case ocultarse
-            
+                
+                ' verifico si se peude ocultar en este mapa
+                if mapinfo(.pos.map).ocultarsinefecto = 1 then
+                    call writeconsolemsg(userindex, "�ocultarse no funciona aqu�!", fonttypenames.fonttype_info)
+                    exit sub
+                end if
+                
                 if .flags.enconsulta then
                     call writeconsolemsg(userindex, "no puedes ocultarte si est�s en consulta.", fonttypenames.fonttype_info)
                     exit sub
@@ -2647,7 +2759,9 @@ private sub handlework(byval userindex as integer)
                 end if
                 
                 call doocultarse(userindex)
+                
         end select
+        
     end with
 end sub
 
@@ -2676,7 +2790,6 @@ private sub handleinitcrafting(byval userindex as integer)
             
             .construir.cantidad = totalitems
             .construir.porciclo = minimoint(maxitemsconstruibles(userindex), itemsporciclo)
-            
         end if
     end with
 end sub
@@ -2767,6 +2880,7 @@ private sub handlecraftblacksmith(byval userindex as integer)
         
         if objdata(item).skherreria = 0 then exit sub
         
+        if not intervalopermitetrabajar(userindex) then exit sub
         call herreroconstruiritem(userindex, item)
     end with
 end sub
@@ -2799,6 +2913,7 @@ private sub handlecraftcarpenter(byval userindex as integer)
         
         if objdata(item).skcarpinteria = 0 then exit sub
         
+        if not intervalopermitetrabajar(userindex) then exit sub
         call carpinteroconstruiritem(userindex, item)
     end with
 end sub
@@ -2832,6 +2947,8 @@ private sub handleworkleftclick(byval userindex as integer)
         dim tu as integer   'target user
         dim tn as integer   'target npc
         
+        dim weaponindex as integer
+        
         x = .incomingdata.readbyte()
         y = .incomingdata.readbyte()
         
@@ -2851,7 +2968,7 @@ private sub handleworkleftclick(byval userindex as integer)
         
         select case skill
             case eskill.proyectiles
-            
+                
                 'check attack interval
                 if not intervalopermiteatacar(userindex, false) then exit sub
                 'check magic interval
@@ -2859,141 +2976,8 @@ private sub handleworkleftclick(byval userindex as integer)
                 'check bow's interval
                 if not intervalopermiteusararcos(userindex) then exit sub
                 
-                dim atacked as boolean
-                atacked = true
-                
-                'make sure the item is valid and there is ammo equipped.
-                with .invent
-                    ' tiene arma equipada?
-                    if .weaponeqpobjindex = 0 then
-                        dummyint = 1
-                    ' en un slot v�lido?
-                    elseif .weaponeqpslot < 1 or .weaponeqpslot > userlist(userindex).currentinventoryslots then
-                        dummyint = 1
-                    ' usa munici�n? (si no la usa, puede ser un arma arrojadiza)
-                    elseif objdata(.weaponeqpobjindex).municion = 1 then
-                        ' la municion esta equipada en un slot valido?
-                        if .municioneqpslot < 1 or .municioneqpslot > userlist(userindex).currentinventoryslots then
-                            dummyint = 1
-                        ' tiene munici�n?
-                        elseif .municioneqpobjindex = 0 then
-                            dummyint = 1
-                        ' son flechas?
-                        elseif objdata(.municioneqpobjindex).objtype <> eobjtype.otflechas then
-                            dummyint = 1
-                        ' tiene suficientes?
-                        elseif .object(.municioneqpslot).amount < 1 then
-                            dummyint = 1
-                        end if
-                    ' es un arma de proyectiles?
-                    elseif objdata(.weaponeqpobjindex).proyectil <> 1 then
-                        dummyint = 2
-                    end if
-                    
-                    if dummyint <> 0 then
-                        if dummyint = 1 then
-                            call writeconsolemsg(userindex, "no tienes municiones.", fonttypenames.fonttype_info)
+                call lanzarproyectil(userindex, x, y)
                             
-                            call desequipar(userindex, .weaponeqpslot)
-                        end if
-                        
-                        call desequipar(userindex, .municioneqpslot)
-                        exit sub
-                    end if
-                end with
-                
-                'quitamos stamina
-                if .stats.minsta >= 10 then
-                    call quitarsta(userindex, randomnumber(1, 10))
-                else
-                    if .genero = egenero.hombre then
-                        call writeconsolemsg(userindex, "est�s muy cansado para luchar.", fonttypenames.fonttype_info)
-                    else
-                        call writeconsolemsg(userindex, "est�s muy cansada para luchar.", fonttypenames.fonttype_info)
-                    end if
-                    exit sub
-                end if
-                
-                call lookattile(userindex, .pos.map, x, y)
-                
-                tu = .flags.targetuser
-                tn = .flags.targetnpc
-                
-                'validate target
-                if tu > 0 then
-                    'only allow to atack if the other one can retaliate (can see us)
-                    if abs(userlist(tu).pos.y - .pos.y) > rango_vision_y then
-                        call writeconsolemsg(userindex, "est�s demasiado lejos para atacar.", fonttypenames.fonttype_warning)
-                        exit sub
-                    end if
-                    
-                    'prevent from hitting self
-                    if tu = userindex then
-                        call writeconsolemsg(userindex, "�no puedes atacarte a vos mismo!", fonttypenames.fonttype_info)
-                        exit sub
-                    end if
-                    
-                    'attack!
-                    atacked = usuarioatacausuario(userindex, tu)
-                    
-                elseif tn > 0 then
-                    'only allow to atack if the other one can retaliate (can see us)
-                    if abs(npclist(tn).pos.y - .pos.y) > rango_vision_y and abs(npclist(tn).pos.x - .pos.x) > rango_vision_x then
-                        call writeconsolemsg(userindex, "est�s demasiado lejos para atacar.", fonttypenames.fonttype_warning)
-                        exit sub
-                    end if
-                    
-                    'is it attackable???
-                    if npclist(tn).attackable <> 0 then
-                        
-                        'attack!
-                        atacked = usuarioatacanpc(userindex, tn)
-                    end if
-                end if
-                
-                ' solo pierde la munici�n si pudo atacar al target, o tiro al aire
-                if atacked then
-                    with .invent
-                        ' tiene equipado arco y flecha?
-                        if objdata(.weaponeqpobjindex).municion = 1 then
-                            dummyint = .municioneqpslot
-                        
-                            
-                            'take 1 arrow away - we do it after hitting, since if ammo slot is 0 it gives a rt9 and kicks players
-                            call quitaruserinvitem(userindex, dummyint, 1)
-                            
-                            if .object(dummyint).amount > 0 then
-                                'quitaruserinvitem unequips the ammo, so we equip it again
-                                .municioneqpslot = dummyint
-                                .municioneqpobjindex = .object(dummyint).objindex
-                                .object(dummyint).equipped = 1
-                            else
-                                .municioneqpslot = 0
-                                .municioneqpobjindex = 0
-                            end if
-                        ' tiene equipado un arma arrojadiza
-                        else
-                            dummyint = .weaponeqpslot
-                            
-                            'take 1 knife away
-                            call quitaruserinvitem(userindex, dummyint, 1)
-                            
-                            if .object(dummyint).amount > 0 then
-                                'quitaruserinvitem unequips the weapon, so we equip it again
-                                .weaponeqpslot = dummyint
-                                .weaponeqpobjindex = .object(dummyint).objindex
-                                .object(dummyint).equipped = 1
-                            else
-                                .weaponeqpslot = 0
-                                .weaponeqpobjindex = 0
-                            end if
-                            
-                        end if
-                        
-                        call updateuserinv(false, userindex, dummyint)
-                    end with
-               end if
-            
             case eskill.magia
                 'check the map allows spells to be casted.
                 if mapinfo(.pos.map).magiasinefecto > 0 then
@@ -3032,8 +3016,8 @@ private sub handleworkleftclick(byval userindex as integer)
                 end if
             
             case eskill.pesca
-                dummyint = .invent.weaponeqpobjindex
-                if dummyint = 0 then exit sub
+                weaponindex = .invent.weaponeqpobjindex
+                if weaponindex = 0 then exit sub
                 
                 'check interval
                 if not intervalopermitetrabajar(userindex) then exit sub
@@ -3046,18 +3030,37 @@ private sub handleworkleftclick(byval userindex as integer)
                 end if
                 
                 if hayagua(.pos.map, x, y) then
-                    select case dummyint
-                        case ca�a_pesca
+                    select case weaponindex
+                        case ca�a_pesca, ca�a_pesca_newbie
                             call dopescar(userindex)
                         
                         case red_pesca
+                            
+                            dummyint = mapdata(.pos.map, x, y).objinfo.objindex
+                
+                            if dummyint = 0 then
+                                call writeconsolemsg(userindex, "no hay un yacimiento de peces donde pescar.", fonttypenames.fonttype_info)
+                                exit sub
+                            end if
+                            
                             if abs(.pos.x - x) + abs(.pos.y - y) > 2 then
                                 call writeconsolemsg(userindex, "est�s demasiado lejos para pescar.", fonttypenames.fonttype_info)
                                 exit sub
                             end if
                             
-                            call dopescarred(userindex)
-                        
+                            if .pos.x = x and .pos.y = y then
+                                call writeconsolemsg(userindex, "no puedes pescar desde all�.", fonttypenames.fonttype_info)
+                                exit sub
+                            end if
+                            
+                            '�hay un arbol normal donde clickeo?
+                            if objdata(dummyint).objtype = eobjtype.otyacimientopez then
+                                call dopescarred(userindex)
+                            else
+                                call writeconsolemsg(userindex, "no hay un yacimiento de peces donde pescar.", fonttypenames.fonttype_info)
+                                exit sub
+                            end if
+                              
                         case else
                             exit sub    'invalid item!
                     end select
@@ -3084,7 +3087,7 @@ private sub handleworkleftclick(byval userindex as integer)
                         'can't steal administrative players
                         if userlist(tu).flags.privilegios and playertype.user then
                             if userlist(tu).flags.muerto = 0 then
-                                 if abs(.pos.x - x) + abs(.pos.y - y) > 1 then
+                                 if abs(.pos.x - x) + abs(.pos.y - y) > 2 then
                                      call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
                                      exit sub
                                  end if
@@ -3115,13 +3118,16 @@ private sub handleworkleftclick(byval userindex as integer)
                 'check interval
                 if not intervalopermitetrabajar(userindex) then exit sub
                 
-                if .invent.weaponeqpobjindex = 0 then
+                weaponindex = .invent.weaponeqpobjindex
+                
+                if weaponindex = 0 then
                     call writeconsolemsg(userindex, "deber�as equiparte el hacha.", fonttypenames.fonttype_info)
                     exit sub
                 end if
                 
-                if .invent.weaponeqpobjindex <> hacha_le�ador and _
-                    .invent.weaponeqpobjindex <> hacha_le�a_elfica then
+                if weaponindex <> hacha_le�ador and _
+                   weaponindex <> hacha_le�a_elfica and _
+                   weaponindex <> hacha_le�ador_newbie then
                     ' podemos llegar ac� si el user equip� el anillo dsp de la u y antes del click
                     exit sub
                 end if
@@ -3140,12 +3146,19 @@ private sub handleworkleftclick(byval userindex as integer)
                         exit sub
                     end if
                     
-                    '�hay un arbol donde clickeo?
-                    if objdata(dummyint).objtype = eobjtype.otarboles and .invent.weaponeqpobjindex = hacha_le�ador then
-                        call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_talar, .pos.x, .pos.y))
-                        call dotalar(userindex)
-                    elseif objdata(dummyint).objtype = eobjtype.otarbolelfico and .invent.weaponeqpobjindex = hacha_le�a_elfica then
-                        if .invent.weaponeqpobjindex = hacha_le�a_elfica then
+                    '�hay un arbol normal donde clickeo?
+                    if objdata(dummyint).objtype = eobjtype.otarboles then
+                        if weaponindex = hacha_le�ador or weaponindex = hacha_le�ador_newbie then
+                            call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_talar, .pos.x, .pos.y))
+                            call dotalar(userindex)
+                        else
+                            call writeconsolemsg(userindex, "no puedes extraer le�a de �ste �rbol con �ste hacha.", fonttypenames.fonttype_info)
+                        end if
+                        
+                    ' arbol elfico?
+                    elseif objdata(dummyint).objtype = eobjtype.otarbolelfico then
+                    
+                        if weaponindex = hacha_le�a_elfica then
                             call senddata(sendtarget.topcarea, userindex, preparemessageplaywave(snd_talar, .pos.x, .pos.y))
                             call dotalar(userindex, true)
                         else
@@ -3159,9 +3172,11 @@ private sub handleworkleftclick(byval userindex as integer)
             case eskill.mineria
                 if not intervalopermitetrabajar(userindex) then exit sub
                                 
-                if .invent.weaponeqpobjindex = 0 then exit sub
+                weaponindex = .invent.weaponeqpobjindex
+                                
+                if weaponindex = 0 then exit sub
                 
-                if .invent.weaponeqpobjindex <> piquete_minero then
+                if weaponindex <> piquete_minero and weaponindex <> piquete_minero_newbie then
                     ' podemos llegar ac� si el user equip� el anillo dsp de la u y antes del click
                     exit sub
                 end if
@@ -3178,7 +3193,6 @@ private sub handleworkleftclick(byval userindex as integer)
                         exit sub
                     end if
                     
-                    dummyint = mapdata(.pos.map, x, y).objinfo.objindex 'check
                     '�hay un yacimiento donde clickeo?
                     if objdata(dummyint).objtype = eobjtype.otyacimiento then
                         call domineria(userindex)
@@ -3293,7 +3307,7 @@ private sub handlecreatenewguild(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -3793,7 +3807,7 @@ private sub handleforumpost(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -3952,7 +3966,7 @@ private sub handleclancodexupdate(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4045,17 +4059,29 @@ private sub handleusercommerceoffer(byval userindex as integer)
                 call writecommercechat(userindex, "no tienes esa cantidad de oro para agregar a la oferta.", fonttypenames.fonttype_talk)
                 exit sub
             end if
+            
+            if amount < 0 then
+                if abs(amount) > .comusu.goldamount then
+                    amount = .comusu.goldamount * (-1)
+                end if
+            end if
         else
             'if modifing a filled offerslot, we already got the objindex, then we don't need to know it
             if slot <> 0 then objindex = .invent.object(slot).objindex
             ' can't offer more than he has
-            if not tieneobjetos(objindex, _
-                totalofferitems(objindex, userindex) + amount, userindex) then
+            if not hasenoughitems(userindex, objindex, _
+                totalofferitems(objindex, userindex) + amount) then
                 
                 call writecommercechat(userindex, "no tienes esa cantidad.", fonttypenames.fonttype_talk)
                 exit sub
             end if
             
+            if amount < 0 then
+                if abs(amount) > .comusu.cant(offerslot) then
+                    amount = .comusu.cant(offerslot) * (-1)
+                end if
+            end if
+        
             if itemnewbie(objindex) then
                 call writecancelofferitem(userindex, offerslot)
                 exit sub
@@ -4077,10 +4103,7 @@ private sub handleusercommerceoffer(byval userindex as integer)
             end if
         end if
         
-        
-                
         call agregaroferta(userindex, offerslot, objindex, amount, slot = flagoro)
-        
         call enviaroferta(tuser, offerslot)
     end with
 end sub
@@ -4104,7 +4127,7 @@ private sub handleguildacceptpeace(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4160,7 +4183,7 @@ private sub handleguildrejectalliance(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4216,7 +4239,7 @@ private sub handleguildrejectpeace(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4272,7 +4295,7 @@ private sub handleguildacceptalliance(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4328,7 +4351,7 @@ private sub handleguildofferpeace(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4382,7 +4405,7 @@ private sub handleguildofferalliance(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4436,7 +4459,7 @@ private sub handleguildalliancedetails(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4491,7 +4514,7 @@ private sub handleguildpeacedetails(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4546,7 +4569,7 @@ private sub handleguildrequestjoinerinfo(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4634,7 +4657,7 @@ private sub handleguilddeclarewar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4693,7 +4716,7 @@ private sub handleguildnewwebsite(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4736,7 +4759,7 @@ private sub handleguildacceptnewmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4797,7 +4820,7 @@ private sub handleguildrejectnewmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4859,7 +4882,7 @@ private sub handleguildkickmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4914,7 +4937,7 @@ private sub handleguildupdatenews(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -4957,7 +4980,7 @@ private sub handleguildmemberinfo(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -5025,7 +5048,7 @@ private sub handleguildrequestmembership(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -5079,7 +5102,7 @@ private sub handleguildrequestdetails(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -5372,18 +5395,18 @@ private sub handlereleasepet(byval userindex as integer)
         
         'validate target npc
         if .flags.targetnpc = 0 then
-            call writeconsolemsg(userindex, "primero tienes que seleccionar un personaje, haz click izquierdo sobre �l.", fonttypenames.fonttype_info)
+            call writeconsolemsg(userindex, "primero tienes que seleccionar una mascota, haz click izquierdo sobre ella.", fonttypenames.fonttype_info)
             exit sub
         end if
+        
+        'make usre it's the user's pet
+        if npclist(.flags.targetnpc).maestrouser <> userindex then exit sub
         
         'make sure it's close enough
         if distancia(npclist(.flags.targetnpc).pos, .pos) > 10 then
             call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
             exit sub
         end if
-        
-        'make usre it's the user's pet
-        if npclist(.flags.targetnpc).maestrouser <> userindex then exit sub
         
         'do it
         call quitarpet(userindex, .flags.targetnpc)
@@ -5603,6 +5626,7 @@ private sub handleconsultation(byval userindex as string)
 'last modification: 01/05/2010
 'habilita/deshabilita el modo consulta.
 '01/05/2010: zama - agrego validaciones.
+'16/09/2010: zama - no se hace visible en los clientes si estaba navegando (porque ya lo estaba).
 '***************************************************
     
     dim userconsulta as integer
@@ -5658,7 +5682,9 @@ private sub handleconsultation(byval userindex as string)
                     .counters.tiempooculto = 0
                     .counters.invisibilidad = 0
                     
-                    call usuarios.setinvisible(userconsulta, userlist(userconsulta).char.charindex, false)
+                    if userlist(userconsulta).flags.navegando = 0 then
+                        call usuarios.setinvisible(userconsulta, userlist(userconsulta).char.charindex, false)
+                    end if
                 end if
             end with
         end if
@@ -6283,7 +6309,7 @@ private sub handleguildmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6340,7 +6366,7 @@ private sub handlepartymessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6462,7 +6488,7 @@ private sub handlecouncilmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6518,7 +6544,7 @@ private sub handlerolemasterrequest(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6594,7 +6620,7 @@ private sub handlebugreport(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         dim n as integer
         
         call buffer.copybuffer(.incomingdata)
@@ -6649,7 +6675,7 @@ private sub handlechangedescription(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6705,7 +6731,7 @@ private sub handleguildvote(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6778,7 +6804,7 @@ private sub handlepunishments(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -6864,7 +6890,7 @@ private sub handlechangepassword(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         dim oldpass as string
@@ -6921,7 +6947,7 @@ private sub handlegamble(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
-'
+'10/07/2010: zama - now normal npcs don't answer if asked to gamble.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -6933,24 +6959,46 @@ private sub handlegamble(byval userindex as integer)
         call .incomingdata.readbyte
         
         dim amount as integer
+        dim typenpc as enpctype
         
         amount = .incomingdata.readinteger()
         
+        ' dead?
         if .flags.muerto = 1 then
             call writeconsolemsg(userindex, "��est�s muerto!!", fonttypenames.fonttype_info)
+        
+        'validate target npc
         elseif .flags.targetnpc = 0 then
-            'validate target npc
             call writeconsolemsg(userindex, "primero tienes que seleccionar un personaje, haz click izquierdo sobre �l.", fonttypenames.fonttype_info)
+        
+        ' validate distance
         elseif distancia(npclist(.flags.targetnpc).pos, .pos) > 10 then
             call writeconsolemsg(userindex, "est�s demasiado lejos.", fonttypenames.fonttype_info)
+        
+        ' validate npctype
         elseif npclist(.flags.targetnpc).npctype <> enpctype.timbero then
-            call writechatoverhead(userindex, "no tengo ning�n inter�s en apostar.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+            
+            
+            dim targetnpctype as enpctype
+            targetnpctype = npclist(.flags.targetnpc).npctype
+            
+            ' normal npcs don't speak
+            if targetnpctype <> enpctype.comun and targetnpctype <> enpctype.dragon and targetnpctype <> enpctype.pretoriano then
+                call writechatoverhead(userindex, "no tengo ning�n inter�s en apostar.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+            end if
+            
+        ' validate amount
         elseif amount < 1 then
             call writechatoverhead(userindex, "el m�nimo de apuesta es 1 moneda.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+        
+        ' validate amount
         elseif amount > 5000 then
             call writechatoverhead(userindex, "el m�ximo de apuesta es 5000 monedas.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+        
+        ' validate user gold
         elseif .stats.gld < amount then
             call writechatoverhead(userindex, "no tienes esa cantidad.", npclist(.flags.targetnpc).char.charindex, vbwhite)
+        
         else
             if randomnumber(1, 100) <= 47 then
                 .stats.gld = .stats.gld + amount
@@ -7067,8 +7115,9 @@ end sub
 private sub handleleavefaction(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 09/28/2010
+' 09/28/2010 c4b3z0n - ahora la respuesta de los npcs sino perteneces a ninguna facci�n solo la hacen el rey o el demonio
+' 05/17/06 - maraxus
 '***************************************************
 
     dim talktoking as boolean
@@ -7137,9 +7186,14 @@ private sub handleleavefaction(byval userindex as integer)
         else
         
             ' si le hablaba al rey o demonio, le repsonden ellos
-            if npcindex > 0 then
-                call writechatoverhead(userindex, "�no perteneces a ninguna facci�n!", _
+            'corregido, solo si son en efecto el rey o el demonio, no cualquier npc (c4b3z0n)
+            if (talktodemon and criminal(userindex)) or (talktoking and not criminal(userindex)) then 'si se pueden unir a la facci�n (status), son invitados
+                call writechatoverhead(userindex, "no perteneces a nuestra facci�n. si deseas unirte, di /enlistar", _
                                        npclist(npcindex).char.charindex, vbwhite)
+            elseif (talktodemon and not criminal(userindex)) then
+                call writechatoverhead(userindex, "���sal de aqu� buf�n!!!", npclist(npcindex).char.charindex, vbwhite)
+            elseif (talktoking and criminal(userindex)) then
+                call writechatoverhead(userindex, "���sal de aqu� maldito criminal!!!", npclist(npcindex).char.charindex, vbwhite)
             else
                 call writeconsolemsg(userindex, "�no perteneces a ninguna facci�n!", fonttypenames.fonttype_fight)
             end if
@@ -7214,8 +7268,8 @@ end sub
 private sub handledenounce(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 14/11/2010
+'14/11/2010: zama - now denounces can be desactivated.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -7225,13 +7279,14 @@ private sub handledenounce(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
         call buffer.readbyte
         
         dim text as string
+        dim msg as string
         
         text = buffer.readasciistring()
         
@@ -7239,7 +7294,13 @@ on error goto errhandler
             'analize chat...
             call statistics.parsechat(text)
             
-            call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg(lcase$(.name) & " denuncia: " & text, fonttypenames.fonttype_guildmsg))
+            msg = lcase$(.name) & " denuncia: " & text
+            
+            call senddata(sendtarget.toadmins, 0, _
+                preparemessageconsolemsg(msg, fonttypenames.fonttype_guildmsg), true)
+            
+            call denuncias.push(msg, false)
+            
             call writeconsolemsg(userindex, "denuncia enviada, espere..", fonttypenames.fonttype_info)
         end if
         
@@ -7365,7 +7426,7 @@ private sub handlepartykick(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7426,7 +7487,7 @@ private sub handlepartysetleader(byval userindex as integer)
 'on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7492,7 +7553,7 @@ private sub handlepartyacceptmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7570,7 +7631,7 @@ private sub handleguildmemberlist(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7639,7 +7700,7 @@ private sub handlegmmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7707,8 +7768,8 @@ end sub
 private sub handleonlineroyalarmy(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 28/05/2010
+'28/05/2010: zama - ahora solo dioses pueden ver otros dioses online.
 '***************************************************
     with userlist(userindex)
         'remove packet id
@@ -7718,12 +7779,19 @@ private sub handleonlineroyalarmy(byval userindex as integer)
     
         dim i as long
         dim list as string
+        dim priv as playertype
 
+        priv = playertype.user or playertype.consejero or playertype.semidios
+        
+        ' solo dioses pueden ver otros dioses online
+        if .flags.privilegios and (playertype.dios or playertype.admin) then
+            priv = priv or playertype.dios or playertype.admin
+        end if
+     
         for i = 1 to lastuser
             if userlist(i).connid <> -1 then
                 if userlist(i).faccion.armadareal = 1 then
-                    if userlist(i).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) or _
-                      .flags.privilegios and (playertype.dios or playertype.admin) then
+                    if userlist(i).flags.privilegios and priv then
                         list = list & userlist(i).name & ", "
                     end if
                 end if
@@ -7746,8 +7814,8 @@ end sub
 private sub handleonlinechaoslegion(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 28/05/2010
+'28/05/2010: zama - ahora solo dioses pueden ver otros dioses online.
 '***************************************************
     with userlist(userindex)
         'remove packet id
@@ -7757,12 +7825,19 @@ private sub handleonlinechaoslegion(byval userindex as integer)
     
         dim i as long
         dim list as string
+        dim priv as playertype
 
+        priv = playertype.user or playertype.consejero or playertype.semidios
+        
+        ' solo dioses pueden ver otros dioses online
+        if .flags.privilegios and (playertype.dios or playertype.admin) then
+            priv = priv or playertype.dios or playertype.admin
+        end if
+     
         for i = 1 to lastuser
             if userlist(i).connid <> -1 then
                 if userlist(i).faccion.fuerzascaos = 1 then
-                    if userlist(i).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) or _
-                      .flags.privilegios and (playertype.dios or playertype.admin) then
+                    if userlist(i).flags.privilegios and priv then
                         list = list & userlist(i).name & ", "
                     end if
                 end if
@@ -7796,7 +7871,7 @@ private sub handlegonearby(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7883,7 +7958,7 @@ private sub handlecomment(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7944,8 +8019,9 @@ end sub
 private sub handlewhere(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 18/11/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
+'18/11/2010: zama - obtengo los privs del charfile antes de mostrar la posicion de un usuario offline.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -7955,7 +8031,7 @@ private sub handlewhere(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -7963,20 +8039,39 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
+        dim mipos as string
         
         username = buffer.readasciistring()
         
         if not .flags.privilegios and playertype.user then
+            
             tuser = nameindex(username)
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
+                
+                if fileexist(charpath & username & ".chr", vbnormal) then
+                
+                    dim charprivs as playertype
+                    charprivs = getcharprivs(username)
+                    
+                    if (charprivs and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 or ((charprivs and (playertype.dios or playertype.admin) <> 0) and (.flags.privilegios and (playertype.dios or playertype.admin)) <> 0) then
+                        mipos = getvar(charpath & username & ".chr", "init", "position")
+                        call writeconsolemsg(userindex, "ubicaci�n  " & username & " (offline): " & readfield(1, mipos, 45) & ", " & readfield(2, mipos, 45) & ", " & readfield(3, mipos, 45) & ".", fonttypenames.fonttype_info)
+                    end if
+                else
+                    if not (esdios(username) or esadmin(username)) then
+                        call writeconsolemsg(userindex, "usuario inexistente.", fonttypenames.fonttype_info)
+                    elseif .flags.privilegios and (playertype.dios or playertype.admin) then
+                        call writeconsolemsg(userindex, "usuario inexistente.", fonttypenames.fonttype_info)
+                    end if
+                end if
             else
                 if (userlist(tuser).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 or ((userlist(tuser).flags.privilegios and (playertype.dios or playertype.admin) <> 0) and (.flags.privilegios and (playertype.dios or playertype.admin)) <> 0) then
                     call writeconsolemsg(userindex, "ubicaci�n  " & username & ": " & userlist(tuser).pos.map & ", " & userlist(tuser).pos.x & ", " & userlist(tuser).pos.y & ".", fonttypenames.fonttype_info)
-                    call loggm(.name, "/donde " & username)
                 end if
             end if
         end if
+        
+        call loggm(.name, "/donde " & username)
         
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
@@ -8150,7 +8245,7 @@ private sub handlewarpchar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8178,12 +8273,24 @@ on error goto errhandler
                 end if
             
                 if tuser <= 0 then
-                    call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
-                elseif inmapbounds(map, x, y) then
-                    call findlegalpos(tuser, map, x, y)
-                    call warpuserchar(tuser, map, x, y, true, true)
-                    call writeconsolemsg(userindex, userlist(tuser).name & " transportado.", fonttypenames.fonttype_info)
-                    call loggm(.name, "transport� a " & userlist(tuser).name & " hacia " & "mapa" & map & " x:" & x & " y:" & y)
+                    if not (esdios(username) or esadmin(username)) then
+                        call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_info)
+                    else
+                        call writeconsolemsg(userindex, "no puedes transportar dioses o admins.", fonttypenames.fonttype_info)
+                    end if
+                    
+                elseif not ((userlist(tuser).flags.privilegios and playertype.dios) <> 0 or _
+                            (userlist(tuser).flags.privilegios and playertype.admin) <> 0) or _
+                           tuser = userindex then
+                            
+                    if inmapbounds(map, x, y) then
+                        call findlegalpos(tuser, map, x, y)
+                        call warpuserchar(tuser, map, x, y, true, true)
+                        call writeconsolemsg(userindex, userlist(tuser).name & " transportado.", fonttypenames.fonttype_info)
+                        call loggm(.name, "transport� a " & userlist(tuser).name & " hacia " & "mapa" & map & " x:" & x & " y:" & y)
+                    end if
+                else
+                    call writeconsolemsg(userindex, "no puedes transportar dioses o admins.", fonttypenames.fonttype_info)
                 end if
             end if
         end if
@@ -8223,7 +8330,7 @@ private sub handlesilence(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8337,6 +8444,7 @@ private sub handleitemupgrade(byval userindex as integer)
         if itemindex <= 0 then exit sub
         if not tieneobjetos(itemindex, 1, userindex) then exit sub
         
+        if not intervalopermitetrabajar(userindex) then exit sub
         call doupgrade(userindex, itemindex)
     end with
 end sub
@@ -8360,7 +8468,7 @@ private sub handlesosremove(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8407,7 +8515,7 @@ private sub handlegotochar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8548,8 +8656,8 @@ end sub
 private sub handleworking(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 07/10/2010
+'07/10/2010: zama - adaptado para que funcione mas de un centinela en paralelo.
 '***************************************************
     dim i as long
     dim users as string
@@ -8565,7 +8673,7 @@ private sub handleworking(byval userindex as integer)
                 users = users & ", " & userlist(i).name
                 
                 ' display the user being checked by the centinel
-                if modcentinela.centinela.revisandouserindex = i then _
+                if userlist(i).flags.centinelaindex <> 0 then _
                     users = users & " (*)"
             end if
         next i
@@ -8622,8 +8730,8 @@ end sub
 private sub handlejail(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 05/17/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 6 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -8633,7 +8741,7 @@ private sub handlejail(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8661,7 +8769,11 @@ on error goto errhandler
                 tuser = nameindex(username)
                 
                 if tuser <= 0 then
-                    call writeconsolemsg(userindex, "el usuario no est� online.", fonttypenames.fonttype_info)
+                    if (esdios(username) or esadmin(username)) then
+                        call writeconsolemsg(userindex, "no puedes encarcelar a administradores.", fonttypenames.fonttype_info)
+                    else
+                        call writeconsolemsg(userindex, "el usuario no est� online.", fonttypenames.fonttype_info)
+                    end if
                 else
                     if not userlist(tuser).flags.privilegios and playertype.user then
                         call writeconsolemsg(userindex, "no puedes encarcelar a administradores.", fonttypenames.fonttype_info)
@@ -8767,7 +8879,7 @@ private sub handlewarnuser(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8833,9 +8945,10 @@ end sub
 private sub handleeditchar(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 11/06/2009
+'last modification: 18/09/2010
 '02/03/2009: zama - cuando editas nivel, chequea si el pj puede permanecer en clan faccionario
 '11/06/2009: zama - todos los comandos se pueden usar aunque el pj este offline
+'18/09/2010: zama - ahora se puede editar la vida del propio pj (cualquier rm o dios).
 '***************************************************
     if userlist(userindex).incomingdata.length < 8 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -8845,7 +8958,7 @@ private sub handleeditchar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -8879,19 +8992,23 @@ on error goto errhandler
         if .flags.privilegios and playertype.rolemaster then
             select case .flags.privilegios and (playertype.dios or playertype.semidios or playertype.consejero)
                 case playertype.consejero
-                    ' los rms consejeros s�lo se pueden editar su head, body y level
+                    ' los rms consejeros s�lo se pueden editar su head, body, level y vida
                     valido = tuser = userindex and _
-                            (opcion = eeditoptions.eo_body or opcion = eeditoptions.eo_head or opcion = eeditoptions.eo_level)
+                            (opcion = eeditoptions.eo_body or _
+                             opcion = eeditoptions.eo_head or _
+                             opcion = eeditoptions.eo_level or _
+                             opcion = eeditoptions.eo_vida)
                 
                 case playertype.semidios
-                    ' los rms s�lo se pueden editar su level y el head y body de cualquiera
-                    valido = (opcion = eeditoptions.eo_level and tuser = userindex) _
-                            or opcion = eeditoptions.eo_body or opcion = eeditoptions.eo_head
-                
+                    ' los rms s�lo se pueden editar su level o vida y el head y body de cualquiera
+                    valido = ((opcion = eeditoptions.eo_level or opcion = eeditoptions.eo_vida) and tuser = userindex) or _
+                              opcion = eeditoptions.eo_body or _
+                              opcion = eeditoptions.eo_head
+                    
                 case playertype.dios
                     ' los drms pueden aplicar los siguientes comandos sobre cualquiera
-                    ' pero si quiere modificar el level s�lo lo puede hacer sobre s� mismo
-                    valido = (opcion = eeditoptions.eo_level and tuser = userindex) or _
+                    ' pero si quiere modificar el level o vida s�lo lo puede hacer sobre s� mismo
+                    valido = ((opcion = eeditoptions.eo_level or opcion = eeditoptions.eo_vida) and tuser = userindex) or _
                             opcion = eeditoptions.eo_body or _
                             opcion = eeditoptions.eo_head or _
                             opcion = eeditoptions.eo_citicenskilled or _
@@ -8900,9 +9017,21 @@ on error goto errhandler
                             opcion = eeditoptions.eo_skills or _
                             opcion = eeditoptions.eo_addgold
             end select
+        
+        'si no es rm debe ser dios para poder usar este comando
+        elseif .flags.privilegios and (playertype.admin or playertype.dios) then
             
-        elseif .flags.privilegios and (playertype.admin or playertype.dios) then   'si no es rm debe ser dios para poder usar este comando
-            valido = true
+            if opcion = eeditoptions.eo_vida then
+                '  por ahora dejo para que los dioses no puedan editar la vida de otros
+                valido = (tuser = userindex)
+            else
+                valido = true
+            end if
+            
+        elseif .flags.privespecial then
+            valido = (opcion = eeditoptions.eo_citicenskilled) or _
+                     (opcion = eeditoptions.eo_criminalskilled)
+            
         end if
 
         if valido then
@@ -9193,6 +9322,48 @@ on error goto errhandler
                         
                         ' log it
                         commandstring = commandstring & "agregar "
+                    
+                    case eeditoptions.eo_vida
+                    
+                        if val(arg1) > max_vida_edit then
+                            arg1 = cstr(max_vida_edit)
+                            call writeconsolemsg(userindex, "no puedes tener vida superior a " & max_vida_edit & ".", fonttype_info)
+                        end if
+                        
+                        ' no valido si esta offline, porque solo se puede editar a si mismo
+                        userlist(tuser).stats.maxhp = val(arg1)
+                        userlist(tuser).stats.minhp = val(arg1)
+                        
+                        call writeupdateuserstats(tuser)
+                        
+                        ' log it
+                        commandstring = commandstring & "vida "
+                        
+                    case eeditoptions.eo_poss
+                    
+                        dim map as integer
+                        dim x as integer
+                        dim y as integer
+                        
+                        map = val(readfield(1, arg1, 45))
+                        x = val(readfield(2, arg1, 45))
+                        y = val(readfield(3, arg1, 45))
+                        
+                        if inmapbounds(map, x, y) then
+                            
+                            if tuser <= 0 then
+                                call writevar(usercharpath, "init", "position", map & "-" & x & "-" & y)
+                                call writeconsolemsg(userindex, "charfile alterado: " & username, fonttypenames.fonttype_info)
+                            else
+                                call warpuserchar(tuser, map, x, y, true, true)
+                                call writeconsolemsg(userindex, "usuario teletransportado: " & username, fonttypenames.fonttype_info)
+                            end if
+                        else
+                            call writeconsolemsg(userindex, "posici�n inv�lida", fonttype_info)
+                        end if
+                        
+                        ' log it
+                        commandstring = commandstring & "poss "
                         
                     case else
                         call writeconsolemsg(userindex, "comando no permitido.", fonttypenames.fonttype_info)
@@ -9205,8 +9376,10 @@ on error goto errhandler
                 
             end if
         end if
+        
         'if we got here then packet is complete, copy data back to original queue
         call .incomingdata.copybuffer(buffer)
+        
     end with
 
 errhandler:
@@ -9241,7 +9414,7 @@ private sub handlerequestcharinfo(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9294,8 +9467,8 @@ end sub
 private sub handlerequestcharstats(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9305,7 +9478,7 @@ private sub handlerequestcharstats(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9313,19 +9486,35 @@ on error goto errhandler
         
         dim username as string
         dim tuser as integer
-        username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) <> 0 then
+        dim userisadmin as boolean
+        dim otheruserisadmin as boolean
+        
+        username = buffer.readasciistring()
+         
+        userisadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
+        
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and ((.flags.privilegios and playertype.semidios) <> 0 or userisadmin) then
             call loggm(.name, "/stat " & username)
             
             tuser = nameindex(username)
             
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_info)
-                
-                call senduserministatstxtfromchar(userindex, username)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_info)
+                    
+                    call senduserministatstxtfromchar(userindex, username)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver los stats de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             else
-                call senduserministatstxt(userindex, tuser)
+                if userisadmin or not otheruserisadmin then
+                    call senduserministatstxt(userindex, tuser)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver los stats de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -9353,8 +9542,8 @@ end sub
 private sub handlerequestchargold(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9364,7 +9553,7 @@ private sub handlerequestchargold(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9373,18 +9562,37 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         
-        username = buffer.readasciistring()
-        tuser = nameindex(username)
+        dim userisadmin as boolean
+        dim otheruserisadmin as boolean
         
-        if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
+        username = buffer.readasciistring()
+        
+        userisadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
+        
+        if (.flags.privilegios and playertype.semidios) or userisadmin then
+            
             call loggm(.name, "/bal " & username)
             
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_talk)
-                
-                call senduserorotxtfromchar(userindex, username)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_talk)
+                    
+                    call senduserorotxtfromchar(userindex, username)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver el oro de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             else
-                call writeconsolemsg(userindex, "el usuario " & username & " tiene " & userlist(tuser).stats.banco & " en el banco.", fonttypenames.fonttype_talk)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "el usuario " & username & " tiene " & userlist(tuser).stats.banco & " en el banco.", fonttypenames.fonttype_talk)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver el oro de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -9412,8 +9620,8 @@ end sub
 private sub handlerequestcharinventory(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9423,7 +9631,7 @@ private sub handlerequestcharinventory(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9432,19 +9640,36 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         
-        username = buffer.readasciistring()
-        tuser = nameindex(username)
+        dim userisadmin as boolean
+        dim otheruserisadmin as boolean
         
+        username = buffer.readasciistring()
+        
+        userisadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
         
         if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
             call loggm(.name, "/inv " & username)
             
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "usuario offline. leyendo del charfile...", fonttypenames.fonttype_talk)
-                
-                call senduserinvtxtfromchar(userindex, username)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "usuario offline. leyendo del charfile...", fonttypenames.fonttype_talk)
+                    
+                    call senduserinvtxtfromchar(userindex, username)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver el inventario de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             else
-                call senduserinvtxt(userindex, tuser)
+                if userisadmin or not otheruserisadmin then
+                    call senduserinvtxt(userindex, tuser)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver el inventario de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -9472,8 +9697,8 @@ end sub
 private sub handlerequestcharbank(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9483,7 +9708,7 @@ private sub handlerequestcharbank(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9492,19 +9717,36 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         
+        dim userisadmin as boolean
+        dim otheruserisadmin as boolean
+
         username = buffer.readasciistring()
-        tuser = nameindex(username)
         
+        userisadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
         
-        if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
+        if (.flags.privilegios and playertype.semidios) <> 0 or userisadmin then
             call loggm(.name, "/bov " & username)
             
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
+            tuser = nameindex(username)
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_talk)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "usuario offline. leyendo charfile... ", fonttypenames.fonttype_talk)
                 
-                call senduserbovedatxtfromchar(userindex, username)
+                    call senduserbovedatxtfromchar(userindex, username)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver la b�veda de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             else
-                call senduserbovedatxt(userindex, tuser)
+                if userisadmin or not otheruserisadmin then
+                    call senduserbovedatxt(userindex, tuser)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver la b�veda de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -9543,7 +9785,7 @@ private sub handlerequestcharskills(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9614,7 +9856,7 @@ private sub handlerevivechar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9643,7 +9885,7 @@ on error goto errhandler
                         .flags.muerto = 0
                         
                         if .flags.navegando = 1 then
-                            call toogleboatbody(userindex)
+                            call toggleboatbody(tuser)
                         else
                             call darcuerpodesnudo(tuser)
                         end if
@@ -9772,6 +10014,7 @@ private sub handleonlinemap(byval userindex as integer)
         if len(list) > 2 then list = left$(list, len(list) - 2)
         
         call writeconsolemsg(userindex, "usuarios en el mapa: " & list, fonttypenames.fonttype_info)
+        call loggm(.name, "/onlinemap " & map)
     end with
 end sub
 
@@ -9783,8 +10026,8 @@ end sub
 private sub handleforgive(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9794,7 +10037,7 @@ private sub handleforgive(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9813,7 +10056,10 @@ on error goto errhandler
                     call volverciudadano(tuser)
                 else
                     call loggm(.name, "intento perdonar un personaje de nivel avanzado.")
-                    call writeconsolemsg(userindex, "s�lo se permite perdonar newbies.", fonttypenames.fonttype_info)
+                    
+                    if not (esdios(username) or esadmin(username)) then
+                        call writeconsolemsg(userindex, "s�lo se permite perdonar newbies.", fonttypenames.fonttype_info)
+                    end if
                 end if
             end if
         end if
@@ -9842,8 +10088,8 @@ end sub
 private sub handlekick(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9853,7 +10099,7 @@ private sub handlekick(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9862,16 +10108,22 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         dim rank as integer
+        dim isadmin as boolean
         
         rank = playertype.admin or playertype.dios or playertype.semidios or playertype.consejero
         
         username = buffer.readasciistring()
+        isadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
         
-        if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
+        if (.flags.privilegios and playertype.semidios) or isadmin then
             tuser = nameindex(username)
             
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "el usuario no est� online.", fonttypenames.fonttype_info)
+                if not (esdios(username) or esadmin(username)) or isadmin then
+                    call writeconsolemsg(userindex, "el usuario no est� online.", fonttypenames.fonttype_info)
+                else
+                    call writeconsolemsg(userindex, "no puedes echar a alguien con jerarqu�a mayor a la tuya.", fonttypenames.fonttype_info)
+                end if
             else
                 if (userlist(tuser).flags.privilegios and rank) > (.flags.privilegios and rank) then
                     call writeconsolemsg(userindex, "no puedes echar a alguien con jerarqu�a mayor a la tuya.", fonttypenames.fonttype_info)
@@ -9907,8 +10159,8 @@ end sub
 private sub handleexecute(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 07/06/2010
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -9918,7 +10170,7 @@ private sub handleexecute(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -9941,7 +10193,11 @@ on error goto errhandler
                     call loggm(.name, " ejecuto a " & username)
                 end if
             else
-                call writeconsolemsg(userindex, "no est� online.", fonttypenames.fonttype_info)
+                if not (esdios(username) or esadmin(username)) then
+                    call writeconsolemsg(userindex, "no est� online.", fonttypenames.fonttype_info)
+                else
+                    call writeconsolemsg(userindex, "��est�s loco?? ��c�mo vas a pi�atear un gm?? :@", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -9980,7 +10236,7 @@ private sub handlebanchar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10031,7 +10287,7 @@ private sub handleunbanchar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10130,7 +10386,7 @@ private sub handlesummonchar(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10147,7 +10403,12 @@ on error goto errhandler
             tuser = nameindex(username)
             
             if tuser <= 0 then
-                call writeconsolemsg(userindex, "el jugador no est� online.", fonttypenames.fonttype_info)
+                if esdios(username) or esadmin(username) then
+                    call writeconsolemsg(userindex, "no puedes invocar a dioses y admins.", fonttypenames.fonttype_info)
+                else
+                    call writeconsolemsg(userindex, "el jugador no est� online.", fonttypenames.fonttype_info)
+                end if
+                
             else
                 if (.flags.privilegios and (playertype.dios or playertype.admin)) <> 0 or _
                   (userlist(tuser).flags.privilegios and (playertype.consejero or playertype.user)) <> 0 then
@@ -10284,8 +10545,8 @@ end sub
 private sub handleservermessage(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 12/29/06
-'
+'last modification: 28/05/2010
+'28/05/2010: zama - ahora no dice el nombre del gm que lo dice.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -10295,7 +10556,7 @@ private sub handleservermessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10307,10 +10568,64 @@ on error goto errhandler
         if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
             if lenb(message) <> 0 then
                 call loggm(.name, "mensaje broadcast:" & message)
-                call senddata(sendtarget.toall, 0, preparemessageconsolemsg(userlist(userindex).name & "> " & message, fonttypenames.fonttype_talk))
+                call senddata(sendtarget.toall, 0, preparemessageconsolemsg(message, fonttypenames.fonttype_talk))
                 ''''''''''''''''solo para el testeo'''''''
                 ''''''''''se usa para comunicarse con el server'''''''''''
-                frmmain.txtchat.text = frmmain.txtchat.text & vbnewline & userlist(userindex).name & " > " & message
+                'frmmain.txtchat.text = frmmain.txtchat.text & vbnewline & userlist(userindex).name & " > " & message
+            end if
+        end if
+        
+        'if we got here then packet is complete, copy data back to original queue
+        call .incomingdata.copybuffer(buffer)
+    end with
+
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+    
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the "mapmessage" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handlemapmessage(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'***************************************************
+    if userlist(userindex).incomingdata.length < 3 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+    with userlist(userindex)
+        'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
+        call buffer.copybuffer(.incomingdata)
+        
+        'remove packet id
+        call buffer.readbyte
+        
+        dim message as string
+        message = buffer.readasciistring()
+        
+        if (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) then
+            if lenb(message) <> 0 then
+                
+                dim mapa as integer
+                mapa = .pos.map
+                
+                call loggm(.name, "mensaje a mapa " & mapa & ":" & message)
+                call senddata(sendtarget.tomap, mapa, preparemessageconsolemsg(message, fonttypenames.fonttype_talk))
             end if
         end if
         
@@ -10338,8 +10653,9 @@ end sub
 private sub handlenicktoip(byval userindex as integer)
 '***************************************************
 'author: nicolas matias gonzalez (nigo)
-'last modification: 24/07/07
-'pablo (toxicwaste): agrego para uqe el /nick2ip tambien diga los nicks en esa ip por pedido de la dgm.
+'last modification: 07/06/2010
+'pablo (toxicwaste): agrego para que el /nick2ip tambien diga los nicks en esa ip por pedido de la dgm.
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -10349,7 +10665,7 @@ private sub handlenicktoip(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10358,14 +10674,16 @@ on error goto errhandler
         dim username as string
         dim tuser as integer
         dim priv as playertype
+        dim isadmin as boolean
         
         username = buffer.readasciistring()
         
         if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios)) <> 0 then
             tuser = nameindex(username)
             call loggm(.name, "nick2ip solicito la ip de " & username)
-
-            if .flags.privilegios and (playertype.dios or playertype.admin) then
+            
+            isadmin = (.flags.privilegios and (playertype.dios or playertype.admin)) <> 0
+            if isadmin then
                 priv = playertype.user or playertype.consejero or playertype.semidios or playertype.dios or playertype.admin
             else
                 priv = playertype.user
@@ -10391,7 +10709,9 @@ on error goto errhandler
                     call writeconsolemsg(userindex, "los personajes con ip " & ip & " son: " & lista, fonttypenames.fonttype_info)
                 end if
             else
-                call writeconsolemsg(userindex, "no hay ning�n personaje con ese nick.", fonttypenames.fonttype_info)
+                if not (esdios(username) or esadmin(username)) or isadmin then
+                    call writeconsolemsg(userindex, "no hay ning�n personaje con ese nick.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -10485,7 +10805,7 @@ private sub handleguildonlinemembers(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10669,6 +10989,60 @@ private sub handleraintoggle(byval userindex as integer)
 end sub
 
 ''
+' handles the "enabledenounces" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handleenabledenounces(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'enables/disables
+'***************************************************
+
+    with userlist(userindex)
+    
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        if not esgm(userindex) then exit sub
+        
+        dim activado as boolean
+        dim msg as string
+        
+        activado = not .flags.senddenounces
+        .flags.senddenounces = activado
+        
+        msg = "denuncias por consola " & iif(activado, "ativadas", "desactivadas") & "."
+        
+        call loggm(.name, msg)
+        
+        call writeconsolemsg(userindex, msg, fonttypenames.fonttype_info)
+    end with
+
+end sub
+
+''
+' handles the "showdenounceslist" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handleshowdenounceslist(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'
+'***************************************************
+    with userlist(userindex)
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        if .flags.privilegios and playertype.user then exit sub
+        call writeshowdenounces(userindex)
+    end with
+end sub
+
+''
 ' handles the "setchardescription" message.
 '
 ' @param    userindex the index of the user sending the message.
@@ -10687,7 +11061,7 @@ private sub handlesetchardescription(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10831,7 +11205,7 @@ private sub handleroyalarmymessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10840,8 +11214,8 @@ on error goto errhandler
         dim message as string
         message = buffer.readasciistring()
         
-        'solo dioses, admins y rms
-        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.rolemaster) then
+        'solo dioses, admins, semis y rms
+        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.semidios or playertype.rolemaster) then
             call senddata(sendtarget.torealyrms, 0, preparemessageconsolemsg("ej�rcito real> " & message, fonttypenames.fonttype_talk))
         end if
         
@@ -10880,7 +11254,7 @@ private sub handlechaoslegionmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10889,8 +11263,8 @@ on error goto errhandler
         dim message as string
         message = buffer.readasciistring()
         
-        'solo dioses, admins y rms
-        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.rolemaster) then
+        'solo dioses, admins, semis y rms
+        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.semidios or playertype.rolemaster) then
             call senddata(sendtarget.tocaosyrms, 0, preparemessageconsolemsg("fuerzas del caos> " & message, fonttypenames.fonttype_talk))
         end if
         
@@ -10929,7 +11303,7 @@ private sub handlecitizenmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -10938,8 +11312,8 @@ on error goto errhandler
         dim message as string
         message = buffer.readasciistring()
         
-        'solo dioses, admins y rms
-        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.rolemaster) then
+        'solo dioses, admins, semis y rms
+        if .flags.privilegios and (playertype.dios or playertype.admin or playertype.semidios or playertype.rolemaster) then
             call senddata(sendtarget.tociudadanosyrms, 0, preparemessageconsolemsg("ciudadanos> " & message, fonttypenames.fonttype_talk))
         end if
         
@@ -10978,7 +11352,7 @@ private sub handlecriminalmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11027,7 +11401,7 @@ private sub handletalkasnpc(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11119,7 +11493,7 @@ private sub handleacceptroyalcouncilmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11181,7 +11555,7 @@ private sub handleacceptchaoscouncilmember(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11279,7 +11653,7 @@ private sub handlemakedumb(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11335,7 +11709,7 @@ private sub handlemakedumbnomore(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11413,7 +11787,7 @@ private sub handlecouncilkick(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11610,7 +11984,7 @@ private sub handleguildban(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11700,7 +12074,7 @@ private sub handlebanip(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11828,13 +12202,22 @@ private sub handlecreateitem(byval userindex as integer)
         tobj = .incomingdata.readinteger()
 
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
-            
-        call loggm(.name, "/ci: " & tobj)
+                
+        dim mapa as integer
+        dim x as byte
+        dim y as byte
         
-        if mapdata(.pos.map, .pos.x, .pos.y - 1).objinfo.objindex > 0 then _
+        mapa = .pos.map
+        x = .pos.x
+        y = .pos.y
+            
+        call loggm(.name, "/ci: " & tobj & " en mapa " & _
+            mapa & " (" & x & "," & y & ")")
+        
+        if mapdata(mapa, x, y - 1).objinfo.objindex > 0 then _
             exit sub
         
-        if mapdata(.pos.map, .pos.x, .pos.y - 1).tileexit.map > 0 then _
+        if mapdata(mapa, x, y - 1).tileexit.map > 0 then _
             exit sub
         
         if tobj < 1 or tobj > numobjdatas then _
@@ -11848,7 +12231,13 @@ private sub handlecreateitem(byval userindex as integer)
         
         objeto.amount = 100
         objeto.objindex = tobj
-        call makeobj(objeto, .pos.map, .pos.x, .pos.y - 1)
+        call makeobj(objeto, mapa, x, y - 1)
+        
+        if objdata(tobj).log = 1 then
+            call logdesarrollo(.name & " /ci: [" & tobj & "]" & objdata(tobj).name & " en mapa " & _
+                mapa & " (" & x & "," & y & ")")
+        end if
+        
     end with
 end sub
 
@@ -11869,18 +12258,30 @@ private sub handledestroyitems(byval userindex as integer)
         
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
-        if mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex = 0 then exit sub
+        dim mapa as integer
+        dim x as byte
+        dim y as byte
         
-        call loggm(.name, "/dest")
+        mapa = .pos.map
+        x = .pos.x
+        y = .pos.y
         
-        if objdata(mapdata(.pos.map, .pos.x, .pos.y).objinfo.objindex).objtype = eobjtype.otteleport and _
-            mapdata(.pos.map, .pos.x, .pos.y).tileexit.map > 0 then
+        dim objindex as integer
+        objindex = mapdata(mapa, x, y).objinfo.objindex
+        
+        if objindex = 0 then exit sub
+        
+        call loggm(.name, "/dest " & objindex & " en mapa " & _
+            mapa & " (" & x & "," & y & "). cantidad: " & mapdata(mapa, x, y).objinfo.amount)
+        
+        if objdata(objindex).objtype = eobjtype.otteleport and _
+            mapdata(mapa, x, y).tileexit.map > 0 then
             
             call writeconsolemsg(userindex, "no puede destruir teleports as�. utilice /dt.", fonttypenames.fonttype_info)
             exit sub
         end if
         
-        call eraseobj(10000, .pos.map, .pos.x, .pos.y)
+        call eraseobj(10000, mapa, x, y)
     end with
 end sub
 
@@ -11903,7 +12304,7 @@ private sub handlechaoslegionkick(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11914,7 +12315,10 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and _
+            (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 or _
+            .flags.privespecial then
+            
             if (instrb(username, "\") <> 0) then
                 username = replace(username, "\", "")
             end if
@@ -11978,7 +12382,7 @@ private sub handleroyalarmykick(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -11989,7 +12393,10 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and _
+            (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 or _
+            .flags.privespecial then
+            
             if (instrb(username, "\") <> 0) then
                 username = replace(username, "\", "")
             end if
@@ -12113,7 +12520,7 @@ private sub handleremovepunishment(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -12269,7 +12676,7 @@ private sub handlelastip(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -12396,8 +12803,9 @@ end sub
 public sub handlecheckslot(byval userindex as integer)
 '***************************************************
 'author: pablo (toxicwaste)
-'last modification: 09/09/2008 (niconz)
+'last modification: 07/06/2010
 'check one users slot in particular from inventory
+'07/06/2010: zama - ahora no se puede usar para saber si hay dioses/admins online.
 '***************************************************
     if userlist(userindex).incomingdata.length < 4 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -12407,7 +12815,7 @@ public sub handlecheckslot(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -12418,26 +12826,41 @@ on error goto errhandler
         dim slot as byte
         dim tindex as integer
         
+        dim userisadmin as boolean
+        dim otheruserisadmin as boolean
+                
         username = buffer.readasciistring() 'que username?
         slot = buffer.readbyte() 'que slot?
         
-        if .flags.privilegios and (playertype.admin or playertype.semidios or playertype.dios) then
-            tindex = nameindex(username)  'que user index?
+        userisadmin = (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0
+
+        if (.flags.privilegios and playertype.semidios) <> 0 or userisadmin then
             
             call loggm(.name, .name & " checke� el slot " & slot & " de " & username)
-               
+            
+            tindex = nameindex(username)  'que user index?
+            otheruserisadmin = esdios(username) or esadmin(username)
+            
             if tindex > 0 then
-                if slot > 0 and slot <= userlist(tindex).currentinventoryslots then
-                    if userlist(tindex).invent.object(slot).objindex > 0 then
-                        call writeconsolemsg(userindex, " objeto " & slot & ") " & objdata(userlist(tindex).invent.object(slot).objindex).name & " cantidad:" & userlist(tindex).invent.object(slot).amount, fonttypenames.fonttype_info)
+                if userisadmin or not otheruserisadmin then
+                    if slot > 0 and slot <= userlist(tindex).currentinventoryslots then
+                        if userlist(tindex).invent.object(slot).objindex > 0 then
+                            call writeconsolemsg(userindex, " objeto " & slot & ") " & objdata(userlist(tindex).invent.object(slot).objindex).name & " cantidad:" & userlist(tindex).invent.object(slot).amount, fonttypenames.fonttype_info)
+                        else
+                            call writeconsolemsg(userindex, "no hay ning�n objeto en slot seleccionado.", fonttypenames.fonttype_info)
+                        end if
                     else
-                        call writeconsolemsg(userindex, "no hay ning�n objeto en slot seleccionado.", fonttypenames.fonttype_info)
+                        call writeconsolemsg(userindex, "slot inv�lido.", fonttypenames.fonttype_talk)
                     end if
                 else
-                    call writeconsolemsg(userindex, "slot inv�lido.", fonttypenames.fonttype_talk)
+                    call writeconsolemsg(userindex, "no puedes ver slots de un dios o admin.", fonttypenames.fonttype_info)
                 end if
             else
-                call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_talk)
+                if userisadmin or not otheruserisadmin then
+                    call writeconsolemsg(userindex, "usuario offline.", fonttypenames.fonttype_talk)
+                else
+                    call writeconsolemsg(userindex, "no puedes ver slots de un dios o admin.", fonttypenames.fonttype_info)
+                end if
             end if
         end if
         
@@ -12570,6 +12993,8 @@ public sub handlereloadserverini(byval userindex as integer)
         call loggm(.name, .name & " ha recargado los inits.")
         
         call loadsini
+        
+        call writeconsolemsg(userindex, "server.ini actualizado correctamente", fonttypenames.fonttype_info)
     end with
 end sub
 
@@ -12823,7 +13248,7 @@ on error goto errhandler
     
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -12834,9 +13259,11 @@ on error goto errhandler
         if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             if tstr = "newbie" or tstr = "no" or tstr = "armada" or tstr = "caos" or tstr = "faccion" then
                 call loggm(.name, .name & " ha cambiado la informaci�n sobre si es restringido el mapa.")
-                mapinfo(userlist(userindex).pos.map).restringir = tstr
+                
+                mapinfo(userlist(userindex).pos.map).restringir = restrictstringtobyte(tstr)
+                
                 call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "restringir", tstr)
-                call writeconsolemsg(userindex, "mapa " & .pos.map & " restringido: " & mapinfo(.pos.map).restringir, fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "mapa " & .pos.map & " restringido: " & restrictbytetostring(mapinfo(.pos.map).restringir), fonttypenames.fonttype_info)
             else
                 call writeconsolemsg(userindex, "opciones para restringir: 'newbie', 'no', 'armada', 'caos', 'faccion'", fonttypenames.fonttype_info)
             end if
@@ -12978,7 +13405,7 @@ on error goto errhandler
     
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -12989,9 +13416,11 @@ on error goto errhandler
         if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
             if tstr = "bosque" or tstr = "nieve" or tstr = "desierto" or tstr = "ciudad" or tstr = "campo" or tstr = "dungeon" then
                 call loggm(.name, .name & " ha cambiado la informaci�n del terreno del mapa.")
-                mapinfo(userlist(userindex).pos.map).terreno = tstr
+                
+                mapinfo(userlist(userindex).pos.map).terreno = terrainstringtobyte(tstr)
+                
                 call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "terreno", tstr)
-                call writeconsolemsg(userindex, "mapa " & .pos.map & " terreno: " & mapinfo(.pos.map).terreno, fonttypenames.fonttype_info)
+                call writeconsolemsg(userindex, "mapa " & .pos.map & " terreno: " & terrainbytetostring(mapinfo(.pos.map).terreno), fonttypenames.fonttype_info)
             else
                 call writeconsolemsg(userindex, "opciones para terreno: 'bosque', 'nieve', 'desierto', 'ciudad', 'campo', 'dungeon'", fonttypenames.fonttype_info)
                 call writeconsolemsg(userindex, "igualmente, el �nico �til es 'nieve' ya que al ingresarlo, la gente muere de fr�o en el mapa.", fonttypenames.fonttype_info)
@@ -13035,7 +13464,7 @@ on error goto errhandler
     
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13069,6 +13498,125 @@ on error goto 0
     
     if error <> 0 then _
         err.raise error
+end sub
+            
+''
+' handle the "changemapinfostealnp" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handlechangemapinfostealnpc(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 25/07/2010
+'robonpcspermitido -> options: "1", "0"
+'***************************************************
+    if userlist(userindex).incomingdata.length < 2 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    dim robonpc as byte
+    
+    with userlist(userindex)
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        robonpc = val(iif(.incomingdata.readboolean(), 1, 0))
+        
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+            call loggm(.name, .name & " ha cambiado la informaci�n sobre si est� permitido robar npcs en el mapa.")
+            
+            mapinfo(userlist(userindex).pos.map).robonpcspermitido = robonpc
+            
+            call writevar(app.path & mappath & "mapa" & userlist(userindex).pos.map & ".dat", "mapa" & userlist(userindex).pos.map, "robonpcspermitido", robonpc)
+            call writeconsolemsg(userindex, "mapa " & .pos.map & " robonpcspermitido: " & mapinfo(.pos.map).robonpcspermitido, fonttypenames.fonttype_info)
+        end if
+    end with
+end sub
+            
+''
+' handle the "changemapinfonoocultar" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handlechangemapinfonoocultar(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 18/09/2010
+'ocultarsinefecto -> options: "1", "0"
+'***************************************************
+    if userlist(userindex).incomingdata.length < 2 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    dim noocultar as byte
+    dim mapa as integer
+    
+    with userlist(userindex)
+    
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        noocultar = val(iif(.incomingdata.readboolean(), 1, 0))
+        
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+            
+            mapa = .pos.map
+            
+            call loggm(.name, .name & " ha cambiado la informaci�n sobre si est� permitido ocultarse en el mapa " & mapa & ".")
+            
+            mapinfo(mapa).ocultarsinefecto = noocultar
+            
+            call writevar(app.path & mappath & "mapa" & mapa & ".dat", "mapa" & mapa, "ocultarsinefecto", noocultar)
+            call writeconsolemsg(userindex, "mapa " & mapa & " ocultarsinefecto: " & noocultar, fonttypenames.fonttype_info)
+        end if
+        
+    end with
+    
+end sub
+           
+''
+' handle the "changemapinfonoinvocar" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handlechangemapinfonoinvocar(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 18/09/2010
+'invocarsinefecto -> options: "1", "0"
+'***************************************************
+    if userlist(userindex).incomingdata.length < 2 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+    dim noinvocar as byte
+    dim mapa as integer
+    
+    with userlist(userindex)
+    
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        noinvocar = val(iif(.incomingdata.readboolean(), 1, 0))
+        
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) <> 0 then
+            
+            mapa = .pos.map
+            
+            call loggm(.name, .name & " ha cambiado la informaci�n sobre si est� permitido invocar en el mapa " & mapa & ".")
+            
+            mapinfo(mapa).invocarsinefecto = noinvocar
+            
+            call writevar(app.path & mappath & "mapa" & mapa & ".dat", "mapa" & mapa, "invocarsinefecto", noinvocar)
+            call writeconsolemsg(userindex, "mapa " & mapa & " invocarsinefecto: " & noinvocar, fonttypenames.fonttype_info)
+        end if
+        
+    end with
+    
 end sub
 
 ''
@@ -13116,7 +13664,7 @@ public sub handleshowguildmessages(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13189,16 +13737,7 @@ public sub handletogglecentinelactivated(byval userindex as integer)
         
         centinelaactivado = not centinelaactivado
         
-        with centinela
-            .revisandouserindex = 0
-            .clave = 0
-            .tiemporestante = 0
-        end with
-    
-        if centinelanpcindex then
-            call quitarnpc(centinelanpcindex)
-            centinelanpcindex = 0
-        end if
+        call resetcentinelas
         
         if centinelaactivado then
             call senddata(sendtarget.toadmins, 0, preparemessageconsolemsg("el centinela ha sido activado.", fonttypenames.fonttype_server))
@@ -13227,7 +13766,7 @@ public sub handlealtername(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13242,7 +13781,7 @@ on error goto errhandler
         username = buffer.readasciistring()
         newname = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) then
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) or .flags.privespecial then
             if lenb(username) = 0 or lenb(newname) = 0 then
                 call writeconsolemsg(userindex, "usar: /aname origen@destino", fonttypenames.fonttype_info)
             else
@@ -13319,7 +13858,7 @@ public sub handlealtermail(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13381,7 +13920,7 @@ public sub handlealterpassword(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13435,8 +13974,8 @@ end sub
 public sub handlecreatenpc(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 12/24/06
-'
+'last modification: 26/09/2010
+'26/09/2010: zama - ya no se pueden crear npcs pretorianos.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -13452,6 +13991,11 @@ public sub handlecreatenpc(byval userindex as integer)
         npcindex = .incomingdata.readinteger()
         
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
+        
+        if npcindex >= 900 then
+            call writeconsolemsg(userindex, "no puedes sumonear miembros del clan pretoriano de esta forma, utiliza /crearclanpretoriano.", fonttypenames.fonttype_warning)
+            exit sub
+        end if
         
         npcindex = spawnnpc(npcindex, .pos, true, false)
         
@@ -13470,8 +14014,8 @@ end sub
 public sub handlecreatenpcwithrespawn(byval userindex as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modification: 12/24/06
-'
+'last modification: 26/09/2010
+'26/09/2010: zama - ya no se pueden crear npcs pretorianos.
 '***************************************************
     if userlist(userindex).incomingdata.length < 3 then
         err.raise userlist(userindex).incomingdata.notenoughdataerrcode
@@ -13485,6 +14029,11 @@ public sub handlecreatenpcwithrespawn(byval userindex as integer)
         dim npcindex as integer
         
         npcindex = .incomingdata.readinteger()
+        
+        if npcindex >= 900 then
+            call writeconsolemsg(userindex, "no puedes sumonear miembros del clan pretoriano de esta forma, utiliza /crearclanpretoriano.", fonttypenames.fonttype_warning)
+            exit sub
+        end if
         
         if .flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios) then exit sub
         
@@ -13632,9 +14181,11 @@ public sub handleserveropentouserstoggle(byval userindex as integer)
         if serversologms > 0 then
             call writeconsolemsg(userindex, "servidor habilitado para todos.", fonttypenames.fonttype_info)
             serversologms = 0
+            frmmain.chkserverhabilitado.value = vbunchecked
         else
             call writeconsolemsg(userindex, "servidor restringido a administradores.", fonttypenames.fonttype_info)
             serversologms = 1
+            frmmain.chkserverhabilitado.value = vbchecked
         end if
     end with
 end sub
@@ -13692,7 +14243,7 @@ public sub handleturncriminal(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13746,7 +14297,7 @@ public sub handleresetfactions(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13758,7 +14309,7 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) then
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) or .flags.privespecial then
             call loggm(.name, "/rajar " & username)
             
             tuser = nameindex(username)
@@ -13825,7 +14376,7 @@ public sub handleremovecharfromguild(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13884,7 +14435,7 @@ public sub handlerequestcharmail(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13895,7 +14446,7 @@ on error goto errhandler
         
         username = buffer.readasciistring()
         
-        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) then
+        if (not .flags.privilegios and playertype.rolemaster) <> 0 and (.flags.privilegios and (playertype.admin or playertype.dios)) or .flags.privespecial then
             if fileexist(charpath & username & ".chr") then
                 mail = getvar(charpath & username & ".chr", "contacto", "email")
                 
@@ -13938,7 +14489,7 @@ public sub handlesystemmessage(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -13991,7 +14542,7 @@ public sub handlesetmotd(byval userindex as integer)
 on error goto errhandler
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         call buffer.copybuffer(.incomingdata)
         
         'remove packet id
@@ -14113,7 +14664,7 @@ on error goto errhandler
 
     with userlist(userindex)
         'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
-        dim buffer as new clsbytequeue
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
         
         call buffer.copybuffer(.incomingdata)
 
@@ -14168,6 +14719,119 @@ on error goto 0
 end sub
 
 ''
+' handle the "createpretorianclan" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handlecreatepretorianclan(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 29/10/2010
+'***************************************************
+
+on error goto errhandler
+
+    dim map as integer
+    dim x as byte
+    dim y as byte
+    dim index as long
+    
+    with userlist(userindex)
+        
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        map = .incomingdata.readinteger()
+        x = .incomingdata.readbyte()
+        y = .incomingdata.readbyte()
+        
+        ' user admin?
+        if .flags.privilegios and (playertype.admin or playertype.dios) = 0 then exit sub
+        
+        ' valid pos?
+        if not inmapbounds(map, x, y) then
+            call writeconsolemsg(userindex, "posici�n inv�lida.", fonttypenames.fonttype_info)
+            exit sub
+        end if
+        
+        ' choose pretorian clan index
+        if map = mapa_pretoriano then
+            index = 1 ' default clan
+        else
+            index = 2 ' custom clan
+        end if
+            
+        ' is already active any clan?
+        if not clanpretoriano(index).active then
+            
+            if not clanpretoriano(index).spawnclan(map, x, y, index) then
+                call writeconsolemsg(userindex, "la posici�n no es apropiada para crear el clan", fonttypenames.fonttype_info)
+            end if
+        
+        else
+            call writeconsolemsg(userindex, "el clan pretoriano se encuentra activo en el mapa " & _
+                clanpretoriano(index).clanmap & ". utilice /eliminarpretorianos mapa y reintente.", fonttypenames.fonttype_info)
+        end if
+    
+    end with
+
+    exit sub
+
+errhandler:
+    call logerror("error en handlecreatepretorianclan. error: " & err.number & " - " & err.description)
+end sub
+
+''
+' handle the "createpretorianclan" message
+'
+' @param userindex the index of the user sending the message
+
+public sub handledeletepretorianclan(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 29/10/2010
+'***************************************************
+
+on error goto errhandler
+    
+    dim map as integer
+    dim index as long
+    
+    with userlist(userindex)
+        
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        map = .incomingdata.readinteger()
+        
+        ' user admin?
+        if .flags.privilegios and (playertype.admin or playertype.dios) = 0 then exit sub
+        
+        ' valid map?
+        if map < 1 or map > nummaps then
+            call writeconsolemsg(userindex, "mapa inv�lido.", fonttypenames.fonttype_info)
+            exit sub
+        end if
+    
+        for index = 1 to ubound(clanpretoriano)
+         
+            ' search for the clan to be deleted
+            if clanpretoriano(index).clanmap = map then
+                clanpretoriano(index).deleteclan
+                exit for
+            end if
+        
+        next index
+    
+    end with
+
+    exit sub
+
+errhandler:
+    call logerror("error en handledeletepretorianclan. error: " & err.number & " - " & err.description)
+end sub
+
+''
 ' writes the "logged" message to the given user's outgoing data buffer.
 '
 ' @param    userindex user to which the message is intended.
@@ -14180,7 +14844,11 @@ public sub writeloggedmessage(byval userindex as integer)
 'writes the "logged" message to the given user's outgoing data buffer
 '***************************************************
 on error goto errhandler
-    call userlist(userindex).outgoingdata.writebyte(serverpacketid.logged)
+    with userlist(userindex)
+        call .outgoingdata.writebyte(serverpacketid.logged)
+    
+        call .outgoingdata.writebyte(.clase)
+    end with
 exit sub
 
 errhandler:
@@ -15186,7 +15854,7 @@ end sub
 ' @param    loops number of repets for the midi.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public sub writeplaymidi(byval userindex as integer, byval midi as byte, optional byval loops as integer = -1)
+public sub writeplaymidi(byval userindex as integer, byval midi as integer, optional byval loops as integer = -1)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
@@ -16288,7 +16956,6 @@ on error goto errhandler
     
     with userlist(userindex)
         call .outgoingdata.writebyte(serverpacketid.sendskills)
-        call .outgoingdata.writebyte(.clase)
         
         for i = 1 to numskills
             call .outgoingdata.writebyte(userlist(userindex).stats.userskills(i))
@@ -17062,6 +17729,43 @@ errhandler:
     end if
 end sub
 
+''
+' writes the "showdenounces" message to the given user's outgoing data buffer.
+'
+' @param    userindex user to which the message is intended.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writeshowdenounces(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'writes the "showdenounces" message to the given user's outgoing data buffer
+'***************************************************
+on error goto errhandler
+    
+    dim denounceindex as long
+    dim denouncelist as string
+    
+    with userlist(userindex).outgoingdata
+        call .writebyte(serverpacketid.showdenounces)
+        
+        for denounceindex = 1 to denuncias.longitud
+            denouncelist = denouncelist & denuncias.verelemento(denounceindex, false) & separator
+        next denounceindex
+        
+        if lenb(denouncelist) <> 0 then _
+            denouncelist = left$(denouncelist, len(denouncelist) - 1)
+        
+        call .writeasciistring(denouncelist)
+    end with
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
 
 ''
 ' writes the "showsosform" message to the given user's outgoing data buffer.
@@ -17458,7 +18162,7 @@ end function
 ' @return   the formated message ready to be writen as is on outgoing buffers.
 ' @remarks  the data is not actually sent until the buffer is properly flushed.
 
-public function preparemessageplaymidi(byval midi as byte, optional byval loops as integer = -1) as string
+public function preparemessageplaymidi(byval midi as integer, optional byval loops as integer = -1) as string
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modification: 05/17/06
@@ -17466,7 +18170,7 @@ public function preparemessageplaymidi(byval midi as byte, optional byval loops 
 '***************************************************
     with auxiliarbuffer
         call .writebyte(serverpacketid.playmidi)
-        call .writebyte(midi)
+        call .writeinteger(midi)
         call .writeinteger(loops)
         
         preparemessageplaymidi = .readasciistringfixed(.length)
@@ -17855,3 +18559,454 @@ errhandler:
         resume
     end if
 end sub
+
+''
+' handles the "setdialog" message.
+'
+' @param userindex the index of the user sending the message
+
+public sub handlesetdialog(byval userindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 18/11/2010
+'20/11/2010: zama - arreglo privilegios.
+'***************************************************
+    if userlist(userindex).incomingdata.length < 2 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+
+    with userlist(userindex)
+        'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
+        call buffer.copybuffer(.incomingdata)
+        
+        'remove packet id
+        call buffer.readbyte
+        
+        dim newdialog as string
+        newdialog = buffer.readasciistring
+        
+        call .incomingdata.copybuffer(buffer)
+        
+        if .flags.targetnpc > 0 then
+            ' dsgm/dsrm/rm
+            if not ((.flags.privilegios and playertype.dios) = 0 and (.flags.privilegios and (playertype.semidios or playertype.rolemaster)) <> (playertype.semidios or playertype.rolemaster)) then
+                'replace the npc's dialog.
+                npclist(.flags.targetnpc).desc = newdialog
+            end if
+        end if
+    end with
+
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+    
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the "impersonate" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handleimpersonate(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'
+'***************************************************
+    with userlist(userindex)
+    
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        ' dsgm/dsrm/rm
+        if (.flags.privilegios and playertype.dios) = 0 and _
+           (.flags.privilegios and (playertype.semidios or playertype.rolemaster)) <> (playertype.semidios or playertype.rolemaster) then exit sub
+
+        
+        dim npcindex as integer
+        npcindex = .flags.targetnpc
+        
+        if npcindex = 0 then exit sub
+        
+        ' copy head, body and desc
+        call imitatenpc(userindex, npcindex)
+        
+        ' teleports user to npc's coords
+        call warpuserchar(userindex, npclist(npcindex).pos.map, npclist(npcindex).pos.x, _
+            npclist(npcindex).pos.y, false, true)
+        
+        ' log gm
+        call loggm(.name, "/impersonar con " & npclist(npcindex).name & " en mapa " & .pos.map)
+        
+        ' remove npc
+        call quitarnpc(npcindex)
+        
+    end with
+    
+end sub
+
+''
+' handles the "imitate" message.
+'
+' @param    userindex the index of the user sending the message.
+
+private sub handleimitate(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'
+'***************************************************
+    with userlist(userindex)
+    
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        ' dsgm/dsrm/rm/conserm
+        if (.flags.privilegios and playertype.dios) = 0 and _
+           (.flags.privilegios and (playertype.semidios or playertype.rolemaster)) <> (playertype.semidios or playertype.rolemaster) and _
+           (.flags.privilegios and (playertype.consejero or playertype.rolemaster)) <> (playertype.consejero or playertype.rolemaster) then exit sub
+        
+        dim npcindex as integer
+        npcindex = .flags.targetnpc
+        
+        if npcindex = 0 then exit sub
+        
+        ' copy head, body and desc
+        call imitatenpc(userindex, npcindex)
+        call loggm(.name, "/mimetizar con " & npclist(npcindex).name & " en mapa " & .pos.map)
+        
+    end with
+    
+end sub
+
+''
+' handles the "recordadd" message.
+'
+' @param userindex the index of the user sending the message
+           
+public sub handlerecordadd(byval userindex as integer)
+'**************************************************************
+'author: amraphen
+'last modify date: 29/11/2010
+'
+'**************************************************************
+    if userlist(userindex).incomingdata.length < 2 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+
+    with userlist(userindex)
+        'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
+        call buffer.copybuffer(.incomingdata)
+        
+        'remove packet id
+        call buffer.readbyte
+        
+        dim username as string
+        dim reason as string
+        
+        username = buffer.readasciistring
+        reason = buffer.readasciistring
+    
+        if not (.flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster)) then
+            'verificamos que exista el personaje
+            if not fileexist(charpath & ucase$(username) & ".chr") then
+                call writeshowmessagebox(userindex, "el personaje no existe")
+            else
+                'agregamos el seguimiento
+                call addrecord(userindex, username, reason)
+                
+                'enviamos la nueva lista de personajes
+                call writerecordlist(userindex)
+            end if
+        end if
+
+        call .incomingdata.copybuffer(buffer)
+    end with
+        
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+    
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the "recordaddobs" message.
+'
+' @param userindex the index of the user sending the message.
+
+public sub handlerecordaddobs(byval userindex as integer)
+'**************************************************************
+'author: amraphen
+'last modify date: 29/11/2010
+'
+'**************************************************************
+    if userlist(userindex).incomingdata.length < 3 then
+        err.raise userlist(userindex).incomingdata.notenoughdataerrcode
+        exit sub
+    end if
+    
+on error goto errhandler
+
+    with userlist(userindex)
+        'this packet contains strings, make a copy of the data to prevent losses if it's not complete yet...
+        dim buffer as clsbytequeue: set buffer = new clsbytequeue
+        call buffer.copybuffer(.incomingdata)
+        
+        'remove packet id
+        call buffer.readbyte
+        
+        dim recordindex as byte
+        dim obs as string
+        
+        recordindex = buffer.readbyte
+        obs = buffer.readasciistring
+        
+        if not (.flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster)) then
+            'agregamos la observaci�n
+            call addobs(userindex, recordindex, obs)
+            
+            'actualizamos la informaci�n
+            call writerecorddetails(userindex, recordindex)
+        end if
+
+        call .incomingdata.copybuffer(buffer)
+    end with
+        
+errhandler:
+    dim error as long
+    error = err.number
+on error goto 0
+    
+    'destroy auxiliar buffer
+    set buffer = nothing
+    
+    if error <> 0 then _
+        err.raise error
+end sub
+
+''
+' handles the "recordremove" message.
+'
+' @param userindex the index of the user sending the message.
+
+public sub handlerecordremove(byval userindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'
+'***************************************************
+dim recordindex as integer
+
+    with userlist(userindex)
+        'remove packet id
+        call .incomingdata.readbyte
+    
+        recordindex = .incomingdata.readbyte
+        
+        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then exit sub
+        
+        's�lo dioses pueden remover los seguimientos, los otros reciben una advertencia:
+        if (.flags.privilegios and playertype.dios) then
+            call removerecord(recordindex)
+            call writeshowmessagebox(userindex, "se ha eliminado el seguimiento.")
+            call writerecordlist(userindex)
+        else
+            call writeshowmessagebox(userindex, "s�lo los dioses pueden eliminar seguimientos.")
+        end if
+    end with
+end sub
+
+''
+' handles the "recordlistrequest" message.
+'
+' @param userindex the index of the user sending the message.
+            
+public sub handlerecordlistrequest(byval userindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'
+'***************************************************
+    with userlist(userindex)
+        'remove packet id
+        call .incomingdata.readbyte
+
+        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then exit sub
+
+        call writerecordlist(userindex)
+    end with
+end sub
+
+''
+' writes the "recorddetails" message to the given user's outgoing data buffer.
+'
+' @param    userindex user to which the message is intended.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecorddetails(byval userindex as integer, byval recordindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recorddetails" message to the given user's outgoing data buffer
+'***************************************************
+dim i as long
+dim tindex as integer
+dim tmpstr as string
+dim tempdate as date
+on error goto errhandler
+
+    with userlist(userindex).outgoingdata
+        call .writebyte(serverpacketid.recorddetails)
+        
+        'creador y motivo
+        call .writeasciistring(records(recordindex).creador)
+        call .writeasciistring(records(recordindex).motivo)
+        
+        tindex = nameindex(records(recordindex).usuario)
+        
+        'status del pj (online?)
+        call .writeboolean(tindex > 0)
+        
+        'escribo la ip seg�n el estado del personaje
+        if tindex > 0 then
+            'la ip actual
+            tmpstr = userlist(tindex).ip
+        else 'string nulo
+            tmpstr = vbnullstring
+        end if
+        call .writeasciistring(tmpstr)
+        
+        'escribo tiempo online seg�n el estado del personaje
+        if tindex > 0 then
+            'tiempo logueado.
+            tempdate = now - userlist(tindex).logontime
+            tmpstr = hour(tempdate) & ":" & minute(tempdate) & ":" & second(tempdate)
+        else
+            'env�o string nulo.
+            tmpstr = vbnullstring
+        end if
+        call .writeasciistring(tmpstr)
+
+        'escribo observaciones:
+        tmpstr = vbnullstring
+        if records(recordindex).numobs then
+            for i = 1 to records(recordindex).numobs
+                tmpstr = tmpstr & records(recordindex).obs(i).creador & "> " & records(recordindex).obs(i).detalles & vbcrlf
+            next i
+            
+            tmpstr = left$(tmpstr, len(tmpstr) - 1)
+        end if
+        call .writeasciistring(tmpstr)
+    end with
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
+
+''
+' writes the "recordlist" message to the given user's outgoing data buffer.
+'
+' @param    userindex user to which the message is intended.
+' @remarks  the data is not actually sent until the buffer is properly flushed.
+
+public sub writerecordlist(byval userindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 29/11/2010
+'writes the "recordlist" message to the given user's outgoing data buffer
+'***************************************************
+dim i as long
+
+on error goto errhandler
+
+    with userlist(userindex).outgoingdata
+        call .writebyte(serverpacketid.recordlist)
+        
+        call .writebyte(numrecords)
+        for i = 1 to numrecords
+            call .writeasciistring(records(i).usuario)
+        next i
+    end with
+exit sub
+
+errhandler:
+    if err.number = userlist(userindex).outgoingdata.notenoughspaceerrcode then
+        call flushbuffer(userindex)
+        resume
+    end if
+end sub
+
+''
+' handles the "recorddetailsrequest" message.
+'
+' @param userindex the index of the user sending the message.
+            
+public sub handlerecorddetailsrequest(byval userindex as integer)
+'***************************************************
+'author: amraphen
+'last modification: 07/04/2011
+'handles the "recordlistrequest" message
+'***************************************************
+dim recordindex as byte
+
+    with userlist(userindex)
+        'remove packet id
+        call .incomingdata.readbyte
+        
+        recordindex = .incomingdata.readbyte
+        
+        if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then exit sub
+        
+        call writerecorddetails(userindex, recordindex)
+    end with
+end sub
+
+public sub handlemoveitem(byval userindex as integer)
+'***************************************************
+'author: ignacio mariano tirabasso (budi)
+'last modification: 01/01/2011
+'
+'***************************************************
+
+
+with userlist(userindex)
+
+    dim originalslot as byte
+    dim newslot as byte
+    
+    call .incomingdata.readbyte
+    
+    originalslot = .incomingdata.readbyte
+    newslot = .incomingdata.readbyte
+    call .incomingdata.readbyte
+    
+    call invusuario.moveitem(userindex, originalslot, newslot)
+    
+end with
+
+end sub
+

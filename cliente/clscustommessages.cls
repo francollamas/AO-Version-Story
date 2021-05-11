@@ -77,14 +77,16 @@ on error goto errhandler
     
     open app.path & message_file_path for input as handle
     
-    for i = 0 to message_count - 1
+    do while (i < message_count) and (not eof(handle))
         line input #handle, custommessages(i)
         
         'purge invalid messages
         if not messageisvalid(custommessages(i)) then
             custommessages(i) = vbnullstring
         end if
-    next i
+        
+        i = i + 1
+    loop
     
     close handle
     

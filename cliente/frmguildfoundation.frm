@@ -103,7 +103,7 @@ private clsformulario as clsformmovementmanager
 private cbotonsiguiente as clsgraphicalbutton
 private cbotoncancelar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_deactivate()
     me.setfocus
@@ -138,7 +138,7 @@ private sub loadbuttons()
     set cbotonsiguiente = new clsgraphicalbutton
     set cbotoncancelar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonsiguiente.initialize(imgsiguiente, grhpath & "botonsiguientenombreclan.jpg", _
@@ -153,7 +153,7 @@ end sub
 
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcancelar_click()
@@ -168,5 +168,5 @@ private sub imgsiguiente_click()
 end sub
 
 private sub txtweb_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

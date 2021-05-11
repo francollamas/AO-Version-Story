@@ -200,7 +200,7 @@ public type mapinfo
 end type
 
 'dx7 objects
-public directx as new directx7
+public directx as directx7
 public directdraw as directdraw7
 private primarysurface as directdrawsurface7
 private primaryclipper as directdrawclipper
@@ -731,7 +731,12 @@ public sub dofogatafx()
     end if
 end sub
 
-private function estapcarea(byval charindex as integer) as boolean
+public function estapcarea(byval charindex as integer) as boolean
+'***************************************************
+'author: unknown
+'last modification: 09/21/2010
+' 09/21/2010: c4b3z0n - changed from private funtion tu public function.
+'***************************************************
     with charlist(charindex).pos
         estapcarea = .x > userpos.x - minxborder and .x < userpos.x + minxborder and .y > userpos.y - minyborder and .y < userpos.y + minyborder
     end with
@@ -916,67 +921,69 @@ on error goto errorhandler
     get handle, , grhcount
     
     'resize arrays
-    redim grhdata(1 to grhcount) as grhdata
+    redim grhdata(0 to grhcount) as grhdata
     
     while not eof(handle)
         get handle, , grh
         
-        with grhdata(grh)
-            'get number of frames
-            get handle, , .numframes
-            if .numframes <= 0 then goto errorhandler
-            
-            redim .frames(1 to grhdata(grh).numframes)
-            
-            if .numframes > 1 then
-                'read a animation grh set
-                for frame = 1 to .numframes
-                    get handle, , .frames(frame)
-                    if .frames(frame) <= 0 or .frames(frame) > grhcount then
-                        goto errorhandler
-                    end if
-                next frame
+        if grh <> 0 then
+            with grhdata(grh)
+                'get number of frames
+                get handle, , .numframes
+                if .numframes <= 0 then goto errorhandler
                 
-                get handle, , .speed
+                redim .frames(1 to grhdata(grh).numframes)
                 
-                if .speed <= 0 then goto errorhandler
-                
-                'compute width and height
-                .pixelheight = grhdata(.frames(1)).pixelheight
-                if .pixelheight <= 0 then goto errorhandler
-                
-                .pixelwidth = grhdata(.frames(1)).pixelwidth
-                if .pixelwidth <= 0 then goto errorhandler
-                
-                .tilewidth = grhdata(.frames(1)).tilewidth
-                if .tilewidth <= 0 then goto errorhandler
-                
-                .tileheight = grhdata(.frames(1)).tileheight
-                if .tileheight <= 0 then goto errorhandler
-            else
-                'read in normal grh data
-                get handle, , .filenum
-                if .filenum <= 0 then goto errorhandler
-                
-                get handle, , grhdata(grh).sx
-                if .sx < 0 then goto errorhandler
-                
-                get handle, , .sy
-                if .sy < 0 then goto errorhandler
-                
-                get handle, , .pixelwidth
-                if .pixelwidth <= 0 then goto errorhandler
-                
-                get handle, , .pixelheight
-                if .pixelheight <= 0 then goto errorhandler
-                
-                'compute width and height
-                .tilewidth = .pixelwidth / tilepixelheight
-                .tileheight = .pixelheight / tilepixelwidth
-                
-                .frames(1) = grh
-            end if
-        end with
+                if .numframes > 1 then
+                    'read a animation grh set
+                    for frame = 1 to .numframes
+                        get handle, , .frames(frame)
+                        if .frames(frame) <= 0 or .frames(frame) > grhcount then
+                            goto errorhandler
+                        end if
+                    next frame
+                    
+                    get handle, , .speed
+                    
+                    if .speed <= 0 then goto errorhandler
+                    
+                    'compute width and height
+                    .pixelheight = grhdata(.frames(1)).pixelheight
+                    if .pixelheight <= 0 then goto errorhandler
+                    
+                    .pixelwidth = grhdata(.frames(1)).pixelwidth
+                    if .pixelwidth <= 0 then goto errorhandler
+                    
+                    .tilewidth = grhdata(.frames(1)).tilewidth
+                    if .tilewidth <= 0 then goto errorhandler
+                    
+                    .tileheight = grhdata(.frames(1)).tileheight
+                    if .tileheight <= 0 then goto errorhandler
+                else
+                    'read in normal grh data
+                    get handle, , .filenum
+                    if .filenum <= 0 then goto errorhandler
+                    
+                    get handle, , grhdata(grh).sx
+                    if .sx < 0 then goto errorhandler
+                    
+                    get handle, , .sy
+                    if .sy < 0 then goto errorhandler
+                    
+                    get handle, , .pixelwidth
+                    if .pixelwidth <= 0 then goto errorhandler
+                    
+                    get handle, , .pixelheight
+                    if .pixelheight <= 0 then goto errorhandler
+                    
+                    'compute width and height
+                    .tilewidth = .pixelwidth / tilepixelheight
+                    .tileheight = .pixelheight / tilepixelwidth
+                    
+                    .frames(1) = grh
+                end if
+            end with
+        end if
     wend
     
     close handle
@@ -1097,6 +1104,7 @@ on error goto error
                         grh.loops = grh.loops - 1
                     else
                         grh.started = 0
+                        exit sub
                     end if
                 end if
             end if
@@ -1164,7 +1172,7 @@ sub ddrawtransgrhindextosurface(byval grhindex as integer, byval x as integer, b
     end with
 end sub
 
-sub ddrawtransgrhtosurface(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte)
+sub ddrawtransgrhtosurface(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte, optional byval killatend as byte = 1)
 '*****************************************************************
 'draws a grh transparently to a x and y position
 '*****************************************************************
@@ -1185,6 +1193,7 @@ on error goto error
                         grh.loops = grh.loops - 1
                     else
                         grh.started = 0
+                        if killatend then exit sub
                     end if
                 end if
             end if
@@ -1211,6 +1220,16 @@ on error goto error
         sourcerect.right = sourcerect.left + .pixelwidth
         sourcerect.bottom = sourcerect.top + .pixelheight
         
+        if x < backbufferrect.left then
+            sourcerect.left = sourcerect.left - x
+            x = 0
+        end if
+        
+        if y < backbufferrect.top then
+            sourcerect.top = sourcerect.top - y
+            y = 0
+        end if
+        
         'draw
         call backbuffersurface.bltfast(x, y, surfacedb.surface(.filenum), sourcerect, ddbltfast_srccolorkey or ddbltfast_wait)
     end with
@@ -1229,7 +1248,7 @@ end sub
 
 #if conalfab = 1 then
 
-sub ddrawtransgrhtosurfacealpha(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte)
+sub ddrawtransgrhtosurfacealpha(byref grh as grh, byval x as integer, byval y as integer, byval center as byte, byval animate as byte, optional byval killatend as byte = 1)
 '*****************************************************************
 'draws a grh transparently to a x and y position
 '*****************************************************************
@@ -1253,6 +1272,7 @@ sub ddrawtransgrhtosurfacealpha(byref grh as grh, byval x as integer, byval y as
                         grh.loops = grh.loops - 1
                     else
                         grh.started = 0
+                        if killatend then exit sub
                     end if
                 end if
             end if
@@ -1373,7 +1393,7 @@ sub drawgrhtohdc(byval hdc as long, byval grhindex as integer, byref sourcerect 
     call surfacedb.surface(grhdata(grhindex).filenum).blttodc(hdc, sourcerect, destrect)
 end sub
 
-public sub drawtransparentgrhtohdc(byval dsthdc as long, byval srchdc as long, byref sourcerect as rect, byref destrect as rect, byval transparentcolor)
+public sub drawtransparentgrhtohdc(byval dsthdc as long, byval dstx as long, byval dsty as long, byval grhindex as integer, byref sourcerect as rect, byval transparentcolor as long)
 '**************************************************************
 'author: torres patricio (pato)
 'last modify date: 12/22/2009
@@ -1383,16 +1403,24 @@ public sub drawtransparentgrhtohdc(byval dsthdc as long, byval srchdc as long, b
     dim color as long
     dim x as long
     dim y as long
+    dim srchdc as long
+    dim surface as directdrawsurface7
     
-    for x = sourcerect.left to sourcerect.right
-        for y = sourcerect.top to sourcerect.bottom
+    set surface = surfacedb.surface(grhdata(grhindex).filenum)
+    
+    srchdc = surface.getdc
+    
+    for x = sourcerect.left to sourcerect.right - 1
+        for y = sourcerect.top to sourcerect.bottom - 1
             color = getpixel(srchdc, x, y)
             
             if color <> transparentcolor then
-                call setpixel(dsthdc, destrect.left + (x - sourcerect.left), destrect.top + (y - sourcerect.top), color)
+                call setpixel(dsthdc, dstx + (x - sourcerect.left), dsty + (y - sourcerect.top), color)
             end if
         next y
     next x
+    
+    call surface.releasedc(srchdc)
 end sub
 
 public sub drawimageinpicture(byref picturebox as picturebox, byref picture as stdpicture, byval x1 as single, byval y1 as single, optional width1, optional height1, optional x2, optional y2, optional width2, optional height2)
@@ -1443,7 +1471,7 @@ sub renderscreen(byval tilex as integer, byval tiley as integer, byval pixeloffs
     maxx = screenmaxx + tilebuffersize
     
     'make sure mins and maxs are allways in map bounds
-    if miny < xminmapsize then
+    if miny < yminmapsize then
         minyoffset = yminmapsize - miny
         miny = yminmapsize
     end if
@@ -1465,7 +1493,11 @@ sub renderscreen(byval tilex as integer, byval tiley as integer, byval pixeloffs
         screeny = 1
     end if
     
-    if screenmaxy < ymaxmapsize then screenmaxy = screenmaxy + 1
+    if screenmaxy < ymaxmapsize then
+        screenmaxy = screenmaxy + 1
+    elseif screenmaxy > ymaxmapsize then
+        screenmaxy = ymaxmapsize
+    end if
     
     if screenminx > xminmapsize then
         screenminx = screenminx - 1
@@ -1474,7 +1506,11 @@ sub renderscreen(byval tilex as integer, byval tiley as integer, byval pixeloffs
         screenx = 1
     end if
     
-    if screenmaxx < xmaxmapsize then screenmaxx = screenmaxx + 1
+    if screenmaxx < xmaxmapsize then
+        screenmaxx = screenmaxx + 1
+    elseif screenmaxx > xmaxmapsize then
+        screenmaxx = xmaxmapsize
+    end if
     
     'draw floor layer
     for y = screenminy to screenmaxy
@@ -1870,12 +1906,7 @@ sub shownextframe(byval displayformtop as integer, byval displayformleft as inte
         else
             call renderscreen(userpos.x - addtouserpos.x, userpos.y - addtouserpos.y, offsetcounterx, offsetcountery)
         end if
-        if clientsetup.bactive then
-            if iscapturepending then
-                call screencapture(true)
-                iscapturepending = false
-            end if
-        end if
+        
         call dialogos.render
         call dibujarcartel
         
@@ -1889,6 +1920,15 @@ sub shownextframe(byval displayformtop as integer, byval displayformleft as inte
             sleep 5
         wend
         
+        'si est� activado el fragshooter y est� esperando para sacar una foto, lo hacemos:
+        if clientsetup.bactive then
+            if fragshootercapturepending then
+                doevents
+                call screencapture(true)
+                fragshootercapturepending = false
+            end if
+        end if
+        
         'fps update
         if fpslastcheck + 1000 < directx.tickcount then
             fps = framesperseccounter
@@ -1897,7 +1937,7 @@ sub shownextframe(byval displayformtop as integer, byval displayformleft as inte
         else
             framesperseccounter = framesperseccounter + 1
         end if
-        
+    
         'get timing info
         timerelapsedtime = getelapsedtime()
         timerticksperframe = timerelapsedtime * enginebasespeed
@@ -2012,8 +2052,9 @@ end function
 private sub charrender(byval charindex as long, byval pixeloffsetx as integer, byval pixeloffsety as integer)
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 12/03/04
+'last modify date: 16/09/2010 (zama)
 'draw char's to screen without offcentering them
+'16/09/2010: zama - ya no se dibujan los bodies cuando estan invisibles.
 '***************************************************
     dim moved as boolean
     dim pos as integer
@@ -2085,67 +2126,60 @@ private sub charrender(byval charindex as long, byval pixeloffsetx as integer, b
         pixeloffsetx = pixeloffsetx + .moveoffsetx
         pixeloffsety = pixeloffsety + .moveoffsety
         
-        if .head.head(.heading).grhindex then
-            if not .invisible then
-                'draw body
-                if .body.walk(.heading).grhindex then _
-                    call ddrawtransgrhtosurface(.body.walk(.heading), pixeloffsetx, pixeloffsety, 1, 1)
+        if not .invisible then
+            'draw body
+            if .body.walk(.heading).grhindex then _
+                call ddrawtransgrhtosurface(.body.walk(.heading), pixeloffsetx, pixeloffsety, 1, 1, 0)
+        
+            'draw head
+            if .head.head(.heading).grhindex then
+                call ddrawtransgrhtosurface(.head.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y, 1, 0)
+                
+                'draw helmet
+                if .casco.head(.heading).grhindex then _
+                    call ddrawtransgrhtosurface(.casco.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y + offset_head, 1, 0)
+                
+                'draw weapon
+                if .arma.weaponwalk(.heading).grhindex then _
+                    call ddrawtransgrhtosurface(.arma.weaponwalk(.heading), pixeloffsetx, pixeloffsety, 1, 1, 0)
+                
+                'draw shield
+                if .escudo.shieldwalk(.heading).grhindex then _
+                    call ddrawtransgrhtosurface(.escudo.shieldwalk(.heading), pixeloffsetx, pixeloffsety, 1, 1, 0)
             
-                'draw head
-                if .head.head(.heading).grhindex then
-                    call ddrawtransgrhtosurface(.head.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y, 1, 0)
-                    
-                    'draw helmet
-                    if .casco.head(.heading).grhindex then _
-                        call ddrawtransgrhtosurface(.casco.head(.heading), pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y + offset_head, 1, 0)
-                    
-                    'draw weapon
-                    if .arma.weaponwalk(.heading).grhindex then _
-                        call ddrawtransgrhtosurface(.arma.weaponwalk(.heading), pixeloffsetx, pixeloffsety, 1, 1)
-                    
-                    'draw shield
-                    if .escudo.shieldwalk(.heading).grhindex then _
-                        call ddrawtransgrhtosurface(.escudo.shieldwalk(.heading), pixeloffsetx, pixeloffsety, 1, 1)
-                
-                
-                    'draw name over head
-                    if lenb(.nombre) > 0 then
-                        if nombres and (esgm(usercharindex) or abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2) then
-                            pos = gettagposition(.nombre)
-                            'pos = instr(.nombre, "<")
-                            'if pos = 0 then pos = len(.nombre) + 2
-                            
-                            if .priv = 0 then
-                                if .atacable then
-                                    color = rgb(colorespj(48).r, colorespj(48).g, colorespj(48).b)
-                                else
-                                    if .criminal then
-                                        color = rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b)
-                                    else
-                                        color = rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b)
-                                    end if
-                                end if
+            
+                'draw name over head
+                if lenb(.nombre) > 0 then
+                    if nombres and (esgm(usercharindex) or abs(mousetilex - .pos.x) < 2 and (abs(mousetiley - .pos.y)) < 2) then
+                        pos = gettagposition(.nombre)
+                        'pos = instr(.nombre, "<")
+                        'if pos = 0 then pos = len(.nombre) + 2
+                        
+                        if .priv = 0 then
+                            if .atacable then
+                                color = rgb(colorespj(48).r, colorespj(48).g, colorespj(48).b)
                             else
-                                color = rgb(colorespj(.priv).r, colorespj(.priv).g, colorespj(.priv).b)
+                                if .criminal then
+                                    color = rgb(colorespj(50).r, colorespj(50).g, colorespj(50).b)
+                                else
+                                    color = rgb(colorespj(49).r, colorespj(49).g, colorespj(49).b)
+                                end if
                             end if
-                            
-                            'nick
-                            line = left$(.nombre, pos - 2)
-                            call rendertextcentered(pixeloffsetx + tilepixelwidth \ 2 + 5, pixeloffsety + 30, line, color, frmmain.font)
-                            
-                            'clan
-                            line = mid$(.nombre, pos)
-                            call rendertextcentered(pixeloffsetx + tilepixelwidth \ 2 + 5, pixeloffsety + 45, line, color, frmmain.font)
+                        else
+                            color = rgb(colorespj(.priv).r, colorespj(.priv).g, colorespj(.priv).b)
                         end if
+                        
+                        'nick
+                        line = left$(.nombre, pos - 2)
+                        call rendertextcentered(pixeloffsetx + tilepixelwidth \ 2 + 5, pixeloffsety + 30, line, color, frmmain.font)
+                        
+                        'clan
+                        line = mid$(.nombre, pos)
+                        call rendertextcentered(pixeloffsetx + tilepixelwidth \ 2 + 5, pixeloffsety + 45, line, color, frmmain.font)
                     end if
                 end if
             end if
-        else
-            'draw body
-            if .body.walk(.heading).grhindex then _
-                call ddrawtransgrhtosurface(.body.walk(.heading), pixeloffsetx, pixeloffsety, 1, 1)
         end if
-
         
         'update dialogs
         call dialogos.updatedialogpos(pixeloffsetx + .body.headoffset.x, pixeloffsety + .body.headoffset.y + offset_head, charindex) '34 son los pixeles del grh de la cabeza que quedan superpuestos al cuerpo

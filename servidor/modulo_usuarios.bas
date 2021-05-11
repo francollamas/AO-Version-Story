@@ -70,22 +70,20 @@ public sub actstats(byval victimindex as integer, byval attackerindex as integer
                     end if
                 end with
                 
-                if criminal(attackerindex) then
-                    if not eracriminal then call refreshcharstatus(attackerindex)
-                else
-                    if eracriminal then call refreshcharstatus(attackerindex)
+                dim escriminal as boolean
+                escriminal = criminal(attackerindex)
+                
+                if eracriminal <> escriminal then
+                    call refreshcharstatus(attackerindex)
                 end if
+                
             end if
         end if
         
         'lo mata
-        'call writeconsolemsg(attackerindex, "has matado a " & userlist(victimindex).name & "!", fonttypenames.fonttype_fight)
-        'call writeconsolemsg(attackerindex, "has ganado " & daexp & " puntos de experiencia.", fonttypenames.fonttype_fight)
-        'call writeconsolemsg(victimindex, "�" & .name & " te ha matado!", fonttypenames.fonttype_fight)
         call writemultimessage(attackerindex, emessages.havekilleduser, victimindex, daexp)
         call writemultimessage(victimindex, emessages.userkill, attackerindex)
         
-        'call userdie(victimindex)
         call flushbuffer(victimindex)
         
         'log
@@ -109,7 +107,7 @@ public sub revivirusuario(byval userindex as integer)
         end if
         
         if .flags.navegando = 1 then
-            call toogleboatbody(userindex)
+            call toggleboatbody(userindex)
         else
             call darcuerpodesnudo(userindex)
             
@@ -127,57 +125,115 @@ public sub revivirusuario(byval userindex as integer)
     end with
 end sub
 
-public sub toogleboatbody(byval userindex as integer)
+public sub toggleboatbody(byval userindex as integer)
 '***************************************************
 'author: zama
-'last modification: 13/01/2010
+'last modification: 25/07/2010
 'gives boat body depending on user alignment.
+'25/07/2010: zama - now makes difference depending on faccion and atacable status.
 '***************************************************
 
     dim ropaje as integer
+    dim esfaccionario as boolean
+    dim newbody as integer
     
     with userlist(userindex)
-        
  
         .char.head = 0
+        if .invent.barcoobjindex = 0 then exit sub
         
-        ' barco de armada
-        if .faccion.armadareal = 1 then
-            .char.body = ifragatareal
+        ropaje = objdata(.invent.barcoobjindex).ropaje
+        
+        ' criminales y caos
+        if criminal(userindex) then
             
-        ' barco de caos
-        elseif .faccion.fuerzascaos = 1 then
-            .char.body = ifragatacaos
+            esfaccionario = escaos(userindex)
+            
+            select case ropaje
+                case ibarca
+                    if esfaccionario then
+                        newbody = ibarcacaos
+                    else
+                        newbody = ibarcapk
+                    end if
+                
+                case igalera
+                    if esfaccionario then
+                        newbody = igaleracaos
+                    else
+                        newbody = igalerapk
+                    end if
+                    
+                case igaleon
+                    if esfaccionario then
+                        newbody = igaleoncaos
+                    else
+                        newbody = igaleonpk
+                    end if
+            end select
         
-        'barcos neutrales
+        ' ciudas y armadas
         else
-            ropaje = objdata(.invent.barcoobjindex).ropaje
             
-            if criminal(userindex) then
+            esfaccionario = esarmada(userindex)
+            
+            ' atacable
+            if .flags.atacablepor <> 0 then
+                
                 select case ropaje
                     case ibarca
-                        .char.body = ibarcapk
+                        if esfaccionario then
+                            newbody = ibarcarealatacable
+                        else
+                            newbody = ibarcaciudaatacable
+                        end if
                     
                     case igalera
-                        .char.body = igalerapk
-                    
+                        if esfaccionario then
+                            newbody = igalerarealatacable
+                        else
+                            newbody = igaleraciudaatacable
+                        end if
+                        
                     case igaleon
-                        .char.body = igaleonpk
+                        if esfaccionario then
+                            newbody = igaleonrealatacable
+                        else
+                            newbody = igaleonciudaatacable
+                        end if
                 end select
+            
+            ' normal
             else
+            
                 select case ropaje
                     case ibarca
-                        .char.body = ibarcaciuda
+                        if esfaccionario then
+                            newbody = ibarcareal
+                        else
+                            newbody = ibarcaciuda
+                        end if
                     
                     case igalera
-                        .char.body = igaleraciuda
-                    
+                        if esfaccionario then
+                            newbody = igalerareal
+                        else
+                            newbody = igaleraciuda
+                        end if
+                        
                     case igaleon
-                        .char.body = igaleonciuda
+                        if esfaccionario then
+                            newbody = igaleonreal
+                        else
+                            newbody = igaleonciuda
+                        end if
                 end select
+            
             end if
+            
         end if
         
+        .char.body = newbody
         .char.shieldanim = ningunescudo
         .char.weaponanim = ningunarma
         .char.cascoanim = ninguncasco
@@ -287,7 +343,17 @@ on error goto errorhandler
 exit sub
     
 errorhandler:
-    call logerror("error en eraseuserchar " & err.number & ": " & err.description)
+    
+    dim username as string
+    dim charindex as integer
+    
+    if userindex > 0 then
+        username = userlist(userindex).name
+        charindex = userlist(userindex).char.charindex
+    end if
+
+    call logerror("error en eraseuserchar " & err.number & ": " & err.description & _
+                  ". user: " & username & "(ui: " & userindex & " - ci: " & charindex & ")")
 end sub
 
 public sub refreshcharstatus(byval userindex as integer)
@@ -319,7 +385,7 @@ public sub refreshcharstatus(byval userindex as integer)
             if .flags.muerto = 1 then
                 .char.body = ifragatafantasmal
             else
-                call toogleboatbody(userindex)
+                call toggleboatbody(userindex)
             end if
             
             call changeuserchar(userindex, .char.body, .char.head, .char.heading, .char.weaponanim, .char.shieldanim, .char.cascoanim)
@@ -433,7 +499,7 @@ end sub
 public sub checkuserlevel(byval userindex as integer)
 '*************************************************
 'author: unknown
-'last modified: 11/19/2009
+'last modified: 08/04/2011
 'chequea que el usuario no halla alcanzado el siguiente nivel,
 'de lo contrario le da la vida, mana, etc, correspodiente.
 '07/08/2006 integer - modificacion de los valores
@@ -446,6 +512,7 @@ public sub checkuserlevel(byval userindex as integer)
 '02/03/2009 zama - arreglada la validacion de expulsion para miembros de clanes faccionarios que llegan a 25.
 '11/19/2009 pato - modifico la nueva f�rmula de man� ganada para el bandido y se la limito a 499
 '02/04/2010: zama - modifico la ganancia de hit por nivel del ladron.
+'08/04/2011: amraphen - arreglada la distribuci�n de probabilidades para la vida en el caso de promedio entero.
 '*************************************************
     dim pts as integer
     dim aumentohit as integer
@@ -494,19 +561,20 @@ on error goto errhandler
                 .stats.elu = .stats.elu * 1.4
             elseif .stats.elv < 21 then
                 .stats.elu = .stats.elu * 1.35
-            elseif .stats.elv < 33 then
+            elseif .stats.elv < 26 then
                 .stats.elu = .stats.elu * 1.3
-            elseif .stats.elv < 41 then
-                .stats.elu = .stats.elu * 1.225
+            elseif .stats.elv < 35 then
+                .stats.elu = .stats.elu * 1.2
+            elseif .stats.elv < 40 then
+                .stats.elu = .stats.elu * 1.3
             else
-                .stats.elu = .stats.elu * 1.25
+                .stats.elu = .stats.elu * 1.375
             end if
             
             'calculo subida de vida
             promedio = modvida(.clase) - (21 - .stats.useratributos(eatributos.constitucion)) * 0.5
             aux = randomnumber(0, 100)
             
-        
             if promedio - int(promedio) = 0.5 then
                 'es promedio semientero
                 distvida(1) = distribucionsemienteravida(1)
@@ -525,8 +593,7 @@ on error goto errhandler
                 end if
             else
                 'es promedio entero
-                
-                distvida(1) = distribucionsemienteravida(1)
+                distvida(1) = distribucionenteravida(1)
                 distvida(2) = distvida(1) + distribucionenteravida(2)
                 distvida(3) = distvida(2) + distribucionenteravida(3)
                 distvida(4) = distvida(3) + distribucionenteravida(4)
@@ -679,7 +746,7 @@ on error goto errhandler
         'if it ceased to be a newbie, remove newbie items and get char away from newbie dungeon
         if not esnewbie(userindex) and wasnewbie then
             call quitarnewbieobj(userindex)
-            if ucase$(mapinfo(.pos.map).restringir) = "newbie" then
+            if mapinfo(.pos.map).restringir = erestrict.restrict_newbie then
                 call warpuserchar(userindex, 1, 50, 50, true)
                 call writeconsolemsg(userindex, "debes abandonar el dungeon newbie.", fonttypenames.fonttype_info)
             end if
@@ -728,12 +795,14 @@ sub moveuserchar(byval userindex as integer, byval nheading as eheading)
     dim sailing as boolean
     dim casperindex as integer
     dim casperheading as eheading
-    dim casperpos as worldpos
+    dim isadmininvi as boolean
     
     sailing = puedeatravesaragua(userindex)
     npos = userlist(userindex).pos
     call headtopos(nheading, npos)
         
+    isadmininvi = (userlist(userindex).flags.admininvisible = 1)
+    
     if movetolegalpos(userlist(userindex).pos.map, npos.x, npos.y, sailing, not sailing) then
         'si no estoy solo en el mapa...
         if mapinfo(userlist(userindex).pos.map).numusers > 1 then
@@ -742,7 +811,7 @@ sub moveuserchar(byval userindex as integer, byval nheading as eheading)
             'si hay un usuario, y paso la validacion, entonces es un casper
             if casperindex > 0 then
                 ' los admins invisibles no pueden patear caspers
-                if not (userlist(userindex).flags.admininvisible = 1) then
+                if not isadmininvi then
                     
                     if triggerzonapelea(userindex, casperindex) = trigger6_prohibe then
                         if userlist(casperindex).flags.seguroresu = false then
@@ -751,58 +820,56 @@ sub moveuserchar(byval userindex as integer, byval nheading as eheading)
                         end if
                     end if
     
-                    casperheading = invertheading(nheading)
-                    casperpos = userlist(casperindex).pos
-                    call headtopos(casperheading, casperpos)
-    
                     with userlist(casperindex)
-                        
+                        casperheading = invertheading(nheading)
+                        call headtopos(casperheading, .pos)
+                    
                         ' si es un admin invisible, no se avisa a los demas clientes
                         if not .flags.admininvisible = 1 then _
-                            call senddata(sendtarget.topcareabutindex, casperindex, preparemessagecharactermove(.char.charindex, casperpos.x, casperpos.y))
+                            call senddata(sendtarget.topcareabutindex, casperindex, preparemessagecharactermove(.char.charindex, .pos.x, .pos.y))
                         
                         call writeforcecharmove(casperindex, casperheading)
                             
-                        'update map and user pos
-                        .pos = casperpos
+                        'update map and char
                         .char.heading = casperheading
-                        mapdata(.pos.map, casperpos.x, casperpos.y).userindex = casperindex
-                    
+                        mapdata(.pos.map, .pos.x, .pos.y).userindex = casperindex
                     end with
                 
                     'actualizamos las �reas de ser necesario
                     call modareas.checkupdateneededuser(casperindex, casperheading)
                 end if
             end if
-
             
             ' si es un admin invisible, no se avisa a los demas clientes
-            if not userlist(userindex).flags.admininvisible = 1 then _
+            if not isadmininvi then _
                 call senddata(sendtarget.topcareabutindex, userindex, preparemessagecharactermove(userlist(userindex).char.charindex, npos.x, npos.y))
             
         end if
         
         ' los admins invisibles no pueden patear caspers
-        if not ((userlist(userindex).flags.admininvisible = 1) and casperindex <> 0) then
+        if not (isadmininvi and (casperindex <> 0)) then
             dim olduserindex as integer
             
-            olduserindex = mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex
-            
-            ' si no hay intercambio de pos con nadie
-            if olduserindex = userindex then
-                mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = 0
-            end if
-            
-            userlist(userindex).pos = npos
-            userlist(userindex).char.heading = nheading
-            mapdata(userlist(userindex).pos.map, userlist(userindex).pos.x, userlist(userindex).pos.y).userindex = userindex
+            with userlist(userindex)
+                olduserindex = mapdata(.pos.map, .pos.x, .pos.y).userindex
+                
+                ' si no hay intercambio de pos con nadie
+                if olduserindex = userindex then
+                    mapdata(.pos.map, .pos.x, .pos.y).userindex = 0
+                end if
+                
+                .pos = npos
+                .char.heading = nheading
+                mapdata(.pos.map, .pos.x, .pos.y).userindex = userindex
+                
+                call dotileevents(userindex, .pos.map, .pos.x, .pos.y)
+            end with
             
             'actualizamos las �reas de ser necesario
             call modareas.checkupdateneededuser(userindex, nheading)
         else
             call writeposupdate(userindex)
         end if
-
     else
         call writeposupdate(userindex)
     end if
@@ -937,6 +1004,9 @@ public sub senduserstatstxt(byval sendindex as integer, byval userindex as integ
         call writeconsolemsg(sendindex, "logeado hace: " & hour(tempdate) & ":" & minute(tempdate) & ":" & second(tempdate), fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "total: " & tempstr, fonttypenames.fonttype_info)
 #end if
+        if .flags.traveling = 1 then
+            call writeconsolemsg(sendindex, "tiempo restante para llegar a tu hogar: " & gethomearrivaltime(userindex) & " segundos.", fonttypenames.fonttype_info)
+        end if
         
         call writeconsolemsg(sendindex, "oro: " & .stats.gld & "  posici�n: " & .pos.x & "," & .pos.y & " en mapa " & .pos.map, fonttypenames.fonttype_info)
         call writeconsolemsg(sendindex, "dados: " & .stats.useratributos(eatributos.fuerza) & ", " & .stats.useratributos(eatributos.agilidad) & ", " & .stats.useratributos(eatributos.inteligencia) & ", " & .stats.useratributos(eatributos.carisma) & ", " & .stats.useratributos(eatributos.constitucion), fonttypenames.fonttype_info)
@@ -1215,13 +1285,22 @@ public function puedeapu�alar(byval userindex as integer) as boolean
 'last modification: -
 '
 '***************************************************
-
-    if userlist(userindex).invent.weaponeqpobjindex > 0 then
-        if objdata(userlist(userindex).invent.weaponeqpobjindex).apu�ala = 1 then
-            puedeapu�alar = userlist(userindex).stats.userskills(eskill.apu�alar) >= min_apu�alar _
-                        or userlist(userindex).clase = eclass.assasin
+    
+    dim weaponindex as integer
+     
+    with userlist(userindex)
+        
+        weaponindex = .invent.weaponeqpobjindex
+        
+        if weaponindex > 0 then
+            if objdata(weaponindex).apu�ala = 1 then
+                puedeapu�alar = .stats.userskills(eskill.apu�alar) >= min_apu�alar _
+                                or .clase = eclass.assasin
+            end if
         end if
-    end if
+        
+    end with
+    
 end function
 
 public function puedeacuchillar(byval userindex as integer) as boolean
@@ -1231,10 +1310,14 @@ public function puedeacuchillar(byval userindex as integer) as boolean
 '
 '***************************************************
     
+    dim weaponindex as integer
+    
     with userlist(userindex)
         if .clase = eclass.pirat then
-            if .invent.weaponeqpobjindex > 0 then
-                puedeacuchillar = (objdata(.invent.weaponeqpobjindex).acuchilla = 1)
+        
+            weaponindex = .invent.weaponeqpobjindex
+            if weaponindex > 0 then
+                puedeacuchillar = (objdata(weaponindex).acuchilla = 1)
             end if
         end if
     end with
@@ -1298,7 +1381,7 @@ end sub
 ' @param userindex  indice del usuario que muere
 '
 
-sub userdie(byval userindex as integer)
+public sub userdie(byval userindex as integer)
 '************************************************
 'author: uknown
 'last modified: 12/01/2010 (zama)
@@ -1314,13 +1397,25 @@ on error goto errorhandler
     dim i as long
     dim an as integer
     
+    dim isounddeath as integer
+    
     with userlist(userindex)
         'sonido
         if .genero = egenero.mujer then
-            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.muerte_mujer)
+            if hayagua(.pos.map, .pos.x, .pos.y) then
+                isounddeath = e_soundindex.muerte_mujer_agua
+            else
+                isounddeath = e_soundindex.muerte_mujer
+            end if
         else
-            call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, e_soundindex.muerte_hombre)
+            if hayagua(.pos.map, .pos.x, .pos.y) then
+                isounddeath = e_soundindex.muerte_hombre_agua
+            else
+                isounddeath = e_soundindex.muerte_hombre
+            end if
         end if
+        
+        call sonidosmapas.reproducirsonido(sendtarget.topcarea, userindex, isounddeath)
         
         'quitar el dialogo del user muerto
         call senddata(sendtarget.topcarea, userindex, preparemessageremovechardialog(.char.charindex))
@@ -1330,6 +1425,9 @@ on error goto errorhandler
         .flags.atacadoporuser = 0
         .flags.envenenado = 0
         .flags.muerto = 1
+        
+        .counters.trabajando = 0
+        
         ' no se activa en arenas
         if triggerzonapelea(userindex, userindex) <> trigger6_permite then
             .flags.seguroresu = true
@@ -1354,7 +1452,8 @@ on error goto errorhandler
         end if
         .flags.atacadopornpc = 0
         .flags.npcatacado = 0
-        call perdionpc(userindex)
+        
+        call perdionpc(userindex, false)
         
         '<<<< atacable >>>>
         if .flags.atacablepor > 0 then
@@ -1496,6 +1595,19 @@ on error goto errorhandler
         
         '<<cerramos comercio seguro>>
         call limpiarcomercioseguro(userindex)
+        
+        ' hay que teletransportar?
+        dim mapa as integer
+        mapa = .pos.map
+        dim mapatelep as integer
+        mapatelep = mapinfo(mapa).ondeathgoto.map
+        
+        if mapatelep <> 0 then
+            call writeconsolemsg(userindex, "���tu estado no te permite permanecer en el mapa!!!", fonttypenames.fonttype_infobold)
+            call warpuserchar(userindex, mapatelep, mapinfo(mapa).ondeathgoto.x, _
+                mapinfo(mapa).ondeathgoto.y, true, true)
+        end if
+        
     end with
 exit sub
 
@@ -1503,15 +1615,15 @@ errorhandler:
     call logerror("error en sub userdie. error: " & err.number & " descripci�n: " & err.description)
 end sub
 
-sub contarmuerte(byval muerto as integer, byval atacante as integer)
+public sub contarmuerte(byval muerto as integer, byval atacante as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 13/07/2010
+'13/07/2010: zama - los matados en estado atacable ya no suman frag.
 '***************************************************
 
     if esnewbie(muerto) then exit sub
-    
+        
     with userlist(atacante)
         if triggerzonapelea(muerto, atacante) = trigger6_permite then exit sub
         
@@ -1540,59 +1652,70 @@ sub contarmuerte(byval muerto as integer, byval atacante as integer)
     end with
 end sub
 
-sub tilelibre(byref pos as worldpos, byref npos as worldpos, byref obj as obj, byref agua as boolean, byref tierra as boolean)
+sub tilelibre(byref pos as worldpos, byref npos as worldpos, byref obj as obj, _
+              byref puedeagua as boolean, byref puedetierra as boolean)
 '**************************************************************
 'author: unknown
-'last modify date: 23/01/2007
+'last modify date: 18/09/2010
 '23/01/2007 -> pablo (toxicwaste): el agua es ahora un tilelibre agregando las condiciones necesarias.
+'18/09/2010: zama - aplico optimizacion de busqueda de tile libre en forma de rombo.
 '**************************************************************
+on error goto errhandler
+
+    dim found as boolean
     dim loopc as integer
     dim tx as long
     dim ty as long
-    dim hayobj as boolean
     
-    hayobj = false
-    npos.map = pos.map
-    npos.x = 0
-    npos.y = 0
+    npos = pos
+    tx = pos.x
+    ty = pos.y
     
-    do while not legalpos(pos.map, npos.x, npos.y, agua, tierra) or hayobj
+    loopc = 1
+    
+    ' la primera posicion es valida?
+    if legalpos(pos.map, npos.x, npos.y, puedeagua, puedetierra, true) then
         
-        if loopc > 15 then
-            exit do
+        if not hayobjeto(pos.map, npos.x, npos.y, obj.objindex, obj.amount) then
+            found = true
         end if
         
-        for ty = pos.y - loopc to pos.y + loopc
-            for tx = pos.x - loopc to pos.x + loopc
-                
-                if legalpos(npos.map, tx, ty, agua, tierra) then
-                    'we continue if: a - the item is different from 0 and the dropped item or b - the amount dropped + amount in map exceeds max_inventory_objs
-                    hayobj = (mapdata(npos.map, tx, ty).objinfo.objindex > 0 and mapdata(npos.map, tx, ty).objinfo.objindex <> obj.objindex)
-                    if not hayobj then _
-                        hayobj = (mapdata(npos.map, tx, ty).objinfo.amount + obj.amount > max_inventory_objs)
-                    if not hayobj and mapdata(npos.map, tx, ty).tileexit.map = 0 then
-                        npos.x = tx
-                        npos.y = ty
-                        
-                        'break both fors
-                        tx = pos.x + loopc
-                        ty = pos.y + loopc
-                    end if
-                end if
-            
-            next tx
-        next ty
+    end if
+    
+    ' busca en las demas posiciones, en forma de "rombo"
+    if not found then
+        while (not found) and loopc <= 16
+            if rhomblegaltilepos(pos, tx, ty, loopc, obj.objindex, obj.amount, puedeagua, puedetierra) then
+                npos.x = tx
+                npos.y = ty
+                found = true
+            end if
         
-        loopc = loopc + 1
-    loop
+            loopc = loopc + 1
+        wend
+        
+    end if
+    
+    if not found then
+        npos.x = 0
+        npos.y = 0
+    end if
+    
+    exit sub
+    
+errhandler:
+    call logerror("error en tilelibre. error: " & err.number & " - " & err.description)
 end sub
 
-sub warpuserchar(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer, byval fx as boolean, optional byval teletransported as boolean)
+sub warpuserchar(byval userindex as integer, byval map as integer, byval x as integer, byval y as integer, _
+byval fx as boolean, optional byval teletransported as boolean)
 '**************************************************************
 'author: unknown
-'last modify date: 13/11/2009
+'last modify date: 11/23/2010
 '15/07/2009 - zama: automatic toogle navigate after warping to water.
 '13/11/2009 - zama: now it's activated the timer which determines if the npc can atacak the user.
+'16/09/2010 - zama: no se pierde la visibilidad al cambiar de mapa al estar navegando invisible.
+'11/23/2010 - c4b3z0n: ahora si no se permite invi o ocultar en el mapa al que cambias, te lo saca
 '**************************************************************
     dim oldmap as integer
     dim oldx as integer
@@ -1602,8 +1725,6 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         'quitar el dialogo
         call senddata(sendtarget.topcarea, userindex, preparemessageremovechardialog(.char.charindex))
         
-        call writeremovealldialogs(userindex)
-        
         oldmap = .pos.map
         oldx = .pos.x
         oldy = .pos.y
@@ -1612,6 +1733,34 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         
         if oldmap <> map then
             call writechangemap(userindex, map, mapinfo(.pos.map).mapversion)
+            
+            if .flags.privilegios and playertype.user then 'el chequeo de invi/ocultar solo afecta a usuarios (c4b3z0n)
+                dim ahoravisible as boolean 'para enviar el mensaje de invi y hacer visible (c4b3z0n)
+                dim wasinvi as boolean
+                'chequeo de flags de mapa por invisibilidad (c4b3z0n)
+                if mapinfo(map).invisinefecto > 0 and .flags.invisible = 1 then
+                    .flags.invisible = 0
+                    .counters.invisibilidad = 0
+                    ahoravisible = true
+                    wasinvi = true 'si era invi, para el string
+                end if
+                'chequeo de flags de mapa por ocultar (c4b3z0n)
+                if mapinfo(map).ocultarsinefecto > 0 and .flags.oculto = 1 then
+                    ahoravisible = true
+                    .flags.oculto = 0
+                    .counters.tiempooculto = 0
+                end if
+                
+                if ahoravisible then 'si no era visible y ahora es, le avisa. (c4b3z0n)
+                    call setinvisible(userindex, .char.charindex, false)
+                    if wasinvi then 'era invi
+                        call writeconsolemsg(userindex, "has vuelto a ser visible ya que no esta permitida la invisibilidad en este mapa.", fonttypenames.fonttype_info)
+                    else 'estaba oculto
+                        call writeconsolemsg(userindex, "has vuelto a ser visible ya que no esta permitido ocultarse en este mapa.", fonttypenames.fonttype_info)
+                    end if
+                end if
+            end if
+            
             call writeplaymidi(userindex, val(readfield(1, mapinfo(map).music, 45)))
             
             'update new map users
@@ -1637,7 +1786,8 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
             elseif not previousmap and not nextmap then '140 => 141 (ninguno es superficial, el ultimo mapa es el mismo de antes)
                 .flags.lastmap = .flags.lastmap
             end if
-        
+            
+            call writeremovealldialogs(userindex)
         end if
         
         .pos.x = x
@@ -1647,13 +1797,18 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         call makeuserchar(true, map, userindex, map, x, y)
         call writeusercharindexinserver(userindex)
         
+        call dotileevents(userindex, map, x, y)
+        
         'force a flush, so user index is in there before it's destroyed for teleporting
         call flushbuffer(userindex)
         
         'seguis invisible al pasar de mapa
         if (.flags.invisible = 1 or .flags.oculto = 1) and (not .flags.admininvisible = 1) then
-            call setinvisible(userindex, .char.charindex, true)
-            'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, true))
+            
+            ' no si estas navegando
+            if .flags.navegando = 0 then
+                call setinvisible(userindex, .char.charindex, true)
+            end if
         end if
         
         if teletransported then
@@ -1675,7 +1830,7 @@ sub warpuserchar(byval userindex as integer, byval map as integer, byval x as in
         call intervalopermiteseratacado(userindex, true)
         
         ' perdes el npc al cambiar de mapa
-        call perdionpc(userindex)
+        call perdionpc(userindex, false)
         
         ' automatic toogle navigate
         if (.flags.privilegios and (playertype.user or playertype.consejero)) = 0 then
@@ -1702,10 +1857,11 @@ end sub
 private sub warpmascotas(byval userindex as integer)
 '************************************************
 'author: uknown
-'last modified: 11/05/2009
+'last modified: 26/10/2010
 '13/02/2009: zama - arreglado respawn de mascotas al cambiar de mapa.
 '13/02/2009: zama - las mascotas no regeneran su vida al cambiar de mapa (solo entre mapas inseguros).
 '11/05/2009: zama - chequeo si la mascota pueden spwnear para asiganrle los stats.
+'26/10/2010: zama - ahora las mascotas rapswnean de forma aleatoria.
 '************************************************
     dim i as integer
     dim pettype as integer
@@ -1757,7 +1913,14 @@ private sub warpmascotas(byval userindex as integer)
         end if
         
         if pettype > 0 and canwarp then
-            index = spawnnpc(pettype, userlist(userindex).pos, false, petrespawn)
+        
+            dim spawnpos as worldpos
+        
+            spawnpos.map = userlist(userindex).pos.map
+            spawnpos.x = userlist(userindex).pos.x + randomnumber(-3, 3)
+            spawnpos.y = userlist(userindex).pos.y + randomnumber(-3, 3)
+        
+            index = spawnnpc(pettype, spawnpos, false, petrespawn)
             
             'controlamos que se sumoneo ok - should never happen. continue to allow removal of other pets if not alone
             ' exception: pets don't spawn in water if they can't swim
@@ -1850,8 +2013,8 @@ end sub
 sub cerrar_usuario(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: 09/04/08 (niconz)
-'
+'last modification: 16/09/2010
+'16/09/2010 - zama: cuando se va el invi estando navegando, no se saca el invi (ya esta visible).
 '***************************************************
     dim isnotvisible as boolean
     dim hiddenpirat as boolean
@@ -1869,7 +2032,7 @@ sub cerrar_usuario(byval userindex as integer)
                     if .flags.navegando = 1 then
                         if .clase = eclass.pirat then
                             ' pierde la apariencia de fragata fantasmal
-                            call toogleboatbody(userindex)
+                            call toggleboatbody(userindex)
                             call writeconsolemsg(userindex, "�has recuperado tu apariencia normal!", fonttypenames.fonttype_info)
                             call changeuserchar(userindex, .char.body, .char.head, .char.heading, ningunarma, _
                                                 ningunescudo, ninguncasco)
@@ -1883,12 +2046,16 @@ sub cerrar_usuario(byval userindex as integer)
                 ' para no repetir mensajes
                 if not hiddenpirat then call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
                 
-                call setinvisible(userindex, .char.charindex, false)
-
+                ' si esta navegando ya esta visible
+                if .flags.navegando = 0 then
+                    call setinvisible(userindex, .char.charindex, false)
+                end if
             end if
             
             if .flags.traveling = 1 then
                 call writemultimessage(userindex, emessages.cancelhome)
+                .flags.traveling = 0
+                .counters.gohome = 0
             end if
             
             call writeconsolemsg(userindex, "cerrando...se cerrar� el juego en " & .counters.salir & " segundos...", fonttypenames.fonttype_info)
@@ -1972,6 +2139,7 @@ sub senduserstatstxtoff(byval sendindex as integer, byval nombre as string)
         call writeconsolemsg(sendindex, "tiempo logeado: " & tempstr, fonttypenames.fonttype_info)
 #end if
     
+        call writeconsolemsg(sendindex, "dados: " & getvar(charpath & nombre & ".chr", "atributos", "at1") & ", " & getvar(charpath & nombre & ".chr", "atributos", "at2") & ", " & getvar(charpath & nombre & ".chr", "atributos", "at3") & ", " & getvar(charpath & nombre & ".chr", "atributos", "at4") & ", " & getvar(charpath & nombre & ".chr", "atributos", "at5"), fonttypenames.fonttype_info)
     end if
 end sub
 
@@ -2119,27 +2287,47 @@ public function isarena(byval userindex as integer) as boolean
     isarena = (triggerzonapelea(userindex, userindex) = trigger6_permite)
 end function
 
-public sub perdionpc(byval userindex as integer)
+public sub perdionpc(byval userindex as integer, optional byval checkpets as boolean = true)
 '**************************************************************
 'author: zama
-'last modify date: 18/01/2010 (zama)
+'last modify date: 11/07/2010 (zama)
 'the user loses his owned npc
 '18/01/2010: zama - las mascotas dejan de atacar al npc que se perdi�.
+'11/07/2010: zama - coloco el indice correcto de las mascotas y ahora siguen al amo si existen.
+'13/07/2010: zama - ahora solo dejan de atacar las mascotas si estan atacando al npc que pierde su amo.
 '**************************************************************
 
-    dim petindex as long
+    dim petcounter as long
+    dim petindex as integer
+    dim npcindex as integer
     
     with userlist(userindex)
-        if .flags.ownednpc > 0 then
-            npclist(.flags.ownednpc).owner = 0
-            .flags.ownednpc = 0
+        
+        npcindex = .flags.ownednpc
+        if npcindex > 0 then
             
-            ' dejan de atacar las mascotas
-            if .nromascotas > 0 then
-                for petindex = 1 to maxmascotas
-                    if .mascotastype(petindex) > 0 then call followamo(petindex)
-                next petindex
+            if checkpets then
+                ' dejan de atacar las mascotas
+                if .nromascotas > 0 then
+                    for petcounter = 1 to maxmascotas
+                    
+                        petindex = .mascotasindex(petcounter)
+                        
+                        if petindex > 0 then
+                            ' si esta atacando al npc deja de hacerlo
+                            if npclist(petindex).targetnpc = npcindex then
+                                call followamo(petindex)
+                            end if
+                        end if
+                        
+                    next petcounter
+                end if
             end if
+            
+            ' reset flags
+            npclist(npcindex).owner = 0
+            .flags.ownednpc = 0
+
         end if
     end with
 end sub
@@ -2147,21 +2335,28 @@ end sub
 public sub apropionpc(byval userindex as integer, byval npcindex as integer)
 '**************************************************************
 'author: zama
-'last modify date: 18/01/2010 (zama)
+'last modify date: 27/07/2010 (zama)
 'the user owns a new npc
 '18/01/2010: zama - el sistema no aplica a zonas seguras.
 '19/04/2010: zama - ahora los admins no se pueden apropiar de npcs.
+'27/07/2010: zama - el sistema no aplica a mapas seguros.
 '**************************************************************
 
     with userlist(userindex)
         ' los admins no se pueden apropiar de npcs
         if esgm(userindex) then exit sub
         
-        'no aplica a zonas seguras
-        if mapdata(.pos.map, .pos.x, .pos.y).trigger = etrigger.zonasegura then exit sub
+        dim mapa as integer
+        mapa = .pos.map
+        
+        ' no aplica a triggers seguras
+        if mapdata(mapa, .pos.x, .pos.y).trigger = etrigger.zonasegura then exit sub
+        
+        ' no se aplica a mapas seguros
+        if mapinfo(mapa).pk = false then exit sub
         
         ' no aplica a algunos mapas que permiten el robo de npcs
-        if mapinfo(.pos.map).robonpcspermitido = 1 then exit sub
+        if mapinfo(mapa).robonpcspermitido = 1 then exit sub
         
         ' pierde el npc anterior
         if .flags.ownednpc > 0 then npclist(.flags.ownednpc).owner = 0
@@ -2304,14 +2499,16 @@ public function hasenoughitems(byval userindex as integer, byval objindex as int
     dim slot as long
     dim iteminvamount as long
     
-    for slot = 1 to userlist(userindex).currentinventoryslots
-        ' si es el item que busco
-        if userlist(userindex).invent.object(slot).objindex = objindex then
-            ' lo sumo a la cantidad total
-            iteminvamount = iteminvamount + userlist(userindex).invent.object(slot).amount
-        end if
-    next slot
-
+    with userlist(userindex)
+        for slot = 1 to .currentinventoryslots
+            ' si es el item que busco
+            if .invent.object(slot).objindex = objindex then
+                ' lo sumo a la cantidad total
+                iteminvamount = iteminvamount + .invent.object(slot).amount
+            end if
+        next slot
+    end with
+    
     hasenoughitems = amount <= iteminvamount
 end function
 
@@ -2348,28 +2545,34 @@ end if
 end function
 
 public sub gohome(byval userindex as integer)
-dim distance as integer
-dim tiempo as long
+'***************************************************
+'author: budi
+'last modification: 01/06/2010
+'01/06/2010: zama - ahora usa otro tipo de intervalo (lo saque de tpiquetec)
+'***************************************************
 
-with userlist(userindex)
-    if .flags.muerto = 1 then
-        if .flags.lastmap = 0 then
-            distance = distancetocities(.pos.map).distancetocity(.hogar)
+    dim distance as long
+    dim tiempo as long
+    
+    with userlist(userindex)
+        if .flags.muerto = 1 then
+            if .flags.lastmap = 0 then
+                distance = distancetocities(.pos.map).distancetocity(.hogar)
+            else
+                distance = distancetocities(.flags.lastmap).distancetocity(.hogar) + gohome_penalty
+            end if
+            
+            tiempo = (distance + 1) * 30 'seg
+            
+            call intervalogohome(userindex, tiempo * 1000, true)
+                
+            call writemultimessage(userindex, emessages.home, distance, tiempo, , mapinfo(ciudades(.hogar).map).name)
         else
-            distance = distancetocities(.flags.lastmap).distancetocity(.hogar) + gohome_penalty
+            call writeconsolemsg(userindex, "debes estar muerto para poder utilizar este comando.", fonttypenames.fonttype_fight)
         end if
         
-        tiempo = (distance + 1) * 30 'segundos
-        
-        .counters.gohome = tiempo / 6 'se va a chequear cada 6 segundos.
-        
-        .flags.traveling = 1
-
-        call writemultimessage(userindex, emessages.home, distance, tiempo, , mapinfo(ciudades(.hogar).map).name)
-    else
-        call writeconsolemsg(userindex, "debes estar muerto para poder utilizar este comando.", fonttypenames.fonttype_fight)
-    end if
-end with
+    end with
+    
 end sub
 
 public function toogletoatackable(byval userindex as integer, byval ownerindex as integer, optional byval stealingnpc as boolean = true) as boolean
@@ -2382,7 +2585,12 @@ public function toogletoatackable(byval userindex as integer, byval ownerindex a
     dim atacablepor as integer
     
     with userlist(userindex)
-    
+        
+        if mapinfo(.pos.map).pk = false then
+            call writeconsolemsg(userindex, "no puedes robar npcs en zonas seguras.", fonttypenames.fonttype_info)
+            exit function
+        end if
+        
         atacablepor = .flags.atacablepor
             
         if atacablepor > 0 then
@@ -2419,11 +2627,79 @@ end function
 public sub sethome(byval userindex as integer, byval newhome as eciudad, byval npcindex as integer)
 '***************************************************
 'author: budi
-'last modification: 30/04/2010
+'last modification: 01/06/2010
 '30/04/2010: zama - ahora el npc avisa que se cambio de hogar.
+'01/06/2010: zama - ahora te avisa si ya tenes ese hogar.
 '***************************************************
-    if newhome < eciudad.cullathorpe or newhome > carghal then exit sub
-    userlist(userindex).hogar = newhome
+    if newhome < eciudad.cullathorpe or newhome > eciudad.clastcity - 1 then exit sub
     
-    call writechatoverhead(userindex, "���bienvenido a nuestra humilde comunidad, este es ahora tu nuevo hogar!!!", npclist(npcindex).char.charindex, vbwhite)
+    if userlist(userindex).hogar <> newhome then
+        userlist(userindex).hogar = newhome
+    
+        call writechatoverhead(userindex, "���bienvenido a nuestra humilde comunidad, este es ahora tu nuevo hogar!!!", npclist(npcindex).char.charindex, vbwhite)
+    else
+        call writechatoverhead(userindex, "���ya eres miembro de nuestra humilde comunidad!!!", npclist(npcindex).char.charindex, vbwhite)
+    end if
+
+end sub
+
+public function gethomearrivaltime(byval userindex as integer) as integer
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 01/06/2010
+'calculates the time left to arrive home.
+'**************************************************************
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    with userlist(userindex)
+        gethomearrivaltime = (.counters.gohome - tactual) * 0.001
+    end with
+
+end function
+
+public sub homearrival(byval userindex as integer)
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 01/06/2010
+'teleports user to its home.
+'**************************************************************
+    
+    dim tx as integer
+    dim ty as integer
+    dim tmap as integer
+
+    with userlist(userindex)
+
+        'antes de que el pj llegue a la ciudad, lo hacemos dejar de navegar para que no se buguee.
+        if .flags.navegando = 1 then
+            .char.body = icuerpomuerto
+            .char.head = icabezamuerto
+            .char.shieldanim = ningunescudo
+            .char.weaponanim = ningunarma
+            .char.cascoanim = ninguncasco
+            
+            .flags.navegando = 0
+            
+            call writenavigatetoggle(userindex)
+            'le sacamos el navegando, pero no le mostramos a los dem�s porque va a ser sumoneado hasta ulla.
+        end if
+        
+        tx = ciudades(.hogar).x
+        ty = ciudades(.hogar).y
+        tmap = ciudades(.hogar).map
+        
+        call findlegalpos(userindex, tmap, tx, ty)
+        call warpuserchar(userindex, tmap, tx, ty, true)
+        
+        call writemultimessage(userindex, emessages.finishhome)
+        
+        .flags.traveling = 0
+        .counters.gohome = 0
+        
+    end with
+    
 end sub

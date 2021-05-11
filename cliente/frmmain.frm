@@ -174,7 +174,7 @@ begin vb.form frmmain
       endproperty
       forecolor       =   &h000000ff&
       height          =   315
-      left            =   150
+      left            =   120
       maxlength       =   160
       multiline       =   -1  'true
       tabindex        =   2
@@ -254,7 +254,6 @@ begin vb.form frmmain
       _extenty        =   2619
       _version        =   393217
       backcolor       =   0
-      enabled         =   -1  'true
       readonly        =   -1  'true
       scrollbars      =   2
       disablenoscroll =   -1  'true
@@ -368,7 +367,7 @@ begin vb.form frmmain
       caption         =   "101"
       forecolor       =   &h00ffffff&
       height          =   180
-      left            =   6705
+      left            =   6660
       tabindex        =   26
       top             =   60
       width           =   555
@@ -929,6 +928,14 @@ attribute vb_globalnamespace = false
 attribute vb_creatable = false
 attribute vb_predeclaredid = true
 attribute vb_exposed = false
+'--------------------------------------------------------------------------------
+'    component  : frmmain
+'    project    : argentum
+'
+'    description: [type_description_here]
+'
+'    modified   :
+'--------------------------------------------------------------------------------
 'argentum online 0.11.6
 '
 'copyright (c) 2002 m�rquez pablo ignacio
@@ -985,11 +992,21 @@ private cbotonestadisticas as clsgraphicalbutton
 private cbotonclanes as clsgraphicalbutton
 private cbotonasignarskill as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 public picskillstar as picture
 
 dim puedemacrear as boolean
+
+public withevents draginventory as clsgrapchicalinventory
+attribute draginventory.vb_varhelpid = -1
+
+'usado para controlar que no se dispare el binding de la tecla ctrl cuando se usa ctrl+tecla.
+dim ctrlmaskon as boolean
+
+public sub draginventory_dragdone(byval originalslot as integer, byval newslot as integer)
+call protocol.writemoveitem(originalslot, newslot, emovetype.inventory)
+end sub
 
 private sub form_load()
     
@@ -1005,8 +1022,15 @@ private sub form_load()
     
     call loadbuttons
     
+    set draginventory = inventario
+    
     me.left = 0
     me.top = 0
+    
+    ' detect links in console
+    enableurldetect rectxt.hwnd, me.hwnd
+    
+    ctrlmaskon = false
 end sub
 
 private sub loadbuttons()
@@ -1024,7 +1048,7 @@ private sub loadbuttons()
     set cbotonasignarskill = new clsgraphicalbutton
     set cbotonmapa = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotondiamarriba.initialize(imginvscrollup, "", _
@@ -1186,14 +1210,54 @@ end sub
 private sub form_keyup(keycode as integer, shift as integer)
 '***************************************************
 'autor: unknown
-'last modification: 18/11/2009
+'last modification: 18/11/2010
 '18/11/2009: zama - ahora se pueden poner comandos en los mensajes personalizados (execpto guildchat y privados)
+'18/11/2010: amraphen - agregu� el handle correspondiente para las nuevas configuraciones de teclas (ctrl+0..9).
 '***************************************************
 #if seguridadalkon then
     if logging then call cheatingdeath.storekey(keycode, false)
 #end if
     
     if (not sendtxt.visible) and (not sendcmstxt.visible) then
+    
+        'verificamos si se est� presionando la tecla ctrl.
+        if shift = 2 then
+            if keycode >= vbkey0 and keycode <= vbkey9 then
+                if keycode = vbkey0 then
+                    'si es ctrl+0 muestro la ventana de configuraci�n de teclas.
+                    call frmcustomkeys.show(vbmodal, me)
+                    
+                elseif keycode >= vbkey1 and keycode <= vbkey9 then
+                    'si es ctrl+1..9 cambio la configuraci�n.
+                    if keycode - vbkey0 = customkeys.currentconfig then exit sub
+                    
+                    customkeys.currentconfig = keycode - vbkey0
+                    
+                    dim smsg as string
+                    
+                    smsg = "�se ha cargado la configuraci�n "
+                    if customkeys.currentconfig = 0 then
+                        smsg = smsg & "default"
+                    else
+                        smsg = smsg & "perzonalizada n�mero " & cstr(customkeys.currentconfig)
+                    end if
+                    smsg = smsg & "!"
+
+                    call showconsolemsg(smsg, 255, 255, 255, true)
+                end if
+                
+                ctrlmaskon = true
+                exit sub
+            end if
+        end if
+        
+        if keycode = vbkeycontrol then
+            'chequeo que no se haya usado un ctrl + tecla antes de disparar las bindings.
+            if ctrlmaskon then
+                ctrlmaskon = false
+                exit sub
+            end if
+        end if
         
         'checks if the key is valid
         if lenb(customkeys.readablename(keycode)) > 0 then
@@ -1265,6 +1329,10 @@ private sub form_keyup(keycode as integer, shift as integer)
                     call writeresuscitationtoggle
             end select
         else
+            
+            'evito que se muestren los mensajes personalizados cuando se cambie una configuraci�n de teclas.
+            if shift = 2 then exit sub
+            
             select case keycode
                 'custom messages!
                 case vbkey0 to vbkey9
@@ -1361,8 +1429,11 @@ private sub form_keyup(keycode as integer, shift as integer)
             
             if trainingmacro.enabled then call desactivarmacrohechizos
             if macrotrabajo.enabled then call desactivarmacrotrabajo
+            
+            if frmcustomkeys.visible then exit sub 'chequeo si est� visible la ventana de configuraci�n de teclas.
+            
             call writeattack
-        
+            
         case customkeys.bindedkey(ekeytype.mkeytalk)
             if sendcmstxt.visible then exit sub
             
@@ -1391,6 +1462,10 @@ private sub form_queryunload(cancel as integer, unloadmode as integer)
         prgrun = false
         cancel = 1
     end if
+end sub
+
+private sub form_unload(cancel as integer)
+    disableurldetect
 end sub
 
 private sub imgasignarskill_click()
@@ -1460,7 +1535,7 @@ private sub imgopciones_click()
 end sub
 
 private sub invequ_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub lblscroll_click(index as integer)
@@ -1486,19 +1561,19 @@ private sub macrotrabajo_timer()
     end if
     
     'macros are disabled if not using argentum!
-    if not application.isappactive() then
-        call desactivarmacrotrabajo
-        exit sub
-    end if
+    'if not application.isappactive() then  'implemento lo propuesto por gd, se puede usar macro aun que se est� en otra ventana
+    '    call desactivarmacrotrabajo
+    '    exit sub
+    'end if
     
     if usingskill = eskill.pesca or usingskill = eskill.talar or usingskill = eskill.mineria or _
-                usingskill = fundirmetal or (usingskill = eskill.herreria and not frmherrero.visible) then
+                usingskill = fundirmetal or (usingskill = eskill.herreria and not mirandoherreria) then
         call writeworkleftclick(tx, ty, usingskill)
         usingskill = 0
     end if
     
     'if inventario.objtype(inventario.selecteditem) = eobjtype.otweapon then
-     if not (frmcarp.visible = true) then call usaritem
+     if not mirandocarpinteria then call usaritem
 end sub
 
 public sub activarmacrotrabajo()
@@ -1583,6 +1658,54 @@ select case index
             call activarmacrotrabajo
         end if
 end select
+end sub
+
+private sub rectxt_mousemove(button as integer, shift as integer, x as single, y as single)
+    startcheckinglinks
+end sub
+
+private sub sendtxt_keydown(keycode as integer, shift as integer)
+    
+    ' control + shift
+    if shift = 3 then
+        on error goto errhandler
+        
+        ' only allow numeric keys
+        if keycode >= vbkey0 and keycode <= vbkey9 then
+            
+            ' get msg number
+            dim nromsg as integer
+            nromsg = keycode - vbkey0 - 1
+            
+            ' pressed "0", so msg number is 9
+            if nromsg = -1 then nromsg = 9
+            
+            'como es keydown, si mantenes _
+             apretado el mensaje llena la consola
+            if custommessages.message(nromsg) = sendtxt.text then
+                exit sub
+            end if
+            
+            custommessages.message(nromsg) = sendtxt.text
+            
+            with fonttypes(fonttypenames.fonttype_info)
+                call showconsolemsg("��""" & sendtxt.text & """ fue guardado como mensaje personalizado " & nromsg + 1 & "!!", .red, .green, .blue, .bold, .italic)
+            end with
+            
+        end if
+        
+    end if
+    
+    exit sub
+    
+errhandler:
+    'did detected an invalid message??
+    if err.number = custommessages.invalidmessageerrcode then
+        with fonttypes(fonttypenames.fonttype_info)
+            call showconsolemsg("el mensaje es inv�lido. modifiquelo por favor.", .red, .green, .blue, .bold, .italic)
+        end with
+    end if
+    
 end sub
 
 private sub sendtxt_keyup(keycode as integer, shift as integer)
@@ -1837,6 +1960,7 @@ private sub form_click()
                     usingskill = 0
                 end if
             else
+                'call writerightclick(tx, ty) 'proximamnete lo implementaremos..
                 call abrirmenuviewport
             end if
         elseif (mouseshift and 1) = 1 then
@@ -1878,7 +2002,10 @@ private sub form_mousemove(button as integer, shift as integer, x as single, y a
         mousey = mainviewshp.height
     end if
     
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
+    
+    ' disable links checking (not over consola)
+    stopcheckinglinks
     
 end sub
 
@@ -1944,7 +2071,8 @@ private sub label7_click()
 end sub
 
 private sub picinv_dblclick()
-    if frmcarp.visible or frmherrero.visible then exit sub
+
+    if mirandocarpinteria or mirandoherreria then exit sub
     
     if not maintimer.check(timersindex.useitemwithdblclick) then exit sub
     
@@ -1967,7 +2095,7 @@ on error resume next  'el .setfocus causaba errores al salir y volver a entrar
         sendcmstxt.setfocus
     elseif (not comerciando) and (not mirandoasignarskills) and _
         (not frmmsg.visible) and (not mirandoforo) and _
-        (not frmestadisticas.visible) and (not frmcantidad.visible) then
+        (not frmestadisticas.visible) and (not frmcantidad.visible) and (not mirandoparty) then
          
         if picinv.visible then
             picinv.setfocus
@@ -2116,87 +2244,30 @@ private sub socket1_connect()
 end sub
 
 private sub socket1_disconnect()
-    dim i as long
-    
-    second.enabled = false
-    connected = false
-    
+    resetallinfo
     socket1.cleanup
-    
-    frmconnect.mousepointer = vbnormal
-    
-    do while i < forms.count - 1
-        i = i + 1
-        
-        if forms(i).name <> me.name and forms(i).name <> frmconnect.name and forms(i).name <> frmcrearpersonaje.name then
-            unload forms(i)
-        end if
-    loop
-    
-    on local error goto 0
-    
-    if not frmcrearpersonaje.visible then
-        frmconnect.visible = true
-    end if
-    
-    frmmain.visible = false
-    
-    pausa = false
-    usermeditar = false
-    
-#if seguridadalkon then
-    logging = false
-    logstring = false
-    lastpressed = 0
-    lastmouse = false
-    lastamount = 0
-#end if
-
-    userclase = 0
-    usersexo = 0
-    userraza = 0
-    userhogar = 0
-    useremail = ""
-    
-    for i = 1 to numskills
-        userskills(i) = 0
-    next i
-
-    for i = 1 to numatributos
-        useratributos(i) = 0
-    next i
-    
-    for i = 1 to max_inventory_slots
-        
-    next i
-    
-    macrotrabajo.enabled = false
-
-    skillpoints = 0
-    alocados = 0
 end sub
 
 private sub socket1_lasterror(errorcode as integer, errorstring as string, response as integer)
     '*********************************************
     'handle socket errors
     '*********************************************
-    if errorcode = 24036 then
-        call msgbox("por favor espere, intentando completar conexion.", vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
-        exit sub
-    end if
+    select case errorcode
+        case too_fast 'jajasaj cualqueira ajjaja
+            call msgbox("por favor espere, intentando completar conexion.", vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+            exit sub
+        case refused 'vivan las negradas
+            call msgbox("el servidor se encuentra cerrado o no te has podido conectar correctamente.", vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+        case time_out
+            call msgbox("el tiempo de espera se ha agotado, intenta nuevamente.", vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+        case else
+            call msgbox(errorstring, vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
+    end select
     
-    call msgbox(errorstring, vbapplicationmodal + vbinformation + vbokonly + vbdefaultbutton1, "error")
     frmconnect.mousepointer = 1
     response = 0
-    second.enabled = false
 
     frmmain.socket1.disconnect
-    
-    if not frmcrearpersonaje.visible then
-        frmconnect.show
-    else
-        frmcrearpersonaje.mousepointer = 0
-    end if
 end sub
 
 private sub socket1_read(datalength as integer, isurgent as integer)
@@ -2231,7 +2302,8 @@ if tx >= minxborder and ty >= minyborder and _
         if charlist(mapdata(tx, ty).charindex).invisible = false then
         
             dim i as long
-            dim m as new frmmenusefashion
+            dim m as frmmenusefashion
+            set m = new frmmenusefashion
             
             load m
             m.setcallback me

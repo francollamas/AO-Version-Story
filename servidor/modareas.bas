@@ -132,9 +132,10 @@ end sub
 public sub checkupdateneededuser(byval userindex as integer, byval head as byte, optional byval butindex as boolean = false)
 '**************************************************************
 'author: lucio n. tourrilhes (dunga)
-'last modify date: 15/07/2009
+'last modify date: 28/10/2010
 'es la funci�n clave del sistema de areas... es llamada al mover un user
 '15/07/2009: zama - now it doesn't send an invisible admin char info
+'28/10/2010: zama - now it doesn't send a saling char invisible message.
 '**************************************************************
     if userlist(userindex).areasinfo.areaid = areasinfo(userlist(userindex).pos.x, userlist(userindex).pos.y) then exit sub
     
@@ -212,24 +213,32 @@ public sub checkupdateneededuser(byval userindex as integer, byval head as byte,
                         if not (userlist(tempint).flags.admininvisible = 1) then
                             call makeuserchar(false, userindex, tempint, map, x, y)
                             
-                            'si el user estaba invisible le avisamos al nuevo cliente de eso
-                            if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
-                                if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then
-                                    call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
+                            ' si esta navegando, siempre esta visible
+                            if userlist(tempint).flags.navegando = 0 then
+                                'si el user estaba invisible le avisamos al nuevo cliente de eso
+                                if userlist(tempint).flags.invisible or userlist(tempint).flags.oculto then
+                                    if .flags.privilegios and (playertype.user or playertype.consejero or playertype.rolemaster) then
+                                        call writesetinvisible(userindex, userlist(tempint).char.charindex, true)
+                                    end if
                                 end if
                             end if
                         end if
                         
+                    
                         ' solo avisa al otro cliente si no es un admin invisible
                         if not (.flags.admininvisible = 1) then
                             call makeuserchar(false, tempint, userindex, .pos.map, .pos.x, .pos.y)
                             
-                            if .flags.invisible or .flags.oculto then
-                                if userlist(tempint).flags.privilegios and playertype.user then
-                                    call writesetinvisible(tempint, .char.charindex, true)
+                            ' si esta navegando, siempre esta visible
+                            if .flags.navegando = 0 then
+                                if .flags.invisible or .flags.oculto then
+                                    if userlist(tempint).flags.privilegios and playertype.user then
+                                        call writesetinvisible(tempint, .char.charindex, true)
+                                    end if
                                 end if
                             end if
                         end if
+
                         
                         call flushbuffer(tempint)
                     
@@ -366,6 +375,8 @@ public sub quitaruser(byval userindex as integer, byval map as integer)
 'last modify date: unknow
 '
 '**************************************************************
+on error goto errorhandler
+
     dim tempval as long
     dim loopc as long
     
@@ -389,6 +400,17 @@ public sub quitaruser(byval userindex as integer, byval map as integer)
     if tempval > conngroups(map).optvalue then 'nescesito redim?
         redim preserve conngroups(map).userentrys(1 to tempval) as long
     end if
+    
+    exit sub
+    
+errorhandler:
+    
+    dim username as string
+    if userindex > 0 then username = userlist(userindex).name
+
+    call logerror("error en quitaruser " & err.number & ": " & err.description & _
+                  ". user: " & username & "(" & userindex & ")")
+
 end sub
 
 public sub agregaruser(byval userindex as integer, byval map as integer, optional byval butindex as boolean = false)

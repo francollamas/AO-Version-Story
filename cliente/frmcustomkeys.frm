@@ -623,7 +623,11 @@ private clsformulario as clsformmovementmanager
 private cbotonguardar as clsgraphicalbutton
 private cbotondefaultkeys as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
+
+private selectedconfig as byte
+private initialconfig as byte
+private currenttab as integer
 
 private sub form_load()
     dim i as long
@@ -636,7 +640,12 @@ private sub form_load()
     
     call loadbuttons
     
-    for i = 1 to customkeys.count
+    selectedconfig = customkeys.currentconfig
+    initialconfig = selectedconfig
+    
+    currenttab = selectedconfig
+    
+    for i = 1 to customkeys.keycount
         text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
     next i
 end sub
@@ -649,7 +658,7 @@ private sub loadbuttons()
     set cbotonguardar = new clsgraphicalbutton
     set cbotondefaultkeys = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonguardar.initialize(imgguardar, grhpath & "botonguardarconfigkey.jpg", _
@@ -659,36 +668,56 @@ private sub loadbuttons()
     call cbotondefaultkeys.initialize(imgdefaultkeys, grhpath & "botondefaultkeys.jpg", _
                                     grhpath & "botondefaultkeysrollover.jpg", _
                                     grhpath & "botondefaultkeysclick.jpg", me)
+                                    
 end sub
 
+
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgdefaultkeys_click()
-    call customkeys.loaddefaults
-    dim i as long
-    
-    for i = 1 to customkeys.count
-        text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
-    next i
+
+    call customkeys.loaddefaults(customkeys.currentconfig)
+
+    call showconfig
 end sub
 
 private sub imgguardar_click()
+
     dim i as long
+    dim smsg as string
     
-    for i = 1 to customkeys.count
+    for i = 1 to customkeys.keycount
         if lenb(text1(i).text) = 0 then
             call msgbox("hay una o m�s teclas no v�lidas, por favor verifique.", vbcritical or vbokonly or vbapplicationmodal or vbdefaultbutton1, "argentum online")
             exit sub
         end if
     next i
     
+    customkeys.currentconfig = selectedconfig
+    
+    if selectedconfig <> initialconfig then
+        smsg = "�se ha cargado la configuraci�n "
+        if selectedconfig = 0 then
+            smsg = smsg & "default"
+        else
+            smsg = smsg & "personalizada n�mero " & cstr(selectedconfig)
+        end if
+        smsg = smsg & "!"
+        
+        call showconsolemsg(smsg, 255, 255, 255, true)
+    end if
+    
     unload me
 end sub
 
+
 private sub text1_keydown(index as integer, keycode as integer, shift as integer)
     dim i as long
+    
+    ' can't change default combination
+    if currenttab = 0 then exit sub
     
     if lenb(customkeys.readablename(keycode)) = 0 then exit sub
     'if key is not valid, we exit
@@ -696,18 +725,20 @@ private sub text1_keydown(index as integer, keycode as integer, shift as integer
     text1(index).text = customkeys.readablename(keycode)
     text1(index).selstart = len(text1(index).text)
     
-    for i = 1 to customkeys.count
+    for i = 1 to customkeys.keycount
         if i <> index then
             if customkeys.bindedkey(i) = keycode then
                 text1(index).text = "" 'if the key is already assigned, simply reject it
                 call beep 'alert the user
                 keycode = 0
+                
                 exit sub
             end if
         end if
     next i
     
     customkeys.bindedkey(index) = keycode
+    
 end sub
 
 private sub text1_keypress(index as integer, keyascii as integer)
@@ -719,5 +750,13 @@ private sub text1_keyup(index as integer, keycode as integer, shift as integer)
 end sub
 
 private sub text1_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
+end sub
+private sub showconfig()
+
+    dim i as long
+
+    for i = 1 to customkeys.keycount
+        text1(i).text = customkeys.readablename(customkeys.bindedkey(i))
+    next i
 end sub

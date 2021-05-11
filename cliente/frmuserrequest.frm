@@ -91,9 +91,9 @@ option explicit
 
 private cbotoncerrar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
-private clsformulario as new clsformmovementmanager
+private clsformulario as clsformmovementmanager
 
 public sub recievepeticion(byval p as string)
 
@@ -104,6 +104,7 @@ end sub
 
 private sub form_load()
     ' handles form movement (drag and drop).
+    set clsformulario = new clsformmovementmanager
     clsformulario.initialize me
     
     me.picture = loadpicture(app.path & "\graficos\ventanapeticion.jpg")
@@ -118,7 +119,7 @@ private sub loadbuttons()
 
     set cbotoncerrar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotoncerrar.initialize(imgcerrar, grhpath & "botoncerrarpeticion.jpg", _
@@ -127,7 +128,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcerrar_click()
@@ -135,5 +136,5 @@ private sub imgcerrar_click()
 end sub
 
 private sub text1_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

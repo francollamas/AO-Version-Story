@@ -45,7 +45,7 @@ private iptables()      as long 'usamos 2 longs: uno de la ip, seguido de uno de
 private entryscounter   as long
 private maxvalue        as long
 private multiplicado    as long 'cuantas veces multiplike el entryscounter para que me entren?
-private const intervaloentreconexiones as long = 1000
+private const intervaloentreconexiones as long = 5000
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 'declaraciones para maximas conexiones por usuario
@@ -69,7 +69,7 @@ public sub initiptables(byval optcountersvalue as long)
     entryscounter = optcountersvalue
     multiplicado = 1
 
-    redim iptables(entryscounter * 2) as long
+    redim iptables(entryscounter * 2 - 1) as long
     maxvalue = 0
 
     redim maxcontables(declaraciones.maxusers * 2 - 1) as long
@@ -92,7 +92,7 @@ public sub ipsecuritymantenimientolista()
     'las borro todas cada 1 hora, asi se "renuevan"
     entryscounter = entryscounter \ multiplicado
     multiplicado = 1
-    redim iptables(entryscounter * 2) as long
+    redim iptables(entryscounter * 2 - 1) as long
     maxvalue = 0
 end sub
 
@@ -142,7 +142,7 @@ private sub addnewipintervalo(byval ip as long, byval index as long)
         multiplicado = multiplicado + 1
         entryscounter = entryscounter * multiplicado
         
-        redim preserve iptables(entryscounter * 2) as long
+        redim preserve iptables(entryscounter * 2 - 1) as long
     end if
     
     '4) corro todo el array para arriba
@@ -192,37 +192,17 @@ end function
 private sub addnewiplimiteconexiones(byval ip as long, byval index as long)
 '*************************************************  *************
 'author: (el oso)
-'last modify date: unknow
-'
+'last modify date: 16/2/2006
+'05/21/10 - pato: saco el uso de buffer auxiliar
 '*************************************************  *************
     'debug.print "agrega conexion a " & ip
     'debug.print "(declaraciones.maxusers - index) = " & (declaraciones.maxusers - index)
     '4) corro todo el array para arriba
-    'call copymemory(maxcontables(index + 2), maxcontables(index), (maxcontablesentry - index \ 2) * 8)    '*4 (peso del long) * 2(cantidad de elementos por c/u)
-    'maxcontables(index) = ip
-
-    '3) subo el indicador de el maximo valor almacenado y listo :)
-    'maxcontablesentry = maxcontablesentry + 1
-
-
-'*************************************************    *************
-'author: (el oso)
-'last modify date: 16/2/2006
-'modified by juan mart�n sotuyo dodero (maraxus)
-'*************************************************    *************
-    debug.print "agrega conexion a " & ip
-    debug.print "(declaraciones.maxusers - index) = " & (declaraciones.maxusers - index)
-    debug.print "agrega conexion a nueva ip " & ip
-    '4) corro todo el array para arriba
-    dim temp() as long
-    redim temp((maxcontablesentry - index \ 2) * 2) as long  'vb no deja inicializar con rangos variables...
-    call copymemory(temp(0), maxcontables(index), (maxcontablesentry - index \ 2) * 8)    '*4 (peso del long) * 2(cantidad de elementos por c/u)
-    call copymemory(maxcontables(index + 2), temp(0), (maxcontablesentry - index \ 2) * 8)    '*4 (peso del long) * 2(cantidad de elementos por c/u)
+    call copymemory(maxcontables(index + 2), maxcontables(index), (maxcontablesentry - index \ 2) * 8)    '*4 (peso del long) * 2(cantidad de elementos por c/u)
     maxcontables(index) = ip
 
     '3) subo el indicador de el maximo valor almacenado y listo :)
     maxcontablesentry = maxcontablesentry + 1
-
 end sub
 
 public sub iprestarconexion(byval ip as long)
@@ -232,8 +212,10 @@ public sub iprestarconexion(byval ip as long)
 '
 '***************************************************
 
+on error goto errhandler
+
 dim key as long
-    debug.print "resta conexion a " & ip
+    'debug.print "resta conexion a " & ip
     
     key = findtableip(ip, ip_limiteconexiones)
     
@@ -241,16 +223,25 @@ dim key as long
         if maxcontables(key + 1) > 0 then
             maxcontables(key + 1) = maxcontables(key + 1) - 1
         end if
-        call logip("restamos conexion a " & ip & " key=" & key & ". conexiones: " & maxcontables(key + 1))
+        'call logip("restamos conexion a " & ip & " key=" & key & ". conexiones: " & maxcontables(key + 1))
+        'comento esto, sino se nos va el hd en logs, jaja
         if maxcontables(key + 1) <= 0 then
             'la limpiamos
-            call copymemory(maxcontables(key), maxcontables(key + 2), (maxcontablesentry - (key \ 2) + 1) * 8)
             maxcontablesentry = maxcontablesentry - 1
+            
+            if key + 2 < ubound(maxcontables) then
+                call copymemory(maxcontables(key), maxcontables(key + 2), (maxcontablesentry - (key \ 2)) * 8)
+            end if
         end if
-    else 'key <= 0
+    else 'key < 0
         call logip("restamos conexion a " & ip & " key=" & key & ". negativo!!")
         'logcriticevent "securityip.iprestarconexion obtuvo un valor negativo en key"
     end if
+    
+    exit sub
+
+errhandler:
+    call logerror("error en iprestarconexion. error: " & err.number & " - " & err.description & ". ip: " & getascip(ip) & " key:" & key)
 end sub
 
 
@@ -275,7 +266,7 @@ dim middle as long
     select case tabla
         case e_securityiptabla.ip_intervalos
             first = 0
-            last = maxvalue
+            last = maxvalue - 1
             do while first <= last
                 middle = (first + last) \ 2
                 
@@ -288,12 +279,12 @@ dim middle as long
                     exit function
                 end if
             loop
-            findtableip = not (middle * 2)
+            findtableip = not (first * 2)
         
         case e_securityiptabla.ip_limiteconexiones
             
             first = 0
-            last = maxcontablesentry
+            last = maxcontablesentry - 1
 
             do while first <= last
                 middle = (first + last) \ 2
@@ -307,7 +298,7 @@ dim middle as long
                     exit function
                 end if
             loop
-            findtableip = not (middle * 2)
+            findtableip = not (first * 2)
     end select
 end function
 

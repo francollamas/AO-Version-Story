@@ -29,7 +29,7 @@ attribute vb_name = "general"
 
 option explicit
 
-global leernpcs as new clsinireader
+global leernpcs as clsinimanager
 
 sub darcuerpodesnudo(byval userindex as integer, optional byval mimetizado as boolean = false)
 '***************************************************
@@ -157,7 +157,8 @@ sub limpiarmundo()
 on error goto errhandler
 
     dim i as integer
-    dim d as new cgarbage
+    dim d as cgarbage
+    set d = new cgarbage
     
     for i = trashcollector.count to 1 step -1
         set d = trashcollector(i)
@@ -220,12 +221,11 @@ end sub
 sub main()
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 15/03/2011
+'15/03/2011: zama - modularice todo, para que quede mas claro.
 '***************************************************
 
 on error resume next
-    dim f as date
     
     chdir app.path
     chdrive app.path
@@ -233,23 +233,118 @@ on error resume next
     call loadmotd
     call banipcargar
     
-    prision.map = 66
-    libertad.map = 66
+    frmmain.caption = frmmain.caption & " v." & app.major & "." & app.minor & "." & app.revision
     
-    prision.x = 75
-    prision.y = 47
-    libertad.x = 75
-    libertad.y = 65
+    ' start loading..
+    frmcargando.show
     
+    ' constants & vars
+    frmcargando.label1(2).caption = "cargando constantes..."
+    call loadconstants
+    doevents
     
+    ' arrays
+    frmcargando.label1(2).caption = "iniciando arrays..."
+    call loadarrays
+    
+    ' server.ini & apuestas.dat
+    frmcargando.label1(2).caption = "cargando server.ini"
+    call loadsini
+    call cargaapuestas
+    
+    ' npcs.dat
+    frmcargando.label1(2).caption = "cargando npcs.dat"
+    call carganpcsdat
+
+    ' obj.dat
+    frmcargando.label1(2).caption = "cargando obj.dat"
+    call loadobjdata
+    
+    ' hechizos.dat
+    frmcargando.label1(2).caption = "cargando hechizos.dat"
+    call cargarhechizos
+        
+    ' objetos de herreria
+    frmcargando.label1(2).caption = "cargando objetos de herrer�a"
+    call loadarmasherreria
+    call loadarmadurasherreria
+    
+    ' objetos de capinteria
+    frmcargando.label1(2).caption = "cargando objetos de carpinter�a"
+    call loadobjcarpintero
+    
+    ' balance.dat
+    frmcargando.label1(2).caption = "cargando balance.dat"
+    call loadbalance
+    
+    ' armaduras faccionarias
+    frmcargando.label1(2).caption = "cargando armadurasfaccionarias.dat"
+    call loadarmadurasfaccion
+    
+    ' pretorianos
+    frmcargando.label1(2).caption = "cargando pretorianos.dat"
+    call loadpretoriandata
+
+    ' mapas
+    if bootdelbackup then
+        frmcargando.label1(2).caption = "cargando backup"
+        call cargarbackup
+    else
+        frmcargando.label1(2).caption = "cargando mapas"
+        call loadmapdata
+    end if
+    
+    ' map sounds
+    set sonidosmapas = new soundmapinfo
+    call sonidosmapas.loadsoundmapinfo
+    
+    ' home distance
+    call generatematrix(matrix_initial_map)
+    
+    ' connections
+    call resetusersconnections
+    
+    ' timers
+    call initmaintimers
+    
+    ' sockets
+    call socketconfig
+    
+    ' end loading..
+    unload frmcargando
+    
+    'log start time
+    logserverstarttime
+    
+    'ocultar
+    if hideme = 1 then
+        call frmmain.initmain(1)
+    else
+        call frmmain.initmain(0)
+    end if
+    
+    tinicioserver = gettickcount() and &h7fffffff
+    call inicializaestadisticas
+
+end sub
+
+private sub loadconstants()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'loads all constants and general parameters.
+'*****************************************************************
+on error resume next
+   
     lastbackup = format(now, "short time")
     minutos = format(now, "short time")
     
+    ' paths
     inipath = app.path & "\"
     datpath = app.path & "\dat\"
+    charpath = app.path & "\charfile\"
     
-    
-    
+    ' skills by level
     levelskill(1).levelvalue = 3
     levelskill(2).levelvalue = 5
     levelskill(3).levelvalue = 7
@@ -301,13 +396,14 @@ on error resume next
     levelskill(49).levelvalue = 100
     levelskill(50).levelvalue = 100
     
-    
+    ' races
     listarazas(eraza.humano) = "humano"
     listarazas(eraza.elfo) = "elfo"
     listarazas(eraza.drow) = "drow"
     listarazas(eraza.gnomo) = "gnomo"
     listarazas(eraza.enano) = "enano"
     
+    ' classes
     listaclases(eclass.mage) = "mago"
     listaclases(eclass.cleric) = "clerigo"
     listaclases(eclass.warrior) = "guerrero"
@@ -321,6 +417,7 @@ on error resume next
     listaclases(eclass.worker) = "trabajador"
     listaclases(eclass.pirat) = "pirata"
     
+    ' skills
     skillsnames(eskill.magia) = "magia"
     skillsnames(eskill.robar) = "robar"
     skillsnames(eskill.tacticas) = "evasi�n en combate"
@@ -342,89 +439,81 @@ on error resume next
     skillsnames(eskill.wrestling) = "combate sin armas"
     skillsnames(eskill.navegacion) = "navegacion"
     
+    ' attributes
     listaatributos(eatributos.fuerza) = "fuerza"
     listaatributos(eatributos.agilidad) = "agilidad"
     listaatributos(eatributos.inteligencia) = "inteligencia"
     listaatributos(eatributos.carisma) = "carisma"
     listaatributos(eatributos.constitucion) = "constitucion"
     
-    
-    frmcargando.show
-    
-    'call playwaveapi(app.path & "\wav\harp3.wav")
-    
-    frmmain.caption = frmmain.caption & " v." & app.major & "." & app.minor & "." & app.revision
-    inipath = app.path & "\"
-    charpath = app.path & "\charfile\"
-    
+    ' fishes
+    listapeces(1) = peces_posibles.pescado1
+    listapeces(2) = peces_posibles.pescado2
+    listapeces(3) = peces_posibles.pescado3
+    listapeces(4) = peces_posibles.pescado4
+
     'bordes del mapa
     minxborder = xminmapsize + (xwindow \ 2)
     maxxborder = xmaxmapsize - (xwindow \ 2)
     minyborder = yminmapsize + (ywindow \ 2)
     maxyborder = ymaxmapsize - (ywindow \ 2)
-    doevents
     
-    frmcargando.label1(2).caption = "iniciando arrays..."
-    
-    call loadguildsdb
-    
-    
-    call cargarspawnlist
-    call cargarforbidenwords
-    '�?�?�?�?�?�?�?� cargamos datos desde archivos �??�?�?�?�?�?�?�
-    frmcargando.label1(2).caption = "cargando server.ini"
-    
-    maxusers = 0
-    call loadsini
-    call cargaapuestas
-    
-    '*************************************************
-    frmcargando.label1(2).caption = "cargando npcs.dat"
-    call carganpcsdat
-    '*************************************************
-    
-    frmcargando.label1(2).caption = "cargando obj.dat"
-    'call loadobjdata
-    call loadobjdata
-        
-    frmcargando.label1(2).caption = "cargando hechizos.dat"
-    call cargarhechizos
-        
-        
-    frmcargando.label1(2).caption = "cargando objetos de herrer�a"
-    call loadarmasherreria
-    call loadarmadurasherreria
-    
-    frmcargando.label1(2).caption = "cargando objetos de carpinter�a"
-    call loadobjcarpintero
-    
-    frmcargando.label1(2).caption = "cargando balance.dat"
-    call loadbalance    '4/01/08 pablo toxicwaste
-    
-    frmcargando.label1(2).caption = "cargando armadurasfaccionarias.dat"
-    call loadarmadurasfaccion
-    
-    if bootdelbackup then
-        
-        frmcargando.label1(2).caption = "cargando backup"
-        call cargarbackup
-    else
-        frmcargando.label1(2).caption = "cargando mapas"
-        call loadmapdata
-    end if
-    
-    
-    call sonidosmapas.loadsoundmapinfo
+    set ayuda = new ccola
+    set denuncias = new ccola
+    denuncias.maxlenght = max_denounces
 
-    call generatematrix(matrix_initial_map)
+    with prision
+        .map = 66
+        .x = 75
+        .y = 47
+    end with
     
-    'comentado porque hay worldsave en ese mapa!
-    'call crearclanpretoriano(mapa_pretoriano, alcoba2_x, alcoba2_y)
-    '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-    
-    dim loopc as integer
-    
-    'resetea las conexiones de los usuarios
+    with libertad
+        .map = 66
+        .x = 75
+        .y = 65
+    end with
+
+    maxusers = 0
+
+    ' initialize classes
+    set wsapisock2usr = new collection
+    protocol.initauxiliarbuffer
+#if seguridadalkon then
+    set ados = new clsantidos
+#end if
+
+    set aclon = new clsantimassclon
+    set trashcollector = new collection
+
+end sub
+
+private sub loadarrays()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'loads all arrays
+'*****************************************************************
+on error resume next
+    ' load records
+    call loadrecords
+    ' load guilds info
+    call loadguildsdb
+    ' load spawn list
+    call cargarspawnlist
+    ' load forbidden words
+    call cargarforbidenwords
+end sub
+
+private sub resetusersconnections()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'resets users connections.
+'*****************************************************************
+on error resume next
+
+    dim loopc as long
     for loopc = 1 to maxusers
         userlist(loopc).connid = -1
         userlist(loopc).connidvalida = false
@@ -432,8 +521,16 @@ on error resume next
         set userlist(loopc).outgoingdata = new clsbytequeue
     next loopc
     
-    '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-    
+end sub
+
+private sub initmaintimers()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'initializes main timers.
+'*****************************************************************
+on error resume next
+
     with frmmain
         .autosave.enabled = true
         .tlluvia.enabled = true
@@ -451,9 +548,16 @@ on error resume next
 #end if
     end with
     
-    '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-    'configuracion de los sockets
-    
+end sub
+
+private sub socketconfig()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'sets socket config.
+'*****************************************************************
+on error resume next
+
     call securityip.initiptables(1000)
     
 #if usarquesocket = 1 then
@@ -488,26 +592,20 @@ on error resume next
 #end if
     
     if frmmain.visible then frmmain.txstatus.caption = "escuchando conexiones entrantes ..."
-    '�?�?�?�?�?�?�?�?�?�?�?�?�?�?��?�?�?�?�?�?�?�?�?�?�?�?�?�?�
     
-    unload frmcargando
-    
-    'log
+end sub
+
+private sub logserverstarttime()
+'*****************************************************************
+'author: zama
+'last modify date: 15/03/2011
+'logs server start time.
+'*****************************************************************
     dim n as integer
     n = freefile
     open app.path & "\logs\main.log" for append shared as #n
     print #n, date & " " & time & " server iniciado " & app.major & "."; app.minor & "." & app.revision
     close #n
-    
-    'ocultar
-    if hideme = 1 then
-        call frmmain.initmain(1)
-    else
-        call frmmain.initmain(0)
-    end if
-    
-    tinicioserver = gettickcount() and &h7fffffff
-    call inicializaestadisticas
 
 end sub
 
@@ -521,7 +619,6 @@ end function
 
 function readfield(byval pos as integer, byref text as string, byval sepascii as byte) as string
 '*****************************************************************
-'gets a field from a string
 'author: juan mart�n sotuyo dodero (maraxus)
 'last modify date: 11/15/2004
 'gets a field from a delimited string
@@ -563,7 +660,7 @@ sub mostrarnumusers()
 '
 '***************************************************
 
-    frmmain.cantusuarios.caption = "n�mero de usuarios jugando: " & numusers
+    frmmain.txtnumusers.text = numusers
 
 end sub
 
@@ -1141,7 +1238,7 @@ public sub efectofrio(byval userindex as integer)
         if .counters.frio < intervalofrio then
             .counters.frio = .counters.frio + 1
         else
-            if mapinfo(.pos.map).terreno = nieve then
+            if mapinfo(.pos.map).terreno = eterrain.terrain_nieve then
                 call writeconsolemsg(userindex, "��est�s muriendo de fr�o, abrigate o morir�s!!", fonttypenames.fonttype_info)
                 modifi = porcentaje(.stats.maxhp, 5)
                 .stats.minhp = .stats.minhp - modifi
@@ -1203,16 +1300,43 @@ end sub
 public sub efectoestadoatacable(byval userindex as integer)
 '******************************************************
 'author: zama
-'last update: 13/01/2010 (zama)
+'last update: 18/09/2010 (zama)
+'18/09/2010: zama - ahora se activa el seguro cuando dejas de ser atacable.
 '******************************************************
 
     ' si ya paso el tiempo de penalizacion
     if not intervaloestadoatacable(userindex) then
         ' deja de poder ser atacado
         userlist(userindex).flags.atacablepor = 0
+        
+        ' activo el seguro si deja de estar atacable
+        if not userlist(userindex).flags.seguro then
+            call writemultimessage(userindex, emessages.safemodeon)
+        end if
+        
         ' send nick normal
         call refreshcharstatus(userindex)
     end if
+    
+end sub
+
+''
+' maneja el tiempo de arrivo al hogar
+'
+' @param userindex  el index del usuario a ser afectado por el /hogar
+'
+
+public sub travelingeffect(byval userindex as integer)
+'******************************************************
+'author: zama
+'last update: 01/06/2010 (zama)
+'******************************************************
+
+    ' si ya paso el tiempo de penalizacion
+    if intervalogohome(userindex) then
+        call homearrival(userindex)
+    end if
+
 end sub
 
 ''
@@ -1224,8 +1348,9 @@ end sub
 public sub efectomimetismo(byval userindex as integer)
 '******************************************************
 'author: unknown
-'last update: 12/01/2010 (zama)
+'last update: 16/09/2010 (zama)
 '12/01/2010: zama - los druidas pierden la inmunidad de ser atacados cuando pierden el efecto del mimetismo.
+'16/09/2010: zama - se recupera la apariencia de la barca correspondiente despues de terminado el mimetismo.
 '******************************************************
     dim barco as objdata
     
@@ -1238,29 +1363,13 @@ public sub efectomimetismo(byval userindex as integer)
             
             if .flags.navegando then
                 if .flags.muerto = 0 then
-                    if .faccion.armadareal = 1 then
-                        .char.body = ifragatareal
-                    elseif .faccion.fuerzascaos = 1 then
-                        .char.body = ifragatacaos
-                    else
-                        barco = objdata(userlist(userindex).invent.barcoobjindex)
-                        if criminal(userindex) then
-                            if barco.ropaje = ibarca then .char.body = ibarcapk
-                            if barco.ropaje = igalera then .char.body = igalerapk
-                            if barco.ropaje = igaleon then .char.body = igaleonpk
-                        else
-                            if barco.ropaje = ibarca then .char.body = ibarcaciuda
-                            if barco.ropaje = igalera then .char.body = igaleraciuda
-                            if barco.ropaje = igaleon then .char.body = igaleonciuda
-                        end if
-                    end if
+                    call toggleboatbody(userindex)
                 else
                     .char.body = ifragatafantasmal
+                    .char.shieldanim = ningunescudo
+                    .char.weaponanim = ningunarma
+                    .char.cascoanim = ninguncasco
                 end if
-                
-                .char.shieldanim = ningunescudo
-                .char.weaponanim = ningunarma
-                .char.cascoanim = ninguncasco
             else
                 .char.body = .charmimetizado.body
                 .char.head = .charmimetizado.head
@@ -1284,8 +1393,8 @@ end sub
 public sub efectoinvisibilidad(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 16/09/2010 (zama)
+'16/09/2010: zama - al perder el invi cuando navegas, no se manda el mensaje de sacar invi (ya estas visible).
 '***************************************************
 
     with userlist(userindex)
@@ -1296,8 +1405,12 @@ public sub efectoinvisibilidad(byval userindex as integer)
             .flags.invisible = 0
             if .flags.oculto = 0 then
                 call writeconsolemsg(userindex, "has vuelto a ser visible.", fonttypenames.fonttype_info)
-                call setinvisible(userindex, .char.charindex, false)
-                'call senddata(sendtarget.topcarea, userindex, preparemessagesetinvisible(.char.charindex, false))
+                
+                ' si navega ya esta visible..
+                if not .flags.navegando = 1 then
+                    call setinvisible(userindex, .char.charindex, false)
+                end if
+                
             end if
         end if
     end with
@@ -1352,21 +1465,85 @@ end sub
 public sub efectoparalisisuser(byval userindex as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 02/12/2010
+'02/12/2010: zama - now non-magic clases lose paralisis effect under certain circunstances.
 '***************************************************
 
     with userlist(userindex)
+    
         if .counters.paralisis > 0 then
+        
+            dim casterindex as integer
+            casterindex = .flags.paralizedbyindex
+        
+            ' only aplies to non-magic clases
+            if .stats.maxman = 0 then
+                ' paralized by user?
+                if casterindex <> 0 then
+                
+                    ' close? => remove paralisis
+                    if userlist(casterindex).name <> .flags.paralizedby then
+                        call removeparalisis(userindex)
+                        exit sub
+                        
+                    ' caster dead? => remove paralisis
+                    elseif userlist(casterindex).flags.muerto = 1 then
+                        call removeparalisis(userindex)
+                        exit sub
+                    
+                    elseif .counters.paralisis > intervaloparalizadoreducido then
+                        ' out of vision range? => reduce paralisis counter
+                        if not invisionrangeandmap(userindex, userlist(casterindex).pos) then
+                            ' aprox. 1500 ms
+                            .counters.paralisis = intervaloparalizadoreducido
+                            exit sub
+                        end if
+                    end if
+                
+                ' npc?
+                else
+                    casterindex = .flags.paralizedbynpcindex
+                    
+                    ' paralized by npc?
+                    if casterindex <> 0 then
+                    
+                        if .counters.paralisis > intervaloparalizadoreducido then
+                            ' out of vision range? => reduce paralisis counter
+                            if not invisionrangeandmap(userindex, npclist(casterindex).pos) then
+                                ' aprox. 1500 ms
+                                .counters.paralisis = intervaloparalizadoreducido
+                                exit sub
+                            end if
+                        end if
+                    end if
+                    
+                end if
+            end if
+            
             .counters.paralisis = .counters.paralisis - 1
+
         else
-            .flags.paralizado = 0
-            .flags.inmovilizado = 0
-            '.flags.administrativeparalisis = 0
-            call writeparalizeok(userindex)
+            call removeparalisis(userindex)
         end if
     end with
 
+end sub
+
+public sub removeparalisis(byval userindex as integer)
+'***************************************************
+'author: zama
+'last modification: 20/11/2010
+'removes paralisis effect from user.
+'***************************************************
+    with userlist(userindex)
+        .flags.paralizado = 0
+        .flags.inmovilizado = 0
+        .flags.paralizedby = vbnullstring
+        .flags.paralizedbyindex = 0
+        .flags.paralizedbynpcindex = 0
+        .counters.paralisis = 0
+        call writeparalizeok(userindex)
+    end with
 end sub
 
 public sub recstamina(byval userindex as integer, byref enviarstats as boolean, byval intervalo as integer)
@@ -1539,6 +1716,7 @@ public sub carganpcsdat()
     dim npcfile as string
     
     npcfile = datpath & "npcs.dat"
+    set leernpcs = new clsinimanager
     call leernpcs.initialize(npcfile)
 end sub
 
@@ -1624,9 +1802,12 @@ sub guardarusuarios()
     dim i as integer
     for i = 1 to lastuser
         if userlist(i).flags.userlogged then
-            call saveuser(i, charpath & ucase$(userlist(i).name) & ".chr")
+            call saveuser(i, charpath & ucase$(userlist(i).name) & ".chr", false)
         end if
     next i
+    
+    'se guardan los seguimientos
+    call saverecords
     
     call senddata(sendtarget.toall, 0, preparemessageconsolemsg("servidor> personajes grabados", fonttypenames.fonttype_server))
     call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
@@ -1645,6 +1826,7 @@ sub inicializaestadisticas()
     dim ta as long
     ta = gettickcount() and &h7fffffff
     
+    set estadisticasweb = new clsestadisticasipc
     call estadisticasweb.inicializa(frmmain.hwnd)
     call estadisticasweb.informar(cantidad_mapas, nummaps)
     call estadisticasweb.informar(cantidad_online, numusers)

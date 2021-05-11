@@ -323,3 +323,46 @@ public function intervaloestadoatacable(byval userindex as integer, optional byv
     end with
 
 end function
+
+public function intervalogohome(byval userindex as integer, optional byval timeinterval as long, optional byval actualizar as boolean = false) as boolean
+'**************************************************************
+'author: zama
+'last modify by: zama
+'last modify date: 01/06/2010
+'01/06/2010: zama - add the timer which determines wether the user can be teleported to its home or not
+'**************************************************************
+    dim tactual as long
+    
+    tactual = gettickcount() and &h7fffffff
+    
+    with userlist(userindex)
+        ' inicializa el timer
+        if actualizar then
+            .flags.traveling = 1
+            .counters.gohome = tactual + timeinterval
+        else
+            if tactual >= .counters.gohome then
+                intervalogohome = true
+            end if
+        end if
+    end with
+
+end function
+
+public function checkinterval(byref starttime as long, byval timenow as long, byval interval as long) as boolean
+dim linterval as long
+
+if timenow < starttime then
+    linterval = &h7fffffff - starttime + timenow + 1
+else
+    linterval = timenow - starttime
+end if
+
+if linterval >= interval then
+    starttime = timenow
+    checkinterval = true
+else
+    checkinterval = false
+end if
+end function
+

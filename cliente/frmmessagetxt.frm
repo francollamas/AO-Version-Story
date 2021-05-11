@@ -173,7 +173,7 @@ begin vb.form frmmessagetxt
       height          =   255
       index           =   1
       left            =   1200
-      tabindex        =   2
+      tabindex        =   1
       top             =   600
       width           =   3330
    end
@@ -193,7 +193,7 @@ begin vb.form frmmessagetxt
       height          =   255
       index           =   0
       left            =   1200
-      tabindex        =   1
+      tabindex        =   0
       top             =   180
       width           =   3330
    end
@@ -213,7 +213,7 @@ begin vb.form frmmessagetxt
       height          =   255
       index           =   2
       left            =   1200
-      tabindex        =   0
+      tabindex        =   2
       top             =   1005
       width           =   3330
    end
@@ -244,7 +244,7 @@ private clsformulario as clsformmovementmanager
 private cbotonguardar as clsgraphicalbutton
 private cbotoncancelar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_load()
     dim i as long
@@ -271,7 +271,7 @@ private sub loadbuttons()
     set cbotonguardar = new clsgraphicalbutton
     set cbotoncancelar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
 
     call cbotonguardar.initialize(imgguardar, grhpath & "botonguardarcustommsg.jpg", grhpath & "botonguardarrollovercustommsg.jpg", _
                                     grhpath & "botonguardarclickcustommsg.jpg", me)
@@ -280,7 +280,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcancelar_click()
@@ -307,5 +307,5 @@ errhandler:
 end sub
 
 private sub messagetxt_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

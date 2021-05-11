@@ -265,7 +265,7 @@ private cbotonsoporte as clsgraphicalbutton
 private cbotontutorial as clsgraphicalbutton
 private cbotonsalir as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private piccheckbox as picture
 
@@ -276,7 +276,7 @@ private bsoundeffectsactivated as boolean
 private loading as boolean
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcambiarpasswd_click()
@@ -464,7 +464,7 @@ private sub imgsoporte_click()
 end sub
 
 private sub imgtutorial_click()
-    frmtutorial.show
+    frmtutorial.show vbmodeless
 end sub
 
 private sub form_load()
@@ -495,7 +495,7 @@ private sub loadbuttons()
     set cbotontutorial = new clsgraphicalbutton
     set cbotonsalir = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     call cbotonconfigteclas.initialize(imgconfigteclas, grhpath & "botonconfigurarteclas.jpg", _
                                     grhpath & "botonconfigurarteclasrollover.jpg", _

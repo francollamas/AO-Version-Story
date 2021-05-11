@@ -1,31 +1,66 @@
 version 5.00
 begin vb.form frmconid 
+   backcolor       =   &h00ffc0c0&
+   borderstyle     =   1  'fixed single
    caption         =   "conid"
    clientheight    =   4440
-   clientleft      =   60
-   clienttop       =   345
+   clientleft      =   45
+   clienttop       =   330
    clientwidth     =   4680
    linktopic       =   "form1"
+   maxbutton       =   0   'false
    scaleheight     =   4440
    scalewidth      =   4680
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton command3 
+      backcolor       =   &h00ffc0c0&
       caption         =   "liberar todos los slots"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   390
       left            =   135
+      style           =   1  'graphical
       tabindex        =   3
       top             =   3495
       width           =   4290
    end
    begin vb.commandbutton command2 
+      backcolor       =   &h00ffc0c0&
       caption         =   "ver estado"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   390
       left            =   135
+      style           =   1  'graphical
       tabindex        =   2
       top             =   3030
       width           =   4290
    end
    begin vb.listbox list1 
+      backcolor       =   &h00c0ffff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   2205
       left            =   180
       tabindex        =   1
@@ -33,14 +68,35 @@ begin vb.form frmconid
       width           =   4215
    end
    begin vb.commandbutton command1 
+      backcolor       =   &h00ffc0c0&
       caption         =   "cerrar"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   390
       left            =   120
+      style           =   1  'graphical
       tabindex        =   0
       top             =   3975
       width           =   4290
    end
    begin vb.label label1 
+      backstyle       =   0  'transparent
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   510
       left            =   180
       tabindex        =   4
@@ -84,7 +140,7 @@ attribute vb_exposed = false
 option explicit
 
 private sub command1_click()
-unload me
+    unload me
 end sub
 
 private sub command2_click()

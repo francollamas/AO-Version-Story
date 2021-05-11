@@ -63,15 +63,16 @@ public enum sendtarget
     tousersandrmsandcounselorsareabutgms
 end enum
 
-public sub senddata(byval sndroute as sendtarget, byval sndindex as integer, byval snddata as string)
+public sub senddata(byval sndroute as sendtarget, byval sndindex as integer, byval snddata as string, _
+                    optional byval isdenounce as boolean = false)
 '**************************************************************
 'author: juan mart�n sotuyo dodero (maraxus) - rewrite of original
-'last modify date: 01/08/2007
-'last modified by: (liquid)
+'last modify date: 14/11/2010
+'last modified by: zama
+'14/11/2010: zama - now denounces can be desactivated.
 '**************************************************************
 on error resume next
     dim loopc as long
-    dim map as integer
     
     select case sndroute
         case sendtarget.topcarea
@@ -82,7 +83,14 @@ on error resume next
             for loopc = 1 to lastuser
                 if userlist(loopc).connid <> -1 then
                     if userlist(loopc).flags.privilegios and (playertype.admin or playertype.dios or playertype.semidios or playertype.consejero) then
-                        call enviardatosaslot(loopc, snddata)
+                        ' denounces can be desactivated
+                        if isdenounce then
+                            if userlist(loopc).flags.senddenounces then
+                                call enviardatosaslot(loopc, snddata)
+                            end if
+                        else
+                            call enviardatosaslot(loopc, snddata)
+                        end if
                    end if
                 end if
             next loopc

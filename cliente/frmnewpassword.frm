@@ -101,7 +101,7 @@ private clsformulario as clsformmovementmanager
 
 private cbotonaceptar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_load()
     ' handles form movement (drag and drop).
@@ -120,7 +120,7 @@ private sub loadbuttons()
 
     set cbotonaceptar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptarcambiarcontrasenia.jpg", _
@@ -129,7 +129,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgaceptar_click()
@@ -143,5 +143,5 @@ private sub imgaceptar_click()
 end sub
 
 private sub text3_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub

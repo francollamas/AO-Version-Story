@@ -231,21 +231,37 @@ public function getmemberlist() as string()
 end function
 
 public sub conectarmiembro(byval userindex as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 28/05/2010
+'28/05/2010: zama - no avisa cuando loguea un dios o admin.
+'***************************************************
     p_onlinemembers.add userindex
 
     with userlist(userindex)
-        call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha conectado."))
+        ' no avisa cuando loguea un dios
+        if (.flags.privilegios and (playertype.admin or playertype.dios)) = 0 then
+            call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha conectado."))
+        end if
     end with
 end sub
 
 public sub desconectarmiembro(byval userindex as integer)
+'***************************************************
+'autor: unknown (orginal version)
+'last modification: 28/05/2010
+'28/05/2010: zama - no avisa cuando desloguea un dios o admin.
+'***************************************************
 dim i   as integer
     for i = 1 to p_onlinemembers.count
         if p_onlinemembers.item(i) = userindex then
             p_onlinemembers.remove i
             
             with userlist(userindex)
-                call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha desconectado."))
+                 ' no avisa cuando se desconecta un dios
+                if (.flags.privilegios and (playertype.admin or playertype.dios)) = 0 then
+                    call senddata(sendtarget.todiosesyclan, .guildindex, preparemessageguildchat(.name & " se ha desconectado."))
+                end if
             end with
 
             exit sub

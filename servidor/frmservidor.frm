@@ -1,491 +1,324 @@
 version 5.00
 begin vb.form frmservidor 
-   backcolor       =   &h00c0c0c0&
-   caption         =   "servidor"
-   clientheight    =   6540
+   backcolor       =   &h00ffc0c0&
+   caption         =   "configuraci�n del servidor"
+   clientheight    =   6000
    clientleft      =   60
    clienttop       =   345
-   clientwidth     =   4845
+   clientwidth     =   6600
    controlbox      =   0   'false
+   beginproperty font 
+      name            =   "ms sans serif"
+      size            =   8.25
+      charset         =   0
+      weight          =   700
+      underline       =   0   'false
+      italic          =   0   'false
+      strikethrough   =   0   'false
+   endproperty
    linktopic       =   "form1"
-   scaleheight     =   436
+   scaleheight     =   400
    scalemode       =   3  'pixel
-   scalewidth      =   323
-   startupposition =   3  'windows default
-   begin vb.commandbutton command26 
-      caption         =   "reset listen"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
+   scalewidth      =   440
+   startupposition =   2  'centerscreen
+   begin vb.commandbutton cmdreiniciar 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "reiniciar"
+      enabled         =   0   'false
+      height          =   375
       left            =   1920
-      tabindex        =   26
-      top             =   6180
-      width           =   1455
-   end
-   begin vb.picturebox picfuera 
-      appearance      =   0  'flat
-      backcolor       =   &h00000000&
-      forecolor       =   &h80000008&
-      height          =   4350
-      left            =   120
-      scaleheight     =   288
-      scalemode       =   3  'pixel
-      scalewidth      =   304
-      tabindex        =   6
-      top             =   120
-      width           =   4590
-      begin vb.vscrollbar vs1 
-         height          =   4335
-         largechange     =   50
-         left            =   4320
-         smallchange     =   17
-         tabindex        =   24
-         top             =   0
-         width           =   255
-      end
-      begin vb.picturebox piccont 
-         backcolor       =   &h00c0c0c0&
-         borderstyle     =   0  'none
-         height          =   4815
-         left            =   0
-         scaleheight     =   321
-         scalemode       =   3  'pixel
-         scalewidth      =   289
-         tabindex        =   7
-         top             =   0
-         width           =   4334
-         begin vb.commandbutton command27 
-            caption         =   "debug userlist"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   27
-            top             =   4440
-            width           =   4095
-         end
-         begin vb.commandbutton command22 
-            caption         =   "administraci�n"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   8
-            top             =   4200
-            width           =   4095
-         end
-         begin vb.commandbutton command21 
-            caption         =   "pausar el servidor"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   9
-            top             =   3960
-            width           =   4095
-         end
-         begin vb.commandbutton command17 
-            caption         =   "actualizar npcs.dat"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   10
-            top             =   3720
-            width           =   4095
-         end
-         begin vb.commandbutton command25 
-            caption         =   "reload md5s"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   25
-            top             =   3480
-            width           =   4095
-         end
-         begin vb.commandbutton command16 
-            caption         =   "reload server.ini"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   11
-            top             =   3240
-            width           =   4095
-         end
-         begin vb.commandbutton command28 
-            caption         =   "reload balance.dat"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   28
-            top             =   3000
-            width           =   4095
-         end
-         begin vb.commandbutton command14 
-            caption         =   "update motd"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   12
-            top             =   2760
-            width           =   4095
-         end
-         begin vb.commandbutton command19 
-            caption         =   "unban all ips (peligro!)"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   13
-            top             =   2520
-            width           =   4095
-         end
-         begin vb.commandbutton command15 
-            caption         =   "unban all (peligro!)"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   14
-            top             =   2280
-            width           =   4095
-         end
-         begin vb.commandbutton command12 
-            caption         =   "debug npcs"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   15
-            top             =   2040
-            width           =   4095
-         end
-         begin vb.commandbutton command11 
-            caption         =   "stats de los slots"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   16
-            top             =   1800
-            width           =   4095
-         end
-         begin vb.commandbutton command10 
-            caption         =   "trafico"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   17
-            top             =   1560
-            width           =   4095
-         end
-         begin vb.commandbutton command9 
-            caption         =   "reload lista nombres prohibidos"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   18
-            top             =   1320
-            width           =   4095
-         end
-         begin vb.commandbutton command8 
-            caption         =   "actualizar hechizos"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   19
-            top             =   1080
-            width           =   4095
-         end
-         begin vb.commandbutton command7 
-            caption         =   "configurar intervalos"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   20
-            top             =   840
-            width           =   4095
-         end
-         begin vb.commandbutton command3 
-            caption         =   "reiniciar"
-            enabled         =   0   'false
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   21
-            top             =   600
-            width           =   4095
-         end
-         begin vb.commandbutton command6 
-            caption         =   "respawn guardias en posiciones originales"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   22
-            top             =   360
-            width           =   4095
-         end
-         begin vb.commandbutton command1 
-            caption         =   "actualizar objetos.dat"
-            beginproperty font 
-               name            =   "tahoma"
-               size            =   8.25
-               charset         =   0
-               weight          =   700
-               underline       =   0   'false
-               italic          =   0   'false
-               strikethrough   =   0   'false
-            endproperty
-            height          =   255
-            left            =   120
-            tabindex        =   23
-            top             =   120
-            width           =   4095
-         end
-      end
-   end
-   begin vb.commandbutton command23 
-      caption         =   "boton magico para apagar server"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   5
+      style           =   1  'graphical
+      tabindex        =   17
       top             =   5520
-      width           =   4095
+      width           =   1695
    end
-   begin vb.commandbutton command5 
-      caption         =   "cargar backup del mundo"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   1
-      top             =   5160
-      width           =   4095
-   end
-   begin vb.commandbutton command18 
-      caption         =   "guardar todos los personajes"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   3
-      top             =   4920
-      width           =   4095
-   end
-   begin vb.commandbutton command4 
-      caption         =   "hacer un backup del mundo"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   2
-      top             =   4680
-      width           =   4095
-   end
-   begin vb.commandbutton command2 
-      caption         =   "ok"
-      default         =   -1  'true
-      height          =   255
-      left            =   3480
-      tabindex        =   0
-      top             =   6180
-      width           =   945
-   end
-   begin vb.commandbutton command20 
-      caption         =   "reset sockets"
-      beginproperty font 
-         name            =   "tahoma"
-         size            =   8.25
-         charset         =   0
-         weight          =   700
-         underline       =   0   'false
-         italic          =   0   'false
-         strikethrough   =   0   'false
-      endproperty
-      height          =   255
-      left            =   240
-      tabindex        =   4
-      top             =   6180
-      width           =   1575
-   end
-   begin vb.shape shape2 
-      height          =   1335
+   begin vb.frame frame3 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "administraci�n"
+      height          =   2415
       left            =   120
+      tabindex        =   16
+      top             =   2040
+      width           =   6375
+      begin vb.commandbutton cmdresetlisten 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "reset listen"
+         height          =   375
+         left            =   2280
+         style           =   1  'graphical
+         tabindex        =   28
+         top             =   1920
+         width           =   1935
+      end
+      begin vb.commandbutton cmdresetsockets 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "reset sockets"
+         height          =   375
+         left            =   240
+         style           =   1  'graphical
+         tabindex        =   27
+         top             =   1920
+         width           =   1935
+      end
+      begin vb.commandbutton cmddebuguserlist 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "debug userlist"
+         height          =   495
+         left            =   4320
+         style           =   1  'graphical
+         tabindex        =   26
+         top             =   1320
+         width           =   1935
+      end
+      begin vb.commandbutton cmdunbanallips 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "unban all ips (peligro!)"
+         height          =   495
+         left            =   2280
+         style           =   1  'graphical
+         tabindex        =   25
+         top             =   1320
+         width           =   1935
+      end
+      begin vb.commandbutton cmdunbanall 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "unban all (peligro!)"
+         height          =   495
+         left            =   240
+         style           =   1  'graphical
+         tabindex        =   24
+         top             =   1320
+         width           =   1935
+      end
+      begin vb.commandbutton cmddebugnpcs 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "debug npcs"
+         height          =   375
+         left            =   4320
+         style           =   1  'graphical
+         tabindex        =   23
+         top             =   840
+         width           =   1935
+      end
+      begin vb.commandbutton frmadministracion 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "administraci�n"
+         height          =   375
+         left            =   2280
+         style           =   1  'graphical
+         tabindex        =   22
+         top             =   840
+         width           =   1935
+      end
+      begin vb.commandbutton cmdpausarservidor 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "pausar el servidor"
+         height          =   375
+         left            =   240
+         style           =   1  'graphical
+         tabindex        =   21
+         top             =   840
+         width           =   1935
+      end
+      begin vb.commandbutton cmdstatsslots 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "stats de slots"
+         height          =   375
+         left            =   4320
+         style           =   1  'graphical
+         tabindex        =   20
+         top             =   360
+         width           =   1935
+      end
+      begin vb.commandbutton cmdvertrafico 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "tr�fico"
+         height          =   375
+         left            =   2280
+         style           =   1  'graphical
+         tabindex        =   19
+         top             =   360
+         width           =   1935
+      end
+      begin vb.commandbutton cmdconfigintervalos 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "config. intervalos"
+         height          =   375
+         left            =   240
+         style           =   1  'graphical
+         tabindex        =   18
+         top             =   360
+         width           =   1935
+      end
+   end
+   begin vb.commandbutton cmdcerrar 
+      backcolor       =   &h00ffc0c0&
+      cancel          =   -1  'true
+      caption         =   "salir (esc)"
+      height          =   375
+      left            =   120
+      style           =   1  'graphical
+      tabindex        =   15
+      top             =   5520
+      width           =   1695
+   end
+   begin vb.commandbutton cmdapagarserver 
+      backcolor       =   &h00c0c0ff&
+      caption         =   "apagar server con backup"
+      height          =   375
+      left            =   3720
+      style           =   1  'graphical
+      tabindex        =   14
+      top             =   5520
+      width           =   2775
+   end
+   begin vb.frame frame2 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "backup"
+      height          =   735
+      left            =   120
+      tabindex        =   10
       top             =   4560
-      width           =   4335
+      width           =   6375
+      begin vb.commandbutton cmdloadworldbackup 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "cargar mapas"
+         height          =   375
+         left            =   4320
+         style           =   1  'graphical
+         tabindex        =   13
+         top             =   240
+         width           =   1935
+      end
+      begin vb.commandbutton cmdcharbackup 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "guardar chars"
+         height          =   375
+         left            =   2280
+         style           =   1  'graphical
+         tabindex        =   12
+         top             =   240
+         width           =   1935
+      end
+      begin vb.commandbutton cmdworldbackup 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "guardar mapas"
+         height          =   375
+         left            =   240
+         style           =   1  'graphical
+         tabindex        =   11
+         top             =   240
+         width           =   1935
+      end
+   end
+   begin vb.frame frame1 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "recargar"
+      height          =   1815
+      left            =   120
+      tabindex        =   0
+      top             =   120
+      width           =   6375
+      begin vb.commandbutton cmdrecargaradministradores 
+         backcolor       =   &h0080c0ff&
+         caption         =   "administradores"
+         height          =   375
+         left            =   1680
+         style           =   1  'graphical
+         tabindex        =   29
+         top             =   1320
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarguardiasposorig 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "guardias en pos originales"
+         height          =   375
+         left            =   3240
+         style           =   1  'graphical
+         tabindex        =   9
+         top             =   1320
+         width           =   3015
+      end
+      begin vb.commandbutton cmdrecargarmotd 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "motd"
+         height          =   375
+         left            =   120
+         style           =   1  'graphical
+         tabindex        =   8
+         top             =   1320
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarmd5s 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "md5s"
+         height          =   375
+         left            =   3240
+         style           =   1  'graphical
+         tabindex        =   7
+         top             =   360
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarserverini 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "server.ini"
+         height          =   375
+         left            =   4800
+         style           =   1  'graphical
+         tabindex        =   6
+         top             =   360
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarnombresinvalidos 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "nombresinvalidos.txt"
+         height          =   375
+         left            =   3240
+         style           =   1  'graphical
+         tabindex        =   5
+         top             =   840
+         width           =   3015
+      end
+      begin vb.commandbutton cmdrecargarnpcs 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "npcs.dat"
+         height          =   375
+         left            =   120
+         style           =   1  'graphical
+         tabindex        =   4
+         top             =   840
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarbalance 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "balance.dat"
+         height          =   375
+         left            =   1680
+         style           =   1  'graphical
+         tabindex        =   3
+         top             =   840
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarhechizos 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "hechizos.dat"
+         height          =   375
+         left            =   1680
+         style           =   1  'graphical
+         tabindex        =   2
+         top             =   360
+         width           =   1455
+      end
+      begin vb.commandbutton cmdrecargarobjetos 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "obj.dat"
+         height          =   375
+         left            =   120
+         style           =   1  'graphical
+         tabindex        =   1
+         top             =   360
+         width           =   1455
+      end
    end
 end
 attribute vb_name = "frmservidor"
@@ -523,144 +356,26 @@ attribute vb_exposed = false
 
 option explicit
 
-private sub command1_click()
-call resetforums
-call loadobjdata
+private sub form_load()
 
-end sub
-
-private sub command10_click()
-frmtrafic.show
-end sub
-
-private sub command11_click()
-frmconid.show
-end sub
-
-private sub command12_click()
-frmdebugnpc.show
-end sub
-
-private sub command14_click()
-call loadmotd
-end sub
-
-private sub command15_click()
-on error resume next
-
-dim fn as string
-dim cad$
-dim n as integer, k as integer
-
-dim sentrada as string
-
-sentrada = inputbox("escribe ""estoy de acuerdo"" entre comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes.", "unban", "hola")
-if sentrada = "estoy de acuerdo" then
-
-    fn = app.path & "\logs\gentebanned.log"
-    
-    if fileexist(fn, vbnormal) then
-        n = freefile
-        open fn for input shared as #n
-        do while not eof(n)
-            k = k + 1
-            input #n, cad$
-            call unban(cad$)
-            
-        loop
-        close #n
-        msgbox "se han habilitado " & k & " personajes."
-        kill fn
-    end if
-end if
-
-end sub
-
-private sub command16_click()
-call loadsini
-end sub
-
-private sub command17_click()
-    call carganpcsdat
-end sub
-
-private sub command18_click()
-me.mousepointer = 11
-call mdparty.actualizaexperiencias
-call guardarusuarios
-me.mousepointer = 0
-msgbox "grabado de personajes ok!"
-end sub
-
-private sub command19_click()
-dim i as long, n as long
-
-dim sentrada as string
-
-sentrada = inputbox("escribe ""estoy de acuerdo"" sin comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes", "unban", "hola")
-if sentrada = "estoy de acuerdo" then
-    
-    n = banips.count
-    for i = 1 to banips.count
-        banips.remove 1
-    next i
-    
-    msgbox "se han habilitado " & n & " ipes"
-end if
-
-end sub
-
-private sub command2_click()
-frmservidor.visible = false
-end sub
-
-private sub command20_click()
 #if usarquesocket = 1 then
-
-if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
-    call wsapireiniciarsockets
-end if
-
+    cmdresetsockets.visible = true
+    cmdresetlisten.visible = true
+#elseif usarquesocket = 0 then
+    cmdresetsockets.visible = false
+    cmdresetlisten.visible = false
 #elseif usarquesocket = 2 then
-
-dim loopc as integer
-
-if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
-    for loopc = 1 to maxusers
-        if userlist(loopc).connid <> -1 and userlist(loopc).connidvalida then
-            call closesocket(loopc)
-        end if
-    next loopc
-    
-    call frmmain.serv.detener
-    call frmmain.serv.iniciar(puerto)
-end if
-
+    cmdresetsockets.visible = true
+    cmdresetlisten.visible = false
 #end if
-end sub
-
-'barrin 29/9/03
-private sub command21_click()
-
-if enpausa = false then
-    enpausa = true
-    call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
-    command21.caption = "reanudar el servidor"
-else
-    enpausa = false
-    call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
-    command21.caption = "pausar el servidor"
-end if
 
 end sub
 
-private sub command22_click()
-    me.visible = false
-    frmadmin.show
-end sub
-
-private sub command23_click()
-if msgbox("�est� seguro que desea hacer worldsave, guardar pjs y cerrar?", vbyesno, "apagar magicamente") = vbyes then
+private sub cmdapagarserver_click()
+    
+    if msgbox("�est� seguro que desea hacer worldsave, guardar pjs y cerrar?", vbyesno, _
+        "apagar magicamente") = vbno then exit sub
+    
     me.mousepointer = 11
     
     frmstat.show
@@ -676,15 +391,162 @@ if msgbox("�est� seguro que desea hacer worldsave, guardar pjs y cerrar?", v
     
     'chauuu
     unload frmmain
-end if
-end sub
-
-private sub command25_click()
-call md5scarga
 
 end sub
 
-private sub command26_click()
+private sub cmdcerrar_click()
+    frmservidor.visible = false
+end sub
+
+private sub cmdcharbackup_click()
+    me.mousepointer = 11
+    call mdparty.actualizaexperiencias
+    call guardarusuarios
+    me.mousepointer = 0
+    msgbox "grabado de personajes ok!"
+end sub
+
+private sub cmdconfigintervalos_click()
+    frminterv.show
+end sub
+
+private sub cmddebugnpcs_click()
+    frmdebugnpc.show
+end sub
+
+private sub cmddebuguserlist_click()
+    frmuserlist.show
+end sub
+
+private sub cmdloadworldbackup_click()
+'se asegura de que los sockets estan cerrados e ignora cualquier err
+on error resume next
+
+    if frmmain.visible then frmmain.txstatus.caption = "reiniciando."
+    
+    frmstat.show
+    
+    if fileexist(app.path & "\logs\errores.log", vbnormal) then kill app.path & "\logs\errores.log"
+    if fileexist(app.path & "\logs\connect.log", vbnormal) then kill app.path & "\logs\connect.log"
+    if fileexist(app.path & "\logs\hackattemps.log", vbnormal) then kill app.path & "\logs\hackattemps.log"
+    if fileexist(app.path & "\logs\asesinatos.log", vbnormal) then kill app.path & "\logs\asesinatos.log"
+    if fileexist(app.path & "\logs\resurrecciones.log", vbnormal) then kill app.path & "\logs\resurrecciones.log"
+    if fileexist(app.path & "\logs\teleports.log", vbnormal) then kill app.path & "\logs\teleports.log"
+
+
+#if usarquesocket = 1 then
+    call apiclosesocket(socklisten)
+#elseif usarquesocket = 0 then
+    frmmain.socket1.cleanup
+    frmmain.socket2(0).cleanup
+#elseif usarquesocket = 2 then
+    frmmain.serv.detener
+#end if
+
+    dim loopc as integer
+    
+    for loopc = 1 to maxusers
+        call closesocket(loopc)
+    next
+      
+    
+    lastuser = 0
+    numusers = 0
+    
+    call freenpcs
+    call freecharindexes
+    
+    call loadsini
+    call cargarbackup
+    call loadobjdata
+
+#if usarquesocket = 1 then
+    socklisten = listenforconnect(puerto, hwndmsg, "")
+
+#elseif usarquesocket = 0 then
+    frmmain.socket1.addressfamily = af_inet
+    frmmain.socket1.protocol = ipproto_ip
+    frmmain.socket1.sockettype = sock_stream
+    frmmain.socket1.binary = false
+    frmmain.socket1.blocking = false
+    frmmain.socket1.buffersize = 1024
+    
+    frmmain.socket2(0).addressfamily = af_inet
+    frmmain.socket2(0).protocol = ipproto_ip
+    frmmain.socket2(0).sockettype = sock_stream
+    frmmain.socket2(0).blocking = false
+    frmmain.socket2(0).buffersize = 2048
+    
+    'escucha
+    frmmain.socket1.localport = puerto
+    frmmain.socket1.listen
+#end if
+
+    if frmmain.visible then frmmain.txstatus.caption = "escuchando conexiones entrantes ..."
+
+end sub
+
+private sub cmdpausarservidor_click()
+    if enpausa = false then
+        enpausa = true
+        call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
+        cmdpausarservidor.caption = "reanudar el servidor"
+    else
+        enpausa = false
+        call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
+        cmdpausarservidor.caption = "pausar el servidor"
+    end if
+end sub
+
+private sub cmdrecargarbalance_click()
+    call loadbalance
+end sub
+
+private sub cmdrecargarguardiasposorig_click()
+    call respawnorigposnpcs
+end sub
+
+private sub cmdrecargarhechizos_click()
+    call cargarhechizos
+end sub
+
+private sub cmdrecargarmd5s_click()
+    call md5scarga
+end sub
+
+private sub cmdrecargarmotd_click()
+    call loadmotd
+end sub
+
+private sub cmdrecargarnombresinvalidos_click()
+    call cargarforbidenwords
+end sub
+
+private sub cmdrecargarnpcs_click()
+    call carganpcsdat
+end sub
+
+private sub cmdrecargarobjetos_click()
+    call resetforums
+    call loadobjdata
+end sub
+
+private sub cmdrecargarserverini_click()
+    call loadsini
+end sub
+
+private sub cmdreiniciar_click()
+
+    if msgbox("��atencion!! si reinicia el servidor puede provocar la p�rdida de datos de los usarios. " & _
+    "�desea reiniciar el servidor de todas maneras?", vbyesno) = vbno then exit sub
+    
+    me.visible = false
+    call general.restart
+
+end sub
+
+private sub cmdresetlisten_click()
+
 #if usarquesocket = 1 then
     'cierra el socket de escucha
     if socklisten >= 0 then call apiclosesocket(socklisten)
@@ -692,151 +554,116 @@ private sub command26_click()
     'inicia el socket de escucha
     socklisten = listenforconnect(puerto, hwndmsg, "")
 #end if
-end sub
-
-private sub command27_click()
-frmuserlist.show
 
 end sub
 
-private sub command28_click()
-    call loadbalance
+private sub cmdresetsockets_click()
+
+#if usarquesocket = 1 then
+
+    if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+        call wsapireiniciarsockets
+    end if
+
+#elseif usarquesocket = 2 then
+
+    dim loopc as integer
+    
+    if msgbox("�est� seguro que desea reiniciar los sockets? se cerrar�n todas las conexiones activas.", vbyesno, "reiniciar sockets") = vbyes then
+        for loopc = 1 to maxusers
+            if userlist(loopc).connid <> -1 and userlist(loopc).connidvalida then
+                call closesocket(loopc)
+            end if
+        next loopc
+        
+        call frmmain.serv.detener
+        call frmmain.serv.iniciar(puerto)
+    end if
+
+#end if
+
 end sub
 
-private sub command3_click()
-if msgbox("��atencion!! si reinicia el servidor puede provocar la p�rdida de datos de los usarios. �desea reiniciar el servidor de todas maneras?", vbyesno) = vbyes then
-    me.visible = false
-    call general.restart
-end if
+private sub cmdstatsslots_click()
+    frmconid.show
 end sub
 
-private sub command4_click()
-on error goto eh
+private sub cmdunbanall_click()
+on error resume next
+
+    dim fn as string
+    dim cad$
+    dim n as integer, k as integer
+    
+    dim sentrada as string
+    
+    sentrada = inputbox("escribe ""estoy de acuerdo"" entre comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes.", "unban", "hola")
+    if sentrada = "estoy de acuerdo" then
+    
+        fn = app.path & "\logs\gentebanned.log"
+        
+        if fileexist(fn, vbnormal) then
+            n = freefile
+            open fn for input shared as #n
+            do while not eof(n)
+                k = k + 1
+                input #n, cad$
+                call unban(cad$)
+                
+            loop
+            close #n
+            msgbox "se han habilitado " & k & " personajes."
+            kill fn
+        end if
+    end if
+end sub
+
+private sub cmdunbanallips_click()
+    dim i as long, n as long
+    
+    dim sentrada as string
+    
+    sentrada = inputbox("escribe ""estoy de acuerdo"" sin comillas y con distinci�n de may�sculas min�sculas para desbanear a todos los personajes", "unban", "hola")
+    if sentrada = "estoy de acuerdo" then
+        
+        n = banips.count
+        for i = 1 to banips.count
+            banips.remove 1
+        next i
+        
+        msgbox "se han habilitado " & n & " ipes"
+    end if
+end sub
+
+private sub cmdvertrafico_click()
+    frmtrafic.show
+end sub
+
+private sub cmdworldbackup_click()
+on error goto errhandler
+
     me.mousepointer = 11
     frmstat.show
     call es.dobackup
     me.mousepointer = 0
     msgbox "worldsave ok!!"
-exit sub
-eh:
-call logerror("error en worldsave")
-end sub
+    
+    exit sub
 
-private sub command5_click()
-
-'se asegura de que los sockets estan cerrados e ignora cualquier err
-on error resume next
-
-if frmmain.visible then frmmain.txstatus.caption = "reiniciando."
-
-frmstat.show
-
-if fileexist(app.path & "\logs\errores.log", vbnormal) then kill app.path & "\logs\errores.log"
-if fileexist(app.path & "\logs\connect.log", vbnormal) then kill app.path & "\logs\connect.log"
-if fileexist(app.path & "\logs\hackattemps.log", vbnormal) then kill app.path & "\logs\hackattemps.log"
-if fileexist(app.path & "\logs\asesinatos.log", vbnormal) then kill app.path & "\logs\asesinatos.log"
-if fileexist(app.path & "\logs\resurrecciones.log", vbnormal) then kill app.path & "\logs\resurrecciones.log"
-if fileexist(app.path & "\logs\teleports.log", vbnormal) then kill app.path & "\logs\teleports.log"
-
-
-#if usarquesocket = 1 then
-call apiclosesocket(socklisten)
-#elseif usarquesocket = 0 then
-frmmain.socket1.cleanup
-frmmain.socket2(0).cleanup
-#elseif usarquesocket = 2 then
-frmmain.serv.detener
-#end if
-
-dim loopc as integer
-
-for loopc = 1 to maxusers
-    call closesocket(loopc)
-next
-  
-
-lastuser = 0
-numusers = 0
-
-call freenpcs
-call freecharindexes
-
-call loadsini
-call cargarbackup
-call loadobjdata
-
-#if usarquesocket = 1 then
-socklisten = listenforconnect(puerto, hwndmsg, "")
-
-#elseif usarquesocket = 0 then
-frmmain.socket1.addressfamily = af_inet
-frmmain.socket1.protocol = ipproto_ip
-frmmain.socket1.sockettype = sock_stream
-frmmain.socket1.binary = false
-frmmain.socket1.blocking = false
-frmmain.socket1.buffersize = 1024
-
-frmmain.socket2(0).addressfamily = af_inet
-frmmain.socket2(0).protocol = ipproto_ip
-frmmain.socket2(0).sockettype = sock_stream
-frmmain.socket2(0).blocking = false
-frmmain.socket2(0).buffersize = 2048
-
-'escucha
-frmmain.socket1.localport = puerto
-frmmain.socket1.listen
-#end if
-
-if frmmain.visible then frmmain.txstatus.caption = "escuchando conexiones entrantes ..."
-
-end sub
-
-private sub command6_click()
-call respawnorigposnpcs
-end sub
-
-private sub command7_click()
-frminterv.show
-end sub
-
-private sub command8_click()
-call cargarhechizos
-end sub
-
-private sub command9_click()
-call cargarforbidenwords
+errhandler:
+    call logerror("error en worldsave")
 end sub
 
 private sub form_deactivate()
-frmservidor.visible = false
+    frmservidor.visible = false
 end sub
 
-private sub form_load()
-#if usarquesocket = 1 then
-command20.visible = true
-command26.visible = true
-#elseif usarquesocket = 0 then
-command20.visible = false
-command26.visible = false
-#elseif usarquesocket = 2 then
-command20.visible = true
-command26.visible = false
-#end if
-
-vs1.min = 0
-if piccont.height > picfuera.scaleheight then
-    vs1.max = piccont.height - picfuera.scaleheight
-else
-    vs1.max = 0
-end if
-piccont.top = -vs1.value
-
+private sub frmadministracion_click()
+    me.visible = false
+    frmadmin.show
 end sub
 
-private sub vs1_change()
-piccont.top = -vs1.value
+private sub cmdrecargaradministradores_click()
+    loadadministrativeusers
 end sub
 
-private sub vs1_scroll()
-piccont.top = -vs1.value
-end sub

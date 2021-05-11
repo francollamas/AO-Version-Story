@@ -157,7 +157,7 @@ private cbotonverde as clsgraphicalbutton
 private cbotonmarron as clsgraphicalbutton
 private cbotonaceptar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private picnegrita as picture
 private piccursiva as picture
@@ -190,7 +190,7 @@ private sub loadbuttons()
     set cbotonmarron = new clsgraphicalbutton
     set cbotonaceptar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonazul.initialize(imgazul, grhpath & "botonazul.jpg", _
@@ -234,7 +234,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgaceptar_click()
@@ -302,7 +302,7 @@ private sub imgoptcursiva_click(index as integer)
 end sub
 
 private sub imgoptcursiva_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgoptnegrita_click(index as integer)
@@ -318,7 +318,7 @@ private sub imgoptnegrita_click(index as integer)
 end sub
 
 private sub imgoptnegrita_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgrojo_click()

@@ -255,9 +255,10 @@ end sub
 private sub irusuariocercano(byval npcindex as integer)
 '***************************************************
 'autor: unknown (orginal version)
-'last modification: 12/01/2010 (zama)
+'last modification: 25/07/2010 (zama)
 '14/09/2009: zama - now npcs don't follow protected users.
 '12/01/2010: zama - los npcs no atacan druidas mimetizados con npcs
+'25/07/2010: zama - agrego una validacion temporal para evitar que los npcs ataquen a usuarios de mapas difernetes.
 '***************************************************
     dim theading as byte
     dim userindex as integer
@@ -315,20 +316,31 @@ private sub irusuariocercano(byval npcindex as integer)
             
             ownerindex = .owner
             if ownerindex > 0 then
-            
-                'is it in it's range of vision??
-                if abs(userlist(ownerindex).pos.x - .pos.x) <= rango_vision_x then
-                    if abs(userlist(ownerindex).pos.y - .pos.y) <= rango_vision_y then
-                        
-                        ' va hacia el si o esta invi ni oculto
-                        if userlist(ownerindex).flags.invisible = 0 and userlist(ownerindex).flags.oculto = 0 and not userlist(ownerindex).flags.enconsulta and not userlist(ownerindex).flags.ignorado then
-                            if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ownerindex)
-                                
-                            theading = finddirection(.pos, userlist(ownerindex).pos)
-                            call movenpcchar(npcindex, theading)
-                            exit sub
+                
+                ' todo: es temporal hatsa reparar un bug que hace que ataquen a usuarios de otros mapas
+                if userlist(ownerindex).pos.map = .pos.map then
+                    
+                    'is it in it's range of vision??
+                    if abs(userlist(ownerindex).pos.x - .pos.x) <= rango_vision_x then
+                        if abs(userlist(ownerindex).pos.y - .pos.y) <= rango_vision_y then
+                            
+                            ' va hacia el si o esta invi ni oculto
+                            if userlist(ownerindex).flags.invisible = 0 and userlist(ownerindex).flags.oculto = 0 and not userlist(ownerindex).flags.enconsulta and not userlist(ownerindex).flags.ignorado then
+                                if .flags.lanzaspells <> 0 then call npclanzaunspell(npcindex, ownerindex)
+                                    
+                                theading = finddirection(.pos, userlist(ownerindex).pos)
+                                call movenpcchar(npcindex, theading)
+                                exit sub
+                            end if
                         end if
                     end if
+                
+                ' esto significa que esta bugueado.. lo logueo, y "reparo" el error a mano (todo temporal)
+                else
+                    call logerror("el npc: " & .name & "(" & npcindex & "), intenta atacar a " & _
+                                  userlist(ownerindex).name & "(index: " & ownerindex & ", mapa: " & _
+                                  userlist(ownerindex).pos.map & ") desde el mapa " & .pos.map)
+                    .owner = 0
                 end if
                 
             end if
@@ -795,10 +807,7 @@ public sub ainpcobjeto(byval npcindex as integer)
 '14/09/2009: zama - now npcs don't follow protected users.
 '***************************************************
     dim userindex as integer
-    dim theading as byte
     dim i as long
-    dim signons as integer
-    dim signoeo as integer
     dim userprotected as boolean
     
     with npclist(npcindex)
@@ -933,7 +942,14 @@ on error goto errorhandler
 exit sub
 
 errorhandler:
-    call logerror("npcai " & npclist(npcindex).name & " " & npclist(npcindex).maestrouser & " " & npclist(npcindex).maestronpc & " mapa:" & npclist(npcindex).pos.map & " x:" & npclist(npcindex).pos.x & " y:" & npclist(npcindex).pos.y & " mov:" & npclist(npcindex).movement & " targu:" & npclist(npcindex).target & " targn:" & npclist(npcindex).targetnpc)
+    with npclist(npcindex)
+        call logerror("error en npcai. error: " & err.number & " - " & err.description & ". " & _
+        "npc: " & .name & ", index: " & npcindex & ", maestrouser: " & .maestrouser & _
+        ", maestronpc: " & .maestronpc & ", mapa: " & .pos.map & " x:" & .pos.x & " y:" & _
+        .pos.y & " mov:" & .movement & " targu:" & _
+        .target & " targn:" & .targetnpc)
+    end with
+    
     dim minpc as npc
     minpc = npclist(npcindex)
     call quitarnpc(npcindex)

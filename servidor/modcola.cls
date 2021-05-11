@@ -59,7 +59,18 @@ option explicit
 
 private const frente = 1
 
+private maxelem as integer
+
 private cola as collection
+
+public property let maxlenght(byval max as integer)
+'***************************************************
+'author: zama
+'last modification: 14/11/2010
+'sets the max queue lenght.
+'***************************************************
+    maxelem = max
+end property
 
 public sub reset()
 on error resume next
@@ -83,11 +94,16 @@ private sub class_initialize()
 set cola = new collection
 end sub
 
-public function verelemento(byval index as integer) as string
+public function verelemento(byval index as integer, optional byval convertupper as boolean = true) as string
 on error resume next
     if indexvalido(index) then
         'pablo
-        verelemento = ucase$(cola.item(index))
+        if convertupper then
+            verelemento = ucase$(cola.item(index))
+        else
+            verelemento = cola.item(index)
+        end if
+        
         '/pablo
         'verelemento = cola(index)
     else
@@ -96,16 +112,33 @@ on error resume next
 end function
 
 
-public sub push(byval nombre as string)
+public sub push(byval detalle as string, optional byval convertupper as boolean = true)
+'***************************************************
+'author: unknown
+'last modification: 14/11/2010
+'14/11/2010: zama - ahora se valida si supera un maximo previamente establecido.
+'***************************************************
 on error resume next
-'mete elemento en la cola
-'pablo
-dim aux as string
-aux = time$ + " " + ucase$(nombre)
-call cola.add(aux)
-'/pablo
-
-'call cola.add(ucase$(nombre))
+    'mete elemento en la cola
+    
+    dim aux as string
+    aux = time$ & " "
+    
+    if convertupper then
+        aux = aux & ucase$(detalle)
+    else
+        aux = aux & detalle
+    end if
+    
+    ' validate that not exceed max lenght
+    if maxelem <> 0 then
+        if cola.count = maxelem then
+            call cola.remove(frente) ' quito el primer elemento
+        end if
+    end if
+    
+    call cola.add(aux)
+        
 end sub
 
 public function pop() as string

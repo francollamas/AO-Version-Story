@@ -420,7 +420,7 @@ private minmayback(1) as picture
 private cbotonmin as clsgraphicalbutton
 private cbotonmay as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private const minindex = "1234567890-=\qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 private const mayindex = "!@#$%^&*()_+|qwertyuiop{}asdfghjkl:""zxcvbnm<>?"
@@ -461,7 +461,7 @@ private sub loadbuttons()
     set cbotonmin = new clsgraphicalbutton
     set cbotonmay = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonmin.initialize(imgmay, grhpath & "botonmay.jpg", _
@@ -475,7 +475,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcerrar_click()
@@ -501,7 +501,7 @@ private sub imgkeypad_click(index as integer)
 end sub
 
 private sub imgkeypad_mousemove(index as integer, button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgmay_click()

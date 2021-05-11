@@ -34,38 +34,44 @@ attribute vb_name = "mod_declaraciones"
 option explicit
 
 'objetos p�blicos
-public dialogosclanes as new clsguilddlg
-public dialogos as new clsdialogs
-public audio as new clsaudio
-public inventario as new clsgrapchicalinventory
-public invbanco(1) as new clsgrapchicalinventory
+public dialogosclanes as clsguilddlg
+public dialogos as clsdialogs
+public audio as clsaudio
+public inventario as clsgrapchicalinventory
+public invbanco(1) as clsgrapchicalinventory
 
 'inventarios de comercio con usuario
-public invcomusu as new clsgrapchicalinventory ' inventario del usuario visible en el comercio
-public invorocomusu(2) as new clsgrapchicalinventory ' inventarios de oro (ambos usuarios)
-public invoffercomusu(1) as new clsgrapchicalinventory ' inventarios de ofertas (ambos usuarios)
+public invcomusu as clsgrapchicalinventory  ' inventario del usuario visible en el comercio
+public invorocomusu(2) as clsgrapchicalinventory  ' inventarios de oro (ambos usuarios)
+public invoffercomusu(1) as clsgrapchicalinventory  ' inventarios de ofertas (ambos usuarios)
 
-public invcomnpc as new clsgrapchicalinventory ' inventario con los items que ofrece el npc
+public invcomnpc as clsgrapchicalinventory  ' inventario con los items que ofrece el npc
 
 'inventarios de herreria
 public const max_list_items as byte = 4
-public invlingosherreria(1 to max_list_items) as new clsgrapchicalinventory
-public invmaderascarpinteria(1 to max_list_items) as new clsgrapchicalinventory
+public invlingosherreria(1 to max_list_items) as clsgrapchicalinventory
+public invmaderascarpinteria(1 to max_list_items) as clsgrapchicalinventory
                 
 public surfacedb as clssurfacemanager   'no va new porque es una interfaz, el new se pone al decidir que clase de objeto es
-public customkeys as new clscustomkeys
-public custommessages as new clscustommessages
+public customkeys as clscustomkeys
+public custommessages as clscustommessages
 
-public incomingdata as new clsbytequeue
-public outgoingdata as new clsbytequeue
+public incomingdata as clsbytequeue
+public outgoingdata as clsbytequeue
 
 ''
 'the main timer of the game.
-public maintimer as new clstimer
+public maintimer as clstimer
 
 #if seguridadalkon then
-public md5 as new clsmd5
+public md5 as clsmd5
 #end if
+
+'error code
+public const too_fast as long = 24036
+public const refused as long = 24061
+public const time_out as long = 24060
+
 
 'sonidos
 public const snd_click as string = "click.wav"
@@ -485,6 +491,9 @@ public enum egmcommands
     changemapinfonoresu     '/modmapinfo resusinefecto
     changemapinfoland       '/modmapinfo terreno
     changemapinfozone       '/modmapinfo zona
+    changemapinfostealnpc   '/modmapinfo robonpcm
+    changemapinfonoocultar  '/modmapinfo ocultarsinefecto
+    changemapinfonoinvocar  '/modmapinfo invocarsinefecto
     savechars               '/grabar
     cleansos                '/borrar sos
     showserverform          '/show int
@@ -500,6 +509,19 @@ public enum egmcommands
     ignored                 '/ignorado
     checkslot               '/slot
     setinivar               '/setinivar llave clave valor
+    createpretorianclan     '/crearpretorianos
+    removepretorianclan     '/eliminarpretorianos
+    enabledenounces         '/denuncias
+    showdenounceslist       '/show denuncias
+    mapmessage              '/mapmsg
+    setdialog               '/setdialog
+    impersonate             '/impersonar
+    imitate                 '/mimetizar
+    recordadd
+    recordremove
+    recordaddobs
+    recordlistrequest
+    recorddetailsrequest
 end enum
 
 '
@@ -732,6 +754,8 @@ public mirandoforo as boolean
 public mirandoasignarskills as boolean
 public mirandoestadisticas as boolean
 public mirandoparty as boolean
+public mirandocarpinteria as boolean
+public mirandoherreria as boolean
 '<-------------------------nuevo-------------------------->
 
 public userclase as eclass
@@ -761,7 +785,7 @@ public skillpoints as integer
 public alocados as integer
 public flags() as integer
 public oscuridad as integer
-'public logged as boolean ' www.gs-zone.org
+public logged as boolean
 
 public usingskill as integer
 
@@ -812,6 +836,8 @@ public enum eeditoptions
     eo_sex
     eo_raza
     eo_addgold
+    eo_vida
+    eo_poss
 end enum
 
 ''
@@ -932,11 +958,17 @@ end type
 public foros(0 to 2) as tforo
 
 ' forum info handler
-public clsforos as new clsforum
+public clsforos as clsforum
 
-public iscapturepending as boolean
+'fragshooter variables
+public fragshootercapturepending as boolean
+public fragshooternickname as string
+public fragshooterkilledsomeone as boolean
+
+
 public traveling as boolean
 
+public bshowguildnews as boolean
 public guildnames() as string
 public guildmembers() as string
 
@@ -970,3 +1002,10 @@ public const madera_grh as integer = 550
 public const madera_elfica_grh as integer = 1999
 
 public picmouseicon as picture
+
+public enum emovetype
+    inventory = 1
+    bank
+end enum
+
+public const mp3_initial_index as integer = 1000

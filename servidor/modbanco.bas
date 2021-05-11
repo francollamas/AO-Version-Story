@@ -99,23 +99,35 @@ sub userretiraitem(byval userindex as integer, byval i as integer, byval cantida
 
 on error goto errhandler
 
+    dim objindex as integer
 
-if cantidad < 1 then exit sub
+    if cantidad < 1 then exit sub
+    
+    call writeupdateuserstats(userindex)
 
-call writeupdateuserstats(userindex)
-
-       if userlist(userindex).bancoinvent.object(i).amount > 0 then
-            if cantidad > userlist(userindex).bancoinvent.object(i).amount then cantidad = userlist(userindex).bancoinvent.object(i).amount
-            'agregamos el obj que compro al inventario
-            call userreciveobj(userindex, cint(i), cantidad)
-            'actualizamos el inventario del usuario
-            call updateuserinv(true, userindex, 0)
-            'actualizamos el banco
-            call updatebanuserinv(true, userindex, 0)
-       end if
-       
-        'actualizamos la ventana de comercio
-        call updateventanabanco(userindex)
+    if userlist(userindex).bancoinvent.object(i).amount > 0 then
+    
+        if cantidad > userlist(userindex).bancoinvent.object(i).amount then _
+            cantidad = userlist(userindex).bancoinvent.object(i).amount
+            
+        objindex = userlist(userindex).bancoinvent.object(i).objindex
+        
+        'agregamos el obj que compro al inventario
+        call userreciveobj(userindex, cint(i), cantidad)
+        
+        if objdata(objindex).log = 1 then
+            call logdesarrollo(userlist(userindex).name & " retir� " & cantidad & " " & _
+                objdata(objindex).name & "[" & objindex & "]")
+        end if
+        
+        'actualizamos el inventario del usuario
+        call updateuserinv(true, userindex, 0)
+        'actualizamos el banco
+        call updatebanuserinv(true, userindex, 0)
+    end if
+    
+    'actualizamos la ventana de comercio
+    call updateventanabanco(userindex)
 
 errhandler:
 
@@ -221,11 +233,23 @@ sub userdepositaitem(byval userindex as integer, byval item as integer, byval ca
 '***************************************************
 
 on error goto errhandler
+
+    dim objindex as integer
+
     if userlist(userindex).invent.object(item).amount > 0 and cantidad > 0 then
-        if cantidad > userlist(userindex).invent.object(item).amount then cantidad = userlist(userindex).invent.object(item).amount
+    
+        if cantidad > userlist(userindex).invent.object(item).amount then _
+            cantidad = userlist(userindex).invent.object(item).amount
+        
+        objindex = userlist(userindex).invent.object(item).objindex
         
         'agregamos el obj que deposita al banco
         call userdejaobj(userindex, cint(item), cantidad)
+        
+        if objdata(objindex).log = 1 then
+            call logdesarrollo(userlist(userindex).name & " deposit� " & cantidad & " " & _
+                objdata(objindex).name & "[" & objindex & "]")
+        end if
         
         'actualizamos el inventario del usuario
         call updateuserinv(true, userindex, 0)

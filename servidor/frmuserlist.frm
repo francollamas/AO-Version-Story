@@ -1,23 +1,47 @@
 version 5.00
 begin vb.form frmuserlist 
-   caption         =   "form1"
+   backcolor       =   &h00ffc0c0&
+   borderstyle     =   1  'fixed single
+   caption         =   "debug de userlist"
    clientheight    =   4665
-   clientleft      =   60
-   clienttop       =   345
+   clientleft      =   45
+   clienttop       =   330
    clientwidth     =   5520
    linktopic       =   "form1"
+   maxbutton       =   0   'false
    scaleheight     =   4665
    scalewidth      =   5520
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton command2 
+      backcolor       =   &h00ffc0c0&
       caption         =   "echar todos los no logged"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   375
-      left            =   120
+      left            =   2400
+      style           =   1  'graphical
       tabindex        =   4
       top             =   4200
-      width           =   2175
+      width           =   3015
    end
    begin vb.textbox text2 
+      backcolor       =   &h00c0ffff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   1095
       left            =   2400
       locked          =   -1  'true
@@ -28,6 +52,16 @@ begin vb.form frmuserlist
       width           =   3015
    end
    begin vb.textbox text1 
+      backcolor       =   &h00c0ffff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   2775
       left            =   2400
       locked          =   -1  'true
@@ -38,15 +72,36 @@ begin vb.form frmuserlist
       width           =   3015
    end
    begin vb.commandbutton command1 
+      backcolor       =   &h00ffc0c0&
       caption         =   "actualiza"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   375
       left            =   120
+      style           =   1  'graphical
       tabindex        =   1
-      top             =   3720
+      top             =   4200
       width           =   2175
    end
    begin vb.listbox list1 
-      height          =   3570
+      backcolor       =   &h00c0ffff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   3960
       left            =   120
       tabindex        =   0
       top             =   120

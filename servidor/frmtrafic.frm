@@ -1,8 +1,9 @@
 version 5.00
 begin vb.form frmtrafic 
+   backcolor       =   &h00ffc0c0&
    borderstyle     =   1  'fixed single
    caption         =   "trafico"
-   clientheight    =   3195
+   clientheight    =   2850
    clientleft      =   45
    clienttop       =   330
    clientwidth     =   4680
@@ -10,19 +11,41 @@ begin vb.form frmtrafic
    linktopic       =   "form1"
    maxbutton       =   0   'false
    minbutton       =   0   'false
-   scaleheight     =   3195
+   scaleheight     =   2850
    scalewidth      =   4680
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton command1 
-      caption         =   "cerrar"
-      height          =   585
+      backcolor       =   &h00ffc0c0&
+      cancel          =   -1  'true
+      caption         =   "salir (esc)"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   465
       left            =   90
+      style           =   1  'graphical
       tabindex        =   1
-      top             =   2250
-      width           =   960
+      top             =   2280
+      width           =   1440
    end
    begin vb.listbox lsttrafico 
-      height          =   2010
+      backcolor       =   &h00c0ffff&
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
+      height          =   1815
       left            =   60
       tabindex        =   0
       top             =   135
@@ -65,5 +88,5 @@ attribute vb_exposed = false
 option explicit
 
 private sub command1_click()
-me.visible = false
+    me.visible = false
 end sub

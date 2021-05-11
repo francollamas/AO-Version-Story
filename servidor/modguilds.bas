@@ -155,7 +155,7 @@ dim guildindex  as integer
     if not m_estadopermiteentrar(userindex, guildindex) then
         
         ' es el lider, bajamos 1 rango de alineacion
-        if guildleader(guildindex) = userlist(userindex).name then
+        if m_esguildleader(userlist(userindex).name, guildindex) then
             call logclanes(userlist(userindex).name & ", l�der de " & guilds(guildindex).guildname & " hizo bajar la alienaci�n de su clan.")
         
             cambioalineacion = true
@@ -1023,21 +1023,36 @@ end function
 public function m_listademiembrosonline(byval userindex as integer, byval guildindex as integer) as string
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 28/05/2010
+'28/05/2010: zama - solo dioses pueden ver otros dioses online.
 '***************************************************
 
-dim i as integer
+    dim i as integer
+    dim priv as playertype
+
+    priv = playertype.user or playertype.consejero or playertype.semidios
+    
+    ' solo dioses pueden ver otros dioses online
+    if userlist(userindex).flags.privilegios and (playertype.dios or playertype.admin) then
+        priv = priv or playertype.dios or playertype.admin
+    end if
     
     if guildindex > 0 and guildindex <= cantidaddeclanes then
+        
+        ' horrible, tengo que decirlo..
         i = guilds(guildindex).m_iterador_proximouserindex
+        
         while i > 0
+        
             'no mostramos dioses y admins
-            if i <> userindex and ((userlist(i).flags.privilegios and (playertype.user or playertype.consejero or playertype.semidios)) <> 0 or (userlist(userindex).flags.privilegios and (playertype.dios or playertype.admin) <> 0)) then _
+            if i <> userindex and (userlist(i).flags.privilegios and priv) then
                 m_listademiembrosonline = m_listademiembrosonline & userlist(i).name & ","
+            end if
+            
             i = guilds(guildindex).m_iterador_proximouserindex
         wend
     end if
+    
     if len(m_listademiembrosonline) > 0 then
         m_listademiembrosonline = left$(m_listademiembrosonline, len(m_listademiembrosonline) - 1)
     end if
@@ -1723,7 +1738,7 @@ public sub senddetallespersonaje(byval userindex as integer, byval personaje as 
     dim gi          as integer
     dim nroasp      as integer
     dim guildname   as string
-    dim userfile    as clsinireader
+    dim userfile    as clsinimanager
     dim miembro     as string
     dim guildactual as integer
     dim list()      as string
@@ -1771,7 +1786,7 @@ public sub senddetallespersonaje(byval userindex as integer, byval personaje as 
     
     'ahora traemos la info
     
-    set userfile = new clsinireader
+    set userfile = new clsinimanager
     
     with userfile
         .initialize (charpath & personaje & ".chr")

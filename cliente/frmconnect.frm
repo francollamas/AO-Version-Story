@@ -1,5 +1,4 @@
 version 5.00
-object = "{eab22ac0-30c1-11cf-a7eb-0000c05bae0b}#1.1#0"; "ieframe.dll"
 begin vb.form frmconnect 
    backcolor       =   &h00e0e0e0&
    borderstyle     =   0  'none
@@ -22,31 +21,6 @@ begin vb.form frmconnect
    scalewidth      =   800
    startupposition =   2  'centerscreen
    visible         =   0   'false
-   begin shdocvwctl.webbrowser webnoticias 
-      height          =   4440
-      left            =   435
-      tabindex        =   5
-      top             =   1680
-      width           =   2850
-      extentx         =   5027
-      extenty         =   7832
-      viewmode        =   0
-      offline         =   0
-      silent          =   0
-      registerasbrowser=   0
-      registerasdroptarget=   1
-      autoarrange     =   0   'false
-      noclientedge    =   0   'false
-      alignleft       =   0   'false
-      nowebview       =   0   'false
-      hidefilenames   =   0   'false
-      singleclick     =   0   'false
-      singleselection =   0   'false
-      nofolders       =   0   'false
-      transparent     =   0   'false
-      viewid          =   "{0057d0e0-3573-11cf-ae69-08002b2e1262}"
-      location        =   "http:///"
-   end
    begin vb.textbox txtpasswd 
       backcolor       =   &h00000000&
       borderstyle     =   0  'none
@@ -130,32 +104,6 @@ begin vb.form frmconnect
       text            =   "localhost"
       top             =   2760
       width           =   1575
-   end
-   begin shdocvwctl.webbrowser webauxiliar 
-      height          =   360
-      left            =   960
-      tabindex        =   6
-      top             =   0
-      visible         =   0   'false
-      width           =   330
-      extentx         =   582
-      extenty         =   635
-      viewmode        =   0
-      offline         =   0
-      silent          =   0
-      registerasbrowser=   0
-      registerasdroptarget=   1
-      autoarrange     =   0   'false
-      noclientedge    =   0   'false
-      alignleft       =   0   'false
-      nowebview       =   0   'false
-      hidefilenames   =   0   'false
-      singleclick     =   0   'false
-      singleselection =   0   'false
-      nofolders       =   0   'false
-      transparent     =   0   'false
-      viewid          =   "{0057d0e0-3573-11cf-ae69-08002b2e1262}"
-      location        =   "http:///"
    end
    begin vb.image imgteclas 
       height          =   375
@@ -304,7 +252,7 @@ private cbotonforo as clsgraphicalbutton
 private cbotonconectarse as clsgraphicalbutton
 private cbotonteclas as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_activate()
 'on error resume next
@@ -352,9 +300,7 @@ private sub form_load()
     '[code 002]:matux
     enginerun = false
     '[end]
-    
-    webnoticias.navigate ("http://ao.alkon.com.ar/noticiascliente/noticias.php")
-    
+
     porttxt.text = config_inicio.puerto
  
      '[code]:matux
@@ -408,7 +354,7 @@ private sub loadbuttons()
     set cbotonconectarse = new clsgraphicalbutton
     set cbotonteclas = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
 
         
     call cbotoncrearpj.initialize(imgcrearpj, grhpath & "botoncrearpersonajeconectar.jpg", _
@@ -454,7 +400,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub checkservers()
@@ -624,16 +570,5 @@ private sub webauxiliar_beforenavigate2(byval pdisp as object, url as variant, f
         call shellexecute(hwnd, "open", url, vbnullstring, vbnullstring, sw_shownormal)
         cancel = true
     end if
-    
-end sub
-
-private sub webnoticias_navigateerror(byval pdisp as object, url as variant, frame as variant, statuscode as variant, cancel as boolean)
-    if statuscode = 500 then webnoticias.visible = false
-end sub
-
-private sub webnoticias_newwindow2(ppdisp as object, cancel as boolean)
-    
-    webauxiliar.registerasbrowser = true
-    set ppdisp = webauxiliar.object
     
 end sub

@@ -479,12 +479,12 @@ private cbotonpaz as clsgraphicalbutton
 private cbotonsolicitaringreso as clsgraphicalbutton
 private cbotoncerrar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 public esleader as boolean
 
 private sub desc_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub form_load()
@@ -509,7 +509,7 @@ private sub loadbuttons()
     set cbotonsolicitaringreso = new clsgraphicalbutton
     set cbotoncerrar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonguerra.initialize(imgdeclararguerra, grhpath & "botondeclararguerra.jpg", _
@@ -542,7 +542,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcerrar_click()

@@ -92,7 +92,7 @@ private cbotonneutral as clsgraphicalbutton
 private cbotonreal as clsgraphicalbutton
 private cbotonsalir as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private enum ealineacion
     iereal = 0
@@ -124,7 +124,7 @@ private sub loadbuttons()
     set cbotonreal = new clsgraphicalbutton
     set cbotonsalir = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotoncriminal.initialize(imgcriminal, "", _
@@ -155,7 +155,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcaos_click()

@@ -44,14 +44,23 @@ private startdx as integer
 private startdy as integer
 
 private showvalue as boolean
+private valueformated as boolean
+
 private imgcontainer as boolean
 
+private slotdragged as integer
+
+private draganddropon as boolean
+
 private invsurface as directdrawsurface7            'dd surface used to render everything
+private bufferinvsurface as directdrawsurface7
 
 private inventory() as inventory    'user's inventory
 
 private withevents inventorywindow as picturebox    'placeholder where to render the inventory
 attribute inventorywindow.vb_varhelpid = -1
+
+public event dragdone(byval originalslot as integer, byval newslot as integer)
 
 #if conmenuesconextuales = 1 then
     dim itemmenu as menu    'menu to be shown as pop up
@@ -71,6 +80,8 @@ private sub class_terminate()
 'last modify date: 27/07/04
 '
 '***************************************************
+    set invsurface = nothing
+    set bufferinvsurface = nothing
 end sub
 
 public sub scrollinventory(byval up as boolean)
@@ -308,6 +319,20 @@ public sub toggleshowvalue(byval bshow as boolean)
     next slot
 end sub
 
+public sub clearallslots()
+'***************************************************
+'author: zama
+'last modify date: 15/03/2011
+'clear all slots.
+'***************************************************
+
+    dim slot as long
+    for slot = 1 to me.maxobjs
+        call setitem(slot, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, vbnullstring)
+    next slot
+
+end sub
+
 public sub setitem(byval slot as byte, byval eobjindex as integer, byval eamount as long, byval eequipped as byte, _
                         byval egrhindex as integer, byval eobjtype as integer, byval emaxhit as integer, byval eminhit as integer, _
                         byval maxdef as integer, byval mindef as integer, byval evalor as single, byval ename as string)
@@ -376,19 +401,24 @@ private sub drawinventory()
     dim destrect as rect
     
     with temprect
+        .bottom = inventorywindow.height
+        .right = inventorywindow.width
+    end with
+    
+    with destrect
         .bottom = owntilepixelheight
         .right = owntilepixelwidth
     end with
     
-    destrect = temprect
-    
     'clear the inventory window
     inventorywindow.cls
     
+    'clear the slot area
+    call invsurface.bltcolorfill(temprect, inventorywindow.backcolor)
+    
     for loopc = inventoryoffset * (inventorywindow.scalewidth \ owntilepixelwidth) + 1 to ubound(inventory)
-        'clear the slot area
-        call invsurface.bltcolorfill(temprect, inventorywindow.backcolor)
-        
+    'for loopc = 1 to ubound(inventory)
+    
         if inventory(loopc).grhindex then
             'get source rect
             with srcrect
@@ -400,13 +430,13 @@ private sub drawinventory()
             
             'render the item grh and the amount
             invsurface.setforecolor vbwhite
-            invsurface.bltfast startdx, startdy, surfacedb.surface(grhdata(inventory(loopc).grhindex).filenum), srcrect, ddbltfast_wait or ddbltfast_nocolorkey
-            invsurface.drawtext startdx / 2, startdy / 2, inventory(loopc).amount, false
+            invsurface.bltfast destrect.left + startdx, destrect.top + startdy, surfacedb.surface(grhdata(inventory(loopc).grhindex).filenum), srcrect, ddbltfast_wait
+            invsurface.drawtext destrect.left + startdx / 2, destrect.top + startdy / 2, inventory(loopc).amount, false
             
             'if equipped we render "e"
             if inventory(loopc).equipped then
                 invsurface.setforecolor vbyellow
-                invsurface.drawtext 20, 20, "e", false
+                invsurface.drawtext destrect.left + 20, destrect.top + 20, "e", false
             end if
             
             'render a box around the selected item
@@ -414,16 +444,12 @@ private sub drawinventory()
                 if imgcontainer then
                     invsurface.setforecolor vbgreen
                     invsurface.setdrawstyle drawstyleconstants.vbdot
-                    invsurface.drawbox 0, 0, owntilepixelwidth, owntilepixelheight
+                    invsurface.drawbox destrect.left, destrect.top, destrect.left + owntilepixelwidth, destrect.top + owntilepixelheight
                 end if
             end if
         end if
         
         'render the item to the inventory window
-        call invsurface.blttodc(inventorywindow.hdc, temprect, destrect)
-        
-        call inventorywindow.refresh
-        
         with destrect
             'check if we have reached the right end of the inventory picturebox
             if .left = (inventorywindow.scalewidth - (inventorywindow.scalewidth mod owntilepixelwidth) - owntilepixelwidth) then
@@ -437,6 +463,110 @@ private sub drawinventory()
             end if
         end with
     next loopc
+
+    call bufferinvsurface.bltfast(0, 0, invsurface, temprect, ddbltfast_wait)
+    call invsurface.blttodc(inventorywindow.hdc, temprect, temprect)
+    
+    call inventorywindow.refresh
+end sub
+
+private sub inventorywindow_mousemove(button as integer, shift as integer, x as single, y as single)
+'***************************************************
+'author: juan mart�n sotuyo dodero (maraxus)
+'last modify date: 27/07/04
+'implements the mouse move event of the inventory picture box
+'displays a tooltip of the item under the mouse
+'***************************************************
+    dim temp_x as integer
+    dim temp_y as integer
+    dim tempitem as integer
+    
+    'exit if it got outside the control's areanv
+    if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
+        exit sub
+    
+    if button = vbrightbutton then
+        if draganddropon then
+            call drawfloatingitem(slotdragged, x, y)
+        end if
+    else
+        temp_x = x \ owntilepixelwidth
+        temp_y = y \ owntilepixelheight
+        
+        tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
+    
+        if tempitem <= ubound(inventory) then
+            inventorywindow.tooltiptext = inventory(tempitem).name
+        end if
+    end if
+end sub
+
+private sub inventorywindow_mousedown(button as integer, shift as integer, x as single, y as single)
+    dim temp_x as integer
+    dim temp_y as integer
+    dim tempitem as integer
+    
+    if draganddropon then
+        'exit if it got outside the control's area
+        if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then exit sub
+        
+        if button = vbrightbutton then
+            temp_x = x \ owntilepixelwidth
+            temp_y = y \ owntilepixelheight
+        
+            tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
+            
+            slotdragged = tempitem
+        end if
+    end if
+end sub
+
+private sub drawfloatingitem(byval slot as integer, byval x as integer, byval y as integer)
+'***************************************************
+'author: ignacio mariano tirabasso (budi)
+'last modify date: 03/01/11
+'renders a floating item
+'***************************************************
+    dim temprect as rect
+    dim srcrectslot as rect
+    
+    with temprect
+        .bottom = inventorywindow.height
+        .right = inventorywindow.width
+    end with
+
+    call bufferinvsurface.bltfast(0, 0, invsurface, temprect, ddbltfast_donotwait)
+    
+    dim upperleftslot as integer
+    upperleftslot = inventoryoffset * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
+    
+    'if not in renderable area we exit
+    if slot < upperleftslot then exit sub
+    
+    if inventory(slot).grhindex then
+        'get source rect
+        with srcrectslot
+            .left = grhdata(inventory(slot).grhindex).sx
+            .top = grhdata(inventory(slot).grhindex).sy
+            .right = .left + tilepixelwidth
+            .bottom = .top + tilepixelheight
+        end with
+        
+        'render the item grh and the amount
+        bufferinvsurface.setforecolor vbwhite
+        call bufferinvsurface.bltfast(x, y, surfacedb.surface(clng(grhdata(inventory(slot).grhindex).filenum)), srcrectslot, ddbltfast_wait or ddbltfast_srccolorkey)
+        
+        'if equipped we render "e"
+        if inventory(slot).equipped then
+            bufferinvsurface.setforecolor vbyellow
+            bufferinvsurface.drawtext x + 20, y + 20, "e", false
+        end if
+    end if
+    
+    'render the item to the inventory window
+    call bufferinvsurface.blttodc(inventorywindow.hdc, temprect, temprect)
+    
+    call inventorywindow.refresh
 end sub
 
 private sub drawinventoryslot(byval slot as integer)
@@ -445,15 +575,8 @@ private sub drawinventoryslot(byval slot as integer)
 'last modify date: 12/04/06
 'renders a inventory slot to the given picturebox
 '***************************************************
-    dim srcrect as rect
-    dim temprect as rect
     dim destrect as rect
     dim srcrectslot as rect
-    
-    with temprect
-        .bottom = owntilepixelheight
-        .right = owntilepixelwidth
-    end with
     
     dim upperleftslot as integer
     upperleftslot = inventoryoffset * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
@@ -469,16 +592,10 @@ private sub drawinventoryslot(byval slot as integer)
     end with
     
     'clear the slot area
-    call invsurface.bltcolorfill(temprect, inventorywindow.backcolor)
+    call invsurface.bltcolorfill(destrect, inventorywindow.backcolor)
     
     if inventory(slot).grhindex then
         'get source rect
-        with srcrect
-            .left = grhdata(inventory(slot).grhindex).sx
-            .top = grhdata(inventory(slot).grhindex).sy
-            .right = .left + owntilepixelwidth
-            .bottom = .top + owntilepixelheight
-        end with
         with srcrectslot
             .left = grhdata(inventory(slot).grhindex).sx
             .top = grhdata(inventory(slot).grhindex).sy
@@ -488,14 +605,19 @@ private sub drawinventoryslot(byval slot as integer)
         
         'render the item grh and the amount
         invsurface.setforecolor vbwhite
-        invsurface.bltfast startdx, startdy, surfacedb.surface(clng(grhdata(inventory(slot).grhindex).filenum)), srcrectslot, ddbltfast_wait or ddbltfast_nocolorkey
-        if showvalue then invsurface.drawtext startdx / 2, startdy / 2, inventory(slot).amount, false
-
+        invsurface.bltfast destrect.left + startdx, destrect.top + startdy, surfacedb.surface(clng(grhdata(inventory(slot).grhindex).filenum)), srcrectslot, ddbltfast_wait or ddbltfast_nocolorkey
+        
+        if showvalue then
+            dim svalue as string
+            svalue = iif(valueformated, format(inventory(slot).amount, "#,###,###,###"), inventory(slot).amount)
+       '     svalue = inventory(slot).amount
+            invsurface.drawtext destrect.left + startdx / 2, destrect.top + startdy / 2, svalue, false
+        end if
         
         'if equipped we render "e"
         if inventory(slot).equipped then
             invsurface.setforecolor vbyellow
-            invsurface.drawtext 20, 20, "e", false
+            invsurface.drawtext destrect.left + 20, destrect.top + 20, "e", false
         end if
         
         'render a box around the selected item
@@ -503,13 +625,13 @@ private sub drawinventoryslot(byval slot as integer)
             if imgcontainer then
                 invsurface.setforecolor vbgreen
                 invsurface.setdrawstyle drawstyleconstants.vbdot
-                invsurface.drawbox 0, 0, owntilepixelwidth, owntilepixelheight
+                invsurface.drawbox destrect.left, destrect.top, destrect.left + owntilepixelwidth, destrect.top + owntilepixelheight
             end if
         end if
     end if
     
     'render the item to the inventory window
-    invsurface.blttodc inventorywindow.hdc, temprect, destrect
+    invsurface.blttodc inventorywindow.hdc, destrect, destrect
     
     call inventorywindow.refresh
 end sub
@@ -523,7 +645,7 @@ end sub
                             optional byval fontsize as integer = 7, optional byval tilewidth as integer = 32, _
                             optional byval tileheight as integer = 32, optional byval startx as integer = 0, _
                             optional byval starty as integer = 0, optional byval bimgcontainer as boolean = true, _
-                            optional byval bshowtext as boolean = true)
+                            optional byval bshowtext as boolean = true, optional formatvalue as boolean = false, optional byval draganddrop as boolean = false)
 #end if
 '***************************************************
 'author: juan mart�n sotuyo dodero (maraxus)
@@ -531,7 +653,11 @@ end sub
 'sets the reference to the picture box on which to render the inventory
 '03/12/09: i added the optionals args fontsize, tilewidth, tileheight, startx and starty. (budi)
 '***************************************************
+
+    dim ddck as ddcolorkey
+
     set inventorywindow = invpic
+    valueformated = formatvalue
     
     'make sure auto-redraw is set to true
     inventorywindow.autoredraw = true
@@ -546,15 +672,19 @@ end sub
     
     'make sure directdraw was correctly initialized
     if directdraw is nothing then exit sub
-      
+            
     'set surface's description
     with surfacedesc
         .lflags = ddsd_caps or ddsd_height or ddsd_width
         .ddscaps.lcaps = ddscaps_offscreenplain or ddscaps_systemmemory
-        .lheight = tileheight
-        .lwidth = tilewidth
+        .lheight = inventorywindow.height
+        .lwidth = inventorywindow.width
     end with
-
+    
+        'create inventory surface
+    set invsurface = directdraw.createsurface(surfacedesc)
+    set bufferinvsurface = directdraw.createsurface(surfacedesc)
+    
     owntilepixelheight = tileheight
     owntilepixelwidth = tilewidth
     startdx = startx
@@ -563,13 +693,13 @@ end sub
     imgcontainer = bimgcontainer
     showvalue = bshowtext
    
-    'create inventory surface
-    set invsurface = directdraw.createsurface(surfacedesc)
+    draganddropon = draganddrop
     
     'prepare surfaces for text rendering
     invsurface.setfonttransparency true
 'todo : fonts should be in a separate class / collection
-    dim font as new stdfont
+    dim font as stdfont
+    set font = new stdfont
     dim ifnt as ifont
     
     font.name = "verdana"
@@ -582,6 +712,7 @@ end sub
     set ifnt = font
     
     invsurface.setfont ifnt
+    bufferinvsurface.setfont ifnt
 '\todo
     
     if imgcontainer then _
@@ -590,31 +721,6 @@ end sub
 #if conmenuesconextuales = 1 then
     set itemmenu = popupmenu
 #end if
-end sub
-
-private sub inventorywindow_mousemove(button as integer, shift as integer, x as single, y as single)
-'***************************************************
-'author: juan mart�n sotuyo dodero (maraxus)
-'last modify date: 27/07/04
-'implements the mouse move event of the inventory picture box
-'displays a tooltip of the item under the mouse
-'***************************************************
-    dim temp_x as integer
-    dim temp_y as integer
-    dim tempitem as integer
-    
-    'exit if it got outside the control's area
-    if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
-        exit sub
-    
-    temp_x = x \ owntilepixelwidth
-    temp_y = y \ owntilepixelheight
-    
-    tempitem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
-    
-    if tempitem <= ubound(inventory) then
-        inventorywindow.tooltiptext = inventory(tempitem).name
-    end if
 end sub
 
 private sub inventorywindow_mouseup(button as integer, shift as integer, x as single, y as single)
@@ -626,22 +732,39 @@ private sub inventorywindow_mouseup(button as integer, shift as integer, x as si
 '***************************************************
     'store previously selected item
     dim prevselitem as long
+    dim tempitem as long
+    dim temp_x as long
+    dim temp_y as long
     
     'exit if it got outside the control's area
     if x < 0 or y < 0 or x > inventorywindow.width or y > inventorywindow.height then _
         exit sub
     
     prevselitem = invselecteditem
-
-    'get the currently clickced item
-    invselecteditem = clickitem(cint(x), cint(y))
     
-    'update needed inventory slots
-    if prevselitem <> invselecteditem then
-        if prevselitem <> 0 and prevselitem <> flagoro then call drawinventoryslot(prevselitem)
-        if invselecteditem then call drawinventoryslot(invselecteditem)
+    if button = vbrightbutton then
+        if draganddropon then
+            temp_x = x \ owntilepixelwidth
+            temp_y = y \ owntilepixelheight
+        
+            invselecteditem = temp_x + (temp_y + inventoryoffset) * (inventorywindow.scalewidth \ owntilepixelwidth) + 1
+            
+            call drawinventory
+            
+            if invselecteditem <> slotdragged then
+                raiseevent dragdone(slotdragged, invselecteditem)
+            end if
+        end if
+    else
+        'get the currently clickced item
+        invselecteditem = clickitem(cint(x), cint(y))
+    
+        'update needed inventory slots
+        if prevselitem <> invselecteditem then
+            if prevselitem <> 0 and prevselitem <> flagoro then call drawinventoryslot(prevselitem)
+            if invselecteditem then call drawinventoryslot(invselecteditem)
+        end if
     end if
-    
 #if conmenuesconextuales = 1 then
     'if it was a right click on the same item we had selected before, show popup menu
     if button = vbrightbutton and prevselitem = invselecteditem then

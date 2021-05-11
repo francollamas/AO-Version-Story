@@ -154,7 +154,7 @@ private cbotonnoticias as clsgraphicalbutton
 private cbotondetalles as clsgraphicalbutton
 private cbotoncerrar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 private sub form_load()
 
@@ -177,7 +177,7 @@ private sub loadbuttons()
     set cbotondetalles = new clsgraphicalbutton
     set cbotoncerrar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotondetalles.initialize(imgdetalles, grhpath & "botondetallesmiembroclan.jpg", _
@@ -195,7 +195,7 @@ private sub loadbuttons()
 end sub
 
 private sub form_mousemove(button as integer, shift as integer, x as single, y as single)
-    lastpressed.toggletonormal
+    lastbuttonpressed.toggletonormal
 end sub
 
 private sub imgcerrar_click()
@@ -211,6 +211,7 @@ private sub imgdetalles_click()
 end sub
 
 private sub imgnoticias_click()
+    bshowguildnews = true
     call writeshowguildnews
 end sub
 

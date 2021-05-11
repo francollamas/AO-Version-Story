@@ -1,15 +1,19 @@
 version 5.00
 begin vb.form frminterv 
+   backcolor       =   &h00ffc0c0&
+   borderstyle     =   1  'fixed single
    caption         =   "intervalos"
-   clientheight    =   4710
-   clientleft      =   60
-   clienttop       =   345
+   clientheight    =   4920
+   clientleft      =   45
+   clienttop       =   330
    clientwidth     =   7650
    linktopic       =   "form1"
-   scaleheight     =   4710
+   maxbutton       =   0   'false
+   scaleheight     =   4920
    scalewidth      =   7650
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton command2 
+      backcolor       =   &h00ffc0c0&
       caption         =   "guardar intervalos"
       beginproperty font 
          name            =   "ms sans serif"
@@ -20,13 +24,15 @@ begin vb.form frminterv
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   255
-      left            =   4200
+      height          =   375
+      left            =   4680
+      style           =   1  'graphical
       tabindex        =   36
       top             =   4320
-      width           =   3255
+      width           =   2895
    end
    begin vb.commandbutton command1 
+      backcolor       =   &h00ffc0c0&
       caption         =   "aplicar"
       beginproperty font 
          name            =   "ms sans serif"
@@ -37,13 +43,15 @@ begin vb.form frminterv
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   255
-      left            =   2160
+      height          =   375
+      left            =   2880
+      style           =   1  'graphical
       tabindex        =   0
       top             =   4320
-      width           =   2055
+      width           =   1695
    end
    begin vb.frame frame11 
+      backcolor       =   &h00ffc0c0&
       caption         =   "npcs"
       beginproperty font 
          name            =   "ms sans serif"
@@ -60,6 +68,7 @@ begin vb.form frminterv
       top             =   2160
       width           =   1695
       begin vb.frame frame4 
+         backcolor       =   &h00ffc0c0&
          caption         =   "a.i"
          beginproperty font 
             name            =   "ms sans serif"
@@ -76,6 +85,16 @@ begin vb.form frminterv
          top             =   240
          width           =   1365
          begin vb.textbox txtai 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   52
@@ -84,6 +103,16 @@ begin vb.form frminterv
             width           =   1050
          end
          begin vb.textbox txtnpcpuedeatacar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   135
             tabindex        =   51
@@ -93,25 +122,46 @@ begin vb.form frminterv
          end
          begin vb.label label7 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "ai"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   165
             tabindex        =   54
             top             =   840
-            width           =   150
+            width           =   195
          end
          begin vb.label label9 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "puede atacar"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   150
             tabindex        =   53
             top             =   255
-            width           =   960
+            width           =   1155
          end
       end
    end
    begin vb.frame frame12 
+      backcolor       =   &h00ffc0c0&
       caption         =   "clima && ambiente"
       beginproperty font 
          name            =   "ms sans serif"
@@ -128,6 +178,7 @@ begin vb.form frminterv
       top             =   2160
       width           =   2865
       begin vb.frame frame7 
+         backcolor       =   &h00ffc0c0&
          caption         =   "frio y fx ambientales"
          beginproperty font 
             name            =   "ms sans serif"
@@ -144,6 +195,16 @@ begin vb.form frminterv
          top             =   240
          width           =   2625
          begin vb.textbox txtcmdexec 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   1320
             tabindex        =   44
@@ -152,6 +213,16 @@ begin vb.form frminterv
             width           =   915
          end
          begin vb.textbox txtintervaloperdidastaminalluvia 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   1320
             tabindex        =   43
@@ -160,6 +231,16 @@ begin vb.form frminterv
             width           =   930
          end
          begin vb.textbox txtintervalowavfx 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   150
             tabindex        =   42
@@ -168,8 +249,18 @@ begin vb.form frminterv
             width           =   930
          end
          begin vb.textbox txtintervalofrio 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
-            left            =   180
+            left            =   150
             tabindex        =   41
             text            =   "0"
             top             =   1080
@@ -177,43 +268,84 @@ begin vb.form frminterv
          end
          begin vb.label label20 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "timerexec"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   1320
             tabindex        =   48
             top             =   840
-            width           =   750
+            width           =   900
          end
          begin vb.label label19 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "stamina lluvia"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
-            left            =   1350
+            left            =   1320
             tabindex        =   47
             top             =   270
-            width           =   1035
+            width           =   1260
          end
          begin vb.label label13 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "fxs"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   180
             tabindex        =   46
             top             =   270
-            width           =   270
+            width           =   330
          end
          begin vb.label label12 
             autosize        =   -1  'true
-            caption         =   "frio"
+            backstyle       =   0  'transparent
+            caption         =   "fr�o"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   195
             tabindex        =   45
-            top             =   810
-            width           =   255
+            top             =   840
+            width           =   345
          end
       end
    end
    begin vb.frame frame6 
+      backcolor       =   &h00ffc0c0&
       caption         =   "usuarios"
       beginproperty font 
          name            =   "ms sans serif"
@@ -230,6 +362,7 @@ begin vb.form frminterv
       top             =   0
       width           =   7455
       begin vb.frame frame9 
+         backcolor       =   &h00ffc0c0&
          caption         =   "otros"
          beginproperty font 
             name            =   "ms sans serif"
@@ -246,41 +379,82 @@ begin vb.form frminterv
          top             =   210
          width           =   1410
          begin vb.textbox txtintervaloparaconexion 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
-            left            =   45
+            left            =   240
             tabindex        =   26
             text            =   "0"
-            top             =   495
+            top             =   480
             width           =   930
          end
          begin vb.textbox txttrabajo 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
-            left            =   60
+            left            =   240
             tabindex        =   25
             text            =   "0"
-            top             =   1020
+            top             =   1200
             width           =   930
          end
          begin vb.label label14 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "intervalocon"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
-            left            =   120
+            left            =   240
             tabindex        =   28
             top             =   270
-            width           =   900
+            width           =   1095
          end
          begin vb.label label16 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "trabajo"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
-            left            =   165
+            left            =   240
             tabindex        =   27
-            top             =   780
-            width           =   540
+            top             =   960
+            width           =   660
          end
       end
       begin vb.frame frame8 
+         backcolor       =   &h00ffc0c0&
          caption         =   "combate"
          beginproperty font 
             name            =   "ms sans serif"
@@ -297,6 +471,16 @@ begin vb.form frminterv
          top             =   210
          width           =   1410
          begin vb.textbox txtpuedeatacar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   135
             tabindex        =   22
@@ -305,33 +489,64 @@ begin vb.form frminterv
             width           =   930
          end
          begin vb.textbox txtintervalolanzahechizo 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
-            left            =   150
+            left            =   120
             tabindex        =   20
             text            =   "0"
-            top             =   525
+            top             =   480
             width           =   930
          end
          begin vb.label label17 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "puede atacar"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   135
             tabindex        =   23
             top             =   930
-            width           =   975
+            width           =   1170
          end
          begin vb.label label15 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "lanza spell"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   150
             tabindex        =   21
             top             =   285
-            width           =   825
+            width           =   1005
          end
       end
       begin vb.frame frame3 
+         backcolor       =   &h00ffc0c0&
          caption         =   "hambre y sed"
          beginproperty font 
             name            =   "ms sans serif"
@@ -348,6 +563,16 @@ begin vb.form frminterv
          top             =   210
          width           =   1410
          begin vb.textbox txtintervalohambre 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   16
@@ -356,6 +581,16 @@ begin vb.form frminterv
             width           =   1050
          end
          begin vb.textbox txtintervalosed 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   15
@@ -365,24 +600,45 @@ begin vb.form frminterv
          end
          begin vb.label label5 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "hambre"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   180
             tabindex        =   18
             top             =   255
-            width           =   555
+            width           =   660
          end
          begin vb.label label6 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "sed"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   165
             tabindex        =   17
             top             =   930
-            width           =   285
+            width           =   345
          end
       end
       begin vb.frame frame1 
+         backcolor       =   &h00ffc0c0&
          caption         =   "sanar"
          beginproperty font 
             name            =   "ms sans serif"
@@ -399,14 +655,34 @@ begin vb.form frminterv
          top             =   210
          width           =   1410
          begin vb.textbox txtsanaintervalodescansar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   11
             text            =   "0"
-            top             =   510
+            top             =   480
             width           =   1050
          end
          begin vb.textbox txtsanaintervalosindescansar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   10
@@ -416,24 +692,45 @@ begin vb.form frminterv
          end
          begin vb.label label3 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "descansando"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   180
             tabindex        =   13
             top             =   255
-            width           =   990
+            width           =   1170
          end
          begin vb.label label1 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "sin descansar"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   165
             tabindex        =   12
             top             =   930
-            width           =   1005
+            width           =   1215
          end
       end
       begin vb.frame frame2 
+         backcolor       =   &h00ffc0c0&
          caption         =   "stamina"
          beginproperty font 
             name            =   "ms sans serif"
@@ -450,6 +747,16 @@ begin vb.form frminterv
          top             =   210
          width           =   1410
          begin vb.textbox txtstaminaintervalosindescansar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   150
             tabindex        =   6
@@ -458,34 +765,65 @@ begin vb.form frminterv
             width           =   1050
          end
          begin vb.textbox txtstaminaintervalodescansar 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   285
             left            =   165
             tabindex        =   5
             text            =   "0"
-            top             =   510
+            top             =   480
             width           =   1050
          end
          begin vb.label label2 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "sin descansar"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   165
             tabindex        =   8
             top             =   930
-            width           =   1005
+            width           =   1215
          end
          begin vb.label label4 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "descansando"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   180
             tabindex        =   7
             top             =   255
-            width           =   990
+            width           =   1170
          end
       end
    end
    begin vb.frame frame5 
+      backcolor       =   &h00ffc0c0&
       caption         =   "magia"
       beginproperty font 
          name            =   "ms sans serif"
@@ -502,6 +840,7 @@ begin vb.form frminterv
       top             =   2160
       width           =   2655
       begin vb.frame frame10 
+         backcolor       =   &h00ffc0c0&
          caption         =   "duracion spells"
          beginproperty font 
             name            =   "ms sans serif"
@@ -518,6 +857,16 @@ begin vb.form frminterv
          top             =   270
          width           =   2400
          begin vb.textbox txtinvocacion 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   1170
             tabindex        =   37
@@ -526,6 +875,16 @@ begin vb.form frminterv
             width           =   900
          end
          begin vb.textbox txtintervaloinvisible 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   1170
             tabindex        =   34
@@ -534,6 +893,16 @@ begin vb.form frminterv
             width           =   900
          end
          begin vb.textbox txtintervaloparalizado 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   195
             tabindex        =   31
@@ -542,6 +911,16 @@ begin vb.form frminterv
             width           =   795
          end
          begin vb.textbox txtintervaloveneno 
+            backcolor       =   &h00c0ffff&
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   300
             left            =   195
             tabindex        =   30
@@ -551,44 +930,86 @@ begin vb.form frminterv
          end
          begin vb.label label18 
             autosize        =   -1  'true
-            caption         =   "invocacion"
+            backstyle       =   0  'transparent
+            caption         =   "invocaci�n"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   1170
             tabindex        =   38
             top             =   960
-            width           =   795
+            width           =   945
          end
          begin vb.label label11 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "invisible"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   1170
             tabindex        =   35
             top             =   285
-            width           =   570
+            width           =   720
          end
          begin vb.label label10 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "paralizado"
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
             height          =   195
             left            =   225
             tabindex        =   33
             top             =   960
-            width           =   735
+            width           =   900
          end
          begin vb.label label8 
             autosize        =   -1  'true
+            backstyle       =   0  'transparent
             caption         =   "veneno"
-            height          =   180
+            beginproperty font 
+               name            =   "ms sans serif"
+               size            =   8.25
+               charset         =   0
+               weight          =   700
+               underline       =   0   'false
+               italic          =   0   'false
+               strikethrough   =   0   'false
+            endproperty
+            height          =   195
             left            =   225
             tabindex        =   32
             top             =   300
-            width           =   555
+            width           =   660
          end
       end
    end
    begin vb.commandbutton ok 
-      caption         =   "ok"
+      backcolor       =   &h00ffc0c0&
+      cancel          =   -1  'true
+      caption         =   "salir (esc)"
       beginproperty font 
          name            =   "ms sans serif"
          size            =   9.75
@@ -598,11 +1019,12 @@ begin vb.form frminterv
          italic          =   0   'false
          strikethrough   =   0   'false
       endproperty
-      height          =   255
+      height          =   375
       left            =   120
+      style           =   1  'graphical
       tabindex        =   1
       top             =   4320
-      width           =   2055
+      width           =   1695
    end
 end
 attribute vb_name = "frminterv"
@@ -713,6 +1135,6 @@ err:
 end sub
 
 private sub ok_click()
-me.visible = false
+    me.visible = false
 end sub
 

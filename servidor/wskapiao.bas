@@ -63,7 +63,7 @@ public type tsockcache
     slot as long
 end type
 
-public wsapisock2usr as new collection
+public wsapisock2usr as collection
 
 ' ====================================================================================
 ' ====================================================================================
@@ -380,7 +380,8 @@ public sub eventosockaccept(byval sockid as long)
     dim tam as long, sa as sockaddr
     dim nuevosock as long
     dim i as long
-    dim tstr as string
+    dim str as string
+    dim data() as byte
     
     tam = sockaddr_size
     
@@ -396,11 +397,6 @@ public sub eventosockaccept(byval sockid as long)
     if ret = invalid_socket then
         i = err.lastdllerror
         call logcriticevent("error en accept() api " & i & ": " & getwsaerrorstring(i))
-        exit sub
-    end if
-    
-    if not securityip.ipsecurityaceptarnuevaconexion(sa.sin_addr) then
-        call wsapiclosesocket(nuevosock)
         exit sub
     end if
 
@@ -419,6 +415,32 @@ public sub eventosockaccept(byval sockid as long)
 
     nuevosock = ret
     
+    if setsockopt(nuevosock, sol_socket, so_linger, 0, 4) <> 0 then
+        i = err.lastdllerror
+        call logcriticevent("error al setear lingers." & i & ": " & getwsaerrorstring(i))
+    end if
+    
+    if not securityip.ipsecurityaceptarnuevaconexion(sa.sin_addr) then
+        call wsapiclosesocket(nuevosock)
+        exit sub
+    end if
+    
+    if securityip.ipsecuritysuperalimiteconexiones(sa.sin_addr) then
+        str = protocol.preparemessageerrormsg("limite de conexiones para su ip alcanzado.")
+        
+        redim preserve data(len(str) - 1) as byte
+        
+        data = strconv(str, vbfromunicode)
+        
+#if seguridadalkon then
+        call security.datasent(security.no_slot, data)
+#end if
+        
+        call send(byval nuevosock, data(0), byval ubound(data()) + 1, byval 0)
+        call wsapiclosesocket(nuevosock)
+        exit sub
+    end if
+    
     'seteamos el tama�o del buffer de entrada
     if setsockopt(nuevosock, sol_socket, so_rcvbuffer, size_rcvbuf, 4) <> 0 then
         i = err.lastdllerror
@@ -429,13 +451,6 @@ public sub eventosockaccept(byval sockid as long)
         i = err.lastdllerror
         call logcriticevent("error al setear el tama�o del buffer de salida " & i & ": " & getwsaerrorstring(i))
     end if
-
-    'if securityip.ipsecuritysuperalimiteconexiones(sa.sin_addr) then
-        'tstr = "limite de conexiones para su ip alcanzado."
-        'call send(byval nuevosock, byval tstr, byval len(tstr), byval 0)
-        'call wsapiclosesocket(nuevosock)
-        'exit sub
-    'end if
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -463,7 +478,7 @@ public sub eventosockaccept(byval sockid as long)
                 'call apiclosesocket(nuevosock)
                 call writeerrormsg(newindex, "su ip se encuentra bloqueada en este servidor.")
                 call flushbuffer(newindex)
-                'call securityip.iprestarconexion(sa.sin_addr)
+                call securityip.iprestarconexion(sa.sin_addr)
                 call wsapiclosesocket(nuevosock)
                 exit sub
             end if
@@ -476,9 +491,6 @@ public sub eventosockaccept(byval sockid as long)
         
         call agregaslotsock(nuevosock, newindex)
     else
-        dim str as string
-        dim data() as byte
-        
         str = protocol.preparemessageerrormsg("el servidor se encuentra lleno en este momento. disculpe las molestias ocasionadas.")
         
         redim preserve data(len(str) - 1) as byte
@@ -522,8 +534,12 @@ public sub eventosockclose(byval slot as integer)
 
     'es el mismo user al que est� revisando el centinela??
     'si estamos ac� es porque se cerr� la conexi�n, no es un /salir, y no queremos banearlo....
-    if centinela.revisandouserindex = slot then _
-        call modcentinela.centinelauserlogout
+    dim centinelaindex as byte
+    centinelaindex = userlist(slot).flags.centinelaindex
+        
+    if centinelaindex <> 0 then
+        call modcentinela.centinelauserlogout(centinelaindex)
+    end if
     
 #if seguridadalkon then
     call security.userdisconnected(slot)

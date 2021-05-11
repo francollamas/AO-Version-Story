@@ -84,23 +84,20 @@ private const colums as integer = 100
 private const maxint as integer = 1000
 
 private type tintermidiatework
-    known as boolean
     distv as integer
     prevv as tvertice
 end type
 
-dim tmparray(1 to rows, 1 to colums) as tintermidiatework
+private tmparray(1 to rows, 1 to colums) as tintermidiatework
 
-dim tileposy as integer
-
-private function limites(byval vfila as integer, byval vcolu as integer)
+private function limites(byval vfila as integer, byval vcolu as integer) as boolean
 '***************************************************
 'author: unknown
 'last modification: -
 '
 '***************************************************
 
-limites = vcolu >= 1 and vcolu <= colums and vfila >= 1 and vfila <= rows
+limites = ((vcolu >= 1) and (vcolu <= colums) and (vfila >= 1) and (vfila <= rows))
 end function
 
 private function iswalkable(byval map as integer, byval row as integer, byval col as integer, byval npcindex as integer) as boolean
@@ -110,11 +107,13 @@ private function iswalkable(byval map as integer, byval row as integer, byval co
 '
 '***************************************************
 
-iswalkable = mapdata(map, row, col).blocked = 0 and mapdata(map, row, col).npcindex = 0
-
-if mapdata(map, row, col).userindex <> 0 then
-     if mapdata(map, row, col).userindex <> npclist(npcindex).pfinfo.targetuser then iswalkable = false
-end if
+with mapdata(map, row, col)
+    iswalkable = ((.blocked or .npcindex) = 0)
+    
+    if .userindex <> 0 then
+         if .userindex <> npclist(npcindex).pfinfo.targetuser then iswalkable = false
+    end if
+end with
 
 end function
 
@@ -127,76 +126,88 @@ private sub processadjacents(byval mapindex as integer, byref t() as tintermidia
 
     dim v as tvertice
     dim j as integer
+    
     'look to north
     j = vfila - 1
     if limites(j, vcolu) then
-            if iswalkable(mapindex, j, vcolu, npcindex) then
-                    'nos aseguramos que no hay un camino m�s corto
-                    if t(j, vcolu).distv = maxint then
-                        'actualizamos la tabla de calculos intermedios
-                        t(j, vcolu).distv = t(vfila, vcolu).distv + 1
-                        t(j, vcolu).prevv.x = vcolu
-                        t(j, vcolu).prevv.y = vfila
-                        'mete el vertice en la cola
-                        v.x = vcolu
-                        v.y = j
-                        call push(v)
-                    end if
-            end if
-    end if
-    j = vfila + 1
-    'look to south
-    if limites(j, vcolu) then
-            if iswalkable(mapindex, j, vcolu, npcindex) then
+        if iswalkable(mapindex, j, vcolu, npcindex) then
+            with t(j, vcolu)
                 'nos aseguramos que no hay un camino m�s corto
-                if t(j, vcolu).distv = maxint then
+                if .distv = maxint then
                     'actualizamos la tabla de calculos intermedios
-                    t(j, vcolu).distv = t(vfila, vcolu).distv + 1
-                    t(j, vcolu).prevv.x = vcolu
-                    t(j, vcolu).prevv.y = vfila
+                    .distv = t(vfila, vcolu).distv + 1
+                    .prevv.x = vcolu
+                    .prevv.y = vfila
                     'mete el vertice en la cola
                     v.x = vcolu
                     v.y = j
                     call push(v)
                 end if
-            end if
+            end with
+        end if
     end if
+    
+    j = vfila + 1
+    'look to south
+    if limites(j, vcolu) then
+        if iswalkable(mapindex, j, vcolu, npcindex) then
+            with t(j, vcolu)
+                'nos aseguramos que no hay un camino m�s corto
+                if .distv = maxint then
+                    'actualizamos la tabla de calculos intermedios
+                    .distv = t(vfila, vcolu).distv + 1
+                    .prevv.x = vcolu
+                    .prevv.y = vfila
+                    'mete el vertice en la cola
+                    v.x = vcolu
+                    v.y = j
+                    call push(v)
+                end if
+            end with
+        end if
+    end if
+    
+    j = vcolu - 1
     'look to west
-    if limites(vfila, vcolu - 1) then
-            if iswalkable(mapindex, vfila, vcolu - 1, npcindex) then
+    if limites(vfila, j) then
+        if iswalkable(mapindex, vfila, j, npcindex) then
+            with t(vfila, j)
                 'nos aseguramos que no hay un camino m�s corto
-                if t(vfila, vcolu - 1).distv = maxint then
+                if .distv = maxint then
                     'actualizamos la tabla de calculos intermedios
-                    t(vfila, vcolu - 1).distv = t(vfila, vcolu).distv + 1
-                    t(vfila, vcolu - 1).prevv.x = vcolu
-                    t(vfila, vcolu - 1).prevv.y = vfila
+                    .distv = t(vfila, vcolu).distv + 1
+                    .prevv.x = vcolu
+                    .prevv.y = vfila
                     'mete el vertice en la cola
-                    v.x = vcolu - 1
+                    v.x = j
                     v.y = vfila
                     call push(v)
                 end if
-            end if
+            end with
+        end if
     end if
+    
+    j = vcolu + 1
     'look to east
-    if limites(vfila, vcolu + 1) then
-            if iswalkable(mapindex, vfila, vcolu + 1, npcindex) then
+    if limites(vfila, j) then
+        if iswalkable(mapindex, vfila, j, npcindex) then
+            with t(vfila, j)
                 'nos aseguramos que no hay un camino m�s corto
-                if t(vfila, vcolu + 1).distv = maxint then
+                if .distv = maxint then
                     'actualizamos la tabla de calculos intermedios
-                    t(vfila, vcolu + 1).distv = t(vfila, vcolu).distv + 1
-                    t(vfila, vcolu + 1).prevv.x = vcolu
-                    t(vfila, vcolu + 1).prevv.y = vfila
+                    .distv = t(vfila, vcolu).distv + 1
+                    .prevv.x = vcolu
+                    .prevv.y = vfila
                     'mete el vertice en la cola
-                    v.x = vcolu + 1
+                    v.x = j
                     v.y = vfila
                     call push(v)
                 end if
-            end if
+            end with
+        end if
     end if
-   
    
 end sub
-
 
 public sub seekpath(byval npcindex as integer, optional byval maxsteps as integer = 30)
 '***************************************************
@@ -214,31 +225,30 @@ public sub seekpath(byval npcindex as integer, optional byval maxsteps as intege
     dim npcmap as integer
     dim steps as integer
     
-    npcmap = npclist(npcindex).pos.map
-    
-    steps = 0
-    
-    cur_npc_pos.x = npclist(npcindex).pos.y
-    cur_npc_pos.y = npclist(npcindex).pos.x
-    
-    tar_npc_pos.x = npclist(npcindex).pfinfo.target.x '  userlist(npclist(npcindex).pfinfo.targetuser).pos.x
-    tar_npc_pos.y = npclist(npcindex).pfinfo.target.y '  userlist(npclist(npcindex).pfinfo.targetuser).pos.y
-    
-    call initializetable(tmparray, cur_npc_pos)
-    call initqueue
-    
-    'we add the first vertex to the queue
-    call push(cur_npc_pos)
-    
-    do while (not isempty)
-        if steps > maxsteps then exit do
-        v = pop
-        if v.x = tar_npc_pos.x and v.y = tar_npc_pos.y then exit do
-        call processadjacents(npcmap, tmparray, v.y, v.x, npcindex)
-    loop
-    
-    call makepath(npcindex)
-
+    with npclist(npcindex)
+        npcmap = .pos.map
+        
+        cur_npc_pos.x = .pos.y
+        cur_npc_pos.y = .pos.x
+        
+        tar_npc_pos.x = .pfinfo.target.x '  userlist(.pfinfo.targetuser).pos.x
+        tar_npc_pos.y = .pfinfo.target.y '  userlist(.pfinfo.targetuser).pos.y
+        
+        call initializetable(tmparray, cur_npc_pos)
+        call initqueue
+        
+        'we add the first vertex to the queue
+        call push(cur_npc_pos)
+        
+        do while (not isempty)
+            if steps > maxsteps then exit do
+            v = pop
+            if (v.x = tar_npc_pos.x) and (v.y = tar_npc_pos.y) then exit do
+            call processadjacents(npcmap, tmparray, v.y, v.x, npcindex)
+        loop
+        
+        call makepath(npcindex)
+    end with
 end sub
 
 private sub makepath(byval npcindex as integer)
@@ -252,29 +262,30 @@ private sub makepath(byval npcindex as integer)
     dim miv as tvertice
     dim i as integer
     
-    pasos = tmparray(npclist(npcindex).pfinfo.target.y, npclist(npcindex).pfinfo.target.x).distv
-    npclist(npcindex).pfinfo.pathlenght = pasos
-    
-    
-    if pasos = maxint then
-        'msgbox "there is no path."
-        npclist(npcindex).pfinfo.nopath = true
-        npclist(npcindex).pfinfo.pathlenght = 0
-        exit sub
-    end if
-    
-    redim npclist(npcindex).pfinfo.path(0 to pasos) as tvertice
-    
-    miv.x = npclist(npcindex).pfinfo.target.x
-    miv.y = npclist(npcindex).pfinfo.target.y
-    
-    for i = pasos to 1 step -1
-        npclist(npcindex).pfinfo.path(i) = miv
-        miv = tmparray(miv.y, miv.x).prevv
-    next i
-    
-    npclist(npcindex).pfinfo.curpos = 1
-    npclist(npcindex).pfinfo.nopath = false
+    with npclist(npcindex)
+        pasos = tmparray(.pfinfo.target.y, .pfinfo.target.x).distv
+        .pfinfo.pathlenght = pasos
+        
+        if pasos = maxint then
+            'msgbox "there is no path."
+            .pfinfo.nopath = true
+            .pfinfo.pathlenght = 0
+            exit sub
+        end if
+        
+        redim .pfinfo.path(1 to pasos) as tvertice
+        
+        miv.x = .pfinfo.target.x
+        miv.y = .pfinfo.target.y
+        
+        for i = pasos to 1 step -1
+            .pfinfo.path(i) = miv
+            miv = tmparray(miv.y, miv.x).prevv
+        next i
+        
+        .pfinfo.curpos = 1
+        .pfinfo.nopath = false
+    end with
    
 end sub
 
@@ -285,22 +296,21 @@ private sub initializetable(byref t() as tintermidiatework, byref s as tvertice,
 'initialize the array where we calculate the path
 '***************************************************
 
-
 dim j as integer, k as integer
 const anymap = 1
+
 for j = s.y - maxsteps to s.y + maxsteps
     for k = s.x - maxsteps to s.x + maxsteps
         if inmapbounds(anymap, j, k) then
-            t(j, k).known = false
-            t(j, k).distv = maxint
-            t(j, k).prevv.x = 0
-            t(j, k).prevv.y = 0
+            with t(j, k)
+                .distv = maxint
+                .prevv.x = 0
+                .prevv.y = 0
+            end with
         end if
-    next
-next
+    next k
+next j
 
-t(s.y, s.x).known = false
 t(s.y, s.x).distv = 0
 
 end sub
-

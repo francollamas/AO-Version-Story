@@ -71,6 +71,7 @@ public sub npc_tirar_items(byref npc as npc, byval ispretoriano as boolean)
 'give away npc's items.
 '28/11/2009: zama - implementado drops complejos
 '02/04/2010: zama - los pretos vuelven a tirar oro.
+'10/04/2011: zama - logueo los objetos logueables dropeados.
 '***************************************************
 on error resume next
 
@@ -128,9 +129,15 @@ on error resume next
                     call tiraroronpc(.drop(nrodrop).amount, npc.pos)
                 else
                     miobj.amount = .drop(nrodrop).amount
-                    miobj.objindex = .drop(nrodrop).objindex
+                    miobj.objindex = objindex
                     
                     call tiraritemalpiso(.pos, miobj)
+                    
+                    if objdata(objindex).log = 1 then
+                        call logdesarrollo(npc.name & " drope� " & miobj.amount & " " & _
+                            objdata(objindex).name & "[" & objindex & "]")
+                    end if
+                    
                 end if
             end if
 
@@ -313,7 +320,6 @@ public sub tiraroronpc(byval cantidad as long, byref pos as worldpos)
 on error goto errhandler
 
     if cantidad > 0 then
-        dim i as byte
         dim miobj as obj
         dim remaininggold as long
         

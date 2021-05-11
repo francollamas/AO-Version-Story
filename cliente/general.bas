@@ -152,8 +152,10 @@ sub initmi()
     dim cualmitemp as integer
     
     alternativos = randomnumber(1, 7368)
-    cualmitemp = randomnumber(1, 1233)
     
+    do
+        cualmitemp = randomnumber(1, 1233)
+    loop while cualmitemp = cualmi
 
     set mi(cualmitemp) = new clsmanagerinvisibles
     call mi(cualmitemp).inicializar(alternativos, 10000)
@@ -785,12 +787,14 @@ sub main()
     else
         set surfacedb = new clssurfacemanstatic
     end if
-    
+ 
+#if testeo = 0 then
     if findpreviousinstance then
         call msgbox("argentum online ya esta corriendo! no es posible correr otra instancia del juego. haga click en aceptar para salir.", vbapplicationmodal + vbinformation + vbokonly, "error al ejecutar")
         end
     end if
-    
+#end if
+
     'read command line. do it after config file is loaded to prevent this from
     'canceling the effects of "/nores" option.
     call leerlineacomandos
@@ -819,90 +823,17 @@ sub main()
     'set resolution before the loading form is displayed, therefore it will be centered.
     call resolution.setresolution
     
-    ' mouse pointer (loaded before opening any form with buttons in it)
-    if fileexist(dirextras & "hand.ico", vbarchive) then _
-        set picmouseicon = loadpicture(dirextras & "hand.ico")
-    
-    frmcargando.show
-    frmcargando.refresh
-    
-    frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
-    call addtorichtextbox(frmcargando.status, "buscando servidores... ", 255, 255, 255, true, false, true)
+    ' load constants, classes, flags, graphics..
+    loadinitialconfig
 
-    call cargarservidores
-'todo : esto de serverrecibidos no se podr�a sacar???
-    serversrecibidos = true
-    
-    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
-    call addtorichtextbox(frmcargando.status, "iniciando constantes... ", 255, 255, 255, true, false, true)
-    
-    call inicializarnombres
-    
-    ' initialize fonttypes
-    call protocol.initfonts
-    
-    with frmconnect
-        .txtnombre = config_inicio.name
-        .txtnombre.selstart = 0
-        .txtnombre.sellength = len(.txtnombre)
-    end with
-    
-    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
-    
-    call addtorichtextbox(frmcargando.status, "iniciando motor gr�fico... ", 255, 255, 255, true, false, true)
-    
-    if not inittileengine(frmmain.hwnd, 149, 13, 32, 32, 13, 17, 9, 8, 8, 0.018) then
-        call closeclient
-    end if
-    
-    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
-    
-    call addtorichtextbox(frmcargando.status, "creando animaciones extra... ", 255, 255, 255, true, false, true)
-    
-    call cargartips
-    
-usermap = 1
-    
-    call cargararraylluvia
-    call cargaranimarmas
-    call cargaranimescudos
-    call cargarcolores
-    
-    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
-    
-    call addtorichtextbox(frmcargando.status, "iniciando directsound... ", 255, 255, 255, true, false, true)
-    
-    'inicializamos el sonido
-    call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
-    'enable / disable audio
-    audio.musicactivated = not clientsetup.bnomusic
-    audio.soundactivated = not clientsetup.bnosound
-    audio.soundeffectsactivated = not clientsetup.bnosoundeffects
-    'inicializamos el inventario gr�fico
-    call inventario.initialize(directdraw, frmmain.picinv, max_inventory_slots)
-    
-    call audio.musicmp3play(app.path & "\mp3\" & mp3_inicio & ".mp3")
-    
-    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
-    
-#if seguridadalkon then
-    cualmi = 0
-    call initmi
-#end if
-    
-    call addtorichtextbox(frmcargando.status, "                    �bienvenido a argentum online!", 255, 255, 255, true, false, true)
-    
-    'give the user enough time to read the welcome text
-    call sleep(500)
-    
-    unload frmcargando
-    
+#if testeo <> 1 then
     dim prespath as string
     prespath = dirgraficos & "presentacion" & randomnumber(1, 4) & ".jpg"
     
     frmpres.picture = loadpicture(prespath)
     frmpres.show vbmodal    'es modal, as� que se detiene la ejecuci�n de main hasta que se desaparece
-    
+#end if
+
 #if usarwrench = 1 then
     frmmain.socket1.startup
 #end if
@@ -914,29 +845,9 @@ usermap = 1
     prgrun = true
     pausa = false
     
-    'set the intervals of timers
-    call maintimer.setinterval(timersindex.attack, int_attack)
-    call maintimer.setinterval(timersindex.work, int_work)
-    call maintimer.setinterval(timersindex.useitemwithu, int_useitemu)
-    call maintimer.setinterval(timersindex.useitemwithdblclick, int_useitemdck)
-    call maintimer.setinterval(timersindex.sendrpu, int_sentrpu)
-    call maintimer.setinterval(timersindex.castspell, int_cast_spell)
-    call maintimer.setinterval(timersindex.arrows, int_arrows)
-    call maintimer.setinterval(timersindex.castattack, int_cast_attack)
-    
-    frmmain.macrotrabajo.interval = int_macro_trabajo
-    frmmain.macrotrabajo.enabled = false
-    
-   'init timers
-    call maintimer.start(timersindex.attack)
-    call maintimer.start(timersindex.work)
-    call maintimer.start(timersindex.useitemwithu)
-    call maintimer.start(timersindex.useitemwithdblclick)
-    call maintimer.start(timersindex.sendrpu)
-    call maintimer.start(timersindex.castspell)
-    call maintimer.start(timersindex.arrows)
-    call maintimer.start(timersindex.castattack)
-    
+    ' intervals
+    loadtimerintervals
+        
     'set the dialog's font
     dialogos.font = frmmain.font
     dialogosclanes.font = frmmain.font
@@ -974,6 +885,145 @@ usermap = 1
     loop
     
     call closeclient
+end sub
+
+private sub loadinitialconfig()
+'***************************************************
+'author: zama
+'last modification: 15/03/2011
+'15/03/2011: zama - initialize classes lazy way.
+'***************************************************
+
+    dim i as long
+
+    frmcargando.show
+    frmcargando.refresh
+
+    frmconnect.version = "v" & app.major & "." & app.minor & " build: " & app.revision
+    
+    '###########
+    ' servidores
+    'todo : esto de serverrecibidos no se podr�a sacar???
+    call addtorichtextbox(frmcargando.status, "buscando servidores... ", 255, 255, 255, true, false, true)
+    call cargarservidores
+    serversrecibidos = true
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+    '###########
+    ' constantes
+    call addtorichtextbox(frmcargando.status, "iniciando constantes... ", 255, 255, 255, true, false, true)
+    call inicializarnombres
+    ' initialize fonttypes
+    call protocol.initfonts
+    
+    with frmconnect
+        .txtnombre = config_inicio.name
+        .txtnombre.selstart = 0
+        .txtnombre.sellength = len(.txtnombre)
+    end with
+    
+    usermap = 1
+    
+    ' mouse pointer (loaded before opening any form with buttons in it)
+    if fileexist(dirextras & "hand.ico", vbarchive) then _
+        set picmouseicon = loadpicture(dirextras & "hand.ico")
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+    '#######
+    ' clases
+    call addtorichtextbox(frmcargando.status, "instanciando clases... ", 255, 255, 255, true, false, true)
+    set dialogos = new clsdialogs
+    set audio = new clsaudio
+    set inventario = new clsgrapchicalinventory
+    set customkeys = new clscustomkeys
+    set custommessages = new clscustommessages
+    set incomingdata = new clsbytequeue
+    set outgoingdata = new clsbytequeue
+    set maintimer = new clstimer
+    set clsforos = new clsforum
+    
+#if seguridadalkon then
+    set md5 = new clsmd5
+#end if
+    set directx = new directx7
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+    '##############
+    ' motor gr�fico
+    call addtorichtextbox(frmcargando.status, "iniciando motor gr�fico... ", 255, 255, 255, true, false, true)
+    
+    if not inittileengine(frmmain.hwnd, 149, 13, 32, 32, 13, 17, 9, 8, 8, 0.018) then
+        call closeclient
+    end if
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+    '###################
+    ' animaciones extras
+    call addtorichtextbox(frmcargando.status, "creando animaciones extra... ", 255, 255, 255, true, false, true)
+    call cargartips
+    call cargararraylluvia
+    call cargaranimarmas
+    call cargaranimescudos
+    call cargarcolores
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+    '#############
+    ' direct sound
+    call addtorichtextbox(frmcargando.status, "iniciando directsound... ", 255, 255, 255, true, false, true)
+    'inicializamos el sonido
+    call audio.initialize(directx, frmmain.hwnd, app.path & "\" & config_inicio.dirsonidos & "\", app.path & "\" & config_inicio.dirmusica & "\")
+    'enable / disable audio
+    audio.musicactivated = not clientsetup.bnomusic
+    audio.soundactivated = not clientsetup.bnosound
+    audio.soundeffectsactivated = not clientsetup.bnosoundeffects
+    'inicializamos el inventario gr�fico
+    call inventario.initialize(directdraw, frmmain.picinv, max_inventory_slots, , , , , , , , , true)
+    call audio.musicmp3play(app.path & "\mp3\" & mp3_inicio & ".mp3")
+    call addtorichtextbox(frmcargando.status, "hecho", 255, 0, 0, true, false, false)
+    
+#if seguridadalkon then
+    cualmi = 0
+    call initmi
+#end if
+    
+    call addtorichtextbox(frmcargando.status, "                    �bienvenido a argentum online!", 255, 255, 255, true, false, true)
+
+    'give the user enough time to read the welcome text
+    call sleep(500)
+    
+    unload frmcargando
+    
+end sub
+
+private sub loadtimerintervals()
+'***************************************************
+'author: zama
+'last modification: 15/03/2011
+'set the intervals of timers
+'***************************************************
+    
+    call maintimer.setinterval(timersindex.attack, int_attack)
+    call maintimer.setinterval(timersindex.work, int_work)
+    call maintimer.setinterval(timersindex.useitemwithu, int_useitemu)
+    call maintimer.setinterval(timersindex.useitemwithdblclick, int_useitemdck)
+    call maintimer.setinterval(timersindex.sendrpu, int_sentrpu)
+    call maintimer.setinterval(timersindex.castspell, int_cast_spell)
+    call maintimer.setinterval(timersindex.arrows, int_arrows)
+    call maintimer.setinterval(timersindex.castattack, int_cast_attack)
+    
+    frmmain.macrotrabajo.interval = int_macro_trabajo
+    frmmain.macrotrabajo.enabled = false
+    
+   'init timers
+    call maintimer.start(timersindex.attack)
+    call maintimer.start(timersindex.work)
+    call maintimer.start(timersindex.useitemwithu)
+    call maintimer.start(timersindex.useitemwithdblclick)
+    call maintimer.start(timersindex.sendrpu)
+    call maintimer.start(timersindex.castspell)
+    call maintimer.start(timersindex.arrows)
+    call maintimer.start(timersindex.castattack)
+
 end sub
 
 sub writevar(byval file as string, byval main as string, byval var as string, byval value as string)
@@ -1089,7 +1139,10 @@ public sub leerlineacomandos()
         end select
     next i
     
-    'call aoupdate(uptodate, nores) ' www.gs-zone.org
+#if testeo = 0 then
+    call aoupdate(uptodate, nores)
+#end if
+
 end sub
 
 ''
@@ -1166,6 +1219,7 @@ private sub loadclientsetup()
     end if
     
     clientsetup.bguildnews = not clientsetup.bguildnews
+    set dialogosclanes = new clsguilddlg
     dialogosclanes.activo = not clientsetup.bgldmsgconsole
     dialogosclanes.cantidaddialogos = clientsetup.bcantmsgs
 end sub
@@ -1415,3 +1469,103 @@ public function forumalignment(byval yforumtype as byte) as byte
     
 end function
 
+public sub resetallinfo()
+    
+    ' save config.ini
+    savegameini
+    
+    ' disable timers
+    frmmain.second.enabled = false
+    frmmain.macrotrabajo.enabled = false
+    connected = false
+    
+    'unload all forms except frmmain, frmconnect and frmcrearpersonaje
+    dim frm as form
+    for each frm in forms
+        if frm.name <> frmmain.name and frm.name <> frmconnect.name and _
+            frm.name <> frmcrearpersonaje.name then
+            
+            unload frm
+        end if
+    next
+    
+    on local error goto 0
+    
+    ' return to connection screen
+    frmconnect.mousepointer = vbnormal
+    if not frmcrearpersonaje.visible then frmconnect.visible = true
+    frmmain.visible = false
+    
+    'stop audio
+    call audio.stopwave
+    frmmain.isplaying = playloop.plnone
+
+    
+    ' reset flags
+    pausa = false
+    usermeditar = false
+    userestupido = false
+    userciego = false
+    userdescansar = false
+    userparalizado = false
+    traveling = false
+    usernavegando = false
+    brain = false
+    bfogata = false
+    comerciando = false
+    bshowtutorial = false
+    
+    mirandoasignarskills = false
+    mirandocarpinteria = false
+    mirandoestadisticas = false
+    mirandoforo = false
+    mirandoherreria = false
+    mirandoparty = false
+    
+    'delete all kind of dialogs
+    call cleandialogs
+    
+#if seguridadalkon then
+    logging = false
+    logstring = false
+    seglastpressed = 0
+    lastmouse = false
+    lastamount = 0
+#end if
+
+    'reset some char variables...
+    dim i as long
+    for i = 1 to lastchar
+        charlist(i).invisible = false
+    next i
+
+    ' reset stats
+    userclase = 0
+    usersexo = 0
+    userraza = 0
+    userhogar = 0
+    useremail = ""
+    skillpoints = 0
+    alocados = 0
+    
+    ' reset skills
+    for i = 1 to numskills
+        userskills(i) = 0
+    next i
+
+    ' reset attributes
+    for i = 1 to numatributos
+        useratributos(i) = 0
+    next i
+    
+    ' clear inventory slots
+    inventario.clearallslots
+
+#if seguridadalkon then
+    call mi(cualmi).inicializar(randomnumber(1, 1000), 10000)
+#end if
+
+    ' connection screen midi
+    call audio.playmidi("2.mid")
+
+end sub

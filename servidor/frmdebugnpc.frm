@@ -1,32 +1,68 @@
 version 5.00
 begin vb.form frmdebugnpc 
-   caption         =   "debugnpcs"
+   backcolor       =   &h00ffc0c0&
+   borderstyle     =   1  'fixed single
+   caption         =   "debug npcs"
    clientheight    =   2460
-   clientleft      =   60
-   clienttop       =   345
+   clientleft      =   45
+   clienttop       =   330
    clientwidth     =   4680
    linktopic       =   "form1"
+   maxbutton       =   0   'false
    scaleheight     =   2460
    scalewidth      =   4680
-   startupposition =   3  'windows default
+   startupposition =   2  'centerscreen
    begin vb.commandbutton command2 
-      caption         =   "salir"
+      backcolor       =   &h00ffc0c0&
+      cancel          =   -1  'true
+      caption         =   "salir (esc)"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   300
       left            =   90
+      style           =   1  'graphical
       tabindex        =   5
       top             =   2085
       width           =   4455
    end
    begin vb.commandbutton command1 
+      backcolor       =   &h00ffc0c0&
       caption         =   "actualizarinfo"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   300
       left            =   90
+      style           =   1  'graphical
       tabindex        =   2
       top             =   1755
       width           =   4455
    end
    begin vb.label label4 
+      backstyle       =   0  'transparent
       caption         =   "maxnpcs:"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   285
       left            =   90
       tabindex        =   4
@@ -34,7 +70,17 @@ begin vb.form frmdebugnpc
       width           =   4455
    end
    begin vb.label label3 
+      backstyle       =   0  'transparent
       caption         =   "lastnpcindex:"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   285
       left            =   90
       tabindex        =   3
@@ -42,7 +88,17 @@ begin vb.form frmdebugnpc
       width           =   4455
    end
    begin vb.label label2 
+      backstyle       =   0  'transparent
       caption         =   "npcs libres:"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   285
       left            =   105
       tabindex        =   1
@@ -50,7 +106,17 @@ begin vb.form frmdebugnpc
       width           =   4455
    end
    begin vb.label label1 
+      backstyle       =   0  'transparent
       caption         =   "npcs activos:"
+      beginproperty font 
+         name            =   "ms sans serif"
+         size            =   8.25
+         charset         =   0
+         weight          =   700
+         underline       =   0   'false
+         italic          =   0   'false
+         strikethrough   =   0   'false
+      endproperty
       height          =   285
       left            =   90
       tabindex        =   0
@@ -108,6 +174,6 @@ label4.caption = "maxnpcs:" & maxnpcs
 end sub
 
 private sub command2_click()
-unload me
+    unload me
 end sub
 

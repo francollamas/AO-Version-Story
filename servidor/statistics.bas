@@ -162,14 +162,18 @@ public sub storefrag(byval killer as integer, byval victim as integer)
             exit sub
     end select
     
-    if userlist(killer).faccion.armadareal then
-        alignment = 1
-    elseif userlist(killer).faccion.fuerzascaos then
-        alignment = 2
-    elseif criminal(killer) then
-        alignment = 3
+    if criminal(killer) then
+        if escaos(killer) then
+            alignment = 2
+        else
+            alignment = 3
+        end if
     else
-        alignment = 4
+        if esarmada(killer) then
+            alignment = 1
+        else
+            alignment = 4
+        end if
     end if
     
     fraglvlracedata(clase).matrix(userlist(killer).stats.elv, raza) = fraglvlracedata(clase).matrix(userlist(killer).stats.elv, raza) + 1

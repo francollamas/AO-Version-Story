@@ -121,12 +121,12 @@ private sub buttonholder_mousemove(button as integer, shift as integer, x as sin
     if not overbutton then
     
         'this helps when two buttons are close
-        formactual.lastpressed.toggletonormal
+        formactual.lastbuttonpressed.toggletonormal
         
         buttonholder.picture = rolloverbuttonimage
         overbutton = true
         
-        set formactual.lastpressed = me
+        set formactual.lastbuttonpressed = me
     end if
 end sub
 

@@ -1,11 +1,11 @@
 version 5.00
 begin vb.form frmmain 
-   backcolor       =   &h00c0c0c0&
+   backcolor       =   &h00ffc0c0&
    borderstyle     =   3  'fixed dialog
    caption         =   "argentum online"
-   clientheight    =   4845
+   clientheight    =   6390
    clientleft      =   1950
-   clienttop       =   1815
+   clienttop       =   1515
    clientwidth     =   5190
    controlbox      =   0   'false
    fillcolor       =   &h00c0c0c0&
@@ -24,169 +24,213 @@ begin vb.form frmmain
    maxbutton       =   0   'false
    minbutton       =   0   'false
    palettemode     =   1  'usezorder
-   scaleheight     =   4845
+   scaleheight     =   6390
    scalewidth      =   5190
    startupposition =   2  'centerscreen
    windowstate     =   1  'minimized
-   begin vb.textbox txtchat 
-      height          =   2775
+   begin vb.checkbox chkserverhabilitado 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "server habilitado solo gms"
+      height          =   255
       left            =   120
-      multiline       =   -1  'true
+      tabindex        =   13
+      top             =   4440
+      width           =   2775
+   end
+   begin vb.textbox txtnumusers 
+      alignment       =   2  'center
+      backcolor       =   &h00c0ffff&
+      height          =   315
+      left            =   2640
+      locked          =   -1  'true
+      tabindex        =   12
+      text            =   "0"
+      top             =   240
+      width           =   975
+   end
+   begin vb.commandbutton cmdsystray 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "systray"
+      height          =   375
+      left            =   120
+      style           =   1  'graphical
       tabindex        =   10
-      top             =   1920
+      top             =   5880
+      width           =   1335
+   end
+   begin vb.commandbutton cmdcerrarserver 
+      backcolor       =   &h00c0c0ff&
+      caption         =   "cerrar servidor"
+      height          =   375
+      left            =   1560
+      style           =   1  'graphical
+      tabindex        =   9
+      top             =   5880
+      width           =   3495
+   end
+   begin vb.commandbutton cmdconfiguracion 
+      backcolor       =   &h00ffc0c0&
+      caption         =   "configuraci�n general"
+      height          =   375
+      left            =   120
+      style           =   1  'graphical
+      tabindex        =   8
+      top             =   5400
       width           =   4935
    end
    begin vb.timer tpiquetec 
       enabled         =   0   'false
       interval        =   6000
-      left            =   480
-      top             =   540
+      left            =   3000
+      top             =   2580
    end
    begin vb.timer packetresend 
       interval        =   10
-      left            =   480
-      top             =   60
+      left            =   3000
+      top             =   2100
    end
    begin vb.timer securitytimer 
       enabled         =   0   'false
       interval        =   10000
-      left            =   960
-      top             =   60
-   end
-   begin vb.checkbox superlog 
-      caption         =   "log"
-      height          =   255
-      left            =   3120
-      tabindex        =   9
-      top             =   480
-      width           =   615
+      left            =   3480
+      top             =   2100
    end
    begin vb.commandbutton cmddump 
-      caption         =   "dump"
-      height          =   255
-      left            =   3720
-      tabindex        =   8
-      top             =   480
-      width           =   1215
+      backcolor       =   &h00ffc0c0&
+      caption         =   "crear log cr�tico de usuarios"
+      height          =   375
+      left            =   120
+      style           =   1  'graphical
+      tabindex        =   7
+      top             =   4920
+      width           =   4935
    end
    begin vb.timer fx 
       enabled         =   0   'false
       interval        =   4000
-      left            =   1440
-      top             =   540
+      left            =   3960
+      top             =   2580
    end
    begin vb.timer auditoria 
       enabled         =   0   'false
       interval        =   1000
-      left            =   1440
-      top             =   1020
+      left            =   3960
+      top             =   3060
    end
    begin vb.timer gametimer 
       enabled         =   0   'false
       interval        =   40
-      left            =   1440
-      top             =   60
+      left            =   3960
+      top             =   2100
    end
    begin vb.timer tlluviaevent 
       enabled         =   0   'false
       interval        =   60000
-      left            =   960
-      top             =   1020
+      left            =   3480
+      top             =   3060
    end
    begin vb.timer tlluvia 
       enabled         =   0   'false
       interval        =   500
-      left            =   960
-      top             =   540
+      left            =   3480
+      top             =   2580
    end
    begin vb.timer autosave 
       enabled         =   0   'false
       interval        =   60000
-      left            =   480
-      top             =   1080
+      left            =   3000
+      top             =   3060
    end
    begin vb.timer npcataca 
       enabled         =   0   'false
       interval        =   4000
-      left            =   1920
-      top             =   1020
+      left            =   4440
+      top             =   3060
    end
    begin vb.timer killlog 
       enabled         =   0   'false
       interval        =   60000
-      left            =   1920
-      top             =   60
+      left            =   4440
+      top             =   2100
    end
    begin vb.timer timer_ai 
       enabled         =   0   'false
       interval        =   100
-      left            =   1935
-      top             =   540
+      left            =   4455
+      top             =   2580
    end
    begin vb.frame frame1 
-      caption         =   "broadcast"
-      height          =   1095
+      backcolor       =   &h00ffc0c0&
+      caption         =   "mensajea todos los clientes (solo testeo)"
+      height          =   3615
       left            =   120
       tabindex        =   2
-      top             =   600
+      top             =   720
       width           =   4935
-      begin vb.commandbutton command2 
-         caption         =   "broadcast consola"
-         beginproperty font 
-            name            =   "tahoma"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   255
-         left            =   2520
-         tabindex        =   6
-         top             =   720
-         width           =   2295
-      end
-      begin vb.commandbutton command1 
-         caption         =   "broadcast clientes"
-         beginproperty font 
-            name            =   "tahoma"
-            size            =   8.25
-            charset         =   0
-            weight          =   700
-            underline       =   0   'false
-            italic          =   0   'false
-            strikethrough   =   0   'false
-         endproperty
-         height          =   255
+      begin vb.textbox txtchat 
+         backcolor       =   &h00c0ffff&
+         height          =   2175
          left            =   120
+         multiline       =   -1  'true
+         tabindex        =   11
+         top             =   1320
+         width           =   4695
+      end
+      begin vb.commandbutton command2 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "enviar por consola"
+         beginproperty font 
+            name            =   "tahoma"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   2520
+         style           =   1  'graphical
          tabindex        =   5
          top             =   720
          width           =   2295
       end
-      begin vb.textbox broadmsg 
-         height          =   315
-         left            =   1080
+      begin vb.commandbutton command1 
+         backcolor       =   &h00ffc0c0&
+         caption         =   "enviar por pop-up"
+         beginproperty font 
+            name            =   "tahoma"
+            size            =   8.25
+            charset         =   0
+            weight          =   700
+            underline       =   0   'false
+            italic          =   0   'false
+            strikethrough   =   0   'false
+         endproperty
+         height          =   375
+         left            =   120
+         style           =   1  'graphical
          tabindex        =   4
-         top             =   240
-         width           =   3735
+         top             =   720
+         width           =   2295
       end
-      begin vb.label label1 
-         caption         =   "mensaje"
-         height          =   255
-         index           =   0
+      begin vb.textbox broadmsg 
+         backcolor       =   &h00c0ffff&
+         height          =   315
          left            =   120
          tabindex        =   3
          top             =   240
-         width           =   855
+         width           =   4695
       end
    end
    begin vb.label escuch 
+      backstyle       =   0  'transparent
       caption         =   "label2"
       height          =   255
-      left            =   3240
-      tabindex        =   7
-      top             =   240
+      left            =   3840
+      tabindex        =   6
+      top             =   0
+      visible         =   0   'false
       width           =   1335
    end
    begin vb.label cantusuarios 
@@ -194,7 +238,7 @@ begin vb.form frmmain
       autosize        =   -1  'true
       backcolor       =   &h00c0c0c0&
       backstyle       =   0  'transparent
-      caption         =   "numero de usuarios:"
+      caption         =   "n�mero de usuarios jugando:"
       beginproperty font 
          name            =   "tahoma"
          size            =   8.25
@@ -208,30 +252,18 @@ begin vb.form frmmain
       height          =   195
       left            =   120
       tabindex        =   1
-      top             =   240
-      width           =   1725
+      top             =   360
+      width           =   2460
    end
    begin vb.label txstatus 
       autosize        =   -1  'true
       backstyle       =   0  'transparent
       forecolor       =   &h000000ff&
       height          =   210
-      left            =   120
+      left            =   240
       tabindex        =   0
-      top             =   5520
-      width           =   45
-   end
-   begin vb.menu mnucontroles 
-      caption         =   "argentum"
-      begin vb.menu mnuservidor 
-         caption         =   "configuracion"
-      end
-      begin vb.menu mnusystray 
-         caption         =   "systray servidor"
-      end
-      begin vb.menu mnucerrar 
-         caption         =   "cerrar servidor"
-      end
+      top             =   0
+      width           =   15
    end
    begin vb.menu mnupopup 
       caption         =   "popupmenu"
@@ -384,10 +416,9 @@ static minutos as long
 static minutoslatsclean as long
 static minspjessave as long
 
-dim i as integer
-dim num as long
 
 minutos = minutos + 1
+minspjessave = minspjessave + 1
 
 '�?�?�?�?�?�?�?�?�?�?�
 call modareas.areasoptimizacion
@@ -404,6 +435,14 @@ if minutos >= minutosws then
     call es.dobackup
     call aclon.vaciarcoleccion
     minutos = 0
+end if
+
+if minspjessave = minutosguardarusuarios - 1 then
+    call senddata(sendtarget.toall, 0, preparemessageconsolemsg("charsave en 1 minuto ...", fonttypenames.fonttype_veneno))
+elseif minspjessave >= minutosguardarusuarios then
+    call mdparty.actualizaexperiencias
+    call guardarusuarios
+    minspjessave = 0
 end if
 
 if minutoslatsclean >= 15 then
@@ -431,16 +470,41 @@ errhandler:
     resume next
 end sub
 
+private sub chkserverhabilitado_click()
+    serversologms = chkserverhabilitado.value
+end sub
+
+private sub cmdcerrarserver_click()
+    if msgbox("��atencion!! si cierra el servidor puede provocar la perdida de datos. " & _
+        "�desea hacerlo de todas maneras?", vbyesno) = vbyes then
+        
+        dim f
+        for each f in forms
+            unload f
+        next
+    end if
+end sub
+
+private sub cmdconfiguracion_click()
+    frmservidor.visible = true
+end sub
+
 private sub cmddump_click()
 on error resume next
 
-dim i as integer
-for i = 1 to maxusers
-    call logcriticevent(i & ") connid: " & userlist(i).connid & ". connidvalida: " & userlist(i).connidvalida & " name: " & userlist(i).name & " userlogged: " & userlist(i).flags.userlogged)
-next i
+    dim i as integer
+    for i = 1 to maxusers
+        call logcriticevent(i & ") connid: " & userlist(i).connid & _
+            ". connidvalida: " & userlist(i).connidvalida & " name: " & userlist(i).name & _
+            " userlogged: " & userlist(i).flags.userlogged)
+    next i
+    
+    call logcriticevent("lastuser: " & lastuser & " nextopenuser: " & nextopenuser)
 
-call logcriticevent("lastuser: " & lastuser & " nextopenuser: " & nextopenuser)
+end sub
 
+private sub cmdsystray_click()
+    setsystray
 end sub
 
 private sub command1_click()
@@ -453,7 +517,7 @@ end sub
 public sub initmain(byval f as byte)
 
 if f = 1 then
-    call mnusystray_click
+    call setsystray
 else
     frmmain.show
 end if
@@ -571,12 +635,8 @@ on error goto hayerror
                     benviarstats = false
                     benviarays = false
                     
-                    call dotileevents(iuserindex, .pos.map, .pos.x, .pos.y)
-                    
-                    
                     if .flags.paralizado = 1 then call efectoparalisisuser(iuserindex)
                     if .flags.ceguera = 1 or .flags.estupidez then call efectocegueestu(iuserindex)
-                    
                     
                     if .flags.muerto = 0 then
                         
@@ -596,7 +656,7 @@ on error goto hayerror
                         
                         if .flags.mimetizado = 1 then call efectomimetismo(iuserindex)
                         
-                        if .flags.atacablepor > 0 then call efectoestadoatacable(iuserindex)
+                        if .flags.atacablepor <> 0 then call efectoestadoatacable(iuserindex)
                         
                         call duracionpociones(iuserindex)
                         
@@ -680,6 +740,8 @@ on error goto hayerror
                         if benviarays then call writeupdatehungerandthirst(iuserindex)
                         
                         if .nromascotas > 0 then call tiempoinvocacion(iuserindex)
+                    else
+                        if .flags.traveling <> 0 then call travelingeffect(iuserindex)
                     end if 'muerto
                 else 'no esta logeado?
                     'inactive players will be removed!
@@ -701,20 +763,8 @@ hayerror:
     logerror ("error en gametimer: " & err.description & " userindex = " & iuserindex)
 end sub
 
-private sub mnucerrar_click()
-
-
-if msgbox("��atencion!! si cierra el servidor puede provocar la perdida de datos. �desea hacerlo de todas maneras?", vbyesno) = vbyes then
-    dim f
-    for each f in forms
-        unload f
-    next
-end if
-
-end sub
-
 private sub mnusalir_click()
-    call mnucerrar_click
+    call cmdcerrarserver_click
 end sub
 
 public sub mnumostrar_click()
@@ -736,33 +786,29 @@ end if
 
 end sub
 
-private sub mnuservidor_click()
-frmservidor.visible = true
-end sub
+private sub setsystray()
 
-private sub mnusystray_click()
-
-dim i as integer
-dim s as string
-dim nid as notifyicondata
-
-s = "argentum-online"
-nid = setnotifyicondata(frmmain.hwnd, vbnull, nif_message or nif_icon or nif_tip, wm_mousemove, frmmain.icon, s)
-i = shell_notifyicona(nim_add, nid)
+    dim i as integer
+    dim s as string
+    dim nid as notifyicondata
     
-if windowstate <> vbminimized then windowstate = vbminimized
-visible = false
+    s = "argentum-online"
+    nid = setnotifyicondata(frmmain.hwnd, vbnull, nif_message or nif_icon or nif_tip, wm_mousemove, frmmain.icon, s)
+    i = shell_notifyicona(nim_add, nid)
+        
+    if windowstate <> vbminimized then windowstate = vbminimized
+    visible = false
 
 end sub
 
 private sub npcataca_timer()
 
 on error resume next
-dim npc as long
-
-for npc = 1 to lastnpc
-    npclist(npc).canattack = 1
-next npc
+    dim npc as long
+    
+    for npc = 1 to lastnpc
+        npclist(npc).canattack = 1
+    next npc
 
 end sub
 
@@ -801,67 +847,54 @@ end sub
 private sub timer_ai_timer()
 
 on error goto errorhandler
-dim npcindex as long
-dim x as integer
-dim y as integer
-dim useai as integer
-dim mapa as integer
-dim e_p as integer
-
-'barrin 29/9/03
-if not haciendobk and not enpausa then
-    'update npcs
-    for npcindex = 1 to lastnpc
-        
-        with npclist(npcindex)
-            if .flags.npcactive then 'nos aseguramos que sea inteligente!
+    dim npcindex as long
+    dim mapa as integer
+    dim e_p as integer
+    
+    'barrin 29/9/03
+    if not haciendobk and not enpausa then
+        'update npcs
+        for npcindex = 1 to lastnpc
             
-                ' chequea si contiua teniendo due�o
-                if .owner > 0 then call validarpermanencianpc(npcindex)
-            
-                if .flags.paralizado = 1 then
-                    call efectoparalisisnpc(npcindex)
-                else
-                    e_p = espretoriano(npcindex)
-                    if e_p > 0 then
-                        select case e_p
-                            case 1  ''clerigo
-                                call prcler_ai(npcindex)
-                            case 2  ''mago
-                                call prmago_ai(npcindex)
-                            case 3  ''cazador
-                                call prcaza_ai(npcindex)
-                            case 4  ''rey
-                                call prrey_ai(npcindex)
-                            case 5  ''guerre
-                                call prguer_ai(npcindex)
-                        end select
+            with npclist(npcindex)
+                if .flags.npcactive then 'nos aseguramos que sea inteligente!
+                
+                    ' chequea si contiua teniendo due�o
+                    if .owner > 0 then call validarpermanencianpc(npcindex)
+                
+                    if .flags.paralizado = 1 then
+                        call efectoparalisisnpc(npcindex)
                     else
-                        'usamos ai si hay algun user en el mapa
-                        if .flags.inmovilizado = 1 then
-                           call efectoparalisisnpc(npcindex)
-                        end if
-                        
-                        mapa = .pos.map
-                        
-                        if mapa > 0 then
-                            if mapinfo(mapa).numusers > 0 then
-                                if .movement <> tipoai.estatico then
-                                    call npcai(npcindex)
+                        ' preto? tienen ai especial
+                        if .npctype = enpctype.pretoriano then
+                            call clanpretoriano(.clanindex).performpretorianai(npcindex)
+                        else
+                            'usamos ai si hay algun user en el mapa
+                            if .flags.inmovilizado = 1 then
+                               call efectoparalisisnpc(npcindex)
+                            end if
+                            
+                            mapa = .pos.map
+                            
+                            if mapa > 0 then
+                                if mapinfo(mapa).numusers > 0 then
+                                    if .movement <> tipoai.estatico then
+                                        call npcai(npcindex)
+                                    end if
                                 end if
                             end if
                         end if
                     end if
                 end if
-            end if
-        end with
-    next npcindex
-end if
-
-exit sub
+            end with
+        next npcindex
+    end if
+    
+    exit sub
 
 errorhandler:
-    call logerror("error en timer_ai_timer " & npclist(npcindex).name & " mapa:" & npclist(npcindex).pos.map)
+    call logerror("error en timer_ai_timer " & npclist(npcindex).name & " mapa:" & _
+    npclist(npcindex).pos.map)
     call muerenpc(npcindex, 0)
 end sub
 
@@ -924,7 +957,6 @@ private sub tpiquetec_timer()
     dim nuevaa as boolean
    ' dim nuevol as boolean
     dim gi as integer
-    
     dim i as long
     
 on error goto errhandler
@@ -932,28 +964,19 @@ on error goto errhandler
         with userlist(i)
             if .flags.userlogged then
                 if mapdata(.pos.map, .pos.x, .pos.y).trigger = etrigger.antipiquete then
-                    .counters.piquetec = .counters.piquetec + 1
-                    call writeconsolemsg(i, "���est�s obstruyendo la v�a p�blica, mu�vete o ser�s encarcelado!!!", fonttypenames.fonttype_info)
-                    
-                    if .counters.piquetec > 23 then
+                    if .flags.muerto = 0 then
+                        .counters.piquetec = .counters.piquetec + 1
+                        call writeconsolemsg(i, "���est�s obstruyendo la v�a p�blica, mu�vete o ser�s encarcelado!!!", fonttypenames.fonttype_info)
+                        
+                        if .counters.piquetec > 23 then
+                            .counters.piquetec = 0
+                            call encarcelar(i, tiempo_carcel_piquete)
+                        end if
+                    else
                         .counters.piquetec = 0
-                        call encarcelar(i, tiempo_carcel_piquete)
                     end if
                 else
                     .counters.piquetec = 0
-                end if
-                
-                if .flags.muerto = 1 then
-                    if .flags.traveling = 1 then
-                        if .counters.gohome <= 0 then
-                            call findlegalpos(i, ciudades(.hogar).map, ciudades(.hogar).x, ciudades(.hogar).y)
-                            call warpuserchar(i, ciudades(.hogar).map, ciudades(.hogar).x, ciudades(.hogar).y, true)
-                            call writemultimessage(i, emessages.finishhome)
-                            .flags.traveling = 0
-                        else
-                            .counters.gohome = .counters.gohome - 1
-                        end if
-                    end if
                 end if
                 
                 'ustedes se preguntaran que hace esto aca?

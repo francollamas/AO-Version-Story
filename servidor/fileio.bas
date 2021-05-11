@@ -46,129 +46,215 @@ public sub cargarspawnlist()
     
 end sub
 
-function esadmin(byval name as string) as boolean
+function esadmin(byref name as string) as boolean
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
 '***************************************************
+    esadmin = (val(administradores.getvalue("admin", name)) = 1)
+end function
 
-    dim numwizs as integer
-    dim wiznum as integer
-    dim nomb as string
+function esdios(byref name as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
+'***************************************************
+    esdios = (val(administradores.getvalue("dios", name)) = 1)
+end function
+
+function essemidios(byref name as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
+'***************************************************
+    essemidios = (val(administradores.getvalue("semidios", name)) = 1)
+end function
+
+function esgmespecial(byref name as string) as boolean
+'***************************************************
+'author: zama
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
+'***************************************************
+    esgmespecial = (val(administradores.getvalue("especial", name)) = 1)
+end function
+
+function esconsejero(byref name as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
+'***************************************************
+    esconsejero = (val(administradores.getvalue("consejero", name)) = 1)
+end function
+
+function esrolesmaster(byref name as string) as boolean
+'***************************************************
+'author: unknown
+'last modification: 27/03/2011
+'27/03/2011 - zama: utilizo la clase para saber los datos.
+'***************************************************
+    esrolesmaster = (val(administradores.getvalue("rm", name)) = 1)
+end function
+
+public function esgmchar(byref name as string) as boolean
+'***************************************************
+'author: zama
+'last modification: 27/03/2011
+'returns true if char is administrative user.
+'***************************************************
     
-    numwizs = val(getvar(inipath & "server.ini", "init", "admines"))
+    dim esgm as boolean
     
-    for wiznum = 1 to numwizs
-        nomb = ucase$(getvar(inipath & "server.ini", "admines", "admin" & wiznum))
-        
-        if left$(nomb, 1) = "*" or left$(nomb, 1) = "+" then nomb = right$(nomb, len(nomb) - 1)
-        if ucase$(name) = nomb then
-            esadmin = true
-            exit function
-        end if
-    next wiznum
-    esadmin = false
+    ' admin?
+    esgm = esadmin(name)
+    ' dios?
+    if not esgm then esgm = esdios(name)
+    ' semidios?
+    if not esgm then esgm = essemidios(name)
+    ' consejero?
+    if not esgm then esgm = esconsejero(name)
+
+    esgmchar = esgm
 
 end function
 
-function esdios(byval name as string) as boolean
-'***************************************************
-'author: unknown
-'last modification: -
-'
-'***************************************************
 
-    dim numwizs as integer
-    dim wiznum as integer
-    dim nomb as string
+public sub loadadministrativeusers()
+'admines     => admin
+'dioses      => dios
+'semidioses  => semidios
+'especiales  => especial
+'consejeros  => consejero
+'rolemasters => rm
+
+    'si esta mierda tuviese array asociativos el c�digo ser�a tan lindo.
+    dim buf as integer
+    dim i as long
+    dim name as string
+       
+    ' public container
+    set administradores = new clsinimanager
     
-    numwizs = val(getvar(inipath & "server.ini", "init", "dioses"))
-    for wiznum = 1 to numwizs
-        nomb = ucase$(getvar(inipath & "server.ini", "dioses", "dios" & wiznum))
-        
-        if left$(nomb, 1) = "*" or left$(nomb, 1) = "+" then nomb = right$(nomb, len(nomb) - 1)
-        if ucase$(name) = nomb then
-            esdios = true
-            exit function
-        end if
-    next wiznum
-    esdios = false
-end function
-
-function essemidios(byval name as string) as boolean
-'***************************************************
-'author: unknown
-'last modification: -
-'
-'***************************************************
-
-    dim numwizs as integer
-    dim wiznum as integer
-    dim nomb as string
+    ' server ini info file
+    dim serverini as clsinimanager
+    set serverini = new clsinimanager
     
-    numwizs = val(getvar(inipath & "server.ini", "init", "semidioses"))
-    for wiznum = 1 to numwizs
-        nomb = ucase$(getvar(inipath & "server.ini", "semidioses", "semidios" & wiznum))
-        
-        if left$(nomb, 1) = "*" or left$(nomb, 1) = "+" then nomb = right$(nomb, len(nomb) - 1)
-        if ucase$(name) = nomb then
-            essemidios = true
-            exit function
-        end if
-    next wiznum
-    essemidios = false
-
-end function
-
-function esconsejero(byval name as string) as boolean
-'***************************************************
-'author: unknown
-'last modification: -
-'
-'***************************************************
-
-    dim numwizs as integer
-    dim wiznum as integer
-    dim nomb as string
+    call serverini.initialize(inipath & "server.ini")
     
-    numwizs = val(getvar(inipath & "server.ini", "init", "consejeros"))
-    for wiznum = 1 to numwizs
-        nomb = ucase$(getvar(inipath & "server.ini", "consejeros", "consejero" & wiznum))
-        
-        if left$(nomb, 1) = "*" or left$(nomb, 1) = "+" then nomb = right$(nomb, len(nomb) - 1)
-        if ucase$(name) = nomb then
-            esconsejero = true
-            exit function
-        end if
-    next wiznum
-    esconsejero = false
-end function
-
-function esrolesmaster(byval name as string) as boolean
-'***************************************************
-'author: unknown
-'last modification: -
-'
-'***************************************************
-
-    dim numwizs as integer
-    dim wiznum as integer
-    dim nomb as string
+       
+    ' admines
+    buf = val(serverini.getvalue("init", "admines"))
     
-    numwizs = val(getvar(inipath & "server.ini", "init", "rolesmasters"))
-    for wiznum = 1 to numwizs
-        nomb = ucase$(getvar(inipath & "server.ini", "rolesmasters", "rm" & wiznum))
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("admines", "admin" & i))
         
-        if left$(nomb, 1) = "*" or left$(nomb, 1) = "+" then nomb = right$(nomb, len(nomb) - 1)
-        if ucase$(name) = nomb then
-            esrolesmaster = true
-            exit function
-        end if
-    next wiznum
-    esrolesmaster = false
-end function
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("admin", name, "1")
 
+    next i
+    
+    ' dioses
+    buf = val(serverini.getvalue("init", "dioses"))
+    
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("dioses", "dios" & i))
+        
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("dios", name, "1")
+        
+    next i
+    
+    ' especiales
+    buf = val(serverini.getvalue("init", "especiales"))
+    
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("especiales", "especial" & i))
+        
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("especial", name, "1")
+        
+    next i
+    
+    ' semidioses
+    buf = val(serverini.getvalue("init", "semidioses"))
+    
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("semidioses", "semidios" & i))
+        
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("semidios", name, "1")
+        
+    next i
+    
+    ' consejeros
+    buf = val(serverini.getvalue("init", "consejeros"))
+        
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("consejeros", "consejero" & i))
+        
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("consejero", name, "1")
+        
+    next i
+    
+    ' rolesmasters
+    buf = val(serverini.getvalue("init", "rolesmasters"))
+        
+    for i = 1 to buf
+        name = ucase$(serverini.getvalue("rolesmasters", "rm" & i))
+        
+        if left$(name, 1) = "*" or left$(name, 1) = "+" then name = right$(name, len(name) - 1)
+        
+        ' add key
+        call administradores.changevalue("rm", name, "1")
+    next i
+    
+    set serverini = nothing
+    
+end sub
+
+public function getcharprivs(byref username as string) as playertype
+'****************************************************
+'author: zama
+'last modification: 18/11/2010
+'reads the user's charfile and retrieves its privs.
+'***************************************************
+
+    dim privs as playertype
+
+    if esadmin(username) then
+        privs = playertype.admin
+        
+    elseif esdios(username) then
+        privs = playertype.dios
+
+    elseif essemidios(username) then
+        privs = playertype.semidios
+        
+    elseif esconsejero(username) then
+        privs = playertype.consejero
+    
+    else
+        privs = playertype.user
+    end if
+
+    getcharprivs = privs
+
+end function
 
 public function txtdimension(byval name as string) as long
 '***************************************************
@@ -235,7 +321,8 @@ on error goto errhandler
     if frmmain.visible then frmmain.txstatus.caption = "cargando hechizos."
     
     dim hechizo as integer
-    dim leer as new clsinireader
+    dim leer as clsinimanager
+    set leer = new clsinimanager
     
     call leer.initialize(datpath & "hechizos.dat")
     
@@ -378,7 +465,6 @@ public sub dobackup()
 '***************************************************
 
     haciendobk = true
-    dim i as integer
     
     
     
@@ -401,7 +487,7 @@ public sub dobackup()
     call limpiarmundo
     call worldsave
     call modguilds.v_rutinaelecciones
-    call resetcentinelainfo     'reseteamos al centinela
+    'call resetcentinelainfo     'reseteamos al centinela 'lo saco porque ahora el reset lo maneja el modcentinela [c4b3z0n]
     
     
     call senddata(sendtarget.toall, 0, preparemessagepausetoggle())
@@ -419,11 +505,13 @@ public sub dobackup()
     close #nfile
 end sub
 
-public sub grabarmapa(byval map as long, byval mapfile as string)
+public sub grabarmapa(byval map as long, byref mapfile as string)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 12/01/2011
+'10/08/2010 - pato: implemento el clsbytebuffer para el grabado de mapas
+'28/10/2010:zama - ahora no se hace backup de los pretorianos.
+'12/01/2011 - amraphen: ahora no se hace backup de npcs prohibidos (pretorianos, mascotas, invocados y centinela)
 '***************************************************
 
 on error resume next
@@ -432,8 +520,15 @@ on error resume next
     dim y as long
     dim x as long
     dim byflags as byte
-    dim tempint as integer
     dim loopc as long
+    dim mapwriter as clsbytebuffer
+    dim infwriter as clsbytebuffer
+    dim inimanager as clsinimanager
+    dim npcinvalido as boolean
+    
+    set mapwriter = new clsbytebuffer
+    set infwriter = new clsbytebuffer
+    set inimanager = new clsinimanager
     
     if fileexist(mapfile & ".map", vbnormal) then
         kill mapfile & ".map"
@@ -446,27 +541,27 @@ on error resume next
     'open .map file
     freefilemap = freefile
     open mapfile & ".map" for binary as freefilemap
-    seek freefilemap, 1
+    
+    call mapwriter.initializewriter(freefilemap)
     
     'open .inf file
     freefileinf = freefile
     open mapfile & ".inf" for binary as freefileinf
-    seek freefileinf, 1
+    
+    call infwriter.initializewriter(freefileinf)
+    
     'map header
-            
-    put freefilemap, , mapinfo(map).mapversion
-    put freefilemap, , micabecera
-    put freefilemap, , tempint
-    put freefilemap, , tempint
-    put freefilemap, , tempint
-    put freefilemap, , tempint
+    call mapwriter.putinteger(mapinfo(map).mapversion)
+        
+    call mapwriter.putstring(micabecera.desc, false)
+    call mapwriter.putlong(micabecera.crc)
+    call mapwriter.putlong(micabecera.magicword)
+    
+    call mapwriter.putdouble(0)
     
     'inf header
-    put freefileinf, , tempint
-    put freefileinf, , tempint
-    put freefileinf, , tempint
-    put freefileinf, , tempint
-    put freefileinf, , tempint
+    call infwriter.putdouble(0)
+    call infwriter.putinteger(0)
     
     'write .map file
     for y = yminmapsize to ymaxmapsize
@@ -480,20 +575,19 @@ on error resume next
                 if .graphic(4) then byflags = byflags or 8
                 if .trigger then byflags = byflags or 16
                 
-                put freefilemap, , byflags
+                call mapwriter.putbyte(byflags)
                 
-                put freefilemap, , .graphic(1)
+                call mapwriter.putinteger(.graphic(1))
                 
                 for loopc = 2 to 4
                     if .graphic(loopc) then _
-                        put freefilemap, , .graphic(loopc)
+                        call mapwriter.putinteger(.graphic(loopc))
                 next loopc
                 
                 if .trigger then _
-                    put freefilemap, , cint(.trigger)
+                    call mapwriter.putinteger(cint(.trigger))
                 
                 '.inf file
-                
                 byflags = 0
                 
                 if .objinfo.objindex > 0 then
@@ -504,58 +598,82 @@ on error resume next
                 end if
     
                 if .tileexit.map then byflags = byflags or 1
-                if .npcindex then byflags = byflags or 2
+                
+                ' no hacer backup de los npcs inv�lidos (pretorianos, mascotas, invocados y centinela)
+                if .npcindex then
+                    npcinvalido = (npclist(.npcindex).npctype = enpctype.pretoriano) or (npclist(.npcindex).maestrouser > 0) or escentinela(.npcindex)
+                    
+                    if not npcinvalido then byflags = byflags or 2
+                end if
+                
                 if .objinfo.objindex then byflags = byflags or 4
                 
-                put freefileinf, , byflags
+                call infwriter.putbyte(byflags)
                 
                 if .tileexit.map then
-                    put freefileinf, , .tileexit.map
-                    put freefileinf, , .tileexit.x
-                    put freefileinf, , .tileexit.y
+                    call infwriter.putinteger(.tileexit.map)
+                    call infwriter.putinteger(.tileexit.x)
+                    call infwriter.putinteger(.tileexit.y)
                 end if
                 
-                if .npcindex then _
-                    put freefileinf, , npclist(.npcindex).numero
+                if .npcindex and not npcinvalido then _
+                    call infwriter.putinteger(npclist(.npcindex).numero)
                 
                 if .objinfo.objindex then
-                    put freefileinf, , .objinfo.objindex
-                    put freefileinf, , .objinfo.amount
+                    call infwriter.putinteger(.objinfo.objindex)
+                    call infwriter.putinteger(.objinfo.amount)
                 end if
+                
+                npcinvalido = false
             end with
         next x
     next y
+    
+    call mapwriter.savebuffer
+    call infwriter.savebuffer
     
     'close .map file
     close freefilemap
 
     'close .inf file
     close freefileinf
+    
+    set mapwriter = nothing
+    set infwriter = nothing
 
     with mapinfo(map)
-    
         'write .dat file
-        call writevar(mapfile & ".dat", "mapa" & map, "name", .name)
-        call writevar(mapfile & ".dat", "mapa" & map, "musicnum", .music)
-        call writevar(mapfile & ".dat", "mapa" & map, "magiasinefecto", .magiasinefecto)
-        call writevar(mapfile & ".dat", "mapa" & map, "invisinefecto", .invisinefecto)
-        call writevar(mapfile & ".dat", "mapa" & map, "resusinefecto", .resusinefecto)
-        call writevar(mapfile & ".dat", "mapa" & map, "startpos", .startpos.map & "-" & .startpos.x & "-" & .startpos.y)
-        
+        call inimanager.changevalue("mapa" & map, "name", .name)
+        call inimanager.changevalue("mapa" & map, "musicnum", .music)
+        call inimanager.changevalue("mapa" & map, "magiasinefecto", .magiasinefecto)
+        call inimanager.changevalue("mapa" & map, "invisinefecto", .invisinefecto)
+        call inimanager.changevalue("mapa" & map, "resusinefecto", .resusinefecto)
+        call inimanager.changevalue("mapa" & map, "startpos", .startpos.map & "-" & .startpos.x & "-" & .startpos.y)
+        call inimanager.changevalue("mapa" & map, "ondeathgoto", .ondeathgoto.map & "-" & .ondeathgoto.x & "-" & .ondeathgoto.y)
+
     
-        call writevar(mapfile & ".dat", "mapa" & map, "terreno", .terreno)
-        call writevar(mapfile & ".dat", "mapa" & map, "zona", .zona)
-        call writevar(mapfile & ".dat", "mapa" & map, "restringir", .restringir)
-        call writevar(mapfile & ".dat", "mapa" & map, "backup", str(.backup))
+        call inimanager.changevalue("mapa" & map, "terreno", terrainbytetostring(.terreno))
+        call inimanager.changevalue("mapa" & map, "zona", .zona)
+        call inimanager.changevalue("mapa" & map, "restringir", restrictbytetostring(.restringir))
+        call inimanager.changevalue("mapa" & map, "backup", str(.backup))
     
         if .pk then
-            call writevar(mapfile & ".dat", "mapa" & map, "pk", "0")
+            call inimanager.changevalue("mapa" & map, "pk", "0")
         else
-            call writevar(mapfile & ".dat", "mapa" & map, "pk", "1")
+            call inimanager.changevalue("mapa" & map, "pk", "1")
         end if
+        
+        call inimanager.changevalue("mapa" & map, "ocultarsinefecto", .ocultarsinefecto)
+        call inimanager.changevalue("mapa" & map, "invocarsinefecto", .invocarsinefecto)
+        call inimanager.changevalue("mapa" & map, "noencriptarmp", .noencriptarmp)
+        call inimanager.changevalue("mapa" & map, "robonpcspermitido", .robonpcspermitido)
+    
+        call inimanager.dumpfile(mapfile & ".dat")
     end with
-
+    
+    set inimanager = nothing
 end sub
+
 sub loadarmasherreria()
 '***************************************************
 'author: unknown
@@ -706,7 +824,8 @@ on error goto errhandler
     'carga la lista de objetos
     '*****************************************************************
     dim object as integer
-    dim leer as new clsinireader
+    dim leer as clsinimanager
+    set leer = new clsinimanager
     
     call leer.initialize(datpath & "obj.dat")
     
@@ -937,7 +1056,7 @@ errhandler:
 
 end sub
 
-sub loaduserstats(byval userindex as integer, byref userfile as clsinireader)
+sub loaduserstats(byval userindex as integer, byref userfile as clsinimanager)
 '*************************************************
 'author: unknown
 'last modified: 11/19/2009
@@ -953,13 +1072,13 @@ with userlist(userindex)
         next loopc
         
         for loopc = 1 to numskills
-            .userskills(loopc) = cint(userfile.getvalue("skills", "sk" & loopc))
-            .eluskills(loopc) = cint(userfile.getvalue("skills", "elusk" & loopc))
-            .expskills(loopc) = cint(userfile.getvalue("skills", "expsk" & loopc))
+            .userskills(loopc) = val(userfile.getvalue("skills", "sk" & loopc))
+            .eluskills(loopc) = val(userfile.getvalue("skills", "elusk" & loopc))
+            .expskills(loopc) = val(userfile.getvalue("skills", "expsk" & loopc))
         next loopc
         
         for loopc = 1 to maxuserhechizos
-            .userhechizos(loopc) = cint(userfile.getvalue("hechizos", "h" & loopc))
+            .userhechizos(loopc) = val(userfile.getvalue("hechizos", "h" & loopc))
         next loopc
         
         .gld = clng(userfile.getvalue("stats", "gld"))
@@ -1004,7 +1123,7 @@ with userlist(userindex)
 end with
 end sub
 
-sub loaduserreputacion(byval userindex as integer, byref userfile as clsinireader)
+sub loaduserreputacion(byval userindex as integer, byref userfile as clsinimanager)
 '***************************************************
 'author: unknown
 'last modification: -
@@ -1023,7 +1142,7 @@ sub loaduserreputacion(byval userindex as integer, byref userfile as clsinireade
     
 end sub
 
-sub loaduserinit(byval userindex as integer, byref userfile as clsinireader)
+sub loaduserinit(byval userindex as integer, byref userfile as clsinimanager)
 '*************************************************
 'author: unknown
 'last modified: 19/11/2006
@@ -1065,7 +1184,7 @@ sub loaduserinit(byval userindex as integer, byref userfile as clsinireader)
             .paralizado = cbyte(userfile.getvalue("flags", "paralizado"))
             
             'matrix
-            .lastmap = cint(userfile.getvalue("flags", "lastmap"))
+            .lastmap = val(userfile.getvalue("flags", "lastmap"))
         end with
         
         if .flags.paralizado = 1 then
@@ -1134,9 +1253,9 @@ sub loaduserinit(byval userindex as integer, byref userfile as clsinireader)
         'lista de objetos
         for loopc = 1 to max_inventory_slots
             ln = userfile.getvalue("inventory", "obj" & loopc)
-            .invent.object(loopc).objindex = cint(readfield(1, ln, 45))
-            .invent.object(loopc).amount = cint(readfield(2, ln, 45))
-            .invent.object(loopc).equipped = cbyte(readfield(3, ln, 45))
+            .invent.object(loopc).objindex = val(readfield(1, ln, 45))
+            .invent.object(loopc).amount = val(readfield(2, ln, 45))
+            .invent.object(loopc).equipped = val(readfield(3, ln, 45))
         next loopc
         
         'obtiene el indice-objeto del arma
@@ -1185,13 +1304,12 @@ sub loaduserinit(byval userindex as integer, byref userfile as clsinireader)
             .invent.anilloeqpobjindex = .invent.object(.invent.anilloeqpslot).objindex
         end if
         
-        .invent.mochilaeqpslot = cbyte(userfile.getvalue("inventory", "mochilaslot"))
+        .invent.mochilaeqpslot = val(userfile.getvalue("inventory", "mochilaslot"))
         if .invent.mochilaeqpslot > 0 then
             .invent.mochilaeqpobjindex = .invent.object(.invent.mochilaeqpslot).objindex
         end if
         
         .nromascotas = cint(userfile.getvalue("mascotas", "nromascotas"))
-        dim npcindex as integer
         for loopc = 1 to maxmascotas
             .mascotastype(loopc) = val(userfile.getvalue("mascotas", "mas" & loopc))
         next loopc
@@ -1238,9 +1356,7 @@ sub cargarbackup()
     if frmmain.visible then frmmain.txstatus.caption = "cargando backup."
     
     dim map as integer
-    dim tempint as integer
     dim tfilename as string
-    dim npcfile as string
     
     on error goto man
         
@@ -1292,9 +1408,7 @@ sub loadmapdata()
     if frmmain.visible then frmmain.txstatus.caption = "cargando mapas..."
     
     dim map as integer
-    dim tempint as integer
     dim tfilename as string
-    dim npcfile as string
     
     on error goto man
         
@@ -1328,92 +1442,102 @@ man:
 
 end sub
 
-public sub cargarmapa(byval map as long, byval mapfl as string)
+public sub cargarmapa(byval map as long, byref mapfl as string)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 10/08/2010
+'10/08/2010 - pato: implemento el clsbytebuffer y el clsinimanager para la carga de mapa
 '***************************************************
 
 on error goto errh
-    dim freefilemap as long
-    dim freefileinf as long
-    dim y as long
+    dim hfile as integer
     dim x as long
+    dim y as long
     dim byflags as byte
     dim npcfile as string
-    dim tempint as integer
+    dim leer as clsinimanager
+    dim mapreader as clsbytebuffer
+    dim infreader as clsbytebuffer
+    dim buff() as byte
+    
+    set mapreader = new clsbytebuffer
+    set infreader = new clsbytebuffer
+    set leer = new clsinimanager
+    
+    npcfile = datpath & "npcs.dat"
+    
+    hfile = freefile
 
-    freefilemap = freefile
+    open mapfl & ".map" for binary as #hfile
+        seek hfile, 1
 
-    open mapfl & ".map" for binary as #freefilemap
-    seek freefilemap, 1
-
-    freefileinf = freefile
+        redim buff(lof(hfile) - 1) as byte
+    
+        get #hfile, , buff
+    close hfile
+    
+    call mapreader.initializereader(buff)
 
     'inf
-    open mapfl & ".inf" for binary as #freefileinf
-    seek freefileinf, 1
+    open mapfl & ".inf" for binary as #hfile
+        seek hfile, 1
 
+        redim buff(lof(hfile) - 1) as byte
+    
+        get #hfile, , buff
+    close hfile
+    
+    call infreader.initializereader(buff)
+    
     'map header
-    get #freefilemap, , mapinfo(map).mapversion
-    get #freefilemap, , micabecera
-    get #freefilemap, , tempint
-    get #freefilemap, , tempint
-    get #freefilemap, , tempint
-    get #freefilemap, , tempint
+    mapinfo(map).mapversion = mapreader.getinteger
+    
+    micabecera.desc = mapreader.getstring(len(micabecera.desc))
+    micabecera.crc = mapreader.getlong
+    micabecera.magicword = mapreader.getlong
+    
+    call mapreader.getdouble
 
     'inf header
-    get #freefileinf, , tempint
-    get #freefileinf, , tempint
-    get #freefileinf, , tempint
-    get #freefileinf, , tempint
-    get #freefileinf, , tempint
+    call infreader.getdouble
+    call infreader.getinteger
 
     for y = yminmapsize to ymaxmapsize
         for x = xminmapsize to xmaxmapsize
             with mapdata(map, x, y)
+                '.map file
+                byflags = mapreader.getbyte
 
-                '.dat file
-                get freefilemap, , byflags
+                if byflags and 1 then .blocked = 1
 
-                if byflags and 1 then
-                    .blocked = 1
-                end if
-
-                get freefilemap, , .graphic(1)
+                .graphic(1) = mapreader.getinteger
 
                 'layer 2 used?
-                if byflags and 2 then get freefilemap, , .graphic(2)
+                if byflags and 2 then .graphic(2) = mapreader.getinteger
 
                 'layer 3 used?
-                if byflags and 4 then get freefilemap, , .graphic(3)
+                if byflags and 4 then .graphic(3) = mapreader.getinteger
 
                 'layer 4 used?
-                if byflags and 8 then get freefilemap, , .graphic(4)
+                if byflags and 8 then .graphic(4) = mapreader.getinteger
 
                 'trigger used?
-                if byflags and 16 then
-                    'enums are 4 byte long in vb, so we make sure we only read 2
-                    get freefilemap, , tempint
-                    .trigger = tempint
-                end if
+                if byflags and 16 then .trigger = mapreader.getinteger
 
-                get freefileinf, , byflags
+                '.inf file
+                byflags = infreader.getbyte
 
                 if byflags and 1 then
-                    get freefileinf, , .tileexit.map
-                    get freefileinf, , .tileexit.x
-                    get freefileinf, , .tileexit.y
+                    .tileexit.map = infreader.getinteger
+                    .tileexit.x = infreader.getinteger
+                    .tileexit.y = infreader.getinteger
                 end if
 
                 if byflags and 2 then
                     'get and make npc
-                    get freefileinf, , .npcindex
+                     .npcindex = infreader.getinteger
 
                     if .npcindex > 0 then
-                        npcfile = datpath & "npcs.dat"
-
                         'si el npc debe hacer respawn en la pos
                         'original la guardamos
                         if val(getvar(npcfile, "npc" & .npcindex, "posorig")) = 1 then
@@ -1435,46 +1559,61 @@ on error goto errh
 
                 if byflags and 4 then
                     'get and make object
-                    get freefileinf, , .objinfo.objindex
-                    get freefileinf, , .objinfo.amount
+                    .objinfo.objindex = infreader.getinteger
+                    .objinfo.amount = infreader.getinteger
                 end if
             end with
         next x
     next y
-
-
-    close freefilemap
-    close freefileinf
-
+    
+    call leer.initialize(mapfl & ".dat")
+    
     with mapinfo(map)
-        .name = getvar(mapfl & ".dat", "mapa" & map, "name")
-        .music = getvar(mapfl & ".dat", "mapa" & map, "musicnum")
-        .startpos.map = val(readfield(1, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
-        .startpos.x = val(readfield(2, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
-        .startpos.y = val(readfield(3, getvar(mapfl & ".dat", "mapa" & map, "startpos"), asc("-")))
-        .magiasinefecto = val(getvar(mapfl & ".dat", "mapa" & map, "magiasinefecto"))
-        .invisinefecto = val(getvar(mapfl & ".dat", "mapa" & map, "invisinefecto"))
-        .resusinefecto = val(getvar(mapfl & ".dat", "mapa" & map, "resusinefecto"))
-        .noencriptarmp = val(getvar(mapfl & ".dat", "mapa" & map, "noencriptarmp"))
-
-        .robonpcspermitido = val(getvar(mapfl & ".dat", "mapa" & map, "robonpcspermitido"))
+        .name = leer.getvalue("mapa" & map, "name")
+        .music = leer.getvalue("mapa" & map, "musicnum")
+        .startpos.map = val(readfield(1, leer.getvalue("mapa" & map, "startpos"), asc("-")))
+        .startpos.x = val(readfield(2, leer.getvalue("mapa" & map, "startpos"), asc("-")))
+        .startpos.y = val(readfield(3, leer.getvalue("mapa" & map, "startpos"), asc("-")))
         
-        if val(getvar(mapfl & ".dat", "mapa" & map, "pk")) = 0 then
+        .ondeathgoto.map = val(readfield(1, leer.getvalue("mapa" & map, "ondeathgoto"), asc("-")))
+        .ondeathgoto.x = val(readfield(2, leer.getvalue("mapa" & map, "ondeathgoto"), asc("-")))
+        .ondeathgoto.y = val(readfield(3, leer.getvalue("mapa" & map, "ondeathgoto"), asc("-")))
+        
+        .magiasinefecto = val(leer.getvalue("mapa" & map, "magiasinefecto"))
+        .invisinefecto = val(leer.getvalue("mapa" & map, "invisinefecto"))
+        .resusinefecto = val(leer.getvalue("mapa" & map, "resusinefecto"))
+        .ocultarsinefecto = val(leer.getvalue("mapa" & map, "ocultarsinefecto"))
+        .invocarsinefecto = val(leer.getvalue("mapa" & map, "invocarsinefecto"))
+        
+        .noencriptarmp = val(leer.getvalue("mapa" & map, "noencriptarmp"))
+
+        .robonpcspermitido = val(leer.getvalue("mapa" & map, "robonpcspermitido"))
+        
+        if val(leer.getvalue("mapa" & map, "pk")) = 0 then
             .pk = true
         else
             .pk = false
         end if
-
         
-        .terreno = getvar(mapfl & ".dat", "mapa" & map, "terreno")
-        .zona = getvar(mapfl & ".dat", "mapa" & map, "zona")
-        .restringir = getvar(mapfl & ".dat", "mapa" & map, "restringir")
-        .backup = val(getvar(mapfl & ".dat", "mapa" & map, "backup"))
+        .terreno = terrainstringtobyte(leer.getvalue("mapa" & map, "terreno"))
+        .zona = leer.getvalue("mapa" & map, "zona")
+        .restringir = restrictstringtobyte(leer.getvalue("mapa" & map, "restringir"))
+        .backup = val(leer.getvalue("mapa" & map, "backup"))
     end with
+    
+    set mapreader = nothing
+    set infreader = nothing
+    set leer = nothing
+    
+    erase buff
 exit sub
 
 errh:
     call logerror("error cargando mapa: " & map & " - pos: " & x & "," & y & "." & err.description)
+
+    set mapreader = nothing
+    set infreader = nothing
+    set leer = nothing
 end sub
 
 sub loadsini()
@@ -1611,6 +1750,8 @@ sub loadsini()
     minutosws = val(getvar(inipath & "server.ini", "intervalos", "intervalows"))
     if minutosws < 60 then minutosws = 180
     
+    minutosguardarusuarios = val(getvar(inipath & "server.ini", "intervalos", "intervaloguardarusuarios"))
+    
     intervalocerrarconexion = val(getvar(inipath & "server.ini", "intervalos", "intervalocerrarconexion"))
     intervalouserpuedeusar = val(getvar(inipath & "server.ini", "intervalos", "intervalouserpuedeusar"))
     intervaloflechascazadores = val(getvar(inipath & "server.ini", "intervalos", "intervaloflechascazadores"))
@@ -1655,20 +1796,34 @@ sub loadsini()
     arghal.x = getvar(datpath & "ciudades.dat", "arghal", "x")
     arghal.y = getvar(datpath & "ciudades.dat", "arghal", "y")
     
+    arkhein.map = getvar(datpath & "ciudades.dat", "arkhein", "mapa")
+    arkhein.x = getvar(datpath & "ciudades.dat", "arkhein", "x")
+    arkhein.y = getvar(datpath & "ciudades.dat", "arkhein", "y")
+    
+    nemahuak.map = getvar(datpath & "ciudades.dat", "nemahuak", "mapa")
+    nemahuak.x = getvar(datpath & "ciudades.dat", "nemahuak", "x")
+    nemahuak.y = getvar(datpath & "ciudades.dat", "nemahuak", "y")
+
+    
     ciudades(eciudad.cullathorpe) = ullathorpe
     ciudades(eciudad.cnix) = nix
     ciudades(eciudad.cbanderbill) = banderbill
     ciudades(eciudad.clindos) = lindos
     ciudades(eciudad.carghal) = arghal
+    ciudades(eciudad.carkhein) = arkhein
     
     call md5scarga
     
+    set consultapopular = new consultaspopulares
     call consultapopular.loaddata
 
 #if seguridadalkon then
     encriptacion.stringvalidacion = encriptacion.armarstringvalidacion
 #end if
-
+    
+    ' admins
+    call loadadministrativeusers
+    
 end sub
 
 sub writevar(byval file as string, byval main as string, byval var as string, byval value as string)
@@ -1682,19 +1837,21 @@ writeprivateprofilestring main, var, value, file
     
 end sub
 
-sub saveuser(byval userindex as integer, byval userfile as string)
+sub saveuser(byval userindex as integer, byval userfile as string, optional byval savetimeonline as boolean = true)
 '*************************************************
 'author: unknown
-'last modified: 12/01/2010 (zama)
+'last modified: 10/10/2010 (pato)
 'saves the users records
 '23/01/2007 pablo (toxicwaste) - agrego nivelingreso, fechaingreso, matadosingreso y nextrecompensa.
 '11/19/2009: pato - save the eluskills and expskills
 '12/01/2010: zama - los druidas pierden la inmunidad de ser atacados cuando pierden el efecto del mimetismo.
+'10/10/2010: pato - saco el writevar e implemento la clase clsinimanager
 '*************************************************
 
 on error goto errhandler
 
-dim olduserhead as long
+dim manager as clsinimanager
+dim existe as boolean
 
 with userlist(userindex)
 
@@ -1705,6 +1862,16 @@ with userlist(userindex)
         exit sub
     end if
     
+    set manager = new clsinimanager
+    
+    if fileexist(userfile) then
+        call manager.initialize(userfile)
+        
+        if fileexist(userfile & ".bk") then call kill(userfile & ".bk")
+        name userfile as userfile & ".bk"
+        
+        existe = true
+    end if
     
     if .flags.mimetizado = 1 then
         .char.body = .charmimetizado.body
@@ -1718,189 +1885,185 @@ with userlist(userindex)
         .flags.ignorado = false
     end if
     
-    if fileexist(userfile, vbnormal) then
-        if .flags.muerto = 1 then
-            olduserhead = .char.head
-            .char.head = getvar(userfile, "init", "head")
-        end if
-    '       kill userfile
-    end if
-    
     dim loopc as integer
     
     
-    call writevar(userfile, "flags", "muerto", cstr(.flags.muerto))
-    call writevar(userfile, "flags", "escondido", cstr(.flags.escondido))
-    call writevar(userfile, "flags", "hambre", cstr(.flags.hambre))
-    call writevar(userfile, "flags", "sed", cstr(.flags.sed))
-    call writevar(userfile, "flags", "desnudo", cstr(.flags.desnudo))
-    call writevar(userfile, "flags", "ban", cstr(.flags.ban))
-    call writevar(userfile, "flags", "navegando", cstr(.flags.navegando))
-    call writevar(userfile, "flags", "envenenado", cstr(.flags.envenenado))
-    call writevar(userfile, "flags", "paralizado", cstr(.flags.paralizado))
+    call manager.changevalue("flags", "muerto", cstr(.flags.muerto))
+    call manager.changevalue("flags", "escondido", cstr(.flags.escondido))
+    call manager.changevalue("flags", "hambre", cstr(.flags.hambre))
+    call manager.changevalue("flags", "sed", cstr(.flags.sed))
+    call manager.changevalue("flags", "desnudo", cstr(.flags.desnudo))
+    call manager.changevalue("flags", "ban", cstr(.flags.ban))
+    call manager.changevalue("flags", "navegando", cstr(.flags.navegando))
+    call manager.changevalue("flags", "envenenado", cstr(.flags.envenenado))
+    call manager.changevalue("flags", "paralizado", cstr(.flags.paralizado))
     'matrix
-    call writevar(userfile, "flags", "lastmap", cstr(.flags.lastmap))
+    call manager.changevalue("flags", "lastmap", cstr(.flags.lastmap))
     
-    call writevar(userfile, "consejo", "pertenece", iif(.flags.privilegios and playertype.royalcouncil, "1", "0"))
-    call writevar(userfile, "consejo", "pertenececaos", iif(.flags.privilegios and playertype.chaoscouncil, "1", "0"))
+    call manager.changevalue("consejo", "pertenece", iif(.flags.privilegios and playertype.royalcouncil, "1", "0"))
+    call manager.changevalue("consejo", "pertenececaos", iif(.flags.privilegios and playertype.chaoscouncil, "1", "0"))
     
     
-    call writevar(userfile, "counters", "pena", cstr(.counters.pena))
-    call writevar(userfile, "counters", "skillsasignados", cstr(.counters.asignedskills))
+    call manager.changevalue("counters", "pena", cstr(.counters.pena))
+    call manager.changevalue("counters", "skillsasignados", cstr(.counters.asignedskills))
     
-    call writevar(userfile, "facciones", "ejercitoreal", cstr(.faccion.armadareal))
-    call writevar(userfile, "facciones", "ejercitocaos", cstr(.faccion.fuerzascaos))
-    call writevar(userfile, "facciones", "ciudmatados", cstr(.faccion.ciudadanosmatados))
-    call writevar(userfile, "facciones", "crimmatados", cstr(.faccion.criminalesmatados))
-    call writevar(userfile, "facciones", "rarcaos", cstr(.faccion.recibioarmaduracaos))
-    call writevar(userfile, "facciones", "rarreal", cstr(.faccion.recibioarmadurareal))
-    call writevar(userfile, "facciones", "rexcaos", cstr(.faccion.recibioexpinicialcaos))
-    call writevar(userfile, "facciones", "rexreal", cstr(.faccion.recibioexpinicialreal))
-    call writevar(userfile, "facciones", "reccaos", cstr(.faccion.recompensascaos))
-    call writevar(userfile, "facciones", "recreal", cstr(.faccion.recompensasreal))
-    call writevar(userfile, "facciones", "reenlistadas", cstr(.faccion.reenlistadas))
-    call writevar(userfile, "facciones", "nivelingreso", cstr(.faccion.nivelingreso))
-    call writevar(userfile, "facciones", "fechaingreso", .faccion.fechaingreso)
-    call writevar(userfile, "facciones", "matadosingreso", cstr(.faccion.matadosingreso))
-    call writevar(userfile, "facciones", "nextrecompensa", cstr(.faccion.nextrecompensa))
+    call manager.changevalue("facciones", "ejercitoreal", cstr(.faccion.armadareal))
+    call manager.changevalue("facciones", "ejercitocaos", cstr(.faccion.fuerzascaos))
+    call manager.changevalue("facciones", "ciudmatados", cstr(.faccion.ciudadanosmatados))
+    call manager.changevalue("facciones", "crimmatados", cstr(.faccion.criminalesmatados))
+    call manager.changevalue("facciones", "rarcaos", cstr(.faccion.recibioarmaduracaos))
+    call manager.changevalue("facciones", "rarreal", cstr(.faccion.recibioarmadurareal))
+    call manager.changevalue("facciones", "rexcaos", cstr(.faccion.recibioexpinicialcaos))
+    call manager.changevalue("facciones", "rexreal", cstr(.faccion.recibioexpinicialreal))
+    call manager.changevalue("facciones", "reccaos", cstr(.faccion.recompensascaos))
+    call manager.changevalue("facciones", "recreal", cstr(.faccion.recompensasreal))
+    call manager.changevalue("facciones", "reenlistadas", cstr(.faccion.reenlistadas))
+    call manager.changevalue("facciones", "nivelingreso", cstr(.faccion.nivelingreso))
+    call manager.changevalue("facciones", "fechaingreso", .faccion.fechaingreso)
+    call manager.changevalue("facciones", "matadosingreso", cstr(.faccion.matadosingreso))
+    call manager.changevalue("facciones", "nextrecompensa", cstr(.faccion.nextrecompensa))
     
     
     '�fueron modificados los atributos del usuario?
     if not .flags.tomopocion then
         for loopc = 1 to ubound(.stats.useratributos)
-            call writevar(userfile, "atributos", "at" & loopc, cstr(.stats.useratributos(loopc)))
+            call manager.changevalue("atributos", "at" & loopc, cstr(.stats.useratributos(loopc)))
         next loopc
     else
         for loopc = 1 to ubound(.stats.useratributos)
             '.stats.useratributos(loopc) = .stats.useratributosbackup(loopc)
-            call writevar(userfile, "atributos", "at" & loopc, cstr(.stats.useratributosbackup(loopc)))
+            call manager.changevalue("atributos", "at" & loopc, cstr(.stats.useratributosbackup(loopc)))
         next loopc
     end if
     
     for loopc = 1 to ubound(.stats.userskills)
-        call writevar(userfile, "skills", "sk" & loopc, cstr(.stats.userskills(loopc)))
-        call writevar(userfile, "skills", "elusk" & loopc, cstr(.stats.eluskills(loopc)))
-        call writevar(userfile, "skills", "expsk" & loopc, cstr(.stats.expskills(loopc)))
+        call manager.changevalue("skills", "sk" & loopc, cstr(.stats.userskills(loopc)))
+        call manager.changevalue("skills", "elusk" & loopc, cstr(.stats.eluskills(loopc)))
+        call manager.changevalue("skills", "expsk" & loopc, cstr(.stats.expskills(loopc)))
     next loopc
     
     
-    call writevar(userfile, "contacto", "email", .email)
+    call manager.changevalue("contacto", "email", .email)
     
-    call writevar(userfile, "init", "genero", .genero)
-    call writevar(userfile, "init", "raza", .raza)
-    call writevar(userfile, "init", "hogar", .hogar)
-    call writevar(userfile, "init", "clase", .clase)
-    call writevar(userfile, "init", "desc", .desc)
+    call manager.changevalue("init", "genero", .genero)
+    call manager.changevalue("init", "raza", .raza)
+    call manager.changevalue("init", "hogar", .hogar)
+    call manager.changevalue("init", "clase", .clase)
+    call manager.changevalue("init", "desc", .desc)
     
-    call writevar(userfile, "init", "heading", cstr(.char.heading))
-    
-    call writevar(userfile, "init", "head", cstr(.origchar.head))
+    call manager.changevalue("init", "heading", cstr(.char.heading))
+    call manager.changevalue("init", "head", cstr(.origchar.head))
     
     if .flags.muerto = 0 then
-        call writevar(userfile, "init", "body", cstr(.char.body))
+        if .char.body <> 0 then
+            call manager.changevalue("init", "body", cstr(.char.body))
+        end if
     end if
     
-    call writevar(userfile, "init", "arma", cstr(.char.weaponanim))
-    call writevar(userfile, "init", "escudo", cstr(.char.shieldanim))
-    call writevar(userfile, "init", "casco", cstr(.char.cascoanim))
+    call manager.changevalue("init", "arma", cstr(.char.weaponanim))
+    call manager.changevalue("init", "escudo", cstr(.char.shieldanim))
+    call manager.changevalue("init", "casco", cstr(.char.cascoanim))
     
-    #if conuptime then
+#if conuptime then
+    
+    if savetimeonline then
         dim tempdate as date
         tempdate = now - .logontime
         .logontime = now
         .uptime = .uptime + (abs(day(tempdate) - 30) * 24 * 3600) + hour(tempdate) * 3600 + minute(tempdate) * 60 + second(tempdate)
         .uptime = .uptime
-        call writevar(userfile, "init", "uptime", .uptime)
-    #end if
+        call manager.changevalue("init", "uptime", .uptime)
+    end if
+#end if
     
     'first time around?
-    if getvar(userfile, "init", "lastip1") = vbnullstring then
-        call writevar(userfile, "init", "lastip1", .ip & " - " & date & ":" & time)
+    if manager.getvalue("init", "lastip1") = vbnullstring then
+        call manager.changevalue("init", "lastip1", .ip & " - " & date & ":" & time)
     'is it a different ip from last time?
-    elseif .ip <> left$(getvar(userfile, "init", "lastip1"), instr(1, getvar(userfile, "init", "lastip1"), " ") - 1) then
+    elseif .ip <> left$(manager.getvalue("init", "lastip1"), instr(1, manager.getvalue("init", "lastip1"), " ") - 1) then
         dim i as integer
         for i = 5 to 2 step -1
-            call writevar(userfile, "init", "lastip" & i, getvar(userfile, "init", "lastip" & cstr(i - 1)))
+            call manager.changevalue("init", "lastip" & i, manager.getvalue("init", "lastip" & cstr(i - 1)))
         next i
-        call writevar(userfile, "init", "lastip1", .ip & " - " & date & ":" & time)
+        call manager.changevalue("init", "lastip1", .ip & " - " & date & ":" & time)
     'same ip, just update the date
     else
-        call writevar(userfile, "init", "lastip1", .ip & " - " & date & ":" & time)
+        call manager.changevalue("init", "lastip1", .ip & " - " & date & ":" & time)
     end if
     
     
     
-    call writevar(userfile, "init", "position", .pos.map & "-" & .pos.x & "-" & .pos.y)
+    call manager.changevalue("init", "position", .pos.map & "-" & .pos.x & "-" & .pos.y)
     
     
-    call writevar(userfile, "stats", "gld", cstr(.stats.gld))
-    call writevar(userfile, "stats", "banco", cstr(.stats.banco))
+    call manager.changevalue("stats", "gld", cstr(.stats.gld))
+    call manager.changevalue("stats", "banco", cstr(.stats.banco))
     
-    call writevar(userfile, "stats", "maxhp", cstr(.stats.maxhp))
-    call writevar(userfile, "stats", "minhp", cstr(.stats.minhp))
+    call manager.changevalue("stats", "maxhp", cstr(.stats.maxhp))
+    call manager.changevalue("stats", "minhp", cstr(.stats.minhp))
     
-    call writevar(userfile, "stats", "maxsta", cstr(.stats.maxsta))
-    call writevar(userfile, "stats", "minsta", cstr(.stats.minsta))
+    call manager.changevalue("stats", "maxsta", cstr(.stats.maxsta))
+    call manager.changevalue("stats", "minsta", cstr(.stats.minsta))
     
-    call writevar(userfile, "stats", "maxman", cstr(.stats.maxman))
-    call writevar(userfile, "stats", "minman", cstr(.stats.minman))
+    call manager.changevalue("stats", "maxman", cstr(.stats.maxman))
+    call manager.changevalue("stats", "minman", cstr(.stats.minman))
     
-    call writevar(userfile, "stats", "maxhit", cstr(.stats.maxhit))
-    call writevar(userfile, "stats", "minhit", cstr(.stats.minhit))
+    call manager.changevalue("stats", "maxhit", cstr(.stats.maxhit))
+    call manager.changevalue("stats", "minhit", cstr(.stats.minhit))
     
-    call writevar(userfile, "stats", "maxagu", cstr(.stats.maxagu))
-    call writevar(userfile, "stats", "minagu", cstr(.stats.minagu))
+    call manager.changevalue("stats", "maxagu", cstr(.stats.maxagu))
+    call manager.changevalue("stats", "minagu", cstr(.stats.minagu))
     
-    call writevar(userfile, "stats", "maxham", cstr(.stats.maxham))
-    call writevar(userfile, "stats", "minham", cstr(.stats.minham))
+    call manager.changevalue("stats", "maxham", cstr(.stats.maxham))
+    call manager.changevalue("stats", "minham", cstr(.stats.minham))
     
-    call writevar(userfile, "stats", "skillptslibres", cstr(.stats.skillpts))
+    call manager.changevalue("stats", "skillptslibres", cstr(.stats.skillpts))
       
-    call writevar(userfile, "stats", "exp", cstr(.stats.exp))
-    call writevar(userfile, "stats", "elv", cstr(.stats.elv))
+    call manager.changevalue("stats", "exp", cstr(.stats.exp))
+    call manager.changevalue("stats", "elv", cstr(.stats.elv))
     
     
-    call writevar(userfile, "stats", "elu", cstr(.stats.elu))
-    call writevar(userfile, "muertes", "usermuertes", cstr(.stats.usuariosmatados))
-    'call writevar(userfile, "muertes", "crimmuertes", cstr(.stats.criminalesmatados))
-    call writevar(userfile, "muertes", "npcsmuertes", cstr(.stats.npcsmuertos))
+    call manager.changevalue("stats", "elu", cstr(.stats.elu))
+    call manager.changevalue("muertes", "usermuertes", cstr(.stats.usuariosmatados))
+    'call manager.changevalue( "muertes", "crimmuertes", cstr(.stats.criminalesmatados))
+    call manager.changevalue("muertes", "npcsmuertes", cstr(.stats.npcsmuertos))
       
     '[kevin]----------------------------------------------------------------------------
     '*******************************************************************************************
-    call writevar(userfile, "bancoinventory", "cantidaditems", val(.bancoinvent.nroitems))
+    call manager.changevalue("bancoinventory", "cantidaditems", val(.bancoinvent.nroitems))
     dim loopd as integer
     for loopd = 1 to max_bancoinventory_slots
-        call writevar(userfile, "bancoinventory", "obj" & loopd, .bancoinvent.object(loopd).objindex & "-" & .bancoinvent.object(loopd).amount)
+        call manager.changevalue("bancoinventory", "obj" & loopd, .bancoinvent.object(loopd).objindex & "-" & .bancoinvent.object(loopd).amount)
     next loopd
     '*******************************************************************************************
     '[/kevin]-----------
       
     'save inv
-    call writevar(userfile, "inventory", "cantidaditems", val(.invent.nroitems))
+    call manager.changevalue("inventory", "cantidaditems", val(.invent.nroitems))
     
     for loopc = 1 to max_inventory_slots
-        call writevar(userfile, "inventory", "obj" & loopc, .invent.object(loopc).objindex & "-" & .invent.object(loopc).amount & "-" & .invent.object(loopc).equipped)
+        call manager.changevalue("inventory", "obj" & loopc, .invent.object(loopc).objindex & "-" & .invent.object(loopc).amount & "-" & .invent.object(loopc).equipped)
     next loopc
     
-    call writevar(userfile, "inventory", "weaponeqpslot", cstr(.invent.weaponeqpslot))
-    call writevar(userfile, "inventory", "armoureqpslot", cstr(.invent.armoureqpslot))
-    call writevar(userfile, "inventory", "cascoeqpslot", cstr(.invent.cascoeqpslot))
-    call writevar(userfile, "inventory", "escudoeqpslot", cstr(.invent.escudoeqpslot))
-    call writevar(userfile, "inventory", "barcoslot", cstr(.invent.barcoslot))
-    call writevar(userfile, "inventory", "municionslot", cstr(.invent.municioneqpslot))
-    call writevar(userfile, "inventory", "mochilaslot", cstr(.invent.mochilaeqpslot))
+    call manager.changevalue("inventory", "weaponeqpslot", cstr(.invent.weaponeqpslot))
+    call manager.changevalue("inventory", "armoureqpslot", cstr(.invent.armoureqpslot))
+    call manager.changevalue("inventory", "cascoeqpslot", cstr(.invent.cascoeqpslot))
+    call manager.changevalue("inventory", "escudoeqpslot", cstr(.invent.escudoeqpslot))
+    call manager.changevalue("inventory", "barcoslot", cstr(.invent.barcoslot))
+    call manager.changevalue("inventory", "municionslot", cstr(.invent.municioneqpslot))
+    call manager.changevalue("inventory", "mochilaslot", cstr(.invent.mochilaeqpslot))
     '/nacho
     
-    call writevar(userfile, "inventory", "anilloslot", cstr(.invent.anilloeqpslot))
+    call manager.changevalue("inventory", "anilloslot", cstr(.invent.anilloeqpslot))
     
     
     'reputacion
-    call writevar(userfile, "rep", "asesino", cstr(.reputacion.asesinorep))
-    call writevar(userfile, "rep", "bandido", cstr(.reputacion.bandidorep))
-    call writevar(userfile, "rep", "burguesia", cstr(.reputacion.burguesrep))
-    call writevar(userfile, "rep", "ladrones", cstr(.reputacion.ladronesrep))
-    call writevar(userfile, "rep", "nobles", cstr(.reputacion.noblerep))
-    call writevar(userfile, "rep", "plebe", cstr(.reputacion.pleberep))
+    call manager.changevalue("rep", "asesino", cstr(.reputacion.asesinorep))
+    call manager.changevalue("rep", "bandido", cstr(.reputacion.bandidorep))
+    call manager.changevalue("rep", "burguesia", cstr(.reputacion.burguesrep))
+    call manager.changevalue("rep", "ladrones", cstr(.reputacion.ladronesrep))
+    call manager.changevalue("rep", "nobles", cstr(.reputacion.noblerep))
+    call manager.changevalue("rep", "plebe", cstr(.reputacion.pleberep))
     
     dim l as long
     l = (-.reputacion.asesinorep) + _
@@ -1910,13 +2073,13 @@ with userlist(userindex)
         .reputacion.noblerep + _
         .reputacion.pleberep
     l = l / 6
-    call writevar(userfile, "rep", "promedio", cstr(l))
+    call manager.changevalue("rep", "promedio", cstr(l))
     
     dim cad as string
     
     for loopc = 1 to maxuserhechizos
         cad = .stats.userhechizos(loopc)
-        call writevar(userfile, "hechizos", "h" & loopc, cad)
+        call manager.changevalue("hechizos", "h" & loopc, cad)
     next
     
     dim nromascotas as long
@@ -1932,15 +2095,15 @@ with userlist(userindex)
                 cad = "0"
                 nromascotas = nromascotas - 1
             end if
-            call writevar(userfile, "mascotas", "mas" & loopc, cad)
+            call manager.changevalue("mascotas", "mas" & loopc, cad)
         else
             cad = .mascotastype(loopc)
-            call writevar(userfile, "mascotas", "mas" & loopc, cad)
+            call manager.changevalue("mascotas", "mas" & loopc, cad)
         end if
     
     next
     
-    call writevar(userfile, "mascotas", "nromascotas", cstr(nromascotas))
+    call manager.changevalue("mascotas", "nromascotas", cstr(nromascotas))
     
     'devuelve el head de muerto
     if .flags.muerto = 1 then
@@ -1948,10 +2111,17 @@ with userlist(userindex)
     end if
 end with
 
+call manager.dumpfile(userfile)
+
+set manager = nothing
+
+if existe then call kill(userfile & ".bk")
+
 exit sub
 
 errhandler:
 call logerror("error en saveuser")
+set manager = nothing
 
 end sub
 
@@ -1977,73 +2147,61 @@ function criminal(byval userindex as integer) as boolean
 
 end function
 
-sub backupnpc(npcindex as integer)
+sub backupnpc(byval npcindex as integer, byval hfile as integer)
 '***************************************************
 'author: unknown
-'last modification: -
-'
+'last modification: 10/09/2010
+'10/09/2010 - pato: optimice el backup de npcs
 '***************************************************
 
-    dim npcnumero as integer
-    dim npcfile as string
     dim loopc as integer
     
-    
-    npcnumero = npclist(npcindex).numero
-    
-    'if npcnumero > 499 then
-    '    npcfile = datpath & "bknpcs-hostiles.dat"
-    'else
-        npcfile = datpath & "bknpcs.dat"
-    'end if
+    print #hfile, "[npc" & npclist(npcindex).numero & "]"
     
     with npclist(npcindex)
         'general
-        call writevar(npcfile, "npc" & npcnumero, "name", .name)
-        call writevar(npcfile, "npc" & npcnumero, "desc", .desc)
-        call writevar(npcfile, "npc" & npcnumero, "head", val(.char.head))
-        call writevar(npcfile, "npc" & npcnumero, "body", val(.char.body))
-        call writevar(npcfile, "npc" & npcnumero, "heading", val(.char.heading))
-        call writevar(npcfile, "npc" & npcnumero, "movement", val(.movement))
-        call writevar(npcfile, "npc" & npcnumero, "attackable", val(.attackable))
-        call writevar(npcfile, "npc" & npcnumero, "comercia", val(.comercia))
-        call writevar(npcfile, "npc" & npcnumero, "tipoitems", val(.tipoitems))
-        call writevar(npcfile, "npc" & npcnumero, "hostil", val(.hostile))
-        call writevar(npcfile, "npc" & npcnumero, "giveexp", val(.giveexp))
-        call writevar(npcfile, "npc" & npcnumero, "givegld", val(.givegld))
-        call writevar(npcfile, "npc" & npcnumero, "hostil", val(.hostile))
-        call writevar(npcfile, "npc" & npcnumero, "invrespawn", val(.invrespawn))
-        call writevar(npcfile, "npc" & npcnumero, "npctype", val(.npctype))
-        
+        print #hfile, "name=" & .name
+        print #hfile, "desc=" & .desc
+        print #hfile, "head=" & val(.char.head)
+        print #hfile, "body=" & val(.char.body)
+        print #hfile, "heading=" & val(.char.heading)
+        print #hfile, "movement=" & val(.movement)
+        print #hfile, "attackable=" & val(.attackable)
+        print #hfile, "comercia=" & val(.comercia)
+        print #hfile, "tipoitems=" & val(.tipoitems)
+        print #hfile, "hostil=" & val(.hostile)
+        print #hfile, "giveexp=" & val(.giveexp)
+        print #hfile, "givegld=" & val(.givegld)
+        print #hfile, "invrespawn=" & val(.invrespawn)
+        print #hfile, "npctype=" & val(.npctype)
         
         'stats
-        call writevar(npcfile, "npc" & npcnumero, "alineacion", val(.stats.alineacion))
-        call writevar(npcfile, "npc" & npcnumero, "def", val(.stats.def))
-        call writevar(npcfile, "npc" & npcnumero, "maxhit", val(.stats.maxhit))
-        call writevar(npcfile, "npc" & npcnumero, "maxhp", val(.stats.maxhp))
-        call writevar(npcfile, "npc" & npcnumero, "minhit", val(.stats.minhit))
-        call writevar(npcfile, "npc" & npcnumero, "minhp", val(.stats.minhp))
-        
-        
-        
+        print #hfile, "alineacion=" & val(.stats.alineacion)
+        print #hfile, "def=" & val(.stats.def)
+        print #hfile, "maxhit=" & val(.stats.maxhit)
+        print #hfile, "maxhp=" & val(.stats.maxhp)
+        print #hfile, "minhit=" & val(.stats.minhit)
+        print #hfile, "minhp=" & val(.stats.minhp)
         
         'flags
-        call writevar(npcfile, "npc" & npcnumero, "respawn", val(.flags.respawn))
-        call writevar(npcfile, "npc" & npcnumero, "backup", val(.flags.backup))
-        call writevar(npcfile, "npc" & npcnumero, "domable", val(.flags.domable))
+        print #hfile, "respawn=" & val(.flags.respawn)
+        print #hfile, "backup=" & val(.flags.backup)
+        print #hfile, "domable=" & val(.flags.domable)
         
         'inventario
-        call writevar(npcfile, "npc" & npcnumero, "nroitems", val(.invent.nroitems))
+        print #hfile, "nroitems=" & val(.invent.nroitems)
         if .invent.nroitems > 0 then
-           for loopc = 1 to max_inventory_slots
-                call writevar(npcfile, "npc" & npcnumero, "obj" & loopc, .invent.object(loopc).objindex & "-" & .invent.object(loopc).amount)
+           for loopc = 1 to .invent.nroitems
+                print #hfile, "obj" & loopc & "=" & .invent.object(loopc).objindex & "-" & .invent.object(loopc).amount
            next loopc
         end if
+        
+        print #hfile, ""
     end with
 
 end sub
 
-sub cargarnpcbackup(npcindex as integer, byval npcnumber as integer)
+sub cargarnpcbackup(byval npcindex as integer, byval npcnumber as integer)
 '***************************************************
 'author: unknown
 'last modification: -
@@ -2208,33 +2366,31 @@ public sub generatematrix(byval mapa as integer)
 '
 '***************************************************
 
-dim i as integer
-dim j as integer
-dim x as integer
-dim y as integer
-
-redim distancetocities(1 to nummaps) as homedistance
-
-for j = 1 to numciudades
-    for i = 1 to nummaps
-        distancetocities(i).distancetocity(j) = -1
-    next i
-next j
-
-for j = 1 to numciudades
-    for i = 1 to 4
-        select case i
-            case eheading.north
-                call setdistance(getlimit(ciudades(j).map, eheading.north), j, i, 0, 1)
-            case eheading.east
-                call setdistance(getlimit(ciudades(j).map, eheading.east), j, i, 1, 0)
-            case eheading.south
-                call setdistance(getlimit(ciudades(j).map, eheading.south), j, i, 0, 1)
-            case eheading.west
-                call setdistance(getlimit(ciudades(j).map, eheading.west), j, i, -1, 0)
-        end select
-    next i
-next j
+    dim i as integer
+    dim j as integer
+    
+    redim distancetocities(1 to nummaps) as homedistance
+    
+    for j = 1 to numciudades
+        for i = 1 to nummaps
+            distancetocities(i).distancetocity(j) = -1
+        next i
+    next j
+    
+    for j = 1 to numciudades
+        for i = 1 to 4
+            select case i
+                case eheading.north
+                    call setdistance(getlimit(ciudades(j).map, eheading.north), j, i, 0, 1)
+                case eheading.east
+                    call setdistance(getlimit(ciudades(j).map, eheading.east), j, i, 1, 0)
+                case eheading.south
+                    call setdistance(getlimit(ciudades(j).map, eheading.south), j, i, 0, 1)
+                case eheading.west
+                    call setdistance(getlimit(ciudades(j).map, eheading.west), j, i, -1, 0)
+            end select
+        next i
+    next j
 
 end sub
 
@@ -2282,7 +2438,8 @@ public function getlimit(byval mapa as integer, byval side as byte) as integer
 'retrieves the limit in the given side in the given map.
 'todo: this should be set in the .inf map file.
 '***************************************************
-dim i, x, y as integer
+dim x as long
+dim y as long
 
 if mapa <= 0 then exit function
 
@@ -2311,7 +2468,6 @@ public sub loadarmadurasfaccion()
 '
 '***************************************************
     dim classindex as long
-    dim raceindex as long
     
     dim armaduraindex as integer
     
@@ -2401,4 +2557,3 @@ public sub loadarmadurasfaccion()
     next classindex
     
 end sub
-

@@ -117,7 +117,7 @@ private cbotoncerrar as clsgraphicalbutton
 private cbotondetalles as clsgraphicalbutton
 private cbotonrechazar as clsgraphicalbutton
 
-public lastpressed as clsgraphicalbutton
+public lastbuttonpressed as clsgraphicalbutton
 
 
 private tipoprop as tipo_propuesta
@@ -147,7 +147,7 @@ private sub loadbuttons()
     set cbotondetalles = new clsgraphicalbutton
     set cbotonrechazar = new clsgraphicalbutton
     
-    set lastpressed = new clsgraphicalbutton
+    set lastbuttonpressed = new clsgraphicalbutton
     
     
     call cbotonaceptar.initialize(imgaceptar, grhpath & "botonaceptaroferta.jpg", _

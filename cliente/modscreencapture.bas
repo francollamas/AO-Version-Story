@@ -506,12 +506,17 @@ dim hfile as long
 end function
 
 public sub screencapture(optional byval autofragshooter as boolean = false)
-'medio desprolijo donde pongo la pic, pero es lo que hay por ahora
+'**************************************************************
+'author: unknown
+'last modify date: 11/16/2006
+'11/16/2010: amraphen - now the fragshooter screenshots are stored in different directories.
+'**************************************************************
 on error goto err:
     dim hwnd as long
     dim file as string
     dim si as string
-    dim c as new cdibsection
+    dim c as cdibsection
+    set c = new cdibsection
     dim i as long
     dim hdcc as long
     
@@ -528,11 +533,29 @@ on error goto err:
     
     hdcc = invalid_handle
     
-    dirfile = iif(autofragshooter, "\screenshots\fragshooter", "\screenshots")
+    ' primero chequea si existe la carpeta screenshots
+    dirfile = app.path & "\screenshots"
+    if not fileexist(dirfile, vbdirectory) then call mkdir(dirfile)
     
-    if not fileexist(app.path & dirfile, vbdirectory) then mkdir (app.path & dirfile)
-    
-    file = app.path & dirfile & "\" & format(now, "dd-mm-yyyy hh-mm-ss") & ".jpg"
+    ' si es una imagen de autofragshooter, se fija si existe la carpeta.
+    if autofragshooter then
+        dirfile = dirfile & "\fragshooter"
+        if not fileexist(dirfile, vbdirectory) then call mkdir(dirfile)
+        
+        'nuevos directorios del fragshooter:
+        if fragshooterkilledsomeone then 'si mat� a alguien.
+            dirfile = dirfile & "\frags"
+        else 'si nos mat� alguien.
+            dirfile = dirfile & "\muertes"
+        end if
+        if not fileexist(dirfile, vbdirectory) then call mkdir(dirfile)
+        
+        'nuevo formato de las screenshots del fragshooter: "victima/asesino(dd-mm-yyyy hh-mm-ss).jpg"
+        file = dirfile & "\" & fragshooternickname & "(" & format(now, "dd-mm-yyyy hh-mm-ss") & ").jpg"
+    else
+        'si no es screenshot del fragshooter, entonces se usa el formato "dd-mm-yyyy hh-mm-ss.jpg"
+        file = dirfile & "\" & format(now, "dd-mm-yyyy hh-mm-ss") & ".jpg"
+    end if
     
     frmscreenshots.picture1.refresh
     frmscreenshots.picture1.picture = frmscreenshots.picture1.image
@@ -553,7 +576,8 @@ end sub
 
 public function fullscreencapture(byval file as string) as boolean
 'medio desprolijo donde pongo la pic, pero es lo que hay por ahora
-    dim c as new cdibsection
+    dim c as cdibsection
+    set c = new cdibsection
     dim hdcc as long
     dim handle as long
     
